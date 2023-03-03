@@ -8,11 +8,9 @@ import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
 import glm_.vec2.operators.times
 import glm_.vec4.Vec4i
-import imgui.NUL
 import kool.BYTES
 import kool.lib.fill
 import kool.set
-import stb_.*
 import unsigned.toUInt
 import java.nio.ByteBuffer
 import kotlin.math.abs
@@ -20,263 +18,278 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.sqrt
 
-/*
- stb_truetype.h - v1.22 - public domain
- authored from 2009-2019 by Sean Barrett / RAD Game Tools
+// [DEAR IMGUI]
+// This is a slightly modified version of stb_truetype.h 1.26.
+// Mostly fixing for compiler and static analyzer warnings.
+// Grep for [DEAR IMGUI] to find the changes.
 
-   This library processes TrueType files:
-        parse files
-        extract glyph metrics
-        extract glyph shapes
-        render glyphs to one-channel bitmaps with antialiasing (box filter)
-        render glyphs to one-channel SDF bitmaps (signed-distance field/function)
-
-   Todo:
-        non-MS cmaps
-        crashproof on bad data
-        hinting? (no longer patented)
-        cleartype-style AA?
-        optimize: use simple memory allocator for intermediates
-        optimize: build edge-list directly from curves
-        optimize: rasterize directly from curves?
-
- ADDITIONAL CONTRIBUTORS
-
-   Mikko Mononen: compound shape support, more cmap formats
-   Tor Andersson: kerning, subpixel rendering
-   Dougall Johnson: OpenType / Type 2 font handling
-   Daniel Ribeiro Maciel: basic GPOS-based kerning
-
-   Misc other:
-       Ryan Gordon
-       Simon Glass
-       github:IntellectualKitty
-       Imanol Celaya
-       Daniel Ribeiro Maciel
-
-   Bug/warning reports/fixes:
-       "Zer" on mollyrocket       Fabian "ryg" Giesen
-       Cass Everitt               Martins Mozeiko
-       stoiko (Haemimont Games)   Cap Petschulat
-       Brian Hook                 Omar Cornut
-       Walter van Niftrik         github:aloucks
-       David Gow                  Peter LaValle
-       David Given                Sergey Popov
-       Ivan-Assen Ivanov          Giumo X. Clanjor
-       Anthony Pesch              Higor Euripedes
-       Johan Duparc               Thomas Fields
-       Hou Qiming                 Derek Vinyard
-       Rob Loach                  Cort Stratton
-       Kenney Phillis Jr.         github:oyvindjam
-       Brian Costabile            github:vassvik
-       Ken Voskuil (kaesve)       Ryan Griege
-
- VERSION HISTORY
-
-   1.22 (2019-08-11) minimize missing-glyph duplication; fix kerning if both 'GPOS' and 'kern' are defined
-   1.21 (2019-02-25) fix warning
-   1.20 (2019-02-07) PackFontRange skips missing codepoints; GetScaleFontVMetrics()
-   1.19 (2018-02-11) GPOS kerning, STBTT_fmod
-   1.18 (2018-01-29) add missing function
-   1.17 (2017-07-23) make more arguments const; doc fix
-   1.16 (2017-07-12) SDF support
-   1.15 (2017-03-03) make more arguments const
-   1.14 (2017-01-16) num-fonts-in-TTC function
-   1.13 (2017-01-02) support OpenType fonts, certain Apple fonts
-   1.12 (2016-10-25) suppress warnings about casting away const with -Wcast-qual
-   1.11 (2016-04-02) fix unused-variable warning
-   1.10 (2016-04-02) user-defined fabs(); rare memory leak; remove duplicate typedef
-   1.09 (2016-01-16) warning fix; avoid crash on outofmem; use allocation userdata properly
-   1.08 (2015-09-13) document stbtt_Rasterize(); fixes for vertical & horizontal edges
-   1.07 (2015-08-01) allow PackFontRanges to accept arrays of sparse codepoints;
-                     variant PackFontRanges to pack and render in separate phases;
-                     fix stbtt_GetFontOFfsetForIndex (never worked for non-0 input?);
-                     fixed an assert() bug in the new rasterizer
-                     replace assert() with STBTT_assert() in new rasterizer
-
-   Full history can be found at the end of this file.
-
- LICENSE
-
-   See end of file for license information.
-
- USAGE
-
-   Include this file in whatever places need to refer to it. In ONE C/C++
-   file, write:
-      #define STB_TRUETYPE_IMPLEMENTATION
-   before the #include of this file. This expands out the actual
-   implementation into that C/C++ file.
-
-   To make the implementation private to the file that generates the implementation,
-      #define STBTT_STATIC
-
-   Simple 3D API (don't ship this, but it's fine for tools and quick start)
-           stbtt_BakeFontBitmap()               -- bake a font to a bitmap for use as texture
-           stbtt_GetBakedQuad()                 -- compute quad to draw for a given char
-
-   Improved 3D API (more shippable):
-           #include "stb_rect_pack.h"           -- optional, but you really want it
-           stbtt_PackBegin()
-           stbtt_PackSetOversampling()          -- for improved quality on small fonts
-           stbtt_PackFontRanges()               -- pack and renders
-           stbtt_PackEnd()
-           stbtt_GetPackedQuad()
-
-   "Load" a font file from a memory buffer (you have to keep the buffer loaded)
-           stbtt_InitFont()
-           stbtt_GetFontOffsetForIndex()        -- indexing for TTC font collections
-           stbtt_GetNumberOfFonts()             -- number of fonts for TTC font collections
-
-   Render a unicode codepoint to a bitmap
-           stbtt_GetCodepointBitmap()           -- allocates and returns a bitmap
-           stbtt_MakeCodepointBitmap()          -- renders into bitmap you provide
-           stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
-
-   Character advance/positioning
-           stbtt_GetCodepointHMetrics()
-           stbtt_GetFontVMetrics()
-           stbtt_GetFontVMetricsOS2()
-           stbtt_GetCodepointKernAdvance()
-
-   Starting with version 1.06, the rasterizer was replaced with a new,
-   faster and generally-more-precise rasterizer. The new rasterizer more
-   accurately measures pixel coverage for anti-aliasing, except in the case
-   where multiple shapes overlap, in which case it overestimates the AA pixel
-   coverage. Thus, anti-aliasing of intersecting shapes may look wrong. If
-   this turns out to be a problem, you can re-enable the old rasterizer with
-        #define STBTT_RASTERIZER_VERSION 1
-   which will incur about a 15% speed hit.
-
- ADDITIONAL DOCUMENTATION
-
-   Immediately after this block comment are a series of sample programs.
-
-   After the sample programs is the "header file" section. This section
-   includes documentation for each API function.
-
-   Some important concepts to understand to use this library:
-
-      Codepoint
-         Characters are defined by unicode codepoints, e.g. 65 is
-         uppercase A, 231 is lowercase c with a cedilla, 0x7e30 is
-         the hiragana for "ma".
-
-      Glyph
-         A visual character shape (every codepoint is rendered as
-         some glyph)
-
-      Glyph index
-         A font-specific integer ID representing a glyph
-
-      Baseline
-         Glyph shapes are defined relative to a baseline, which is the
-         bottom of uppercase characters. Characters extend both above
-         and below the baseline.
-
-      Current Point
-         As you draw text to the screen, you keep track of a "current point"
-         which is the origin of each character. The current point's vertical
-         position is the baseline. Even "baked fonts" use this model.
-
-      Vertical Font Metrics
-         The vertical qualities of the font, used to vertically position
-         and space the characters. See docs for stbtt_GetFontVMetrics.
-
-      Font Size in Pixels or Points
-         The preferred interface for specifying font sizes in stb_truetype
-         is to specify how tall the font's vertical extent should be in pixels.
-         If that sounds good enough, skip the next paragraph.
-
-         Most font APIs instead use "points", which are a common typographic
-         measurement for describing font size, defined as 72 points per inch.
-         stb_truetype provides a point API for compatibility. However, true
-         "per inch" conventions don't make much sense on computer displays
-         since different monitors have different number of pixels per
-         inch. For example, Windows traditionally uses a convention that
-         there are 96 pixels per inch, thus making 'inch' measurements have
-         nothing to do with inches, and thus effectively defining a point to
-         be 1.333 pixels. Additionally, the TrueType font data provides
-         an explicit scale factor to scale a given font's glyphs to points,
-         but the author has observed that this scale factor is often wrong
-         for non-commercial fonts, thus making fonts scaled in points
-         according to the TrueType spec incoherently sized in practice.
-
- DETAILED USAGE:
-
-  Scale:
-    Select how high you want the font to be, in points or pixels.
-    Call ScaleForPixelHeight or ScaleForMappingEmToPixels to compute
-    a scale factor SF that will be used by all other functions.
-
-  Baseline:
-    You need to select a y-coordinate that is the baseline of where
-    your text will appear. Call GetFontBoundingBox to get the baseline-relative
-    bounding box for all characters. SF*-y0 will be the distance in pixels
-    that the worst-case character could extend above the baseline, so if
-    you want the top edge of characters to appear at the top of the
-    screen where y=0, then you would set the baseline to SF*-y0.
-
-  Current point:
-    Set the current point where the first character will appear. The
-    first character could extend left of the current point; this is font
-    dependent. You can either choose a current point that is the leftmost
-    point and hope, or add some padding, or check the bounding box or
-    left-side-bearing of the first character to be displayed and set
-    the current point based on that.
-
-  Displaying a character:
-    Compute the bounding box of the character. It will contain signed values
-    relative to <current_point, baseline>. I.e. if it returns x0,y0,x1,y1,
-    then the character should be displayed in the rectangle from
-    <current_point+SF*x0, baseline+SF*y0> to <current_point+SF*x1,baseline+SF*y1).
-
-  Advancing for the next character:
-    Call GlyphHMetrics, and compute 'current_point += SF * advance'.
-
-
- ADVANCED USAGE
-
-   Quality:
-
-    - Use the functions with Subpixel at the end to allow your characters
-      to have subpixel positioning. Since the font is anti-aliased, not
-      hinted, this is very import for quality. (This is not possible with
-      baked fonts.)
-
-    - Kerning is now supported, and if you're supporting subpixel rendering
-      then kerning is worth using to give your text a polished look.
-
-   Performance:
-
-    - Convert Unicode codepoints to glyph indexes and operate on the glyphs;
-      if you don't do this, stb_truetype is forced to do the conversion on
-      every call.
-
-    - There are a lot of memory allocations. We should modify it to take
-      a temp buffer and allocate from the temp buffer (without freeing),
-      should help performance a lot.
-
- NOTES
-
-   The system uses the raw data found in the .ttf file without changing it
-   and without building auxiliary data structures. This is a bit inefficient
-   on little-endian systems (the data is big-endian), but assuming you're
-   caching the bitmaps or glyph shapes this shouldn't be a big deal.
-
-   It appears to be very hard to programmatically determine what font a
-   given file is in a general way. I provide an API for this, but I don't
-   recommend it.
-
-
- PERFORMANCE MEASUREMENTS FOR 1.06:
-
-                      32-bit     64-bit
-   Previous release:  8.83 s     7.68 s
-   Pool allocations:  7.72 s     6.34 s
-   Inline sort     :  6.54 s     5.65 s
-   New rasterizer  :  5.63 s     5.00 s
-*/
+// stb_truetype.h - v1.26 - public domain
+// authored from 2009-2021 by Sean Barrett / RAD Game Tools
+//
+// =======================================================================
+//
+//    NO SECURITY GUARANTEE -- DO NOT USE THIS ON UNTRUSTED FONT FILES
+//
+// This library does no range checking of the offsets found in the file,
+// meaning an attacker can use it to read arbitrary memory.
+//
+// =======================================================================
+//
+//   This library processes TrueType files:
+//        parse files
+//        extract glyph metrics
+//        extract glyph shapes
+//        render glyphs to one-channel bitmaps with antialiasing (box filter)
+//        render glyphs to one-channel SDF bitmaps (signed-distance field/function)
+//
+//   Todo:
+//        non-MS cmaps
+//        crashproof on bad data
+//        hinting? (no longer patented)
+//        cleartype-style AA?
+//        optimize: use simple memory allocator for intermediates
+//        optimize: build edge-list directly from curves
+//        optimize: rasterize directly from curves?
+//
+// ADDITIONAL CONTRIBUTORS
+//
+//   Mikko Mononen: compound shape support, more cmap formats
+//   Tor Andersson: kerning, subpixel rendering
+//   Dougall Johnson: OpenType / Type 2 font handling
+//   Daniel Ribeiro Maciel: basic GPOS-based kerning
+//
+//   Misc other:
+//       Ryan Gordon
+//       Simon Glass
+//       github:IntellectualKitty
+//       Imanol Celaya
+//       Daniel Ribeiro Maciel
+//
+//   Bug/warning reports/fixes:
+//       "Zer" on mollyrocket       Fabian "ryg" Giesen   github:NiLuJe
+//       Cass Everitt               Martins Mozeiko       github:aloucks
+//       stoiko (Haemimont Games)   Cap Petschulat        github:oyvindjam
+//       Brian Hook                 Omar Cornut           github:vassvik
+//       Walter van Niftrik         Ryan Griege
+//       David Gow                  Peter LaValle
+//       David Given                Sergey Popov
+//       Ivan-Assen Ivanov          Giumo X. Clanjor
+//       Anthony Pesch              Higor Euripedes
+//       Johan Duparc               Thomas Fields
+//       Hou Qiming                 Derek Vinyard
+//       Rob Loach                  Cort Stratton
+//       Kenney Phillis Jr.         Brian Costabile
+//       Ken Voskuil (kaesve)
+//
+// VERSION HISTORY
+//
+//   1.26 (2021-08-28) fix broken rasterizer
+//   1.25 (2021-07-11) many fixes
+//   1.24 (2020-02-05) fix warning
+//   1.23 (2020-02-02) query SVG data for glyphs; query whole kerning table (but only kern not GPOS)
+//   1.22 (2019-08-11) minimize missing-glyph duplication; fix kerning if both 'GPOS' and 'kern' are defined
+//   1.21 (2019-02-25) fix warning
+//   1.20 (2019-02-07) PackFontRange skips missing codepoints; GetScaleFontVMetrics()
+//   1.19 (2018-02-11) GPOS kerning, STBTT_fmod
+//   1.18 (2018-01-29) add missing function
+//   1.17 (2017-07-23) make more arguments const; doc fix
+//   1.16 (2017-07-12) SDF support
+//   1.15 (2017-03-03) make more arguments const
+//   1.14 (2017-01-16) num-fonts-in-TTC function
+//   1.13 (2017-01-02) support OpenType fonts, certain Apple fonts
+//   1.12 (2016-10-25) suppress warnings about casting away const with -Wcast-qual
+//   1.11 (2016-04-02) fix unused-variable warning
+//   1.10 (2016-04-02) user-defined fabs(); rare memory leak; remove duplicate typedef
+//   1.09 (2016-01-16) warning fix; avoid crash on outofmem; use allocation userdata properly
+//   1.08 (2015-09-13) document stbtt_Rasterize(); fixes for vertical & horizontal edges
+//   1.07 (2015-08-01) allow PackFontRanges to accept arrays of sparse codepoints;
+//                     variant PackFontRanges to pack and render in separate phases;
+//                     fix stbtt_GetFontOFfsetForIndex (never worked for non-0 input?);
+//                     fixed an assert() bug in the new rasterizer
+//                     replace assert() with STBTT_assert() in new rasterizer
+//
+//   Full history can be found at the end of this file.
+//
+// LICENSE
+//
+//   See end of file for license information.
+//
+// USAGE
+//
+//   Include this file in whatever places need to refer to it. In ONE C/C++
+//   file, write:
+//      #define STB_TRUETYPE_IMPLEMENTATION
+//   before the #include of this file. This expands out the actual
+//   implementation into that C/C++ file.
+//
+//   To make the implementation private to the file that generates the implementation,
+//      #define STBTT_STATIC
+//
+//   Simple 3D API (don't ship this, but it's fine for tools and quick start)
+//           stbtt_BakeFontBitmap()               -- bake a font to a bitmap for use as texture
+//           stbtt_GetBakedQuad()                 -- compute quad to draw for a given char
+//
+//   Improved 3D API (more shippable):
+//           #include "stb_rect_pack.h"           -- optional, but you really want it
+//           stbtt_PackBegin()
+//           stbtt_PackSetOversampling()          -- for improved quality on small fonts
+//           stbtt_PackFontRanges()               -- pack and renders
+//           stbtt_PackEnd()
+//           stbtt_GetPackedQuad()
+//
+//   "Load" a font file from a memory buffer (you have to keep the buffer loaded)
+//           stbtt_InitFont()
+//           stbtt_GetFontOffsetForIndex()        -- indexing for TTC font collections
+//           stbtt_GetNumberOfFonts()             -- number of fonts for TTC font collections
+//
+//   Render a unicode codepoint to a bitmap
+//           stbtt_GetCodepointBitmap()           -- allocates and returns a bitmap
+//           stbtt_MakeCodepointBitmap()          -- renders into bitmap you provide
+//           stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
+//
+//   Character advance/positioning
+//           stbtt_GetCodepointHMetrics()
+//           stbtt_GetFontVMetrics()
+//           stbtt_GetFontVMetricsOS2()
+//           stbtt_GetCodepointKernAdvance()
+//
+//   Starting with version 1.06, the rasterizer was replaced with a new,
+//   faster and generally-more-precise rasterizer. The new rasterizer more
+//   accurately measures pixel coverage for anti-aliasing, except in the case
+//   where multiple shapes overlap, in which case it overestimates the AA pixel
+//   coverage. Thus, anti-aliasing of intersecting shapes may look wrong. If
+//   this turns out to be a problem, you can re-enable the old rasterizer with
+//        #define STBTT_RASTERIZER_VERSION 1
+//   which will incur about a 15% speed hit.
+//
+// ADDITIONAL DOCUMENTATION
+//
+//   Immediately after this block comment are a series of sample programs.
+//
+//   After the sample programs is the "header file" section. This section
+//   includes documentation for each API function.
+//
+//   Some important concepts to understand to use this library:
+//
+//      Codepoint
+//         Characters are defined by unicode codepoints, e.g. 65 is
+//         uppercase A, 231 is lowercase c with a cedilla, 0x7e30 is
+//         the hiragana for "ma".
+//
+//      Glyph
+//         A visual character shape (every codepoint is rendered as
+//         some glyph)
+//
+//      Glyph index
+//         A font-specific integer ID representing a glyph
+//
+//      Baseline
+//         Glyph shapes are defined relative to a baseline, which is the
+//         bottom of uppercase characters. Characters extend both above
+//         and below the baseline.
+//
+//      Current Point
+//         As you draw text to the screen, you keep track of a "current point"
+//         which is the origin of each character. The current point's vertical
+//         position is the baseline. Even "baked fonts" use this model.
+//
+//      Vertical Font Metrics
+//         The vertical qualities of the font, used to vertically position
+//         and space the characters. See docs for stbtt_GetFontVMetrics.
+//
+//      Font Size in Pixels or Points
+//         The preferred interface for specifying font sizes in stb_truetype
+//         is to specify how tall the font's vertical extent should be in pixels.
+//         If that sounds good enough, skip the next paragraph.
+//
+//         Most font APIs instead use "points", which are a common typographic
+//         measurement for describing font size, defined as 72 points per inch.
+//         stb_truetype provides a point API for compatibility. However, true
+//         "per inch" conventions don't make much sense on computer displays
+//         since different monitors have different number of pixels per
+//         inch. For example, Windows traditionally uses a convention that
+//         there are 96 pixels per inch, thus making 'inch' measurements have
+//         nothing to do with inches, and thus effectively defining a point to
+//         be 1.333 pixels. Additionally, the TrueType font data provides
+//         an explicit scale factor to scale a given font's glyphs to points,
+//         but the author has observed that this scale factor is often wrong
+//         for non-commercial fonts, thus making fonts scaled in points
+//         according to the TrueType spec incoherently sized in practice.
+//
+// DETAILED USAGE:
+//
+//  Scale:
+//    Select how high you want the font to be, in points or pixels.
+//    Call ScaleForPixelHeight or ScaleForMappingEmToPixels to compute
+//    a scale factor SF that will be used by all other functions.
+//
+//  Baseline:
+//    You need to select a y-coordinate that is the baseline of where
+//    your text will appear. Call GetFontBoundingBox to get the baseline-relative
+//    bounding box for all characters. SF*-y0 will be the distance in pixels
+//    that the worst-case character could extend above the baseline, so if
+//    you want the top edge of characters to appear at the top of the
+//    screen where y=0, then you would set the baseline to SF*-y0.
+//
+//  Current point:
+//    Set the current point where the first character will appear. The
+//    first character could extend left of the current point; this is font
+//    dependent. You can either choose a current point that is the leftmost
+//    point and hope, or add some padding, or check the bounding box or
+//    left-side-bearing of the first character to be displayed and set
+//    the current point based on that.
+//
+//  Displaying a character:
+//    Compute the bounding box of the character. It will contain signed values
+//    relative to <current_point, baseline>. I.e. if it returns x0,y0,x1,y1,
+//    then the character should be displayed in the rectangle from
+//    <current_point+SF*x0, baseline+SF*y0> to <current_point+SF*x1,baseline+SF*y1).
+//
+//  Advancing for the next character:
+//    Call GlyphHMetrics, and compute 'current_point += SF * advance'.
+//
+//
+// ADVANCED USAGE
+//
+//   Quality:
+//
+//    - Use the functions with Subpixel at the end to allow your characters
+//      to have subpixel positioning. Since the font is anti-aliased, not
+//      hinted, this is very import for quality. (This is not possible with
+//      baked fonts.)
+//
+//    - Kerning is now supported, and if you're supporting subpixel rendering
+//      then kerning is worth using to give your text a polished look.
+//
+//   Performance:
+//
+//    - Convert Unicode codepoints to glyph indexes and operate on the glyphs;
+//      if you don't do this, stb_truetype is forced to do the conversion on
+//      every call.
+//
+//    - There are a lot of memory allocations. We should modify it to take
+//      a temp buffer and allocate from the temp buffer (without freeing),
+//      should help performance a lot.
+//
+// NOTES
+//
+//   The system uses the raw data found in the .ttf file without changing it
+//   and without building auxiliary data structures. This is a bit inefficient
+//   on little-endian systems (the data is big-endian), but assuming you're
+//   caching the bitmaps or glyph shapes this shouldn't be a big deal.
+//
+//   It appears to be very hard to programmatically determine what font a
+//   given file is in a general way. I provide an API for this, but I don't
+//   recommend it.
+//
+//
+// PERFORMANCE MEASUREMENTS FOR 1.06:
+//
+//                      32-bit     64-bit
+//   Previous release:  8.83 s     7.68 s
+//   Pool allocations:  7.72 s     6.34 s
+//   Inline sort     :  6.54 s     5.65 s
+//   New rasterizer  :  5.63 s     5.00 s
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -284,7 +297,8 @@ import kotlin.math.sqrt
 ////  SAMPLE PROGRAMS
 ////
 //
-//  Incomplete text-in-3d-api example, which draws quads properly aligned to be lossless
+//  Incomplete text-in-3d-api example, which draws quads properly aligned to be lossless.
+//  See "tests/truetype_demo_win32.c" for a complete version.
 //
 //#if 0
 //#define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
@@ -311,6 +325,8 @@ import kotlin.math.sqrt
 //void my_stbtt_print(float x, float y, char *text)
 //{
 //    // assume orthographic projection with units = screen pixels, origin at top left
+//glEnable(GL_BLEND);
+//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //    glEnable(GL_TEXTURE_2D);
 //    glBindTexture(GL_TEXTURE_2D, ftex);
 //    glBegin(GL_QUADS);
@@ -318,10 +334,10 @@ import kotlin.math.sqrt
 //    if (*text >= 32 && *text < 128) {
 //    stbtt_aligned_quad q;
 //    stbtt_GetBakedQuad(cdata, 512,512, *text-32, &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
-//    glTexCoord2f(q.s0,q.t1); glVertex2f(q.x0,q.y0);
-//    glTexCoord2f(q.s1,q.t1); glVertex2f(q.x1,q.y0);
-//    glTexCoord2f(q.s1,q.t0); glVertex2f(q.x1,q.y1);
-//    glTexCoord2f(q.s0,q.t0); glVertex2f(q.x0,q.y1);
+//    glTexCoord2f(q.s0,q.t0); glVertex2f(q.x0,q.y0);
+//    glTexCoord2f(q.s1,q.t0); glVertex2f(q.x1,q.y0);
+//    glTexCoord2f(q.s1,q.t1); glVertex2f(q.x1,q.y1);
+//    glTexCoord2f(q.s0,q.t1); glVertex2f(q.x0,q.y1);
 //}
 //    ++text;
 //}
@@ -702,6 +718,7 @@ object tt {
         var hmtx = 0
         var kern = 0
         var gpos = 0
+        var svg = 0
 
         /** a cmap mapping for our chosen character encoding */
         var indexMap = 0
@@ -799,6 +816,57 @@ object tt {
 //    STBTT_DEF int  stbtt_GetGlyphBox(const stbtt_fontinfo *info, int glyph_index, int *x0, int *y0, int *x1, int *y1);
 //// as above, but takes one or more glyph indices for greater efficiency
 
+    class KerningEntry {
+        var glyph1 = 0 // use stbtt_FindGlyphIndex
+        var glyph2 = 0
+        var advance = 0
+    }
+
+    STBTT_DEF int  stbtt_GetKerningTableLength(const stbtt_fontinfo *info)
+    {
+        stbtt_uint8 * data = info->data+info->kern
+
+        // we only look at the first table. it must be 'horizontal' and format 0.
+        if (!info->kern)
+        return 0
+        if (ttUSHORT(data + 2) < 1) // number of tables, need at least 1
+            return 0
+        if (ttUSHORT(data + 8) != 1) // horizontal flag must be set in format
+            return 0
+
+        return ttUSHORT(data + 10)
+    }
+
+    STBTT_DEF int stbtt_GetKerningTable(const stbtt_fontinfo *info, stbtt_kerningentry* table, int table_length)
+    {
+        stbtt_uint8 * data = info->data+info->kern
+        int k, length
+
+        // we only look at the first table. it must be 'horizontal' and format 0.
+        if (!info->kern)
+        return 0
+        if (ttUSHORT(data + 2) < 1) // number of tables, need at least 1
+            return 0
+        if (ttUSHORT(data + 8) != 1) // horizontal flag must be set in format
+            return 0
+
+        length = ttUSHORT(data + 10)
+        if (table_length < length)
+            length = table_length
+
+        for (k = 0; k < length; k++)
+        {
+            table[k].glyph1 = ttUSHORT(data + 18 + (k * 6))
+            table[k].glyph2 = ttUSHORT(data + 20 + (k * 6))
+            table[k].advance = ttSHORT(data + 22 + (k * 6))
+        }
+
+        return length
+    }
+
+// Retrieves a complete list of all of the kerning pairs provided by the font
+// stbtt_GetKerningTable never writes more than table_length entries and returns how many entries it did write.
+// The table will be sorted by (a.glyph1 == b.glyph1)?(a.glyph2 < b.glyph2):(a.glyph1 < b.glyph1)
 
     //////////////////////////////////////////////////////////////////////////////
     //
@@ -851,7 +919,48 @@ object tt {
 //
 //    STBTT_DEF void stbtt_FreeShape(const stbtt_fontinfo *info, stbtt_vertex *vertices);
 //// frees the data allocated above
-//
+
+    STBTT_DEF stbtt_uint8 *stbtt_FindSVGDoc(const stbtt_fontinfo *info, int gl)
+    {
+        int i
+        stbtt_uint8 * data = info->data
+        stbtt_uint8 * svg_doc_list = data + stbtt__get_svg((stbtt_fontinfo *) info)
+
+        int numEntries = ttUSHORT (svg_doc_list)
+        stbtt_uint8 * svg_docs = svg_doc_list + 2
+
+        for (i= 0; i < numEntries; i++) {
+        stbtt_uint8 * svg_doc = svg_docs + (12 * i)
+        if ((gl >= ttUSHORT(svg_doc)) && (gl <= ttUSHORT(svg_doc + 2)))
+            return svg_doc
+    }
+        return 0
+    }
+
+    STBTT_DEF int stbtt_GetGlyphSVG(const stbtt_fontinfo *info, int gl, const char **svg)
+    {
+        stbtt_uint8 * data = info->data
+        stbtt_uint8 * svg_doc
+
+        if (info->svg == 0)
+        return 0
+
+        svg_doc = stbtt_FindSVGDoc(info, gl)
+        if (svg_doc != NULL) {
+            *svg = (char *) data +info->svg+ttULONG(svg_doc+4)
+            return ttULONG(svg_doc + 8)
+        } else {
+            return 0
+        }
+    }
+
+    STBTT_DEF int stbtt_GetCodepointSVG(const stbtt_fontinfo *info, int unicode_codepoint, const char **svg)
+    {
+        return stbtt_GetGlyphSVG(info, stbtt_FindGlyphIndex(info, unicode_codepoint), svg)
+    }
+// fills svg with the character's SVG data.
+// returns data size or 0 if SVG not found.
+
 ////////////////////////////////////////////////////////////////////////////////
 ////
 //// BITMAP RENDERING
@@ -1184,6 +1293,23 @@ object tt {
         return cff.cffGetIndex()
     }
 
+
+// since most people won't use this, find this table the first time it's needed
+    static int stbtt__get_svg(stbtt_fontinfo *info)
+    {
+        stbtt_uint32 t
+        if (info->svg < 0) {
+        t = stbtt__find_table(info->data, info->fontstart, "SVG ")
+        if (t) {
+            stbtt_uint32 offset = ttULONG (info->data+t+2)
+            info->svg = t+offset
+        } else { info ->
+            svg = 0
+        }
+    }
+        return info->svg
+    }
+
     /** ~stbtt_InitFont_internal */
     fun initFont(info: FontInfo, data: ByteBuffer, fontStart: Int): Boolean {
 
@@ -1261,6 +1387,8 @@ object tt {
             else -> data.getShort(t + 4).i
         }
 
+        info.svg = -1
+
         // find a cmap encoding table we understand *now* to avoid searching
         // later. (todo: could make this installable)
         // the same regardless of glyph.
@@ -1274,6 +1402,7 @@ object tt {
                     MS_EID.UNICODE_BMP.i, MS_EID.UNICODE_FULL.i -> // MS/Unicode
                         info.indexMap = cmap + data.getInt(encodingRecord + 4)
                 }
+
                 PlatformID.UNICODE.i ->
                     // Mac/iOS has these
                     // all the encodingIDs are unicode, so we don't bother to check it
@@ -1299,6 +1428,7 @@ object tt {
                     return data.get(indexMap + 6 + unicodeCodepoint).toUInt()
                 return 0
             }
+
             6 -> {
                 val first = data.shortUI(indexMap + 6)
                 val count = data.shortUI(indexMap + 8)
@@ -1306,6 +1436,7 @@ object tt {
                     return data.shortUI(indexMap + 10 + (unicodeCodepoint - first) * 2)
                 return 0
             }
+
             2 -> TODO("high-byte mapping for japanese/chinese/korean")
             4 -> { // standard mapping for windows fonts: binary search collection of ranges
                 val segCount = data.shortUI(indexMap + 6) ushr 1
@@ -1339,9 +1470,9 @@ object tt {
                 run {
                     val item = (search - endCount) ushr 1
 
-                    assert(unicodeCodepoint <= data.shortUI(endCount + 2 * item))
                     val start = data.shortUI(indexMap + 14 + segCount * 2 + 2 + 2 * item)
-                    if (unicodeCodepoint < start)
+                    val last = data.shortUI(endCount + 2 * item)
+                    if (unicodeCodepoint < start || unicodeCodepoint > last)
                         return 0
 
                     val offset = data.shortUI(indexMap + 14 + segCount * 6 + 2 + 2 * item)
@@ -1351,6 +1482,7 @@ object tt {
                     return data.shortUI(offset + (unicodeCodepoint - start) * 2 + indexMap + 14 + segCount * 6 + 2 + 2 * item)
                 }
             }
+
             12, 13 -> {
 //                stbtt_uint32 ngroups = ttULONG (data + indexMap + 12)
 //                stbtt_int32 low, high
@@ -1448,6 +1580,7 @@ object tt {
                     vertices[numVertices++].set(V.curve, (cx + scx) shr 1, (cy + scy) shr 1, cx, cy)
                 vertices[numVertices++].set(V.curve, sx, sy, scx, scy)
             }
+
             wasOff -> vertices[numVertices++].set(V.curve, sx, sy, cx, cy)
             else -> vertices[numVertices++].set(V.line, sx, sy, 0, 0)
         }
@@ -1587,7 +1720,8 @@ object tt {
                 }
                 numVertices = closeShape(vertices, numVertices, wasOff, startOff, sx, sy, scx, scy, cx, cy)
             }
-            numberOfContours == -1 -> {
+
+            numberOfContours < 0 -> {
                 // Compound shapes.
                 var more = true
                 val comp = data.sliceAt(g + 10)
@@ -1614,12 +1748,14 @@ object tt {
                             mtx[2] = 0f
                             mtx[3] = mtx[0]
                         }
+
                         flags has (1 shl 6) -> { // WE_HAVE_AN_X_AND_YSCALE
                             mtx[0] = comp.short / 16384f
                             mtx[1] = 0f
                             mtx[2] = 0f
                             mtx[3] = comp.short / 16384f
                         }
+
                         flags has (1 shl 7) -> { // WE_HAVE_A_TWO_BY_TWO
                             mtx[0] = comp.short / 16384f
                             mtx[1] = comp.short / 16384f
@@ -1651,6 +1787,7 @@ object tt {
                             if (it < numVertices) vertices!![it]
                             else compVerts[it - numVertices]
                         }
+//                        if (num_vertices > 0 && vertices) STBTT_memcpy(tmp, vertices, num_vertices*sizeof(stbtt_vertex));
                         vertices = tmp
                         numVertices += compVerts.size
                     }
@@ -1658,7 +1795,7 @@ object tt {
                     more = flags has (1 shl 5)
                 }
             }
-            numberOfContours < 0 -> TODO("other compound variations?")
+
             else -> Unit // numberOfCounters == 0, do nothing
         }
         return Array(numVertices) { vertices!![it] }
@@ -2017,12 +2154,13 @@ object tt {
                             c.rcCurveTo(dx1, dy1, dx2, dy2, dx3, dy3)
                             c.rcCurveTo(dx4, dy4, dx5, dy5, dx6, dy6)
                         }
+
                         else -> TODO("unimplemented")
                     }
                 }
 
                 else -> {
-                    if (b0 != 255 && b0 != 28 && (b0 < 32 || b0 > 254))
+                    if (b0 != 255 && b0 != 28 && b0 < 32)
                         return cserr("reserved operator")
 
                     // push immediate
@@ -2163,10 +2301,7 @@ object tt {
 //        }
 //    } break;
 //
-//        default: {
-//        // There are no other cases.
-//        STBTT_assert(0);
-//    } break;
+//        default: return -1; // unsupported
 //    }
 //
 //    return -1;
@@ -2212,13 +2347,11 @@ object tt {
 //        classDefTable = classRangeRecords + 6 * classRangeCount;
 //    } break;
 //
-//        default: {
-//        // There are no other cases.
-//        STBTT_assert(0);
-//    } break;
+//        default:
+//            return -1; // Unsupported definition type, return an error.
 //    }
-//
-//    return -1;
+//    // "All glyphs not assigned to a class fall into class 0". (OpenType spec)
+//    return 0;
 //}
 //
 //// Define to STBTT_assert(x) if you want to break on unimplemented formats.
@@ -2344,8 +2477,7 @@ object tt {
 //    } // [DEAR IMGUI] removed ;
 //
 //        default:
-//        // TODO: Implement other stuff.
-//        break;
+//        return 0; // Unsupported position format
 //    }
 //}
 //
@@ -2563,6 +2695,18 @@ object tt {
 
 //    #if STBTT_RASTERIZER_VERSION == 1
 
+
+    fun sizedTrapezoidArea(height: Float, topWidth: FLoat, bottomWidth: Float): Float {
+        check(topWidth >= 0)
+        check(bottomWidth >= 0)
+        return (topWidth + bottomWidth) / 2f * height
+    }
+
+    fun positionTrapezoidArea(height: Float, tx0: Float, tx1: Float, bx0: Float, bx1: Float) =
+            sizedTrapezoidArea(height, tx1 - tx0, bx1 - bx0)
+
+    fun sizedTriangleArea(height: Float, width: Float) = height * width / 2
+
     /** note: this routine clips fills that extend off the edges... ideally this
      *  wouldn't happen, but it could happen if the truetype glyph bounding boxes
      *  are wrong, or if the user supplies a too-small bitmap */
@@ -2680,6 +2824,7 @@ object tt {
                                 z.next = active
                                 active = z
                             }
+
                             else -> {
                                 // find thing to insert AFTER
                                 var p: ActiveEdge = active
@@ -2738,12 +2883,12 @@ object tt {
         }
 
         assert(when {
-            x0 == x.f -> x1 <= x + 1
-            x0 == x + 1f -> x1 >= x
-            x0 <= x -> x1 <= x
-            x0 >= x + 1 -> x1 >= x + 1
-            else -> x1 >= x && x1 <= x + 1
-        })
+                   x0 == x.f -> x1 <= x + 1
+                   x0 == x + 1f -> x1 >= x
+                   x0 <= x -> x1 <= x
+                   x0 >= x + 1 -> x1 >= x + 1
+                   else -> x1 >= x && x1 <= x + 1
+               })
 
         if (x0 <= x && x1 <= x)
             scanline[x] += e.direction * (y1 - y0)
@@ -2807,10 +2952,10 @@ object tt {
                     if (xTop.i == xBottom.i) {
                         // simple case, only spans one pixel
                         val x = xTop.i
-                        val height = sy1 - sy0
+                        val height = (sy1 - sy0) * e.direction
                         assert(x in 0 until len)
-                        scanline[x] += e.direction * (1 - ((xTop - x) + (xBottom - x)) / 2) * height
-                        scanlineFill[x] += e.direction * height // everything right of this pixel is filled
+                        scanline[x] += positionTrapezoidArea(height, xTop, x + 1f, xBottom, x + 1f)
+                        scanlineFill[x] += height // everything right of this pixel is filled
                     } else {
                         // covers 2+ pixels
                         if (xTop > xBottom) {
@@ -2829,29 +2974,80 @@ object tt {
                             x0 = xb
                             xb = t
                         }
+                        check(dy >= 0)
+                        check(dx >= 0)
 
                         val x1 = xTop.i
                         val x2 = xBottom.i
                         // compute intersection with y axis at x1+1
-                        var yCrossing = (x1 + 1 - x0) * dy + yTop
+                        var yCrossing = yTop + dy * (x1 + 1 - x0)
+
+                        // compute intersection with y axis at x2
+                        val yFinal = yTop + dy * (x2 - x0)
+
+                        //           x1    x_top                            x2    x_bottom
+                        //     y_top  +------|-----+------------+------------+--------|---+------------+
+                        //            |            |            |            |            |            |
+                        //            |            |            |            |            |            |
+                        //       sy0  |      Txxxxx|............|............|............|............|
+                        // y_crossing |            *xxxxx.......|............|............|............|
+                        //            |            |     xxxxx..|............|............|............|
+                        //            |            |     /-   xx*xxxx........|............|............|
+                        //            |            | dy <       |    xxxxxx..|............|............|
+                        //   y_final  |            |     \-     |          xx*xxx.........|............|
+                        //       sy1  |            |            |            |   xxxxxB...|............|
+                        //            |            |            |            |            |            |
+                        //            |            |            |            |            |            |
+                        //  y_bottom  +------------+------------+------------+------------+------------+
+                        //
+                        // goal is to measure the area covered by '.' in each pixel
+
+                        // if x2 is right at the right edge of x1, y_crossing can blow up, github #1057
+                        // @TODO: maybe test against sy1 rather than y_bottom?
+                        if (yCrossing > yBottom)
+                            yCrossing = yBottom
 
                         val sign = e.direction
+
                         // area of the rectangle covered from y0..y_crossing
                         var area = sign * (yCrossing - sy0)
-                        // area of the triangle (x_top,y0), (x+1,y0), (x+1,y_crossing)
-                        scanline[x1] += area * (1 - ((xTop - x1) + (x1 + 1 - x1)) / 2)
 
-                        val step = sign * dy
+                        // area of the triangle (x_top,sy0), (x1+1,sy0), (x1+1,y_crossing)
+                        scanline[x1] += sizedTriangleArea(area, x1 + 1 - xTop)
+
+                        // check if final y_crossing is blown up; no test case for this
+                        if (yFinal > yBottom) {
+                            yFinal = yBottom
+                            dy = (yFinal - yCrossing) / (x2 - (x1 + 1)) // if denom=0, y_final = y_crossing, so y_final <= y_bottom
+                        }
+
+                        // in second pixel, area covered by line segment found in first pixel
+                        // is always a rectangle 1 wide * the height of that line segment; this
+                        // is exactly what the variable 'area' stores. it also gets a contribution
+                        // from the line segment within it. the THIRD pixel will get the first
+                        // pixel's rectangle contribution, the second pixel's rectangle contribution,
+                        // and its own contribution. the 'own contribution' is the same in every pixel except
+                        // the leftmost and rightmost, a trapezoid that slides down in each pixel.
+                        // the second pixel's contribution to the third pixel will be the
+                        // rectangle 1 wide times the height change in the second pixel, which is dy.
+
+                        val step = sign * dy * 1 // dy is dy/dx, change in y for every 1 change in x,
+                        // which multiplied by 1-pixel-width is how much pixel area changes for each step in x
+                        // so the area advances by 'step' every time
+
+
                         for (x in x1 + 1 until x2) {
-                            scanline[x] += area + step / 2
+                            scanline[x] += area + step / 2 // area of trapezoid is 1*step/2
                             area += step
                         }
-                        yCrossing += dy * (x2 - (x1 + 1))
+                        check(abs(area) <= 1.01f) { "accumulated error from area += step unless we round step down" }
+                        check(sy1 > yFinal - 0.01f)
 
-                        assert(abs(area) <= 1.01f)
+                        // area covered in the last pixel is the rectangle from all the pixels to the left,
+                        // plus the trapezoid filled by the line segment in this pixel all the way to the right edge
+                        scanline[x2] += area + sign * positionTrapezoidArea(sy1 - yFinal, x2.f, x2 + 1f, xBottom, x2 + 1f)
 
-                        scanline[x2] += area + sign * (1 - ((x2 - x2) + (xBottom - x2)) / 2) * (sy1 - yCrossing)
-
+                        // the rest of the line is filled based on the total height of the line segment in this pixel
                         scanlineFill[x2] += sign * (sy1 - sy0)
                     }
                 } else {
@@ -2859,6 +3055,9 @@ object tt {
                     // clipping logic. since this does not match the intended use
                     // of this library, we use a different, very slow brute
                     // force implementation
+                    // note though that this does happen some of the time because
+                    // x_top and x_bottom can be extrapolated at the top & bottom of
+                    // the shape and actually lie outside the bounding box
                     for (x in 0 until len) {
                         // cases:
                         //
@@ -2892,23 +3091,28 @@ object tt {
                                 handleClippedEdge2(scanline, x, e, x1, y1, x2, y2)
                                 handleClippedEdge2(scanline, x, e, x2, y2, x3, y3)
                             }
+
                             x3 < x1 && x0 > x2 -> { // three segments descending down-left
                                 handleClippedEdge2(scanline, x, e, x0, y0, x2, y2)
                                 handleClippedEdge2(scanline, x, e, x2, y2, x1, y1)
                                 handleClippedEdge2(scanline, x, e, x1, y1, x3, y3)
                             }
+
                             x0 < x1 && x3 > x1 -> { // two segments across x, down-right
                                 handleClippedEdge2(scanline, x, e, x0, y0, x1, y1)
                                 handleClippedEdge2(scanline, x, e, x1, y1, x3, y3)
                             }
+
                             x3 < x1 && x0 > x1 -> { // two segments across x, down-left
                                 handleClippedEdge2(scanline, x, e, x0, y0, x1, y1)
                                 handleClippedEdge2(scanline, x, e, x1, y1, x3, y3)
                             }
+
                             x0 < x2 && x3 > x2 -> { // two segments across x+1, down-right
                                 handleClippedEdge2(scanline, x, e, x0, y0, x2, y2)
                                 handleClippedEdge2(scanline, x, e, x2, y2, x3, y3)
                             }
+
                             x3 < x2 && x0 > x2 -> { // two segments across x+1, down-left
                                 handleClippedEdge2(scanline, x, e, x0, y0, x2, y2)
                                 handleClippedEdge2(scanline, x, e, x2, y2, x3, y3)
@@ -3263,24 +3467,27 @@ object tt {
                         x = v.x.f; y = v.y.f
                         addPoint(points, numPoints++, x, y)
                     }
+
                     V.line.i -> {
                         x = v.x.f; y = v.y.f
                         addPoint(points, numPoints++, x, y)
                     }
+
                     V.curve.i -> {
                         numPoints = tesselateCurve(points, numPoints,
-                                x, y,
-                                v.cX.f, v.cY.f,
-                                v.x.f, v.y.f,
-                                objspaceFlatnessSquared, 0f)
+                                                   x, y,
+                                                   v.cX.f, v.cY.f,
+                                                   v.x.f, v.y.f,
+                                                   objspaceFlatnessSquared, 0f)
                         x = v.x.f; y = v.y.f
                     }
+
                     V.cubic.i -> {
                         numPoints = tesselateCubic(points, numPoints, x, y,
-                                v.cX.f, v.cY.f,
-                                v.cX1.f, v.cY1.f,
-                                v.x.f, v.y.f,
-                                objspaceFlatnessSquared, 0)
+                                                   v.cX.f, v.cY.f,
+                                                   v.cX1.f, v.cY1.f,
+                                                   v.x.f, v.y.f,
+                                                   objspaceFlatnessSquared, 0)
                         x = v.x.f; y = v.y.f
                     }
                 }
@@ -3489,7 +3696,7 @@ object tt {
 
         rectpack.initTarget(context, pw - padding, ph - padding, nodes)
 
-        pixels?.fill(0, toIndex =  pw * ph) // background of 0 around pixels
+        pixels?.fill(0, toIndex = pw * ph) // background of 0 around pixels
 
         return true
     }
@@ -3640,6 +3847,8 @@ object tt {
 
     /** rects array must be big enough to accommodate all characters in the given ranges */
     fun packFontRangesRenderIntoRects(spc: PackContext, info: FontInfo, ranges: Array<PackRange>, rects: Array<rectpack.Rect>): Boolean {
+
+        var missingGlyph = -1
         var returnValue = true
 
         // save current values
@@ -3669,17 +3878,17 @@ object tt {
                         val (advance, lsb) = getGlyphHMetrics(info, glyph)
                         val (x0, y0, x1, y1) = getGlyphBitmapBox(info, glyph, scale * Vec2(spc.oversample))
                         makeGlyphBitmapSubpixel(info, spc.pixels.sliceAt(r.x + r.y * spc.strideInBytes),
-                                r.w - spc.oversample.x + 1, r.h - spc.oversample.y + 1,
-                                spc.strideInBytes,
-                                scale * Vec2(spc.oversample), // TODO -> glm
-                                glyph = glyph)
+                                                r.w - spc.oversample.x + 1, r.h - spc.oversample.y + 1,
+                                                spc.strideInBytes,
+                                                scale * Vec2(spc.oversample), // TODO -> glm
+                                                glyph = glyph)
                         if (spc.oversample.x > 1)
                             hPrefilter(spc.pixels.sliceAt(r.x + r.y * spc.strideInBytes),
-                                    r.w, r.h, spc.strideInBytes, spc.oversample.x)
+                                       r.w, r.h, spc.strideInBytes, spc.oversample.x)
 
                         if (spc.oversample.y > 1)
                             vPrefilter(spc.pixels.sliceAt(r.x + r.y * spc.strideInBytes),
-                                    r.w, r.h, spc.strideInBytes, spc.oversample.y)
+                                       r.w, r.h, spc.strideInBytes, spc.oversample.y)
 
                         bc.x0 = r.x
                         bc.y0 = r.y
@@ -3690,7 +3899,12 @@ object tt {
                         bc.yOff = y0 * recip.y + sub.y
                         bc.xOff2 = (x0 + r.w) * recip.x + sub.x
                         bc.yOff2 = (y0 + r.h) * recip.y + sub.y
+
+                        if (glyph == 0)
+                            missingGlyph = j
                     }
+                    spc.skipMissing -> returnValue = 0
+                    r.wasPacked != 0 && r.w == 0 && r.h == 0 && missingGlyph >= 0 -> range.chardataForRange[j] = range.chardataForRange[missingGlyph]
                     else -> returnValue = false // if any fail, report failure
                 }
                 ++k
@@ -3879,15 +4093,14 @@ object tt {
 //    float y_frac;
 //    int winding = 0;
 //
-//    orig[0] = x;
-//    orig[1] = y;
-//
 //    // make sure y never passes through a vertex of the shape
 //    y_frac = (float) STBTT_fmod(y, 1.0f);
 //    if (y_frac < 0.01f)
 //        y += 0.01f;
 //    else if (y_frac > 0.99f)
 //        y -= 0.01f;
+//
+//    orig[0] = x;
 //    orig[1] = y;
 //
 //    // test a ray from (-infinity,y) to (x,y)
@@ -3949,7 +4162,7 @@ object tt {
 //    return  (float) STBTT_pow( x,1.0f/3.0f);
 //}
 //
-//// x^3 + c*x^2 + b*x + a = 0
+//// x^3 + a*x^2 + b*x + c = 0
 //static int stbtt__solve_cubic(float a, float b, float c, float* r)
 //{
 //    float s = -a / 3;
@@ -4054,18 +4267,17 @@ object tt {
 //        for (i=0; i < num_verts; ++i) {
 //        float x0 = verts[i].x*scale_x, y0 = verts[i].y*scale_y;
 //
-//        // check against every point here rather than inside line/curve primitives -- @TODO: wrong if multiple 'moves' in a row produce a garbage point, and given culling, probably more efficient to do within line/curve
-//        float dist2 = (x0-sx)*(x0-sx) + (y0-sy)*(y0-sy);
-//        if (dist2 < min_dist*min_dist)
-//            min_dist = (float) STBTT_sqrt(dist2);
-//
-//        if (verts[i].type == STBTT_vline) {
+//        if (verts[i].type == STBTT_vline && precompute[i] != 0.0f) {
 //            float x1 = verts[i-1].x*scale_x, y1 = verts[i-1].y*scale_y;
+//
+//    float dist,dist2 = (x0-sx)*(x0-sx) + (y0-sy)*(y0-sy);
+//    if (dist2 < min_dist*min_dist)
+//    min_dist = (float) STBTT_sqrt(dist2);
 //
 //            // coarse culling against bbox
 //            //if (sx > STBTT_min(x0,x1)-min_dist && sx < STBTT_max(x0,x1)+min_dist &&
 //            //    sy > STBTT_min(y0,y1)-min_dist && sy < STBTT_max(y0,y1)+min_dist)
-//            float dist = (float) STBTT_fabs((x1-x0)*(y0-sy) - (y1-y0)*(x0-sx)) * precompute[i];
+//            dist = (float) STBTT_fabs((x1-x0)*(y0-sy) - (y1-y0)*(x0-sx)) * precompute[i];
 //            STBTT_assert(i != 0);
 //            if (dist < min_dist) {
 //                // check position along line
@@ -4092,7 +4304,8 @@ object tt {
 //                float ax = x1-x0, ay = y1-y0;
 //                float bx = x0 - 2*x1 + x2, by = y0 - 2*y1 + y2;
 //                float mx = x0 - sx, my = y0 - sy;
-//                float res[3],px,py,t,it;
+//    float res[3] = {0.f,0.f,0.f};
+//    float px,py,t,it,dist2;
 //                float a_inv = precompute[i];
 //                if (a_inv == 0.0) { // if a_inv is 0, it's 2nd degree so use quadratic formula
 //                    float a = 3*(ax*bx + ay*by);
@@ -4119,6 +4332,10 @@ object tt {
 //                    float d = (mx*ax+my*ay) * a_inv;
 //                    num = stbtt__solve_cubic(b, c, d, res);
 //                }
+//    dist2 = (x0-sx)*(x0-sx) + (y0-sy)*(y0-sy);
+//    if (dist2 < min_dist*min_dist)
+//    min_dist = (float) STBTT_sqrt(dist2);
+//
 //                if (num >= 1 && res[0] >= 0.0f && res[0] <= 1.0f) {
 //                    t = res[0], it = 1.0f - t;
 //                    px = it*it*x0 + 2*t*it*x1 + t*t*x2;
