@@ -46,11 +46,7 @@ fun round(f: Float): Float = (f + 0.5f).i.f
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: Hashing
 // -----------------------------------------------------------------------------------------------------------------
-fun fileLoadToMemory(filename: String): CharArray? =
-        ClassLoader.getSystemResourceAsStream(filename)?.use { s ->
-            val bytes = s.readBytes()
-            CharArray(bytes.size) { bytes[it].c }
-        }
+fun fileLoadToMemory(filename: String): ByteArray? = ClassLoader.getSystemResourceAsStream(filename)?.use { it.readBytes() }
 
 /** [JVM] */
 fun hashData(data: Int, seed: Int = 0): ID {

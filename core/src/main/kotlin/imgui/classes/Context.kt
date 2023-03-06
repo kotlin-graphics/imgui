@@ -659,7 +659,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Debug Tools
 
-    var debugLogFlags = DebugLogFlag.OutputToTTY.i
+    var debugLogFlags = DebugLogFlag.OutputToTTY or DebugLogFlag.EventMask_ wo DebugLogFlag.EventClipper
     val debugLogBuf = StringBuilder()
 
     val debugLogIndex = TextIndex()
