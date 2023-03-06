@@ -487,7 +487,6 @@ fun rasterizeSortedEdges(edges: Array<TrueType.Edge>, n: Int, vSubsample: Int, o
  *  [JVM] signature different for different STBTT_RASTERIZER_VERSION, no need to mentioning version in name */
 fun Bitmap.rasterizeSortedEdges(edges: Array<TrueType.Edge>, n: Int, /*vSubsample: Int,*/ offX: Int, offY: Int) {
 
-    val hh = TrueType.HHeap()
     var active: TrueType.ActiveEdge? = null
 
     val scanline = PtrFloat(if (w > 64) w * 2 + 1 else 129)

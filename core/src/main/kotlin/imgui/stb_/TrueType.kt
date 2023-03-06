@@ -3,6 +3,7 @@
 package imgui.stb_
 
 import glm_.f
+import glm_.i
 //import glm_.*
 import glm_.vec2.operators.div
 import glm_.vec4.Vec4i
@@ -573,13 +574,13 @@ object TrueType {
 //    #define ttCHAR(p)     (* (stbtt_int8 *) (p))
 //    #define ttFixed(p)    ttLONG(p)
 
-    internal fun UByteArray.ushort(offset: Int): UShort {
+    internal fun UByteArray.ushort(offset: Int): UInt {
         val a = this[offset].ui shl 8
         val b = this[offset + 1].ui
-        return (a + b).us
+        return (a + b).us.ui
     }
 
-    internal fun UByteArray.short(offset: Int): Int = ushort(offset).toInt()
+    internal fun UByteArray.short(offset: Int): Int = ushort(offset).toShort().toInt()
 
     internal fun UByteArray.ulong(offset: Int): UInt {
         val a = this[offset].ui shl 24
@@ -592,10 +593,11 @@ object TrueType {
     internal fun UByteArray.long(offset: Int): Int = ulong(offset).toInt()
 
 
-    fun tag4(p: UByteArray, c0: Int, c1: Int, c2: Int, c3: Int) = p[0] == c0.ub && p[1] == c1.ub && p[2] == c2.ub && p[3] == c3.ub
+    fun tag4(p: UByteArray, c0: Int, c1: Int, c2: Int, c3: Int) = TrueType.tag4(p, 0, c0, c1, c2, c3)
+    fun tag4(p: UByteArray, index: Int, c0: Int, c1: Int, c2: Int, c3: Int) = p[index] == c0.ub && p[index + 1] == c1.ub && p[index + 2] == c2.ub && p[index + 3] == c3.ub
 
     fun tag(p: UByteArray, str: String) = tag(p, 0, str)
-    fun tag(p: UByteArray, index: Int, str: String) = tag4(p, str[index].code, str[index + 1].code, str[index + 2].code, str[index + 3].code)
+    fun tag(p: UByteArray, index: Int, str: String) = tag4(p, index, str[0].code, str[1].code, str[2].code, str[3].code)
 
     fun isFont(font: UByteArray): Boolean = when { // check the version number
         tag4(font, '1'.code, 0, 0, 0) -> true // TrueType 1
@@ -730,17 +732,17 @@ object TrueType {
         var fdSelector = -1
 
         fdSelect seek 0
-        val fmt = fdSelect.get8()
+        val fmt = fdSelect.get8().i
         if (fmt == 0) {
             // untested
             fdSelect skip glyphIndex
-            fdSelector = fdSelect.get8()
+            fdSelector = fdSelect.get8().i
         } else if (fmt == 3) {
-            val nRanges = fdSelect.get16()
-            var start = fdSelect.get16()
+            val nRanges = fdSelect.get16().i
+            var start = fdSelect.get16().i
             for (i in 0 until nRanges) {
-                val v = fdSelect.get8()
-                val end = fdSelect.get16()
+                val v = fdSelect.get8().i
+                val end = fdSelect.get16().i
                 if (glyphIndex in start until end) {
                     fdSelector = v
                     break
@@ -748,9 +750,8 @@ object TrueType {
                 start = end
             }
         }
-        TODO()
-//        if (fdSelector == -1) return stbtt__new_buf(NULL, 0) // [DEAR IMGUI] fixed, see #6007 and nothings/stb#1422
-//        return getSubrs(info.cff, info.fontDicts cffIndexGet fdSelector)
+        if (fdSelector == -1) return Buf() // [DEAR IMGUI] fixed, see #6007 and nothings/stb#1422
+        return getSubrs(info.cff, info.fontDicts cffIndexGet fdSelector)
     }
 
     fun FontInfo.runCharString(glyphIndex: Int, c: Csctx): Boolean {
@@ -1083,6 +1084,9 @@ object TrueType {
 //        return cserr("no endchar")
     }
 
+    // [JVM] -> `glyph shapes.kt`
+    // stbtt__GetGlyphShapeT2
+    // stbtt__GetGlyphInfoT2
 
 //static int  stbtt__GetGlyphKernInfoAdvance(const stbtt_fontinfo *info, int glyph1, int glyph2)
 //{
@@ -1347,118 +1351,25 @@ object TrueType {
 //    return 0;
 //}
 //
-//STBTT_DEF int  stbtt_GetGlyphKernAdvance(const stbtt_fontinfo *info, int g1, int g2)
-//{
-//    int xAdvance = 0;
-//
-//    if (info->gpos)
-//    xAdvance += stbtt__GetGlyphGPOSInfoAdvance(info, g1, g2);
-//    else if (info->kern)
-//    xAdvance += stbtt__GetGlyphKernInfoAdvance(info, g1, g2);
-//
-//    return xAdvance;
-//}
-//
-//STBTT_DEF int  stbtt_GetCodepointKernAdvance(const stbtt_fontinfo *info, int ch1, int ch2)
-//{
-//    if (!info->kern && !info->gpos) // if no kerning table, don't waste time looking up both codepoint->glyphs
-//    return 0;
-//    return stbtt_GetGlyphKernAdvance(info, stbtt_FindGlyphIndex(info,ch1), stbtt_FindGlyphIndex(info,ch2));
-//}
-//
-//STBTT_DEF void stbtt_GetCodepointHMetrics(const stbtt_fontinfo *info, int codepoint, int *advanceWidth, int *leftSideBearing)
-//{
-//    stbtt_GetGlyphHMetrics(info, stbtt_FindGlyphIndex(info,codepoint), advanceWidth, leftSideBearing);
-//}
-
-
-//STBTT_DEF int  stbtt_GetFontVMetricsOS2(const stbtt_fontinfo *info, int *typoAscent, int *typoDescent, int *typoLineGap)
-//{
-//    int tab = stbtt__find_table(info->data, info->fontstart, "OS/2");
-//    if (!tab)
-//        return 0;
-//    if (typoAscent ) *typoAscent  = ttSHORT(info->data+tab + 68);
-//    if (typoDescent) *typoDescent = ttSHORT(info->data+tab + 70);
-//    if (typoLineGap) *typoLineGap = ttSHORT(info->data+tab + 72);
-//    return 1;
-//}
-//
-//STBTT_DEF void stbtt_GetFontBoundingBox(const stbtt_fontinfo *info, int *x0, int *y0, int *x1, int *y1)
-//{
-//    *x0 = ttSHORT(info->data + info->head + 36);
-//    *y0 = ttSHORT(info->data + info->head + 38);
-//    *x1 = ttSHORT(info->data + info->head + 40);
-//    *y1 = ttSHORT(info->data + info->head + 42);
-//}
-
-
-//STBTT_DEF void stbtt_FreeShape(const stbtt_fontinfo *info, stbtt_vertex *v)
-//{
-//    STBTT_free(v, info->userdata);
-//}
 
     //////////////////////////////////////////////////////////////////////////////
     //
     // antialiasing software rasterizer
     //
 
+    // [JVM] -> `bitmap rendering.kt`
 
-//STBTT_DEF void stbtt_GetCodepointBitmapBoxSubpixel(const stbtt_fontinfo *font, int codepoint, float scale_x, float scale_y, float shift_x, float shift_y, int *ix0, int *iy0, int *ix1, int *iy1)
-//{
-//    stbtt_GetGlyphBitmapBoxSubpixel(font, stbtt_FindGlyphIndex(font,codepoint), scale_x, scale_y,shift_x,shift_y, ix0,iy0,ix1,iy1);
-//}
-//
-//STBTT_DEF void stbtt_GetCodepointBitmapBox(const stbtt_fontinfo *font, int codepoint, float scale_x, float scale_y, int *ix0, int *iy0, int *ix1, int *iy1)
-//{
-//    stbtt_GetCodepointBitmapBoxSubpixel(font, codepoint, scale_x, scale_y,0.0f,0.0f, ix0,iy0,ix1,iy1);
-//}
 
     //////////////////////////////////////////////////////////////////////////////
     //
     //  Rasterizer
 
-    class HHeapChunk {
-        var next: HHeapChunk? = null
-    }
-
-    class HHeap(var head: Int = -1,
-                var firstFree2: ActiveEdge? = null,
-                var numRemainingInHeadChunk: Int = 0) {
-        lateinit var array: Array<ActiveEdge>
-    }
-
-    fun hheapAlloc(hh: HHeap): ActiveEdge =
-            if (hh.firstFree2 != null) {
-                val p = hh.firstFree2!!
-                hh.firstFree2 = p.next
-                p
-            } else {
-                if (hh.numRemainingInHeadChunk == 0) {
-                    val count = 2000
-                    val c = Array(count) { ActiveEdge() }
-//                c.next = hh.head
-                    hh.head = 0
-                    hh.array = c
-                    hh.numRemainingInHeadChunk = count
-                }
-                --hh.numRemainingInHeadChunk
-                hh.array[hh.head + hh.numRemainingInHeadChunk]
-            }
-
-    fun hheapFree(hh: HHeap, p: ActiveEdge) {
-        p.next = hh.firstFree2
-        hh.firstFree2 = p
-    }
-
-//static void stbtt__hheap_cleanup(stbtt__hheap *hh, void *userdata)
-//{
-//    stbtt__hheap_chunk *c = hh->head;
-//    while (c) {
-//        stbtt__hheap_chunk *n = c->next;
-//        STBTT_free(c, userdata);
-//        c = n;
-//    }
-//}
+    // [JVM] all useless here
+    // stbtt__hheap_chunk
+    // stbtt__hheap
+    // stbtt__hheap_alloc
+    // stbtt__hheap_free
+    // stbtt__hheap_cleanup
 
     class Edge : Comparable<Edge> {
         var x0 = 0f
@@ -1509,41 +1420,42 @@ object TrueType {
         var w = 0
 
         var e: ActiveEdge? = e_
-        while (e != null) {
-            if (w == 0) {
-                // if we're currently at zero, we need to record the edge start point
-                x0 = e.x; w += e.direction.i
-            } else {
-                val x1 = e.x; w += e.direction.i
-                // if we went to zero, we need to draw
-                if (w == 0) {
-                    var i = x0 shr FIXSHIFT
-                    var j = x1 shr FIXSHIFT
-
-                    if (i < len && j >= 0) {
-                        if (i == j) {
-                            // x0,x1 are the same pixel, so compute combined coverage
-                            scanline[i] = (scanline[i] + ((x1 - x0) * maxWeight shr FIXSHIFT)).b
-                        } else {
-                            if (i >= 0) // add antialiasing for x0
-                                scanline[i] = (scanline[i] + (((FIX - (x0 and FIXMASK)) * maxWeight) shr FIXSHIFT)).b
-                            else
-                                i = -1 // clip
-
-                            if (j < len) // add antialiasing for x1
-                                scanline[j] = (scanline[j] + (((x1 and FIXMASK) * maxWeight) shr FIXSHIFT)).b
-                            else
-                                j = len // clip
-
-                            while (++i < j) // fill pixels between x0 and x1
-                                scanline[i] = (scanline[i] + maxWeight).b
-                        }
-                    }
-                }
-            }
-
-            e = e.next
-        }
+        TODO()
+//        while (e != null) {
+//            if (w == 0) {
+//                // if we're currently at zero, we need to record the edge start point
+//                x0 = e.x; w += e.direction.i
+//            } else {
+//                val x1 = e.x; w += e.direction.i
+//                // if we went to zero, we need to draw
+//                if (w == 0) {
+//                    var i = x0 shr FIXSHIFT
+//                    var j = x1 shr FIXSHIFT
+//
+//                    if (i < len && j >= 0) {
+//                        if (i == j) {
+//                            // x0,x1 are the same pixel, so compute combined coverage
+//                            scanline[i] = (scanline[i] + ((x1 - x0) * maxWeight shr FIXSHIFT)).b
+//                        } else {
+//                            if (i >= 0) // add antialiasing for x0
+//                                scanline[i] = (scanline[i] + (((FIX - (x0 and FIXMASK)) * maxWeight) shr FIXSHIFT)).b
+//                            else
+//                                i = -1 // clip
+//
+//                            if (j < len) // add antialiasing for x1
+//                                scanline[j] = (scanline[j] + (((x1 and FIXMASK) * maxWeight) shr FIXSHIFT)).b
+//                            else
+//                                j = len // clip
+//
+//                            while (++i < j) // fill pixels between x0 and x1
+//                                scanline[i] = (scanline[i] + maxWeight).b
+//                        }
+//                    }
+//                }
+//            }
+//
+//            e = e.next
+//        }
     }
 
 

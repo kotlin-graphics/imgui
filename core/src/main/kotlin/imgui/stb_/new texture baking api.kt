@@ -65,7 +65,7 @@ class PackRange {
     var firstUnicodeCodepointInRange = 0 // if non-zero, then the chars are continuous, and this is the first codepoint
     var arrayOfUnicodeCodepoints: IntArray? = null // if non-zero, then this is an array of unicode codepoints
     var numChars = 0
-    var chardataForRange: List<PackedChar> = emptyList() // output
+    var chardataForRange: ArrayList<PackedChar> = ArrayList() // output
 
     // don't set these, they're used internally
     var hOversample = 0u
@@ -146,13 +146,14 @@ fun PackContext.packSetOversampling(hOversample: UInt, vOversample: UInt) {
 //    spc->skip_missing = skip;
 //}
 
-fun getPackedQuad(charData: Array<PackedChar>, w: Int, h: Int, // same data as above
+fun getPackedQuad(charData: Array<PackedChar>, pw: Int, ph: Int, // same data as above
                   charIndex: Int,       // character to display
                   pos: Vec2 = Vec2(),   // pointers to current position in screen pixel space
                   q: AlignedQuad,       // output: quad to draw
                   alignToInteger: Boolean = false) {
 
-    val ip = 1f / Vec2(p)
+    val ipw = 1f / pw
+    val iph = 1f / ph
     val b = charData[charIndex]
 
     if (alignToInteger) {
@@ -169,10 +170,10 @@ fun getPackedQuad(charData: Array<PackedChar>, w: Int, h: Int, // same data as a
         q.y1 = pos.y + b.yOff2
     }
 
-    q.s0 = b.x0 * ip.x
-    q.t0 = b.y0 * ip.y
-    q.s1 = b.x1 * ip.x
-    q.t1 = b.y1 * ip.y
+    q.s0 = b.x0 * ipw
+    q.t0 = b.y0 * iph
+    q.s1 = b.x1 * ipw
+    q.t1 = b.y1 * iph
 
     pos.x += b.xAdvance
 }
@@ -233,29 +234,28 @@ fun PackContext.packFontRangesRenderIntoRects(info: FontInfo, ranges: Array<Pack
                                                  scale * vOversample.i,
                                                  0f, 0f,
                                                  glyph)
-                    if (hOversample > 1)
+                    if (hOversample > 1u)
                         TrueType.hPrefilter(pixels!!, r.x + r.y * strideInBytes,
                                             r.w, r.h, strideInBytes, hOversample)
 
-                    if (vOversample > 1)
+                    if (vOversample > 1u)
                         TrueType.vPrefilter(pixels!!, r.x + r.y * strideInBytes,
-                                            r.w, r.h, spc.strideInBytes, spc.oversample.y)
+                                            r.w, r.h, strideInBytes, vOversample)
 
                     bc.x0 = r.x
                     bc.y0 = r.y
                     bc.x1 = r.x + r.w
                     bc.y1 = r.y + r.h
                     bc.xAdvance = scale * advance
-                    bc.xOff = x0 * recip.x + sub.x
-                    bc.yOff = y0 * recip.y + sub.y
-                    bc.xOff2 = (x0 + r.w) * recip.x + sub.x
-                    bc.yOff2 = (y0 + r.h) * recip.y + sub.y
+                    bc.xOff = x0 * recipH + subX
+                    bc.yOff = y0 * recipV + subY
+                    bc.xOff2 = (x0 + r.w) * recipH + subX
+                    bc.yOff2 = (y0 + r.h) * recipV + subY
 
                     if (glyph == 0)
                         missingGlyph = j
                 }
-
-                spc.skipMissing -> returnValue = false
+                skipMissing -> returnValue = false
                 r.wasPacked != 0 && r.w == 0 && r.h == 0 && missingGlyph >= 0 -> range.chardataForRange[j] = range.chardataForRange[missingGlyph]
                 else -> returnValue = false // if any fail, report failure
             }
@@ -264,7 +264,8 @@ fun PackContext.packFontRangesRenderIntoRects(info: FontInfo, ranges: Array<Pack
     }
 
     // restore original values
-    spc.oversample put oldOver
+    hOversample = oldHOver
+    vOversample = oldVOver
 
     return returnValue
 }
@@ -290,7 +291,7 @@ constructor(var pixels: UByteArray?,
             strideInBytes: Int,
             val padding: Int) {
 
-    val nodes = Array(width - padding) { Node() }
+    val nodes = Array(width - padding) { Node(it) }
     val packInfo = Context(width - padding, height - padding, nodes)
     var skipMissing = false
     var hOversample = 1u

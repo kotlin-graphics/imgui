@@ -6,7 +6,6 @@ import glm_.vec4.Vec4i
 import imgui.stb_.TrueType.getGlyfOffset
 import imgui.stb_.TrueType.getGlyphInfoT2
 import imgui.stb_.TrueType.short
-import imgui.stb_.TrueType.ulong
 import imgui.stb_.TrueType.ushort
 
 //////////////////////////////////////////////////////////////////////////////
@@ -29,8 +28,8 @@ infix fun FontInfo.findGlyphIndex(unicodeCodepoint: Int): Int {
         }
 
         6 -> {
-            val first = data.ushort(indexMap + 6).ui
-            val count = data.ushort(indexMap + 8).ui
+            val first = data.ushort(indexMap + 6)
+            val count = data.ushort(indexMap + 8)
             if (unicodeCodepoint.ui in first until first + count)
                 return data.ushort(indexMap + 10 + (unicodeCodepoint - first.i) * 2).i
             0
@@ -53,11 +52,11 @@ infix fun FontInfo.findGlyphIndex(unicodeCodepoint: Int): Int {
             // they lie from endCount .. endCount + segCount
             // but searchRange is the nearest power of two, so...
             if (unicodeCodepoint >= data.ushort(search.i + rangeShift.i * 2).i)
-                search += rangeShift.ui * 2u
+                search += rangeShift * 2u
 
             // now decrement to bias correctly to find smallest
             search -= 2u
-            while (entrySelector != 0.us) {
+            while (entrySelector != 0u) {
                 searchRange = searchRange shr 1
                 val end = data.ushort(search.i + searchRange.i * 2)
                 if (unicodeCodepoint > end.i)
@@ -75,7 +74,7 @@ infix fun FontInfo.findGlyphIndex(unicodeCodepoint: Int): Int {
                     return 0
 
                 val offset = data.ushort(indexMap + 14 + segCount.i * 6 + 2 + 2 * item.i)
-                if (offset == 0.us)
+                if (offset == 0u)
                     return unicodeCodepoint + data.ushort(indexMap + 14 + segCount.i * 4 + 2 + 2 * item.i).i
 
                 data.ushort(offset.i + (unicodeCodepoint - start.i) * 2 + indexMap + 14 + segCount.i * 6 + 2 + 2 * item.i).i
@@ -124,7 +123,7 @@ infix fun FontInfo.findGlyphIndex(unicodeCodepoint: Int): Int {
 //       scale = pixels / (ascent - descent)
 // so if you prefer to measure height by the ascent only, use a similar calculation.
 infix fun FontInfo.scaleForPixelHeight(height: Float): Float {
-    val fheight = data.ushort(hhea + 4).i - data.ushort(hhea + 6).i
+    val fheight = data.short(hhea + 4) - data.short(hhea + 6)
     return height.f / fheight
 }
 

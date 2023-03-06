@@ -115,7 +115,7 @@ object rectpack {
         var x = 0
         var y = 0
         var prevLink: Ptr<Ptr<Node>>? = null
-//        override fun toString() = "x=$x y=$y prevLink=${Arrays.toString(prevLink)}"
+        override fun toString() = "x=$x y=$y prevLink=$prevLink"
     }
 
 
@@ -173,5 +173,5 @@ object rectpack {
 //    }
 }
 
-typealias PPNode = () -> rectpack.Node?
+//typealias PPNode = () -> rectpack.Node?
 //typealias PPNodeB = KMutableProperty0<rp.Node?>

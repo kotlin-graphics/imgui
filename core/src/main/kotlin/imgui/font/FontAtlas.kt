@@ -622,20 +622,19 @@ class FontAtlas {
 
             // Find index from cfg.DstFont (we allow the user to set cfg.DstFont. Also it makes casual debugging nicer than when storing indices)
             srcTmp.dstIndex = -1
-            var outputIdx = 0
-            while (outputIdx < fonts.size && srcTmp.dstIndex == -1) {
+            for (outputIdx in 0 until fonts.size) {
+                if (srcTmp.dstIndex != -1) break
                 if (cfg.dstFont == fonts[outputIdx])
                     srcTmp.dstIndex = outputIdx
-                outputIdx++
             }
-            if (srcTmp.dstIndex == -1) {
-                assert(srcTmp.dstIndex != -1) { "cfg.DstFont not pointing within atlas->Fonts[] array?" }
-                return false
-            }
+//            if (srcTmp.dstIndex == -1) {
+//                assert(srcTmp.dstIndex != -1) { "cfg.DstFont not pointing within atlas->Fonts[] array?" }
+//                return false
+//            }
             // Initialize helper structure for font loading and verify that the TTF/OTF data is correct
             val fontOffset = getFontOffsetForIndex(cfg.fontData.asUByteArray(), cfg.fontNo)
             assert(fontOffset >= 0) { "FontData is incorrect, or FontNo cannot be found." }
-            if (!srcTmp.fontInfo.initFont(cfg.fontData, fontOffset))
+            if (!srcTmp.fontInfo.initFont(cfg.fontData.asUByteArray(), fontOffset))
                 return false
 
             // Measure highest codepoints
@@ -709,7 +708,7 @@ class FontAtlas {
                 firstUnicodeCodepointInRange = 0
                 arrayOfUnicodeCodepoints = srcTmp.glyphsList.toIntArray()
                 numChars = srcTmp.glyphsList.size
-                chardataForRange = srcTmp.packedChars
+                chardataForRange = ArrayList(srcTmp.packedChars)
                 hOversample = cfg.oversample.x.ui
                 vOversample = cfg.oversample.x.ui
             }
@@ -737,7 +736,7 @@ class FontAtlas {
         texSize.put(x = when {
             texDesiredWidth > 0 -> texDesiredWidth
             else -> {
-                val surfaceSqrt = sqrt(totalSurface.f) + 1
+                val surfaceSqrt = sqrt(totalSurface.f).i + 1
                 when {
                     surfaceSqrt >= 4096 * 0.7f -> 4096
                     else -> when {
@@ -900,10 +899,11 @@ class FontAtlas {
         val userRects = customRects
         // We expect at least the default custom rects to be registered, else something went wrong.
         assert(userRects.isNotEmpty())
-        val packRects = Array(userRects.size) { rectpack.Rect() }    // calloc -> all 0
-        for (i in userRects.indices) {
-            packRects[i].w = userRects[i].width
-            packRects[i].h = userRects[i].height
+        val packRects = Array(userRects.size) {
+            rectpack.Rect().apply {
+                w = userRects[it].width
+                h = userRects[it].height
+            }
         }
         stbrpContext.packRects(packRects)
         for (i in userRects.indices)

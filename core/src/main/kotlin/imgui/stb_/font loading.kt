@@ -85,22 +85,22 @@ class FontInfo {
     var indexToLocFormat = 0
 
     /** cff font data */
-    lateinit var cff: Buf
+    var cff = Buf()
 
     /** the charstring index */
-    lateinit var charStrings: Buf
+    var charStrings = Buf()
 
     /** global charstring subroutines index */
-    lateinit var gSubrs: Buf
+    var gSubrs = Buf()
 
     /** private charstring subroutines index */
-    lateinit var subrs: Buf
+    var subrs = Buf()
 
     /** array of font dicts */
-    lateinit var fontDicts: Buf
+    var fontDicts = Buf()
 
     /** map from glyph to fontdict */
-    lateinit var fdSelect: Buf
+    var fdSelect = Buf()
 }
 
 
@@ -109,9 +109,8 @@ class FontInfo {
 // the stbtt_fontinfo yourself, and stbtt_InitFont will fill it out. You don't
 // need to do anything special to free it, because the contents are pure
 // value data with no additional data structures. Returns 0 on failure.
-fun FontInfo.initFont(data: ByteArray, fontStart: Int): Boolean {
+fun FontInfo.initFont(data: UByteArray, fontStart: Int): Boolean {
 
-    val data = data.asUByteArray()
     this.data = data
     this.fontStart = fontStart
     cff = Buf()
@@ -197,14 +196,14 @@ fun FontInfo.initFont(data: ByteArray, fontStart: Int): Boolean {
         val encodingRecord = cmap + 4u + 8u * i.ui
         // find an encoding we understand:
         when (data.ushort(encodingRecord.i).i) {
-            TrueType.PlatformID.MICROSOFT.i -> when (data.ushort(encodingRecord.i + 2).i) {
+            PlatformID.MICROSOFT.i -> when (data.ushort(encodingRecord.i + 2).i) {
                 // MS/Unicode
-                TrueType.MS_EID.UNICODE_BMP.i, TrueType.MS_EID.UNICODE_FULL.i -> indexMap = cmap.i + data.ulong(encodingRecord.i + 4).i
+                MS_EID.UNICODE_BMP.i, MS_EID.UNICODE_FULL.i -> indexMap = cmap.i + data.ulong(encodingRecord.i + 4).i
             }
 
             // Mac/iOS has these
             // all the encodingIDs are unicode, so we don't bother to check it
-            TrueType.PlatformID.UNICODE.i -> indexMap = cmap.i + data.ulong(encodingRecord.i + 4).i
+            PlatformID.UNICODE.i -> indexMap = cmap.i + data.ulong(encodingRecord.i + 4).i
         }
     }
     if (indexMap == 0)

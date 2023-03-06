@@ -13,7 +13,7 @@ class Csctx(val bounds: Boolean) {
     var minY = 0
     var maxY = 0
 
-    lateinit var vertices: Array<TrueType.Vertex>
+    lateinit var vertices: Array<Vertex>
     var numVertices = 0
 
     fun trackVertex(x: Int, y: Int) {
@@ -24,10 +24,10 @@ class Csctx(val bounds: Boolean) {
         started = true
     }
 
-    fun v(type: TrueType.Type, x: Int, y: Int, cx: Int, cy: Int, cx1: Int, cy1: Int) {
+    fun v(type: Vertex.Type, x: Int, y: Int, cx: Int, cy: Int, cx1: Int, cy1: Int) {
         if (bounds) {
             trackVertex(x, y)
-            if (type == TrueType.Type.cubic) {
+            if (type == Vertex.Type.cubic) {
                 trackVertex(cx, cy)
                 trackVertex(cx1, cy1)
             }
@@ -41,7 +41,7 @@ class Csctx(val bounds: Boolean) {
 
     fun closeShape() {
         if (firstX != x || firstY != y)
-            v(TrueType.Type.line, firstX.i, firstY.i, 0, 0, 0, 0)
+            v(Vertex.Type.line, firstX.i, firstY.i, 0, 0, 0, 0)
     }
 
     fun rMoveTo(dx: Float, dy: Float) {
@@ -50,13 +50,13 @@ class Csctx(val bounds: Boolean) {
         firstX = x
         y += dy
         firstY = y
-        v(TrueType.Type.move, x.i, y.i, 0, 0, 0, 0)
+        v(Vertex.Type.move, x.i, y.i, 0, 0, 0, 0)
     }
 
     fun rLineTo(dx: Float, dy: Float) {
         x += dx
         y += dy
-        v(TrueType.Type.line, x.i, y.i, 0, 0, 0, 0)
+        v(Vertex.Type.line, x.i, y.i, 0, 0, 0, 0)
     }
 
     fun rcCurveTo(dx1: Float, dy1: Float, dx2: Float, dy2: Float, dx3: Float, dy3: Float) {
@@ -66,6 +66,6 @@ class Csctx(val bounds: Boolean) {
         val cy2 = cy1 + dy2
         x = cx2 + dx3
         y = cy2 + dy3
-        v(TrueType.Type.cubic, x.i, y.i, cx1.i, cy1.i, cx2.i, cy2.i)
+        v(Vertex.Type.cubic, x.i, y.i, cx1.i, cy1.i, cx2.i, cy2.i)
     }
 }

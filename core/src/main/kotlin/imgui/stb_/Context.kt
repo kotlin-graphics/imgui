@@ -43,7 +43,7 @@ constructor(val width: Int,
     var heuristic = rectpack.Skyline.default
 
     /** we allocate two extra nodes so optimal user-node-count is 'width' not 'width+2' */
-    val extra = Array(2) { Node() }
+    val extra = Array(2) { Node(-2 + it) }
 
     var activeHead: Ptr<Node>? = ptrOf(extra[0])
     var freeHead: Ptr<Node>? = ptrOf(nodes[0])
@@ -138,19 +138,16 @@ constructor(val width: Int,
         // sort according to heuristic
         rects.sortWith(rectpack.rectHeightCompare)
 
-        rects.forEach { r ->
-            if (r.w == 0 || r.h == 0) {
-                // empty rect needs no space
-                r.x = 0
-                r.y = 0
+        for (rect in rects) {
+            if (rect.w == 0 || rect.h == 0) {
+                rect.x = 0; rect.y = 0 // empty rect needs no space
             } else {
-                val fr = skylinePackRectangle(r.w, r.h)
+                val fr = skylinePackRectangle(rect.w, rect.h)
                 if (fr.prevLink != null) {
-                    r.x = fr.x
-                    r.y = fr.y
+                    rect.x = fr.x
+                    rect.y = fr.y
                 } else {
-                    r.x = rectpack.MAXVAL
-                    r.y = rectpack.MAXVAL
+                    rect.x = rectpack.MAXVAL; rect.y = rectpack.MAXVAL
                 }
             }
         }
@@ -255,9 +252,13 @@ constructor(val width: Int,
         assert(width % align == 0)
 
         // if it can't possibly fit, bail immediately
-        if (width > this.width || height > this.height) return fr
+        if (width > this.width || height > this.height) {
+            fr.prevLink = null
+            fr.x = 0; fr.y = 0
+            return fr
+        }
 
-        var node = activeHead!!
+        var node = activeHead!!.copy()
         var prev = ptrOf(activeHead!!)
         while (node().x + width <= this.width) {
             val (y, waste) = skylineFindMinY(node, node().x, width)
@@ -265,7 +266,7 @@ constructor(val width: Int,
                 // bottom left
                 if (y < bestY) {
                     bestY = y
-                    best = prev
+                    best = prev.copy()
                 }
             } else {
                 // best-fit
@@ -274,7 +275,7 @@ constructor(val width: Int,
                     if (y < bestY || (y == bestY && waste < bestWaste)) {
                         bestY = y
                         bestWaste = waste
-                        best = prev
+                        best = prev.copy()
                     }
                 }
             }
@@ -302,8 +303,8 @@ constructor(val width: Int,
         // This makes BF take about 2x the time
 
         if (heuristic == rectpack.Skyline.bfSortHeight) {
-            var tail = activeHead
-            node = activeHead!!
+            var tail = activeHead?.copy()
+            node = activeHead!!.copy()
             prev = ptrOf(activeHead!!)
             // find first node that's admissible
             while (tail!!().x < width)
@@ -325,7 +326,7 @@ constructor(val width: Int,
                             //assert(y <= bestY) [DEAR IMGUI]
                             bestY = y
                             bestWaste = waste
-                            best = prev
+                            best = prev.copy()
                         }
                     }
                 }
@@ -334,7 +335,7 @@ constructor(val width: Int,
         }
 
         return fr.apply {
-            prevLink = best
+            prevLink = best?.copy()
             x = bestX
             y = bestY
         }
