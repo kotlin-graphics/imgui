@@ -9,17 +9,15 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.style
 import imgui.internal.*
-import imgui.stb.*
+import imgui.stb.stbClear
 import imgui.stb_.*
 import kool.*
 import kool.lib.isNotEmpty
-import org.lwjgl.stb.*
 import uno.convert.decode85
 import uno.kotlin.plusAssign
 import uno.stb.stb
 import unsigned.toUInt
 import java.nio.ByteBuffer
-import kotlin.math.floor
 import kotlin.math.sqrt
 
 /** Load and rasterize multiple TTF/OTF fonts into a same texture. The font atlas will build a single texture holding:
@@ -684,7 +682,7 @@ class FontAtlas {
 
         // Allocate packing character data and flag packed characters buffer as non-packed (x0=y0=x1=y1=0)
         // (We technically don't need to zero-clear buf_rects, but let's do it for the sake of sanity)
-        val bufRects = Array(totalGlyphsCount) { rectpack.Rect() }
+        val bufRects = Array(totalGlyphsCount) { rectpack.Rect().apply { id = it } }
         val bufPackedchars = Array(totalGlyphsCount) { PackedChar() }
 
         // 4. Gather glyphs sizes so we can pack them in our virtual canvas.
@@ -809,7 +807,7 @@ class FontAtlas {
 //        bufRects.free()
 
         // 9. Setup ImFont and glyphs for runtime
-        val q = STBTTAlignedQuad.calloc()
+        val q = AlignedQuad()
         for (srcIdx in srcTmpArray.indices) {
             val srcTmp = srcTmpArray[srcIdx]
             if (srcTmp.glyphsCount == 0)
@@ -821,32 +819,31 @@ class FontAtlas {
             val cfg = configData[srcIdx]
             val dstFont = cfg.dstFont!!
 
-            TODO()
-//            val fontScale = STBTruetype.stbtt_ScaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
-//            val (unscaledAscent, unscaledDescent, _) = stbtt_GetFontVMetrics(srcTmp.fontInfo)
-//
-//            val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
-//            val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
-//            buildSetupFont(dstFont, cfg, ascent, descent)
-//            val fontOff = Vec2(cfg.glyphOffset).apply { y += round(dstFont.ascent) }
-//
-//            for (glyphIdx in 0 until srcTmp.glyphsCount) {
-//                // Register glyph
-//                val codepoint = srcTmp.glyphsList[glyphIdx]
-//                val pc = srcTmp.packedChars[glyphIdx]
-//                stbtt_GetPackedQuad(srcTmp.packedChars, texSize, glyphIdx, q)
-//                dstFont.addGlyph(cfg, codepoint, q.x0 + fontOff.x, q.y0 + fontOff.y,
-//                                 q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
-//            }
+            val fontScale = srcTmp.fontInfo scaleForPixelHeight cfg.sizePixels
+            val (unscaledAscent, unscaledDescent, _) = srcTmp.fontInfo.fontVMetrics
+
+            val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
+            val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
+            buildSetupFont(dstFont, cfg, ascent, descent)
+            val fontOff = Vec2(cfg.glyphOffset).apply { y += round(dstFont.ascent) }
+
+            for (glyphIdx in 0 until srcTmp.glyphsCount) {
+                // Register glyph
+                val codepoint = srcTmp.glyphsList[glyphIdx]
+                val pc = srcTmp.packedChars[glyphIdx]
+                getPackedQuad(srcTmp.packedChars, texSize.x, texSize.y, glyphIdx, q = q)
+                dstFont.addGlyph(cfg, codepoint, q.x0 + fontOff.x, q.y0 + fontOff.y,
+                                 q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
+            }
         }
 //        bufPackedchars.free()
 
         // Cleanup temporary (ImVector doesn't honor destructor)
         srcTmpArray.forEach { it.free() }
-        q.free()
+//        q.free()
 
-        // TODO
-        //        texPixelsAlpha8 = Buffer(texSize.x * texSize.y)
+        texPixelsAlpha8 = Buffer(texSize.x * texSize.y) { spc.pixels!![it].toByte() }
+
 
         buildFinish()
         return true
