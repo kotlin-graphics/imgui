@@ -590,6 +590,18 @@ object TrueType {
         return a + b + c + d
     }
 
+    internal fun UByteArray.ULong(offset: Int): ULong {
+        val a = this[offset].ul shl 56
+        val b = this[offset + 1].ui shl 48
+        val c = this[offset + 2].ui shl 40
+        val d = this[offset + 3].ui shl 32
+        val e = this[offset + 4].ui shl 24
+        val f = this[offset + 5].ui shl 16
+        val g = this[offset + 6].ui shl 8
+        val h = this[offset + 7].ui
+        return a + b + c + d + e + f + g + h
+    }
+
     internal fun UByteArray.long(offset: Int): Int = ulong(offset).toInt()
 
 

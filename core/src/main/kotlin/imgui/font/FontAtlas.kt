@@ -801,6 +801,7 @@ class FontAtlas {
             //            srcTmp.rects = NULL // JVM dont free, it's a dummy container custom offset'ed
         }
 
+
         // End packing
 //        STBTruetype.stbtt_PackEnd(spc)
 //        spc.free()
