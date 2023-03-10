@@ -1431,7 +1431,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 }
 
 private fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
-inline class DrawVert_Buffer(val data: ByteBuffer) {
+@JvmInline
+value class DrawVert_Buffer(val data: ByteBuffer) {
 
     operator fun get(index: Int) = DrawVert(
         Vec2(data, index * DrawVert.SIZE),

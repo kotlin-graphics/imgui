@@ -208,7 +208,8 @@ object easyFont {
     }
 }
 
-inline class InfoStruct(val chars: CharArray) {
+@JvmInline
+value class InfoStruct(val chars: CharArray) {
     val advance: Char
         get() = chars[0]
     val hSeg: Char
