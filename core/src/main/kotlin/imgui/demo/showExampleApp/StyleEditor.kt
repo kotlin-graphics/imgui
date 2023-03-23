@@ -336,7 +336,7 @@ object StyleEditor {
         popItemWidth()
     }
 
-    fun showFont(font: Font) {
+    fun debugNodeFont(font: Font) {
         val name = font.configData.getOrNull(0)?.name ?: ""
         val fontDetailsOpened = treeNode(font,
                                          "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)",

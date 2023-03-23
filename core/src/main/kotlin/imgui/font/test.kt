@@ -1,154 +1,105 @@
 package imgui.font
 
-import imgui.stb_.TrueType.ULong
-import imgui.stb_.i
-import imgui.stb_.ul
+import com.aayushatharva.brotli4j.Brotli4jLoader
+import com.aayushatharva.brotli4j.encoder.Encoder
+import com.ibm.icu.text.BreakIterator
+import glm_.asHexString
+import glm_.i
+import glm_.minus
 import java.io.File
+import java.math.BigInteger
 
 
 fun main() {
-    val ini = File("imgui.ini")
-    val a = ini.readBytes()
+    val ini = File("core/src/main/resources/fonts/ProggyClean.ttf")
+    val array = ini.readBytes().asUByteArray()
 //    encode(ubyteArrayOf(0u, 1u, 2u, 3u))
+
+    // Load the native library
+    Brotli4jLoader.ensureAvailability();
+
+    // Compress data and get output in byte array
+    val compressed = ini.readBytes()// Encoder.compress(ini.readBytes(), Encoder.Parameters().setQuality(11))//.take(4).toByteArray()
+
+    println()
+
+//    val n = stb.compress(CharArray(compressed.size) { compressed[it].toChar() })
+
+    val range = (0xD7FF + 1 - 0x0000) + (0xFFFF + 1 - 0xE000) + (Char.MAX_HIGH_SURROGATE.i + 1 - Char.MIN_SURROGATE.i) * (Char.MAX_SURROGATE.i + 1 - Char.MIN_LOW_SURROGATE.i)
+
+    for (i in 0 until range) {
+        val code = encode(i)
+        val plain = decode(code)
+        if (i != plain)
+            error("$i != $plain")
+    }
+
+
+    val bigInteger = BigInteger(compressed)
+    var div = bigInteger
+    val res = StringBuilder()
+    while (div > BigInteger.ZERO) {
+        val (d, r) = div.divideAndRemainder(range.toBigInteger())
+        div = d
+        val rem = r.toInt()
+        res.insert(0, encode(rem))
+    }
+
+    var value = BigInteger.ZERO
+    var i = 0
+    while (i < res.length) {
+        val s = when (val c = res[i++]) {
+            in Char.MIN_SURROGATE..Char.MAX_SURROGATE -> c.toString() + res[i++]
+            else -> c.toString()
+        }
+        value = value * range.toBigInteger() + decode(s).toBigInteger()
+    }
+
+    val equal = bigInteger == value
+    println(equal)
 }
 
-/**
-Base32768 is a binary-to-text encoding optimised for UTF-16-encoded text.
-(e.g. Windows, Java, JavaScript)
- */
-
-// Z is a number, usually a uint15 but sometimes a uint7
-
-const val BITS_PER_CHAR = 15 // Base32768 is a 15-bit encoding
-const val BITS_PER_BYTE = 8
-
-val pairStrings = listOf("ҠҿԀԟڀڿݠޟ߀ߟကဟႠႿᄀᅟᆀᆟᇠሿበቿዠዿጠጿᎠᏟᐠᙟᚠᛟកសᠠᡟᣀᣟᦀᦟ᧠᧿ᨠᨿᯀᯟᰀᰟᴀᴟ⇠⇿⋀⋟⍀⏟␀␟─❟➀➿⠀⥿⦠⦿⨠⩟⪀⪿⫠⭟ⰀⰟⲀⳟⴀⴟⵀⵟ⺠⻟㇀㇟㐀䶟䷀龿ꀀꑿ꒠꒿ꔀꗿꙀꙟꚠꛟ꜀ꝟꞀꞟꡀꡟ",
-                               "ƀƟɀʟ")
-
-const lookupE = {}
-const lookupD = {}
-pairStrings.forEach((pairString, r) => {
-    // Decompression
-    const encodeRepertoire =[]
-    pairString.match(/../ gu).forEach(pair => {
-        const first = pair . codePointAt (0)
-        const last = pair . codePointAt (1)
-        for (let codePoint = first; codePoint <= last; codePoint++) {
-        encodeRepertoire.push(String.fromCodePoint(codePoint))
-    }
-    })
-
-    const numZBits = BITS_PER_CHAR -BITS_PER_BYTE * r // 0 -> 15, 1 -> 7
-    lookupE[numZBits] = encodeRepertoire
-    encodeRepertoire.forEach((chr, z) => {
-        lookupD[chr] = [numZBits, z]
-    })
-})
-
-const encode = uint8Array => {
-    const length = uint8Array . length
-
-            let str = ''
-    let z = 0
-    let numZBits = 0
-
-    for (let i = 0; i < length; i++) {
-        const uint8 = uint8Array [i]
-
-        // Take most significant bit first
-        for (let j = BITS_PER_BYTE - 1; j >= 0; j--) {
-        const bit =(uint8 > > j) & 1
-
-        z = (z < < 1)+bit
-        numZBits++
-
-        if (numZBits === BITS_PER_CHAR) {
-            str += lookupE[numZBits][z]
-            z = 0
-            numZBits = 0
-        }
-    }
+fun encode(int: Int): String = when {
+    int <= 0xD7FF -> int.toChar().toString()
+    int <= 0xD7FF + (0xFFFF + 1 - 0xE000) -> (int + (0xE000 - Char.MIN_SURROGATE.i)).toChar().toString()
+    int <= 0xD7FF + (0xFFFF + 1 - 0xE000) + (Char.MAX_HIGH_SURROGATE.i + 1 - Char.MIN_SURROGATE.i) * (Char.MAX_SURROGATE.i + 1 - Char.MIN_LOW_SURROGATE.i) -> {
+        val i = int - (0xD7FF + (0xFFFF + 1 - 0xE000))
+        val chunk = Char.MAX_SURROGATE.i + 1 - Char.MIN_LOW_SURROGATE.i
+        charArrayOf(Char.MIN_SURROGATE + i / chunk, Char.MIN_LOW_SURROGATE + i % chunk).concatToString()
     }
 
-    if (numZBits !== 0) {
-        // Final bits require special treatment.
-
-        // z = bbbbbbcccccccc, numZBits = 14, padBits = 1
-        // z = bbbbbcccccccc, numZBits = 13, padBits = 2
-        // z = bbbbcccccccc, numZBits = 12, padBits = 3
-        // z = bbbcccccccc, numZBits = 11, padBits = 4
-        // z = bbcccccccc, numZBits = 10, padBits = 5
-        // z = bcccccccc, numZBits = 9, padBits = 6
-        // z = cccccccc, numZBits = 8, padBits = 7
-        // => Pad `z` out to 15 bits using 1s, then encode as normal (r = 0)
-
-        // z = ccccccc, numZBits = 7, padBits = 0
-        // z = cccccc, numZBits = 6, padBits = 1
-        // z = ccccc, numZBits = 5, padBits = 2
-        // z = cccc, numZBits = 4, padBits = 3
-        // z = ccc, numZBits = 3, padBits = 4
-        // z = cc, numZBits = 2, padBits = 5
-        // z = c, numZBits = 1, padBits = 6
-        // => Pad `z` out to 7 bits using 1s, then encode specially (r = 1)
-
-        while (!(numZBits in lookupE)) {
-            z = (z < < 1)+1
-            numZBits++
-        }
-
-        str += lookupE[numZBits][z]
-    }
-
-    return str
+    else -> error("int = $int")
 }
 
-const decode = str => {
-    const length = str . length
-
-            // This length is a guess. There's a chance we allocate one more byte here
-            // than we actually need. But we can count and slice it off later
-            const uint8Array = new Uint8Array(Math.floor(length * BITS_PER_CHAR / BITS_PER_BYTE))
-    let numUint8s = 0
-    let uint8 = 0
-    let numUint8Bits = 0
-
-    for (let i = 0; i < length; i++) {
-        const chr = str . charAt (i)
-
-        if (!(chr in lookupD)) {
-            throw new Error (`Unrecognised Base32768 character: ${chr}`)
-        }
-
-        const[numZBits, z] = lookupD[chr]
-
-        if (numZBits !== BITS_PER_CHAR && i !== length - 1) {
-            throw new Error ('Secondary character found before end of input at position ' + String(i))
-        }
-
-        // Take most significant bit first
-        for (let j = numZBits - 1; j >= 0; j--) {
-        const bit =(z > > j) & 1
-
-        uint8 = (uint8 < < 1)+bit
-        numUint8Bits++
-
-        if (numUint8Bits === BITS_PER_BYTE) {
-            uint8Array[numUint8s] = uint8
-            numUint8s++
-            uint8 = 0
-            numUint8Bits = 0
+fun decode(string: String): Int = when (string.length) {
+    1 -> {
+        val code = string[0].code
+        when {
+            code <= 0xD7FF -> code
+            code in 0xE000..0xFFFF -> code - (0xE000 - Char.MIN_SURROGATE.i)
+            else -> error("")
         }
     }
+
+    2 -> {
+        val a = string[0].code - Char.MIN_SURROGATE
+        val b = string[1].code - Char.MIN_LOW_SURROGATE
+        val chunk = Char.MAX_SURROGATE.i + 1 - Char.MIN_LOW_SURROGATE.i
+        val code = a * chunk + b
+        check(code <= (Char.MAX_HIGH_SURROGATE.i + 1 - Char.MIN_SURROGATE.i) * (Char.MAX_SURROGATE.i + 1 - Char.MIN_LOW_SURROGATE.i))
+        code + 0xD7FF + (0xFFFF + 1 - 0xE000)
     }
 
-    // Final padding bits! Requires special consideration!
-    // Remember how we always pad with 1s?
-    // Note: there could be 0 such bits, check still works though
-    if (uint8 !== ((1 < < numUint8Bits) - 1)) {
-        throw new Error ('Padding mismatch')
-    }
-
-    return new Uint8Array (uint8Array.buffer, 0, numUint8s)
+    else -> error("")
 }
 
-export { encode, decode }
+fun getLength(emoji: String?): Int {
+    val it: BreakIterator = BreakIterator.getCharacterInstance()
+    it.setText(emoji)
+    var emojiCount = 0
+    while (it.next() != BreakIterator.DONE)
+        emojiCount++
+    return emojiCount
+}
+
+val codepoints = Char.MIN_SURROGATE.i..Char.MAX_HIGH_SURROGATE.i to Char.MIN_LOW_SURROGATE.i..Char.MAX_SURROGATE.i

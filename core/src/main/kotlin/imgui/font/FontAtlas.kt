@@ -85,8 +85,8 @@ class FontAtlas {
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
         val glyphRanges = fontCfg.glyphRanges.takeIf { it.isNotEmpty() } ?: glyphRanges.default
-//        return addFontFromMemoryCompressedBase85TTF(ttfCompressedBase85, fontCfg.sizePixels, fontCfg, glyphRanges)
-        return addFontFromMemoryTTF(fileLoadToMemory("fonts/ProggyClean.ttf")!!, fontCfg.sizePixels, fontCfg, glyphRanges)
+        return addFontFromMemoryCompressedBase85TTF(ttfCompressedBase85, fontCfg.sizePixels, fontCfg, glyphRanges)
+//        return addFontFromMemoryTTF(fileLoadToMemory("fonts/ProggyClean.ttf")!!, fontCfg.sizePixels, fontCfg, glyphRanges)
     }
 
     fun addFontFromFileTTF(filename: String, sizePixels: Float, fontCfg: FontConfig = FontConfig(), glyphRanges: Array<IntRange> = emptyArray()): Font? {
@@ -136,22 +136,19 @@ class FontAtlas {
      *  to build the texture and fonts. */
     fun clearInputData() {
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
-        configData.filter { it.fontData.isNotEmpty() && it.fontDataOwnedByAtlas }.forEach {
-//            it.fontData = charArrayOf()
-            it.fontDataBuffer.free()
-        }
+        for (data in configData)
+            if (data.fontData.isNotEmpty() && data.fontDataOwnedByAtlas)
+                data.fontData = byteArrayOf()
 
         // When clearing this we lose access to the font name and other information used to build the font.
-        fonts.filter {
-            if (it.configData.isNotEmpty()) configData.contains(it.configData[0]) else false
-        }.forEach {
-            it.configData.clear()
-            it.configDataCount = 0
-        }
+        for (font in fonts)
+            if (font.configData.getOrNull(0) in configData) {
+                font.configData.clear()
+                font.configDataCount = 0
+            }
         configData.clear()
         customRects.clear()
-        packIdMouseCursors = -1
-        packIdLines = -1
+        packIdMouseCursors = -1; packIdLines = -1
         // Important: we leave TexReady untouched
     }
 
@@ -708,7 +705,7 @@ class FontAtlas {
                 numChars = srcTmp.glyphsList.size
                 chardataForRange = ArrayList(srcTmp.packedChars)
                 hOversample = cfg.oversample.x.ui
-                vOversample = cfg.oversample.x.ui
+                vOversample = cfg.oversample.y.ui
             }
             // Gather the sizes of all rectangles we will need to pack (this loop is based on stbtt_PackFontRangesGatherRects)
             val scale = when {
@@ -808,7 +805,6 @@ class FontAtlas {
 //        bufRects.free()
 
         // 9. Setup ImFont and glyphs for runtime
-        val q = AlignedQuad()
         for (srcIdx in srcTmpArray.indices) {
             val srcTmp = srcTmpArray[srcIdx]
             if (srcTmp.glyphsCount == 0)
@@ -832,6 +828,7 @@ class FontAtlas {
                 // Register glyph
                 val codepoint = srcTmp.glyphsList[glyphIdx]
                 val pc = srcTmp.packedChars[glyphIdx]
+                val q = AlignedQuad()
                 getPackedQuad(srcTmp.packedChars, texSize.x, texSize.y, glyphIdx, q = q)
                 dstFont.addGlyph(cfg, codepoint, q.x0 + fontOff.x, q.y0 + fontOff.y,
                                  q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
@@ -844,7 +841,6 @@ class FontAtlas {
 //        q.free()
 
         texPixelsAlpha8 = Buffer(texSize.x * texSize.y) { spc.pixels!![it].toByte() }
-
 
         buildFinish()
         return true
@@ -952,7 +948,7 @@ class FontAtlas {
         var offY = 0
         while (offY < h) {
             for (offX in 0 until w)
-                outPixel[ptr + offX] = if (inStr[offX] == inMarkerChar) inMarkerPixelValue else 0x00
+                outPixel[ptr + offX] = if (inStr[ptr2 + offX] == inMarkerChar) inMarkerPixelValue else 0x00
             offY++
             ptr += texSize.x
             ptr2 += w

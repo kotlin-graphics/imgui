@@ -20,8 +20,6 @@ class FontConfig {
     /** TTF/OTF data size   */
     var fontDataSize = 0
 
-    @Deprecated("")
-    lateinit var fontDataBuffer: ByteBuffer
     /** TTF/OTF data ownership taken by the container ImFontAtlas (will delete memory itself).  */
     var fontDataOwnedByAtlas = true
     /** Index of font within TTF/OTF file   */

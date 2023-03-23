@@ -223,7 +223,7 @@ internal interface debugTools {
     fun showFontAtlas(atlas: FontAtlas) {
         for (font in atlas.fonts)
             withID(font) {
-                StyleEditor.showFont(font)
+                StyleEditor.debugNodeFont(font)
             }
         treeNode("Atlas texture", "Atlas texture (${atlas.texWidth}x${atlas.texHeight} pixels)") {
             val tintCol = Vec4(1f)
