@@ -34,32 +34,38 @@ dependencies {
     val brotliVersion = "1.11.0"
     val operatingSystem: OperatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
     implementation("com.aayushatharva.brotli4j:brotli4j:$brotliVersion")
-    runtimeOnly(
-            "com.aayushatharva.brotli4j:native-${
-                when {
-                    operatingSystem.isWindows -> "windows-x86_64"
-                    operatingSystem.isMacOsX -> when {
-                        DefaultNativePlatform.getCurrentArchitecture().isArm -> "osx-aarch64"
-                        else -> "osx-x86_64"
-                    }
-
-                    operatingSystem.isLinux -> when {
-                        Architectures.ARM_V7.isAlias(DefaultNativePlatform.getCurrentArchitecture().name) -> "linux-armv7"
-                        Architectures.AARCH64.isAlias(DefaultNativePlatform.getCurrentArchitecture().name) -> "linux-aarch64"
-                        Architectures.X86_64.isAlias(DefaultNativePlatform.getCurrentArchitecture().name) -> "linux-x86_64"
-                        else -> throw IllegalStateException("Unsupported architecture: ${DefaultNativePlatform.getCurrentArchitecture().name}")
-                    }
-
-                    else -> throw IllegalStateException("Unsupported operating system: $operatingSystem")
-                }
-            }:$brotliVersion"
-    )
-    // https://mvnrepository.com/artifact/com.ibm.icu/icu4j
-    implementation("com.ibm.icu:icu4j:72.1")
+//    testImplementation("com.aayushatharva.brotli4j:brotli4j:$brotliVersion")
+    runtimeOnly("com.aayushatharva.brotli4j:native-${
+        if (operatingSystem.isWindows) "windows-x86_64"
+        else if (operatingSystem.isMacOsX)
+            if (DefaultNativePlatform.getCurrentArchitecture().isArm()) "osx-aarch64"
+            else "osx-x86_64"
+        else if (operatingSystem.isLinux)
+            if (Architectures.ARM_V7.isAlias(DefaultNativePlatform.getCurrentArchitecture().name)) "linux-armv7"
+            else if (Architectures.AARCH64.isAlias(DefaultNativePlatform.getCurrentArchitecture().name)) "linux-aarch64"
+            else if (Architectures.X86_64.isAlias(DefaultNativePlatform.getCurrentArchitecture().name)) "linux-x86_64"
+            else
+                throw IllegalStateException("Unsupported architecture: ${DefaultNativePlatform.getCurrentArchitecture().name}")
+        else
+            throw IllegalStateException("Unsupported operating system: $operatingSystem")
+    }:$brotliVersion")
+//    testRuntimeOnly("com.aayushatharva.brotli4j:native-${
+//        if (operatingSystem.isWindows) "windows-x86_64"
+//        else if (operatingSystem.isMacOsX)
+//            if (DefaultNativePlatform.getCurrentArchitecture().isArm()) "osx-aarch64"
+//            else "osx-x86_64"
+//        else if (operatingSystem.isLinux)
+//            if (Architectures.ARM_V7.isAlias(DefaultNativePlatform.getCurrentArchitecture().name)) "linux-armv7"
+//            else if (Architectures.AARCH64.isAlias(DefaultNativePlatform.getCurrentArchitecture().name)) "linux-aarch64"
+//            else if (Architectures.X86_64.isAlias(DefaultNativePlatform.getCurrentArchitecture().name)) "linux-x86_64"
+//            else
+//                throw IllegalStateException("Unsupported architecture: ${DefaultNativePlatform.getCurrentArchitecture().name}")
+//        else
+//            throw IllegalStateException("Unsupported operating system: $operatingSystem")
+//    }:$brotliVersion")
 }
 
 kotlin.jvmToolchain {
-    this as JavaToolchainSpec
     languageVersion.set(JavaLanguageVersion.of(8))
 }
 

@@ -2,7 +2,6 @@ package imgui.font
 
 import com.aayushatharva.brotli4j.Brotli4jLoader
 import com.aayushatharva.brotli4j.encoder.Encoder
-import com.ibm.icu.text.BreakIterator
 import glm_.asHexString
 import glm_.i
 import glm_.minus
@@ -16,7 +15,7 @@ fun main() {
 //    encode(ubyteArrayOf(0u, 1u, 2u, 3u))
 
     // Load the native library
-    Brotli4jLoader.ensureAvailability();
+    Brotli4jLoader.ensureAvailability()
 
     // Compress data and get output in byte array
     val compressed = ini.readBytes()// Encoder.compress(ini.readBytes(), Encoder.Parameters().setQuality(11))//.take(4).toByteArray()
@@ -91,15 +90,6 @@ fun decode(string: String): Int = when (string.length) {
     }
 
     else -> error("")
-}
-
-fun getLength(emoji: String?): Int {
-    val it: BreakIterator = BreakIterator.getCharacterInstance()
-    it.setText(emoji)
-    var emojiCount = 0
-    while (it.next() != BreakIterator.DONE)
-        emojiCount++
-    return emojiCount
 }
 
 val codepoints = Char.MIN_SURROGATE.i..Char.MAX_HIGH_SURROGATE.i to Char.MIN_LOW_SURROGATE.i..Char.MAX_SURROGATE.i
