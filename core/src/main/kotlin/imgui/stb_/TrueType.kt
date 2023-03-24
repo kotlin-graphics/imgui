@@ -1933,7 +1933,7 @@ object TrueType {
         for (j in 0 until h) {
             var i = 0
             var total = 0u
-            buffer.fill(0.ub, ptr, ptr + kernelWidth.i)
+            buffer.fill(0u, 0, kernelWidth.i)
 
             // make kernel_width a constant in common cases so compiler can optimize out the divide
             while (i <= safeW) {
