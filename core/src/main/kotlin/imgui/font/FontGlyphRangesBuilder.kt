@@ -59,7 +59,7 @@ class FontGlyphRangesBuilder {
     }
 
     /** Output new ranges */
-    fun buildRanges(outRanges: ArrayList<Char>) {
+    infix fun buildRanges(outRanges: ArrayList<Char>) {
         val maxCodepoint = UNICODE_CODEPOINT_MAX
         var n = 0
         while (n <= maxCodepoint) {

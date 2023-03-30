@@ -192,7 +192,7 @@ fun navUpdate() {
     // Always prioritize mouse highlight if navigation is disabled
     if (!navKeyboardActive && !navGamepadActive) {
         g.navDisableHighlight = true
-        g.navDisableMouseHover = true; setMousePos = false
+        g.navDisableMouseHover = false; setMousePos = false
     }
 
     // Update mouse position if requested

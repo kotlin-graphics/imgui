@@ -57,7 +57,7 @@ internal interface widgets {
 
         // Accept null ranges
         if (textEnd == 0) // ~text == text_end
-            if(text.isNotEmpty())
+            if (text.isNotEmpty())
                 text[0] = 0 // ~text_end = "";
 
         // Calculate length
@@ -77,8 +77,7 @@ internal interface widgets {
 
             // Render (we don't hide text after ## in this end-user function)
             renderTextWrapped(bb.min, text, textEnd, wrapWidth)
-        }
-        else {
+        } else {
             // Long text!
             // Perform manual coarse clipping to optimize for long multi-line text
             // - From this point we will only compute the width of lines that are visible. Optimization only available when word-wrapping is disabled.
@@ -310,10 +309,10 @@ internal interface widgets {
     }
 
     fun checkboxFlags(label: String, flags: KMutableProperty0<Long>, flagsValue: Long): Boolean =
-        checkboxFlagsT(label, flags, flagsValue)
+            checkboxFlagsT(label, flags, flagsValue)
 
     fun checkboxFlags(label: String, flags: KMutableProperty0<Ulong>, flagsValue: Ulong): Boolean =
-        checkboxFlagsT(label, flags, flagsValue)
+            checkboxFlagsT(label, flags, flagsValue)
 
     companion object {
         val isRootOfOpenMenuSet: Boolean

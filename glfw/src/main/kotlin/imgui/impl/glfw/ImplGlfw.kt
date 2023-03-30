@@ -27,11 +27,11 @@ enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
 // - When calling Init with 'install_callbacks=true': ImGui_ImplGlfw_InstallCallbacks() is called. GLFW callbacks will be installed for you. They will chain-call user's previously installed callbacks, if any.
 // - When calling Init with 'install_callbacks=false': GLFW callbacks won't be installed. You will need to call individual function yourself from your own GLFW callbacks.
 class ImplGlfw @JvmOverloads constructor(
-    /** Main window */
-    val window: GlfwWindow, installCallbacks: Boolean = true,
-    /** for vr environment */
-    val vrTexSize: Vec2i? = null,
-    clientApi: GlfwClientApi = GlfwClientApi.OpenGL) {
+        /** Main window */
+        val window: GlfwWindow, installCallbacks: Boolean = true,
+        /** for vr environment */
+        val vrTexSize: Vec2i? = null,
+        clientApi: GlfwClientApi = GlfwClientApi.OpenGL) {
 
     /** for passing inputs in vr */
     var vrCursorPos: Vec2? = null
@@ -155,7 +155,7 @@ class ImplGlfw @JvmOverloads constructor(
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
             window.cursor = GlfwCursor(data.mouseCursors[imguiCursor.i].takeIf { it != NULL }
-                                           ?: data.mouseCursors[MouseCursor.Arrow.i])
+                                               ?: data.mouseCursors[MouseCursor.Arrow.i])
             window.cursorMode = CursorMode.normal
         }
     }
@@ -236,7 +236,16 @@ class ImplGlfw @JvmOverloads constructor(
         //        ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
         //        IM_ASSERT(bd->InstalledCallbacks == false && "Callbacks already installed!");
         //        IM_ASSERT(bd->Window == window);
-        //
+
+        window.windowFocusCB = windowFocusCallback
+        window.cursorEnterCB = cursorEnterCallback
+        window.cursorPosCB = cursorPosCallback
+        window.mouseButtonCB = mouseButtonCallback
+        window.scrollCB = scrollCallback
+        window.keyCB = keyCallback
+        window.charCB = charCallback
+        // TODO monitor callback
+
         //        bd->PrevUserCallbackWindowFocus = glfwSetWindowFocusCallback(window, ImGui_ImplGlfw_WindowFocusCallback);
         //        bd->PrevUserCallbackCursorEnter = glfwSetCursorEnterCallback(window, ImGui_ImplGlfw_CursorEnterCallback);
         //        bd->PrevUserCallbackCursorPos = glfwSetCursorPosCallback(window, ImGui_ImplGlfw_CursorPosCallback);
@@ -299,10 +308,10 @@ class ImplGlfw @JvmOverloads constructor(
 
         fun updateKeyModifiers() {
             val wnd = data.window.handle.value
-            io.addKeyEvent(Key.Mod_Ctrl,  (glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS))
-            io.addKeyEvent(Key.Mod_Shift, (glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT)   == GLFW_PRESS))
-            io.addKeyEvent(Key.Mod_Alt,   (glfwGetKey(wnd, GLFW_KEY_LEFT_ALT)     == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT)     == GLFW_PRESS))
-            io.addKeyEvent(Key.Mod_Super, (glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER)   == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER)   == GLFW_PRESS))
+            io.addKeyEvent(Key.Mod_Ctrl, (glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS))
+            io.addKeyEvent(Key.Mod_Shift, (glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS))
+            io.addKeyEvent(Key.Mod_Alt, (glfwGetKey(wnd, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS))
+            io.addKeyEvent(Key.Mod_Super, (glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS))
         }
 
         val scrollCallback: ScrollCB = { offset: Vec2d ->
@@ -363,13 +372,13 @@ class ImplGlfw @JvmOverloads constructor(
         }
 
         fun initForOpengl(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
-            ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.OpenGL)
+                ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.OpenGL)
 
         fun initForVulkan(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
-            ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.Vulkan)
+                ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.Vulkan)
 
         fun initForOther(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
-            ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.Unknown)
+                ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.Unknown)
 
         object data {
             lateinit var window: GlfwWindow

@@ -310,6 +310,8 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
             Pos=${setting.pos.x.i},${setting.pos.y.i}
             Size=${setting.size.x.i},${setting.size.y.i}
             Collapsed=${setting.collapsed.i}
+            
+            
             """.trimIndent() // [JVM] prefer trimIndent over trimMargin to preserve the last line
 }
 
