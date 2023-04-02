@@ -1,7 +1,6 @@
 package imgui.api
 
 import glm_.f
-import glm_.hasnt
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
@@ -32,10 +31,10 @@ import imgui.classes.ContextHookType
 import imgui.classes.IO
 import imgui.classes.Style
 import imgui.font.FontAtlas
-import imgui.internal.*
+import imgui.internal.DrawData
 import imgui.internal.classes.Rect
+import imgui.internal.sections.DrawListFlags
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
-import imgui.internal.sections.ItemFlag
 import imgui.static.*
 import org.lwjgl.system.Platform
 import imgui.WindowFlag as Wf
@@ -101,10 +100,10 @@ interface main {
         g.drawListSharedData.clipRectFullscreen = virtualSpace.toVec4()
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
         g.drawListSharedData.setCircleTessellationMaxError_(style.circleTessellationMaxError)
-        var flags = Dlf.None.i
+        var flags: DrawListFlags = emptyFlags()
         if (style.antiAliasedLines)
             flags = flags or Dlf.AntiAliasedLines
-        if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i)
+        if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines)
             flags = flags or Dlf.AntiAliasedLinesUseTex
         if (style.antiAliasedFill)
             flags = flags or Dlf.AntiAliasedFill
@@ -261,7 +260,7 @@ interface main {
         g.currentWindowStack.clear()
         g.beginPopupStack.clear()
         g.itemFlagsStack.clear()
-        g.itemFlagsStack += ItemFlag.None.i
+        g.itemFlagsStack += emptyFlags()
         g.groupStack.clear()
 
         // // [DEBUG] Update debug features

@@ -8,20 +8,20 @@ import imgui.internal.sections.ViewportP
 // [SECTION] Viewports
 //-----------------------------------------------------------------------------
 
-typealias ViewportFlags = Int
+typealias ViewportFlags = Flag<ViewportFlag>
 
 /** Flags stored in ImGuiViewport::Flags, giving indications to the platform backends. */
-enum class ViewportFlag(override val i: ViewportFlags) : Flag<ViewportFlag> {
-  None(0),
+enum class ViewportFlag : Flag<ViewportFlag> {
+    /** Represent a Platform Window */
+    IsPlatformWindow,
 
-  /** Represent a Platform Window */
-  IsPlatformWindow(1 shl 0),
+    /** Represent a Platform Monitor (unused yet) */
+    IsPlatformMonitor,
 
-  /** Represent a Platform Monitor (unused yet) */
-  IsPlatformMonitor(1 shl 1),
+    /** Platform Window: is created/managed by the application (rather than a dear imgui backend) */
+    OwnedByApp;
 
-  /** Platform Window: is created/managed by the application (rather than a dear imgui backend) */
-  OwnedByApp(1 shl 2)
+    override val i: Int = 1 shl ordinal
 }
 
 // - Currently represents the Platform Window created by the application which is hosting our Dear ImGui windows.
@@ -33,7 +33,7 @@ enum class ViewportFlag(override val i: ViewportFlags) : Flag<ViewportFlag> {
 //   - Windows are generally trying to stay within the Work Area of their host viewport.
 open class Viewport {
     /** See ImGuiViewportFlags_ */
-    var flags: ViewportFlags = 0
+    var flags: ViewportFlags = emptyFlags()
 
     /** Main Area: Position of the viewport (Dear ImGui coordinates are the same as OS desktop/native coordinates) */
     val pos = Vec2()

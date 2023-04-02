@@ -23,7 +23,6 @@ import imgui.ImGui.getColorU32
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
-import imgui.ImGui.isMouseReleased
 import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -129,8 +128,8 @@ object CustomRendering {
                     drawList.apply {
                         addNgon(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides, th); x += sz + spacing  // N-gon
                         addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, circleSegments, th); x += sz + spacing  // Circle
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0f, DrawFlag.None.i, th); x += sz + spacing  // Square
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, DrawFlag.None.i, th); x += sz + spacing  // Square with all rounded corners
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0f, thickness = th); x += sz + spacing  // Square
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, thickness = th); x += sz + spacing  // Square with all rounded corners
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, cornersTlBr, th); x += sz + spacing  // Square with two rounded corners
                         addTriangle(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col, th); x += sz + spacing      // Triangle
 //                        addTriangle(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col, th); x += sz * 0.4f + spacing // Thin triangle
@@ -225,7 +224,7 @@ object CustomRendering {
                 // Context menu (under default mouse threshold)
                 val dragDelta = getMouseDragDelta(MouseButton.Right)
                 if (optEnableContextMenu && dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
-                    openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
+                    openPopupOnItemClick("context", PopupFlag.MouseButtonRight)
                 dsl.popup("context") {
                     if (addingLine) {
                         points.pop()

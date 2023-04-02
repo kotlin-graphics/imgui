@@ -3,15 +3,20 @@ package imgui.api
 import gli_.has
 import glm_.glm
 import glm_.vec2.Vec2
-import imgui.*
+import imgui.ID
 import imgui.ImGui.beginChildEx
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.renderNavHighlight
+import imgui.WindowFlags
+import imgui.emptyFlags
 import imgui.internal.classes.Rect
-import imgui.internal.sections.*
+import imgui.internal.sections.Axis
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.NavHighlightFlag
+import imgui.internal.sections.shl
 import imgui.WindowFlag as Wf
 
 
@@ -27,14 +32,14 @@ interface childWindows {
      *    [Important: due to legacy reason, this is inconsistent with most other functions such as BeginMenu/EndMenu,
      *     BeginPopup/EndPopup, etc. where the EndXXX call should only be called if the corresponding BeginXXX function
      *     returned true. Begin and BeginChild are the only odd ones out. Will be fixed in a future update.] */
-    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = 0): Boolean =
-            beginChildEx(strId, currentWindow.getID(strId), size, border, flags)
+    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = emptyFlags()): Boolean =
+        beginChildEx(strId, currentWindow.getID(strId), size, border, flags)
 
     /** begin a scrolling region.
      *  size == 0f: use remaining window size
      *  size < 0f: use remaining window size minus abs(size)
      *  size > 0f: fixed size. each axis can use a different mode, e.g. Vec2(0, 400).   */
-    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = Wf.None.i): Boolean {
+    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = emptyFlags()): Boolean {
         assert(id != 0)
         return beginChildEx("", id, sizeArg, border, flags)
     }
@@ -67,7 +72,7 @@ interface childWindows {
 
                 // When browsing a window that has no activable items (scroll only) we keep a highlight on the child (pass g.NavId to trick into always displaying)
                 if (window.dc.navLayersActiveMask == 0 && window === g.navWindow)
-                    renderNavHighlight(Rect(bb.min - 2, bb.max + 2), g.navId, NavHighlightFlag.TypeThin.i)
+                    renderNavHighlight(Rect(bb.min - 2, bb.max + 2), g.navId, NavHighlightFlag.TypeThin)
             } else // Not navigable into
                 itemAdd(bb, 0)
             if (g.hoveredWindow === window)

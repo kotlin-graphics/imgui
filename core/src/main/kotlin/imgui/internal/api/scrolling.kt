@@ -1,14 +1,14 @@
 package imgui.internal.api
 
-import glm_.has
 import glm_.min
 import glm_.vec2.Vec2
-import imgui.*
+import imgui.ImGui
+import imgui.WindowFlag
 import imgui.api.g
+import imgui.emptyFlags
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.floor
-import imgui.internal.isPowerOfTwo
 import imgui.internal.sections.ScrollFlag
 import imgui.internal.sections.ScrollFlags
 import imgui.static.calcNextScrollFromScrollTargetAndClamp
@@ -60,14 +60,15 @@ internal interface scrolling {
     }
 
     // Early work-in-progress API (ScrollToItem() will become public)
-    fun scrollToItem(flags: ScrollFlags = ScrollFlag.None.i) {
+    fun scrollToItem(flags: ScrollFlags = emptyFlags()) {
         val window = g.currentWindow!!
         scrollToRectEx(window, g.lastItemData.navRect, flags)
     }
 
-    fun scrollToRect(window: Window, rect: Rect, flags: ScrollFlags = ScrollFlag.None.i): Vec2 = scrollToRectEx(window, rect, flags)
+    fun scrollToRect(window: Window, rect: Rect, flags: ScrollFlags = emptyFlags()): Vec2 =
+        scrollToRectEx(window, rect, flags)
 
-    fun scrollToRectEx(window: Window, itemRect: Rect, flags_: ScrollFlags = ScrollFlag.None.i): Vec2 {
+    fun scrollToRectEx(window: Window, itemRect: Rect, flags_: ScrollFlags = emptyFlags()): Vec2 {
 
         var flags = flags_
 
@@ -78,14 +79,14 @@ internal interface scrolling {
         //GetForegroundDrawList(window)->AddRect(scroll_rect.Min, scroll_rect.Max, IM_COL32_WHITE); // [DEBUG]
 
         // Check that only one behavior is selected per axis
-        assert(flags hasnt ScrollFlag.MaskX_ || (flags and ScrollFlag.MaskX_).isPowerOfTwo)
-        assert(flags hasnt ScrollFlag.MaskY_ || (flags and ScrollFlag.MaskY_).isPowerOfTwo)
+        assert(flags hasnt ScrollFlag.MaskX || (flags and ScrollFlag.MaskX).isPowerOfTwo)
+        assert(flags hasnt ScrollFlag.MaskY || (flags and ScrollFlag.MaskY).isPowerOfTwo)
 
         // Defaults
         var inFlags = flags
-        if (flags hasnt ScrollFlag.MaskX_ && window.scrollbar.x)
+        if (flags hasnt ScrollFlag.MaskX && window.scrollbar.x)
             flags /= ScrollFlag.KeepVisibleEdgeX
-        if (flags hasnt ScrollFlag.MaskY_)
+        if (flags hasnt ScrollFlag.MaskY)
             flags /= if (window.appearing) ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeY
 
         val fullyVisibleX = itemRect.min.x >= scrollRect.min.x && itemRect.max.x <= scrollRect.max.x
@@ -122,9 +123,9 @@ internal interface scrolling {
         if (flags hasnt ScrollFlag.NoScrollParent && window.flags has WindowFlag._ChildWindow) {
             // FIXME-SCROLL: May be an option?
             if (inFlags has (ScrollFlag.AlwaysCenterX or ScrollFlag.KeepVisibleCenterX))
-                inFlags = (inFlags wo ScrollFlag.MaskX_) or ScrollFlag.KeepVisibleEdgeX
+                inFlags = (inFlags wo ScrollFlag.MaskX) or ScrollFlag.KeepVisibleEdgeX
             if (inFlags has (ScrollFlag.AlwaysCenterY or ScrollFlag.KeepVisibleCenterY))
-                inFlags = (inFlags wo ScrollFlag.MaskY_) or ScrollFlag.KeepVisibleEdgeY
+                inFlags = (inFlags wo ScrollFlag.MaskY) or ScrollFlag.KeepVisibleEdgeY
             deltaScroll += scrollToRectEx(window.parentWindow!!, Rect(itemRect.min - deltaScroll, itemRect.max - deltaScroll), inFlags)
         }
 

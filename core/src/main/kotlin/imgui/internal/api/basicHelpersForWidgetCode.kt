@@ -82,7 +82,7 @@ internal interface basicHelpersForWidgetCode {
     /** Declare item bounding box for clipping and interaction.
      *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over available surface
      *  declare their minimum size requirement to ItemSize() and provide a larger region to ItemAdd() which is used drawing/interaction. */
-    fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null, extraFlags: ItemFlags = 0): Boolean {
+    fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null, extraFlags: ItemFlags = emptyFlags()): Boolean {
 
         val window = g.currentWindow!!
 
@@ -92,7 +92,7 @@ internal interface basicHelpersForWidgetCode {
         g.lastItemData.rect put bb
         g.lastItemData.navRect put (navBbArg ?: bb)
         g.lastItemData.inFlags = g.currentItemFlags or extraFlags
-        g.lastItemData.statusFlags = ItemStatusFlag.None.i
+        g.lastItemData.statusFlags = emptyFlags()
 
         // Directional navigation processing
         if (id != 0) {
@@ -120,7 +120,7 @@ internal interface basicHelpersForWidgetCode {
             // READ THE FAQ: https://dearimgui.org/faq
             assert(id != window.id) { "Cannot have an empty ID at the root of a window. If you need an empty label, use ## and read the FAQ about how the ID Stack works!" }
         }
-        g.nextItemData.flags = NextItemDataFlag.None.i
+        g.nextItemData.flags = emptyFlags()
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
             IMGUI_TEST_ENGINE_ITEM_ADD(navBbArg ?: bb, id)
@@ -167,7 +167,7 @@ internal interface basicHelpersForWidgetCode {
 
         // Done with rectangle culling so we can perform heavier checks now.
         val itemFlags = if (g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
-        if (itemFlags hasnt ItemFlag.NoWindowHoverableCheck && !window.isContentHoverable(HoveredFlag.None)) {
+        if (itemFlags hasnt ItemFlag.NoWindowHoverableCheck && !window.isContentHoverable) {
             g.hoveredIdDisabled = true
             return false
         }

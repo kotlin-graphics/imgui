@@ -5,6 +5,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.clamp
 import imgui.classes.DrawList
+import imgui.emptyFlags
 import imgui.font.Font
 import kotlin.math.acos
 import kotlin.math.ceil
@@ -67,7 +68,7 @@ class DrawListSharedData {
     var clipRectFullscreen = Vec4()
 
     /** Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards) */
-    var initialFlags = DrawListFlag.None.i
+    var initialFlags: DrawListFlags = emptyFlags()
 
     /** [Internal] Temp write buffer */
     val tempBuffer = ArrayList<Vec2>()

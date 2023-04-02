@@ -4,6 +4,7 @@ import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.Cond;
+import imgui.Flag;
 import imgui.ImGui;
 import imgui.MutableProperty0;
 import imgui.classes.Context;
@@ -144,7 +145,7 @@ public class OpenGL3 {
         imgui.text("Hello, world!");                                // Display some text (you can use a format string too)
         // TODO
 //        imgui.sliderFloat("float", f, 0, 0f, 1f, "%.3f", 1f);       // Edit 1 float using a slider from 0.0f to 1.0f
-        imgui.colorEdit3("clear color", clearColor, 0);               // Edit 3 floats representing a color
+        imgui.colorEdit3("clear color", clearColor, Flag.empty());               // Edit 3 floats representing a color
 
         imgui.checkbox("Demo Window", showDemo);                 // Edit bools storing our windows open/close state
         imgui.checkbox("Another Window", showAnotherWindow);
@@ -159,7 +160,7 @@ public class OpenGL3 {
 
         // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name the window.
         if (showAnotherWindow.get()) {
-            imgui.begin("Another Window", showAnotherWindow, 0);
+            imgui.begin("Another Window", showAnotherWindow, Flag.empty());
             imgui.text("Hello from another window!");
             if (imgui.button("Close Me", new Vec2()))
                 showAnotherWindow.set(false);

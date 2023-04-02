@@ -4,18 +4,18 @@ import glm_.glm
 import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.calcTextSize
-import imgui.ImGui.contentRegionAvail
-import imgui.ImGui.popID
-import imgui.ImGui.popStyleColor
-import imgui.ImGui.popStyleVar
 import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginPopupEx
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.closePopupToLevel
+import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.endDisabled
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.openPopup
+import imgui.ImGui.popID
 import imgui.ImGui.popItemFlag
+import imgui.ImGui.popStyleColor
+import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushID
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushStyleColor
@@ -110,7 +110,7 @@ internal interface menus {
         // This is only done for items for the menu set and not the full parent window.
         val menusetIsOpen = widgets.isRootOfOpenMenuSet
         if (menusetIsOpen)
-            pushItemFlag(ItemFlag.NoWindowHoverableCheck.i, true)
+            pushItemFlag(ItemFlag.NoWindowHoverableCheck, true)
 
         // The reference position stored in popup_pos will be used by Begin() to find a suitable position for the child menu,
         // However the final position is going to be different! It is chosen by FindBestWindowPosForPopup().
@@ -220,7 +220,7 @@ internal interface menus {
         if (wantClose && isPopupOpen(id))
             closePopupToLevel(g.beginPopupStack.size, true)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else emptyFlags())
         popID()
 
         if (wantOpen && !menuIsOpen && g.openPopupStack.size > g.beginPopupStack.size)
@@ -263,7 +263,7 @@ internal interface menus {
         // See BeginMenuEx() for comments about this.
         val menusetIsOpen = widgets.isRootOfOpenMenuSet
         if (menusetIsOpen)
-            pushItemFlag(ItemFlag.NoWindowHoverableCheck.i, true)
+            pushItemFlag(ItemFlag.NoWindowHoverableCheck, true)
 
         // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
         // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
@@ -310,7 +310,7 @@ internal interface menus {
                     window.drawList.renderCheckMark(pos + Vec2(offsets.offsetMark + stretchW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f), Col.Text.u32, g.fontSize * 0.866f)
             }
         }
-        IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else ItemStatusFlag.None)
+        IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else emptyFlags())
         if (!enabled)
             endDisabled()
         popID()

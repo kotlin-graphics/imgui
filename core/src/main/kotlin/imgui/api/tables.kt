@@ -85,8 +85,10 @@ import imgui.TableRowFlag as Trf
 interface tables {
 
     /** Read about "TABLE SIZING" at the top of this file. */
-    fun beginTable(strId: String, columns: Int, flags: TableFlags = Tf.None.i,
-                   outerSize: Vec2 = Vec2(), innerWidth: Float = 0f): Boolean {
+    fun beginTable(
+        strId: String, columns: Int, flags: TableFlags = emptyFlags(),
+        outerSize: Vec2 = Vec2(), innerWidth: Float = 0f
+    ): Boolean {
         val id = getID(strId)
         return beginTableEx(strId, id, columns, flags, outerSize, innerWidth)
     }
@@ -293,7 +295,7 @@ interface tables {
     /** [Public] Starts into the first cell of a new row
      *
      *  append into the first cell of a new row. */
-    fun tableNextRow(rowFlags: TableRowFlags = Trf.None.i, rowMinHeight: Float = 0f) {
+    fun tableNextRow(rowFlags: TableRowFlags = emptyFlags(), rowMinHeight: Float = 0f) {
 
         val table = g.currentTable!!
 
@@ -368,13 +370,13 @@ interface tables {
 
     /** See "COLUMN SIZING POLICIES" comments at the top of this file
      *  If (init_width_or_weight <= 0.0f) it is ignored */
-    fun tableSetupColumn(label: String?, flags_: TableColumnFlags = Tcf.None.i, initWidthOrWeight: Float = 0f, userId: ID = 0) {
+    fun tableSetupColumn(label: String?, flags_: TableColumnFlags = emptyFlags(), initWidthOrWeight: Float = 0f, userId: ID = 0) {
 
         var flags = flags_
         val table = g.currentTable
         check(table != null) { "Need to call TableSetupColumn() after BeginTable()!" }
         assert(!table.isLayoutLocked) { "Need to call call TableSetupColumn() before first row!" }
-        assert(flags hasnt Tcf.StatusMask_) { "Illegal to pass StatusMask values to TableSetupColumn()" }
+        assert(flags hasnt Tcf.StatusMask) { "Illegal to pass StatusMask values to TableSetupColumn()" }
         if (table.declColumnsCount >= table.columnsCount) {
             assert(table.declColumnsCount < table.columnsCount) { "Called TableSetupColumn() too many times!" }
             return
@@ -385,14 +387,14 @@ interface tables {
 
         // Assert when passing a width or weight if policy is entirely left to default, to avoid storing width into weight and vice-versa.
         // Give a grace to users of ImGuiTableFlags_ScrollX.
-        if (table.isDefaultSizingPolicy && flags hasnt Tcf.WidthMask_ && flags hasnt Tf.ScrollX)
+        if (table.isDefaultSizingPolicy && flags hasnt Tcf.WidthMask && flags hasnt Tcf.IsEnabled)
             assert(initWidthOrWeight <= 0f) { "Can only specify width/weight if sizing policy is set explicitly in either Table or Column." }
 
         // When passing a width automatically enforce WidthFixed policy
         // (whereas TableSetupColumnFlags would default to WidthAuto if table is not Resizable)
-        if (flags hasnt Tcf.WidthMask_ && initWidthOrWeight > 0f)
+        if (flags hasnt Tcf.WidthMask && initWidthOrWeight > 0f)
             (table.flags and Tf._SizingMask).let {
-                if (it == Tf.SizingFixedFit.i || it == Tf.SizingFixedSame.i)
+                if (it eq Tf.SizingFixedFit || it eq Tf.SizingFixedSame)
                     flags = flags or Tcf.WidthFixed
             }
 
@@ -491,7 +493,7 @@ interface tables {
         // Open row
         val rowY1 = ImGui.cursorScreenPos.y
         val rowHeight = tableGetHeaderRowHeight()
-        tableNextRow(Trf.Headers.i, rowHeight)
+        tableNextRow(Trf.Headers, rowHeight)
         if (table.hostSkipItems) // Merely an optimization, you may skip in your own code.
             return
 
@@ -576,7 +578,7 @@ interface tables {
         //GetForegroundDrawList()->AddRect(bb.Min, bb.Max, IM_COL32(255, 0, 0, 255)); // [DEBUG]
 
         // Using AllowItemOverlap mode because we cover the whole cell, and we want user to be able to submit subsequent items.
-        val (pressed, hovered, held) = buttonBehavior(bb, id, ButtonFlag.AllowItemOverlap.i)
+        val (pressed, hovered, held) = buttonBehavior(bb, id, ButtonFlag.AllowItemOverlap)
         if (g.activeId != id)
             setItemAllowOverlap()
         if (held || hovered || selected) {
@@ -601,13 +603,13 @@ interface tables {
             // We don't reorder: through the frozen<>unfrozen line, or through a column that is marked with ImGuiTableColumnFlags_NoReorder.
             if (g.io.mouseDelta.x < 0.0f && g.io.mousePos.x < cellR.min.x)
                 table.columns.getOrNull(column.prevEnabledColumn)?.let { prevColumn ->
-                    if (((column.flags or prevColumn.flags) and Tcf.NoReorder) == 0)
+                    if (((column.flags or prevColumn.flags) and Tcf.NoReorder).isEmpty)
                         if (column.indexWithinEnabledSet < table.freezeColumnsRequest == prevColumn.indexWithinEnabledSet < table.freezeColumnsRequest)
                             table.reorderColumnDir = -1
                 }
             if (g.io.mouseDelta.x > 0f && g.io.mousePos.x > cellR.max.x)
                 table.columns.getOrNull(column.nextEnabledColumn)?.let { nextColumn ->
-                    if (((column.flags or nextColumn.flags) and Tcf.NoReorder) == 0)
+                    if (((column.flags or nextColumn.flags) and Tcf.NoReorder).isEmpty)
                         if (column.indexWithinEnabledSet < table.freezeColumnsRequest == nextColumn.indexWithinEnabledSet < table.freezeColumnsRequest)
                             table.reorderColumnDir = +1
                 }
@@ -705,10 +707,10 @@ interface tables {
      *
      *  return column flags so you can query their Enabled/Visible/Sorted/Hovered status flags. Pass -1 to use current column. */
     fun tableGetColumnFlags(columnN_: Int = -1): TableColumnFlags {
-        val table = g.currentTable ?: return Tcf.None.i
+        val table = g.currentTable ?: return emptyFlags()
         val columnN = if (columnN_ < 0) table.currentColumn else columnN_
         return when (columnN) {
-            table.columnsCount -> if (table.hoveredColumnBody == columnN) Tcf.IsHovered.i else Tcf.None.i
+            table.columnsCount -> if (table.hoveredColumnBody == columnN) Tcf.IsHovered else emptyFlags()
             else -> table.columns[columnN].flags
         }
     }
@@ -739,7 +741,6 @@ interface tables {
     fun tableSetBgColor(target: TableBgTarget, color_: Int, columnN_: Int = -1) {
 
         val table = g.currentTable!!
-        assert(target != TableBgTarget.None)
 
         val color = if (color_ == COL32_DISABLE) 0 else color_
         var columnN = columnN_

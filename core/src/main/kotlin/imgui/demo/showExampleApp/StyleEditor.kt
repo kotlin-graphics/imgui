@@ -85,7 +85,7 @@ object StyleEditor {
 
     var outputDest = 0
     var outputOnlyModified = true
-    var alphaFlags: ColorEditFlags = 0
+    var alphaFlags: ColorEditFlags = emptyFlags()
     val filter = TextFilter()
     var windowScale = 1f
 
@@ -135,7 +135,7 @@ object StyleEditor {
 
         separator()
 
-        if (beginTabBar("##tabs", TabBarFlag.None.i)) {
+        if (beginTabBar("##tabs")) {
 
             if (beginTabItem("Sizes")) {
                 text("Main")
@@ -211,18 +211,21 @@ object StyleEditor {
 
                 filter.draw("Filter colors", fontSize * 16)
 
-                radioButton("Opaque", alphaFlags == Cef.None.i) { alphaFlags = Cef.None.i }; sameLine()
-                radioButton("Alpha", alphaFlags == Cef.AlphaPreview.i) { alphaFlags = Cef.AlphaPreview.i }; sameLine()
-                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf.i) {
-                    alphaFlags = Cef.AlphaPreviewHalf.i
+                radioButton("Opaque", alphaFlags.isEmpty) { alphaFlags = emptyFlags() }; sameLine()
+                radioButton("Alpha", alphaFlags eq Cef.AlphaPreview) { alphaFlags = Cef.AlphaPreview }; sameLine()
+                radioButton("Both", alphaFlags eq Cef.AlphaPreviewHalf) {
+                    alphaFlags = Cef.AlphaPreviewHalf
                 }; sameLine()
                 helpMarker("""
                     In the color list:
                     Left-click on color square to open color picker,
-                    Right-click to open edit options menu.""".trimIndent())
+                    Right-click to open edit options menu.""".trimIndent()
+                )
 
-                child("#colors", Vec2(), true,
-                      Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
+                child(
+                    "#colors", Vec2(), true,
+                    Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened
+                ) {
                     withItemWidth(-160) {
                         for (i in 0 until Col.COUNT) {
                             val name = Col.values()[i].name
@@ -259,11 +262,12 @@ object StyleEditor {
                 helpMarker("""
                     Those are old settings provided for convenience.
                     However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.
-                    Using those settings here will give you poor quality results.""".trimIndent())
+                    Using those settings here will give you poor quality results.""".trimIndent()
+                )
                 pushItemWidth(fontSize * 8)
-                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp.i)) // Scale only this window
+                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp)) // Scale only this window
                     setWindowFontScale(windowScale)
-                dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp.i) // Scale everything
+                dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp) // Scale everything
                 popItemWidth()
 
                 endTabItem()
@@ -284,7 +288,7 @@ object StyleEditor {
                 if (style.curveTessellationTol < 10f) style.curveTessellationTol = 0.1f
 
                 // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
-                dragFloat("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 5f, "%.2f", SliderFlag.AlwaysClamp.i)
+                dragFloat("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 5f, "%.2f", SliderFlag.AlwaysClamp)
                 if (ImGui.isItemActive) {
                     setNextWindowPos(ImGui.cursorScreenPos)
                     tooltip {

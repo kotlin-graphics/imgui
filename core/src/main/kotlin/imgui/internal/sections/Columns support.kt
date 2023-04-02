@@ -2,6 +2,7 @@ package imgui.internal.sections
 
 import imgui.Flag
 import imgui.ID
+import imgui.emptyFlags
 import imgui.internal.DrawListSplitter
 import imgui.internal.classes.Rect
 
@@ -11,13 +12,10 @@ import imgui.internal.classes.Rect
 //-----------------------------------------------------------------------------
 
 
-typealias OldColumnsFlags = Int
+typealias OldColumnsFlags = Flag<OldColumnsFlag>
 
 /** Flags: for Columns(), BeginColumns() */
 enum class OldColumnsFlag : Flag<OldColumnsFlag> {
-
-    None,
-
     /** Disable column dividers */
     NoBorder,
 
@@ -34,7 +32,7 @@ enum class OldColumnsFlag : Flag<OldColumnsFlag> {
      *  width at all_. Will eventually remove.  */
     GrowParentContentsSize;
 
-    override val i: OldColumnsFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    override val i: Int = 1 shl ordinal
 }
 
 /** Storage data for a single column for legacy Columns() api */
@@ -44,14 +42,14 @@ class OldColumnData {
     var offsetNormBeforeResize = 0f
 
     /** Not exposed */
-    var flags: OldColumnsFlags = 0
+    var flags: OldColumnsFlags = emptyFlags()
     var clipRect = Rect()
 }
 
 /** Storage data for a columns set for legacy Columns() api */
 class OldColumns {
     var id: ID = 0
-    var flags: OldColumnsFlags = OldColumnsFlag.None.i
+    var flags: OldColumnsFlags = emptyFlags()
     var isFirstFrame = false
     var isBeingResized = false
     var current = 0

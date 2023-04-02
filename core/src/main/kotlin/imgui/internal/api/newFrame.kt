@@ -60,7 +60,7 @@ internal interface newFrame {
                 }
                 is InputEvent.MouseButton -> {
                     // Trickling Rule: Stop processing queued events if we got multiple action on the same button
-                    val button = MouseButton of e.button
+                    val button = e.button
                     //                    assert(button >= 0 && button < ImGuiMouseButton_COUNT)
                     if (trickleFastInputs && ((mouseButtonChanged has (1 shl button.i)) || mouseWheeled))
                         break
@@ -273,7 +273,7 @@ internal interface newFrame {
             // Handle the edge case of a popup being closed while clicking in its empty space.
             // If we try to focus it, FocusWindow() > ClosePopupsOverWindow() will accidentally close any parent popups because they are not linked together any more.
             val rootWindow = g.hoveredWindow?.rootWindow
-            val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpen(rootWindow.popupId, PopupFlag.AnyPopupLevel.i)
+            val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpen(rootWindow.popupId, PopupFlag.AnyPopupLevel)
 
             if (rootWindow != null && !isClosedPopup) {
                 g.hoveredWindow!!.startMouseMoving() //-V595

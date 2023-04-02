@@ -68,14 +68,18 @@ class Property<V>(val get: () -> V) : KProperty0<V> {
 }
 
 infix fun BooleanArray.mutablePropertyAt(index: Int) = MutableProperty({ this[index] }) { this[index] = it }
+infix fun <T> Array<T>.mutablePropertyAt(index: Int) = MutableProperty({ this[index] }) { this[index] = it }
+infix fun <F: Flag<F>> FlagArray<F>.mutablePropertyAt(index: Int): MutableProperty<Flag<F>> = MutableProperty({ this[index] }) { this[index] = it }
 inline val <V> V.asMutableProperty
     get() = MutableProperty({ this })
 
 infix fun <V> V.mutableProperty(set: (V) -> Unit) = MutableProperty({ this }, set)
+val <V> V.mutableReference: MutableReference<V>
+    get() = MutableReference(this)
 //fun <V> mutableProperty(get: () -> V, set: (V) -> Unit = {}) = MutableProperty(get, set)
 
 //fun <V> mutableProperty(get: () -> V) = MutableProperty(get)
-class MutableProperty<V>(val get: () -> V, val set: (V) -> Unit = {}) : KMutableProperty0<V> {
+abstract class MutablePropertyBase<V> : KMutableProperty0<V> {
     override val annotations: List<Annotation>
         get() = TODO("Not yet implemented")
     override val getter: KProperty0.Getter<V>
@@ -117,7 +121,7 @@ class MutableProperty<V>(val get: () -> V, val set: (V) -> Unit = {}) : KMutable
                 TODO("Not yet implemented")
             }
 
-            override fun invoke(): V = get.invoke()
+            override fun invoke(): V = get()
 
         }
     override val isAbstract: Boolean
@@ -147,8 +151,18 @@ class MutableProperty<V>(val get: () -> V, val set: (V) -> Unit = {}) : KMutable
 
     override fun call(vararg args: Any?): V = TODO("Not yet implemented")
     override fun callBy(args: Map<KParameter, Any?>): V = TODO("Not yet implemented")
-    override fun get(): V = get.invoke()
     override fun getDelegate(): Any = TODO("Not yet implemented")
     override fun invoke(): V = get()
-    override fun set(value: V): Unit = set.invoke(value)
+}
+
+class MutableProperty<V>(val get: () -> V, val set: (V) -> Unit = {}) : MutablePropertyBase<V>() {
+    override fun get(): V = get.invoke()
+    override fun set(value: V) = set.invoke(value)
+}
+
+class MutableReference<V>(var field: V) : MutablePropertyBase<V>() {
+    override fun get(): V = field
+    override fun set(value: V) {
+        field = value
+    }
 }

@@ -1,55 +1,105 @@
 package imgui
 
 import glm_.vec4.Vec4
+import imgui.DragDropFlag.*
 import imgui.ImGui.getColorU32
+import imgui.internal.isPowerOfTwo
 
 
 //-----------------------------------------------------------------------------
 // [SECTION] Flags & Enumerations
 //-----------------------------------------------------------------------------
 
+@JvmInline
+private value class Flags<F : Flag<F>>(override val i: Int) : Flag<F> {
+    constructor() : this(0)
+    constructor(flag: Flag<F>) : this(flag.i)
 
-interface Flag<Self : Flag<Self>> {
-  val i: Int
-
-  infix fun and(b: Self): Int = i and b.i
-  infix fun and(b: Int): Int = i and b
-  infix fun or(b: Self): Int = i or b.i
-  infix fun or(b: Int): Int = i or b
-  infix fun xor(b: Self): Int = i xor b.i
-  infix fun xor(b: Int): Int = i xor b
-  infix fun wo(b: Self): Int = and(b.i.inv())
-  infix fun wo(b: Int): Int = and(b.inv())
-  infix fun has(b: Self): Boolean = and(b.i) != 0
-  infix fun hasnt(b: Self): Boolean = and(b.i) == 0
+    infix fun and(b: Flags<F>): Flags<F> = Flags(i and b.i)
+    infix fun or(b: Flags<F>): Flags<F> = Flags(i or b.i)
+    infix fun xor(b: Flags<F>): Flags<F> = Flags(i xor b.i)
+    infix fun wo(b: Flags<F>): Flags<F> = Flags(i and b.i.inv())
 }
 
-infix fun Int.and(b: Flag<*>): Int = and(b.i)
-infix fun Int.or(b: Flag<*>): Int = or(b.i)
-infix fun Int.xor(b: Flag<*>): Int = xor(b.i)
-infix fun Int.has(b: Flag<*>): Boolean = and(b.i) != 0
-infix fun Int.hasnt(b: Flag<*>): Boolean = and(b.i) == 0
-infix fun Int.wo(b: Flag<*>): Int = and(b.i.inv())
-operator fun Int.minus(flag: Flag<*>): Int = wo(flag)
-operator fun Int.div(flag: Flag<*>): Int = or(flag)
+@JvmInline
+value class FlagArray<F : Flag<F>> private constructor(private val array: IntArray) {
+    constructor(flag: Flag<F>) : this(IntArray(1) {
+        flag.i
+    })
 
+    constructor(flags: Array<out Flag<F>>) : this(IntArray(flags.size) {
+        flags[it].i
+    })
+    // constructor from size
+    constructor(size: Int) : this(IntArray(size))
+
+    operator fun get(index: Int): Flag<F> = Flags(array[index])
+    operator fun set(index: Int, value: Flag<F>) {
+        array[index] = value.i
+    }
+
+    val size: Int get() = array.size
+    operator fun iterator(): Iterator<Flag<F>> = array.iterator().asSequence().map { Flags<F>(it) }.iterator()
+    /**
+     * Returns the range of valid indices for the array.
+     */
+    val indices: IntRange
+        get() = IntRange(0, size - 1)
+}
+/**
+ * Creates a new array of the specified [size], where each element is calculated by calling the specified
+ * [init] function.
+ *
+ * The function [init] is called for each array element sequentially starting from the first one.
+ * It should return the value for an array element given its index.
+ */
+inline fun <F : Flag<F>> FlagArray(size: Int, init: (Int) -> Flag<F>) = FlagArray<F>(size).apply {
+    for (i in indices)
+        this[i] = init(i)
+}
+
+fun <F : Flag<F>> emptyFlags(): Flag<F> = Flags()
+fun <F : Flag<F>> flagArrayOf(flag: Flag<F>): FlagArray<F> = FlagArray(flag)
+fun <F : Flag<F>> flagArrayOf(vararg flags: Flag<F>): FlagArray<F> = FlagArray(flags)
+
+interface Flag<Self : Flag<Self>> {
+    val i: Int
+
+    companion object {
+        @JvmStatic
+        fun <F : Flag<F>> empty(): Flag<F> = emptyFlags()
+    }
+
+    val isEmpty get() = this eq empty()
+    val isNotEmpty get() = !isEmpty
+    val isPowerOfTwo get() = i.isPowerOfTwo
+
+    infix fun eq(b: Flag<Self>): Boolean = i == b.i
+    infix fun notEq(b: Flag<Self>): Boolean = !eq(b)
+    infix fun and(b: Flag<Self>): Flag<Self> = Flags(this) and Flags(b)
+    infix fun or(b: Flag<Self>): Flag<Self> = Flags(this) or Flags(b)
+    infix fun xor(b: Flag<Self>): Flag<Self> = Flags(this) xor Flags(b)
+    infix fun wo(b: Flag<Self>): Flag<Self> = Flags(this) wo Flags(b)
+    infix fun has(b: Flag<Self>): Boolean = and(b).isNotEmpty
+    infix fun hasnt(b: Flag<Self>): Boolean = and(b).isEmpty
+    operator fun minus(flag: Flag<Self>): Flag<Self> = wo(flag)
+    operator fun div(flag: Flag<Self>): Flag<Self> = or(flag)
+    operator fun contains(flag: Flag<Self>) = and(flag) eq flag
+}
 
 /** Flags for ImGui::Begin()
  *  (Those are per-window flags. There are shared flags in ImGuiIO: io.ConfigWindowsResizeFromEdges and io.ConfigWindowsMoveFromTitleBarOnly) */
-typealias WindowFlags = Int
+typealias WindowFlags = Flag<WindowFlag>
 
 /** Flags: for Begin(), BeginChild()    */
-enum class WindowFlag(override val i: WindowFlags) : Flag<WindowFlag> {
+enum class WindowFlag(override val i: Int) : Flag<WindowFlag> {
+    /** Disable title-bar   */
+    NoTitleBar(1 shl 0),
 
-  None(0),
+    /** Disable user resizing with the lower-right grip */
+    NoResize(1 shl 1),
 
-  /** Disable title-bar   */
-  NoTitleBar(1 shl 0),
-
-  /** Disable user resizing with the lower-right grip */
-  NoResize(1 shl 1),
-
-  /** Disable user moving the window  */
+    /** Disable user moving the window  */
     NoMove(1 shl 2),
 
     /** Disable scrollbars (window can still scroll with mouse or programmatically)  */
@@ -106,12 +156,6 @@ enum class WindowFlag(override val i: WindowFlags) : Flag<WindowFlag> {
     /** Display a dot next to the title. When used in a tab/docking context, tab is selected when clicking the X + closure is not assumed (will wait for user to stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar. */
     UnsavedDocument(1 shl 20),
 
-    NoNav(NoNavInputs or NoNavFocus),
-
-    NoDecoration(NoTitleBar or NoResize or NoScrollbar or NoCollapse),
-
-    NoInputs(NoMouseInputs or NoNavInputs or NoNavFocus),
-
     // [Internal]
 
     /** [BETA] On child window: allow gamepad/keyboard navigation to cross over parent border to this child or between sibling child windows. */
@@ -129,25 +173,30 @@ enum class WindowFlag(override val i: WindowFlags) : Flag<WindowFlag> {
     /** Don't use! For internal use by BeginPopupModal()    */
     _Modal(1 shl 27),
 
-  /** Don't use! For internal use by BeginMenu()  */
-  _ChildMenu(1 shl 28)
+    /** Don't use! For internal use by BeginMenu()  */
+    _ChildMenu(1 shl 28);
+
+    companion object {
+        val NoNav: WindowFlags = NoNavInputs or NoNavFocus
+
+        val NoDecoration: WindowFlags = NoTitleBar or NoResize or NoScrollbar or NoCollapse
+
+        val NoInputs: WindowFlags = NoMouseInputs or NoNavInputs or NoNavFocus
+    }
 }
 
 /** Flags for ImGui::InputText(), InputTextMultiline()
  *  (Those are per-item flags. There are shared flags in ImGuiIO: io.ConfigInputTextCursorBlink and io.ConfigInputTextEnterKeepActive) */
-typealias InputTextFlags = Int
+typealias InputTextFlags = Flag<InputTextFlag>
 
-enum class InputTextFlag(override val i: InputTextFlags) : Flag<InputTextFlag> {
+enum class InputTextFlag(override val i: Int) : Flag<InputTextFlag> {
+    /** Allow 0123456789 . + - * /      */
+    CharsDecimal(1 shl 0),
 
-  None(0),
+    /** Allow 0123456789ABCDEFabcdef    */
+    CharsHexadecimal(1 shl 1),
 
-  /** Allow 0123456789 . + - * /      */
-  CharsDecimal(1 shl 0),
-
-  /** Allow 0123456789ABCDEFabcdef    */
-  CharsHexadecimal(1 shl 1),
-
-  /** Turn a..z into A..Z */
+    /** Turn a..z into A..Z */
     CharsUppercase(1 shl 2),
 
     /** Filter out spaces), tabs    */
@@ -218,25 +267,22 @@ enum class InputTextFlag(override val i: InputTextFlags) : Flag<InputTextFlag> {
     /** For internal use by functions using InputText() before reformatting data */
     _NoMarkEdited(1 shl 27),
 
-  /** For internal use by TempInputText(), will skip calling ItemAdd(). Require bounding-box to strictly match. */
-  _MergedItem(1 shl 28)
+    /** For internal use by TempInputText(), will skip calling ItemAdd(). Require bounding-box to strictly match. */
+    _MergedItem(1 shl 28);
 }
 
 
-typealias TreeNodeFlags = Int
+typealias TreeNodeFlags = Flag<TreeNodeFlag>
 
 /** Flags: for TreeNode(), TreeNodeEx(), CollapsingHeader()   */
-enum class TreeNodeFlag(override val i: TreeNodeFlags) : Flag<TreeNodeFlag> {
+enum class TreeNodeFlag(override val i: Int) : Flag<TreeNodeFlag> {
+    /** Draw as selected    */
+    Selected(1 shl 0),
 
-  None(0),
+    /** Draw frame with background (e.g. for CollapsingHeader)  */
+    Framed(1 shl 1),
 
-  /** Draw as selected    */
-  Selected(1 shl 0),
-
-  /** Draw frame with background (e.g. for CollapsingHeader)  */
-  Framed(1 shl 1),
-
-  /** Hit testing to allow subsequent widgets to overlap this one */
+    /** Hit testing to allow subsequent widgets to overlap this one */
     AllowItemOverlap(1 shl 2),
 
     /** Don't do a TreePush() when open (e.g. for CollapsingHeader) ( no extra indent nor pushing on ID stack   */
@@ -274,14 +320,17 @@ enum class TreeNodeFlag(override val i: TreeNodeFlags) : Flag<TreeNodeFlag> {
 
     /** (WIP) Nav: left direction may move to this TreeNode() from any of its child (items submitted between TreeNode and TreePop)   */
     NavLeftJumpsBackHere(1 shl 13),
-    CollapsingHeader(Framed or NoTreePushOnOpen or NoAutoOpenOnLog),
 
     // [Internal]
 
-  _ClipLabelForTrailingButton(1 shl 20)
+    _ClipLabelForTrailingButton(1 shl 20);
+
+    companion object {
+        val CollapsingHeader: TreeNodeFlags = Framed or NoTreePushOnOpen or NoAutoOpenOnLog
+    }
 }
 
-typealias PopupFlags = Int
+typealias PopupFlags = Flag<PopupFlag>
 
 /** Flags for OpenPopup*(), BeginPopupContext*(), IsPopupOpen() functions.
  *  - To be backward compatible with older API which took an 'int mouse_button = 1' argument, we need to treat
@@ -291,20 +340,15 @@ typealias PopupFlags = Int
  *    IMPORTANT: because the default parameter is 1 (==ImGuiPopupFlags_MouseButtonRight), if you rely on the default parameter
  *    and want to use another flag, you need to pass in the ImGuiPopupFlags_MouseButtonRight flag explicitly.
  *  - Multiple buttons currently cannot be combined/or-ed in those functions (we could allow it later). */
-enum class PopupFlag(override val i: PopupFlags) : Flag<PopupFlag> {
+enum class PopupFlag(override val i: Int) : Flag<PopupFlag> {
+    /** For BeginPopupContext*(): open on Left Mouse release. */
+    MouseButtonLeft(0),
 
-  None(0),
+    /** For BeginPopupContext*(): open on Right Mouse release. */
+    MouseButtonRight(1),
 
-  /** For BeginPopupContext*(): open on Left Mouse release. Guaranteed to always be == 0 (same as ImGuiMouseButton_Left) */
-  MouseButtonLeft(0),
-
-  /** For BeginPopupContext*(): open on Right Mouse release. Guaranteed to always be == 1 (same as ImGuiMouseButton_Right) */
-  MouseButtonRight(1),
-
-  /** For BeginPopupContext*(): open on Middle Mouse release. Guaranteed to always be == 2 (same as ImGuiMouseButton_Middle) */
+    /** For BeginPopupContext*(): open on Middle Mouse release. */
     MouseButtonMiddle(2),
-    MouseButtonMask_(0x1F),
-    MouseButtonDefault_(1),
 
     /** For OpenPopup*(), BeginPopupContext*(): don't open if there's already a popup at the same level of the popup stack */
     NoOpenOverExistingPopup(1 shl 5),
@@ -316,25 +360,40 @@ enum class PopupFlag(override val i: PopupFlags) : Flag<PopupFlag> {
     AnyPopupId(1 shl 7),
 
     /** For IsPopupOpen(): search/test at any level of the popup stack (default test in the current level) */
-    AnyPopupLevel(1 shl 8),
-    AnyPopup(AnyPopupId or AnyPopupLevel);
+    AnyPopupLevel(1 shl 8);
+
+    companion object {
+        val AnyPopup: PopupFlags = AnyPopupId or AnyPopupLevel
+        val Default: PopupFlags = MouseButtonRight
+
+        infix fun of(mouseButton: MouseButton): PopupFlags = when (mouseButton) {
+            MouseButton.Left -> MouseButtonLeft
+            MouseButton.Right -> MouseButtonRight
+            MouseButton.Middle -> MouseButtonMiddle
+            else -> emptyFlags()
+        }
+    }
 }
 
+val PopupFlags.mouseButton: MouseButton
+    get() = when {
+        this eq PopupFlag.MouseButtonLeft -> MouseButton.Left
+        this eq PopupFlag.MouseButtonRight -> MouseButton.Right
+        this eq PopupFlag.MouseButtonMiddle -> MouseButton.Middle
+        else -> MouseButton.None
+    }
 
-typealias SelectableFlags = Int
+typealias SelectableFlags = Flag<SelectableFlag>
 
 /** Flags for ImGui::Selectable()   */
-enum class SelectableFlag(override val i: SelectableFlags) : Flag<SelectableFlag> {
+enum class SelectableFlag(override val i: Int) : Flag<SelectableFlag> {
+    /** Clicking this doesn't close parent popup window   */
+    DontClosePopups(1 shl 0),
 
-  None(0),
+    /** Selectable frame can span all columns (text will still fit in current column)   */
+    SpanAllColumns(1 shl 1),
 
-  /** Clicking this doesn't close parent popup window   */
-  DontClosePopups(1 shl 0),
-
-  /** Selectable frame can span all columns (text will still fit in current column)   */
-  SpanAllColumns(1 shl 1),
-
-  /** Generate press events on double clicks too  */
+    /** Generate press events on double clicks too  */
     AllowDoubleClick(1 shl 2),
 
     /** Cannot be selected, display grayed out text */
@@ -370,20 +429,18 @@ enum class SelectableFlag(override val i: SelectableFlags) : Flag<SelectableFlag
     _NoSetKeyOwner(1 shl 27);
 }
 
-typealias ComboFlags = Int
+typealias ComboFlags = Flag<ComboFlag>
 
 /** Flags: for BeginCombo() */
-enum class ComboFlag(override val i: ComboFlags) : Flag<ComboFlag> {
-  None(0),
+enum class ComboFlag(override val i: Int) : Flag<ComboFlag> {
+    /** Align the popup toward the left by default */
+    PopupAlignLeft(1 shl 0),
 
-  /** Align the popup toward the left by default */
-  PopupAlignLeft(1 shl 0),
+    /** Max ~4 items visible */
+    HeightSmall(1 shl 1),
 
-  /** Max ~4 items visible */
-  HeightSmall(1 shl 1),
-
-  /** Max ~8 items visible (default) */
-  HeightRegular(1 shl 2),
+    /** Max ~8 items visible (default) */
+    HeightRegular(1 shl 2),
 
     /** Max ~20 items visible */
     HeightLarge(1 shl 3),
@@ -396,29 +453,30 @@ enum class ComboFlag(override val i: ComboFlags) : Flag<ComboFlag> {
 
     /** Display only a square arrow button  */
     NoPreview(1 shl 6),
-    HeightMask_(HeightSmall or HeightRegular or HeightLarge or HeightLargest),
 
     // private
 
-  /** enable BeginComboPreview() */
-  _CustomPreview(1 shl 20)
+    /** enable BeginComboPreview() */
+    _CustomPreview(1 shl 20);
+
+    companion object {
+        val HeightMask: ComboFlags = HeightSmall or HeightRegular or HeightLarge or HeightLargest
+    }
 }
 
 
-typealias TabBarFlags = Int
+typealias TabBarFlags = Flag<TabBarFlag>
 
 /** Flags for ImGui::BeginTabBar() */
-enum class TabBarFlag(override val i: TabBarFlags) : Flag<TabBarFlag> {
-  None(0),
+enum class TabBarFlag(override val i: Int) : Flag<TabBarFlag> {
+    /** Allow manually dragging tabs to re-order them + New tabs are appended at the end of list */
+    Reorderable(1 shl 0),
 
-  /** Allow manually dragging tabs to re-order them + New tabs are appended at the end of list */
-  Reorderable(1 shl 0),
+    /** Automatically select new tabs when they appear */
+    AutoSelectNewTabs(1 shl 1),
 
-  /** Automatically select new tabs when they appear */
-  AutoSelectNewTabs(1 shl 1),
-
-  /** Disable buttons to open the tab list popup */
-  TabListPopupButton(1 shl 2),
+    /** Disable buttons to open the tab list popup */
+    TabListPopupButton(1 shl 2),
 
     /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button.
      *  You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
@@ -435,33 +493,33 @@ enum class TabBarFlag(override val i: TabBarFlags) : Flag<TabBarFlag> {
 
     /** Add scroll buttons when tabs don't fit */
     FittingPolicyScroll(1 shl 7),
-    FittingPolicyMask_(FittingPolicyResizeDown or FittingPolicyScroll),
-    FittingPolicyDefault_(FittingPolicyResizeDown.i),
 
     // Private
 
     /** Part of a dock node [we don't use this in the master branch but it facilitate branch syncing to keep this around] */
-    _DockNode(1 shl 20),
-    _IsFocused(1 shl 21),
+    _DockNode(1 shl 20), _IsFocused(1 shl 21),
 
     /** FIXME: Settings are handled by the docking system, this only request the tab bar to mark settings dirty when reordering tabs, */
     _SaveSettings(1 shl 22);
+
+    companion object {
+        val FittingPolicyMask: TabBarFlags = FittingPolicyResizeDown or FittingPolicyScroll
+        val FittingPolicyDefault: TabBarFlags = FittingPolicyResizeDown
+    }
 }
 
-typealias TabItemFlags = Int
+typealias TabItemFlags = Flag<TabItemFlag>
 
 /** Flags for ImGui::BeginTabItem() */
-enum class TabItemFlag(override val i: TabItemFlags) : Flag<TabItemFlag> {
-  None(0),
+enum class TabItemFlag(override val i: Int) : Flag<TabItemFlag> {
+    /** Display a dot next to the title + tab is selected when clicking the X + closure is not assumed (will wait for user to stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar. */
+    UnsavedDocument(1 shl 0),
 
-  /** Display a dot next to the title + tab is selected when clicking the X + closure is not assumed (will wait for user to stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar. */
-  UnsavedDocument(1 shl 0),
+    /** Trigger flag to programmatically make the tab selected when calling BeginTabItem() */
+    SetSelected(1 shl 1),
 
-  /** Trigger flag to programmatically make the tab selected when calling BeginTabItem() */
-  SetSelected(1 shl 1),
-
-  /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button. You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
-  NoCloseWithMiddleMouseButton(1 shl 2),
+    /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button. You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
+    NoCloseWithMiddleMouseButton(1 shl 2),
 
     /** Don't call PushID(tab->ID)/PopID() on BeginTabItem()/EndTabItem() */
     NoPushId(1 shl 3),
@@ -479,18 +537,18 @@ enum class TabItemFlag(override val i: TabItemFlags) : Flag<TabItemFlag> {
     Trailing(1 shl 7),
 
     // [Internal]
-
-    _SectionMask_(Leading or Trailing),
-
     /** Track whether p_open was set or not (we'll need this info on the next frame to recompute ContentWidth during layout) */
     _NoCloseButton(1 shl 20),
 
-  /** Used by TabItemButton, change the tab item behavior to mimic a button */
-  _Button(1 shl 21)
+    /** Used by TabItemButton, change the tab item behavior to mimic a button */
+    _Button(1 shl 21);
+
+    companion object {
+        val _SectionMask: TabItemFlags = Leading or Trailing
+    }
 }
 
-
-typealias TableFlags = Int
+typealias TableFlags = Flag<TableFlag>
 
 // Flags for ImGui::BeginTable()
 // - Important! Sizing policies have complex and subtle side effects, much more so than you would expect.
@@ -514,17 +572,12 @@ typealias TableFlags = Int
 //    - Using Stretch columns OFTEN DOES NOT MAKE SENSE if ScrollX is on, UNLESS you have specified a value for 'inner_width' in BeginTable().
 //      If you specify a value for 'inner_width' then effectively the scrolling space is known and Stretch or mixed Fixed/Stretch columns become meaningful again.
 // - Read on documentation at the top of imgui_tables.cpp for details.
-enum class TableFlag(override val i: TableFlags) : Flag<TableFlag> {
+enum class TableFlag(override val i: Int) : Flag<TableFlag> {
+    /** Enable resizing columns. */
+    Resizable(1 shl 0),
 
-  // Features
-
-  None(0),
-
-  /** Enable resizing columns. */
-  Resizable(1 shl 0),
-
-  /** Enable reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers) */
-  Reorderable(1 shl 1),
+    /** Enable reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers) */
+    Reorderable(1 shl 1),
 
     /** Enable hiding/disabling columns in context menu. */
     Hideable(1 shl 2),
@@ -554,21 +607,6 @@ enum class TableFlag(override val i: TableFlags) : Flag<TableFlag> {
 
     /** Draw vertical borders on the left and right sides. */
     BordersOuterV(1 shl 10),
-
-    /** Draw horizontal borders. */
-    BordersH(BordersInnerH or BordersOuterH),
-
-    /** Draw vertical borders. */
-    BordersV(BordersInnerV or BordersOuterV),
-
-    /** Draw inner borders. */
-    BordersInner(BordersInnerV or BordersInnerH),
-
-    /** Draw outer borders. */
-    BordersOuter(BordersOuterV or BordersOuterH),
-
-    /** Draw all borders. */
-    Borders(BordersInner or BordersOuter),
 
     /** [ALPHA] Disable vertical borders in columns Body (borders will always appear in Headers). -> May move to style */
     NoBordersInBody(1 shl 11),
@@ -632,26 +670,38 @@ enum class TableFlag(override val i: TableFlags) : Flag<TableFlag> {
     SortMulti(1 shl 26),
 
     /** Allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0). */
-    SortTristate(1 shl 27),
+    SortTristate(1 shl 27);
 
-  /** [Internal] Combinations and masks */
-  _SizingMask(SizingFixedFit or SizingFixedSame or SizingStretchProp or SizingStretchSame)
+    companion object {
+        /** Draw horizontal borders. */
+        val BordersH: TableFlags = BordersInnerH or BordersOuterH
+
+        /** Draw vertical borders. */
+        val BordersV: TableFlags = BordersInnerV or BordersOuterV
+
+        /** Draw inner borders. */
+        val BordersInner: TableFlags = BordersInnerV or BordersInnerH
+
+        /** Draw outer borders. */
+        val BordersOuter: TableFlags = BordersOuterV or BordersOuterH
+
+        /** Draw all borders. */
+        val Borders: TableFlags = BordersInner or BordersOuter
+
+        /** [Internal] Combinations and masks */
+        val _SizingMask: TableFlags = SizingFixedFit or SizingFixedSame or SizingStretchProp or SizingStretchSame
+    }
 }
 
-typealias TableColumnFlags = Int
+typealias TableColumnFlags = Flag<TableColumnFlag>
 
 // Flags for ImGui::TableSetupColumn()
-enum class TableColumnFlag(override val i: TableColumnFlags) : Flag<TableColumnFlag> {
+enum class TableColumnFlag(override val i: Int) : Flag<TableColumnFlag> {
+    /** Overriding/master disable flag: hide column, won't show in context menu (unlike calling TableSetColumnEnabled() which manipulates the user accessible state) */
+    Disabled(1 shl 0),
 
-  // Input configuration flags
-
-  None(0),
-
-  /** Overriding/master disable flag: hide column, won't show in context menu (unlike calling TableSetColumnEnabled() which manipulates the user accessible state) */
-  Disabled(1 shl 0),
-
-  /** Default as a hidden/disabled column. */
-  DefaultHide(1 shl 1),
+    /** Default as a hidden/disabled column. */
+    DefaultHide(1 shl 1),
 
     /** Default as a sorting column. */
     DefaultSort(1 shl 2),
@@ -715,27 +765,26 @@ enum class TableColumnFlag(override val i: TableColumnFlags) : Flag<TableColumnF
     /** Status: is hovered by mouse */
     IsHovered(1 shl 27),
 
-    // [Internal] Combinations and masks
+    /** [Internal] Disable user resizing this column directly (it may however we resized indirectly from its left edge) */
+    NoDirectResize_(1 shl 30);
 
-    WidthMask_(WidthStretch or WidthFixed),
-    IndentMask_(IndentEnable or IndentDisable),
-    StatusMask_(IsEnabled or IsVisible or IsSorted or IsHovered),
+    companion object {
+        /** [Internal] Combinations and masks */
+        val WidthMask: TableColumnFlags = WidthStretch or WidthFixed
 
-  /** [Internal] Disable user resizing this column directly (it may however we resized indirectly from its left edge) */
-  NoDirectResize_(1 shl 30)
+        val IndentMask: TableColumnFlags = IndentEnable or IndentDisable
+
+        val StatusMask: TableColumnFlags = IsEnabled or IsVisible or IsSorted or IsHovered
+    }
 }
 
-typealias TableRowFlags = Int
+typealias TableRowFlags = Flag<TableRowFlag>
 
 // Flags for ImGui::TableNextRow()
 enum class TableRowFlag(override val i: Int) : Flag<TableRowFlag> {
-  None(0),
-
-  /** Identify header row (set default background color + width of its contents accounted differently for auto column width) */
-  Headers(1 shl 0)
+    /** Identify header row (set default background color + width of its contents accounted differently for auto column width) */
+    Headers(1 shl 0);
 }
-
-typealias TableBgTargets = Int
 
 // Enum for ImGui::TableSetBgColor()
 // Background colors are rendering in 3 layers:
@@ -746,63 +795,61 @@ typealias TableBgTargets = Int
 // When using ImGuiTableFlags_RowBg on the table, each row has the RowBg0 color automatically set for odd/even rows.
 // If you set the color of RowBg0 target, your color will override the existing RowBg0 color.
 // If you set the color of RowBg1 or ColumnBg1 target, your color will blend over the RowBg0 color.
-enum class TableBgTarget(override val i: TableBgTargets) : Flag<TableBgTarget> {
-  None(0),
+enum class TableBgTarget(val i: Int) {
+    /** Set row background color 0 (generally used for background, automatically set when ImGuiTableFlags_RowBg is used) */
+    RowBg0(1),
 
-  /** Set row background color 0 (generally used for background, automatically set when ImGuiTableFlags_RowBg is used) */
-  RowBg0(1),
+    /** Set row background color 1 (generally used for selection marking) */
+    RowBg1(2),
 
-  /** Set row background color 1 (generally used for selection marking) */
-  RowBg1(2),
-
-  /** Set cell background color (top-most color) */
-  CellBg(3);
+    /** Set cell background color (top-most color) */
+    CellBg(3);
 
     companion object {
         infix fun of(i: Int) = values().first { it.i == i }
     }
 }
 
-typealias FocusedFlags = Int
+typealias FocusedFlags = Flag<FocusedFlag>
 
 /** Flags for ImGui::IsWindowFocused() */
-enum class FocusedFlag(override val i: FocusedFlags) : Flag<FocusedFlag> {
-  None(0),
+enum class FocusedFlag : Flag<FocusedFlag> {
+    /** Return true if any children of the window is focused */
+    ChildWindows,
 
-  /** Return true if any children of the window is focused */
-  ChildWindows(1 shl 0),
+    /** Test from root window (top most parent of the current hierarchy) */
+    RootWindow,
 
-  /** Test from root window (top most parent of the current hierarchy) */
-  RootWindow(1 shl 1),
-
-  /** Return true if any window is focused.
-   *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ! */
-    AnyWindow(1 shl 2),
+    /** Return true if any window is focused.
+     *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ! */
+    AnyWindow,
 
     /** Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow) */
-    NoPopupHierarchy(1 shl 3),
+    NoPopupHierarchy,
 
-  //ImGuiFocusedFlags_DockHierarchy               = 1 << 4,   // Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
-  RootAndChildWindows(RootWindow or ChildWindows)
+    //ImGuiFocusedFlags_DockHierarchy               = 1 << 4,   // Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
+    ;
+
+    override val i: Int = 1 shl ordinal
+
+    companion object {
+        val RootAndChildWindows: FocusedFlags = RootWindow or ChildWindows
+    }
 }
 
-typealias HoveredFlags = Int
+typealias HoveredFlags = Flag<HoveredFlag>
 
 /** Flags: for IsItemHovered(), IsWindowHovered() etc.
  *  Note: if you are trying to check whether your mouse should be dispatched to Dear ImGui or to your app, you should use 'io.WantCaptureMouse' instead! Please read the FAQ!
  *  Note: windows with the ImGuiWindowFlags_NoInputs flag are ignored by IsWindowHovered() calls.*/
-enum class HoveredFlag(override val i: HoveredFlags) : Flag<HoveredFlag> {
-  /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
-   *  popup or modal blocking inputs under them.  */
-  None(0),
+enum class HoveredFlag(override val i: Int) : Flag<HoveredFlag> {
+    /** isWindowHovered() only: Return true if any children of the window is hovered */
+    ChildWindows(1 shl 0),
 
-  /** isWindowHovered() only: Return true if any children of the window is hovered */
-  ChildWindows(1 shl 0),
+    /** isWindowHovered() only: Test from root window (top most parent of the current hierarchy) */
+    RootWindow(1 shl 1),
 
-  /** isWindowHovered() only: Test from root window (top most parent of the current hierarchy) */
-  RootWindow(1 shl 1),
-
-  /** IsWindowHovered() only: Return true if any window is hovered    */
+    /** IsWindowHovered() only: Return true if any window is hovered    */
     AnyWindow(1 shl 2),
 
     /** IsWindowHovered() only: Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow) */
@@ -824,8 +871,6 @@ enum class HoveredFlag(override val i: HoveredFlags) : Flag<HoveredFlag> {
 
     /** Disable using gamepad/keyboard navigation state when active, always query mouse. */
     NoNavOverride(1 shl 10),
-    RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i),
-    RootAndChildWindows(RootWindow or ChildWindows),
 
     // Hovering delays (for tooltips)
     /** Return true after io.HoverDelayNormal elapsed (~0.30 sec) */
@@ -834,24 +879,26 @@ enum class HoveredFlag(override val i: HoveredFlags) : Flag<HoveredFlag> {
     /** Return true after io.HoverDelayShort elapsed (~0.10 sec) */
     DelayShort(1 shl 12),
 
-  /** Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
-  NoSharedDelay(1 shl 13)
+    /** Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
+    NoSharedDelay(1 shl 13);
+
+    companion object {
+        val RootAndChildWindows: HoveredFlags = RootWindow or ChildWindows
+        val RectOnly = AllowWhenBlockedByPopup or AllowWhenBlockedByActiveItem or AllowWhenOverlapped
+    }
 }
 
-typealias DragDropFlags = Int
+typealias DragDropFlags = Flag<DragDropFlag>
 
 /** Flags for beginDragDropSource(), acceptDragDropPayload() */
-enum class DragDropFlag(override val i: DragDropFlags) : Flag<DragDropFlag> {
-  // BeginDragDropSource() flags
-  None(0),
+enum class DragDropFlag(override val i: Int) : Flag<DragDropFlag> {
+    /** Disable preview tooltip. By default, a successful call to BeginDragDropSource opens a tooltip so you can display a preview or description of the source contents. This flag disables this behavior. */
+    SourceNoPreviewTooltip(1 shl 0),
 
-  /** Disable preview tooltip. By default, a successful call to BeginDragDropSource opens a tooltip so you can display a preview or description of the source contents. This flag disables this behavior. */
-  SourceNoPreviewTooltip(1 shl 0),
-
-  /** By default, when dragging we clear data so that IsItemHovered() will return false,
-   *  to avoid subsequent user code submitting tooltips.
-   *  This flag disables this behavior so you can still call IsItemHovered() on the source item. */
-  SourceNoDisableHover(1 shl 1),
+    /** By default, when dragging we clear data so that IsItemHovered() will return false,
+     *  to avoid subsequent user code submitting tooltips.
+     *  This flag disables this behavior so you can still call IsItemHovered() on the source item. */
+    SourceNoDisableHover(1 shl 1),
 
     /** Disable the behavior that allows to open tree nodes and collapsing header by holding over them while dragging
      *  a source item. */
@@ -877,10 +924,12 @@ enum class DragDropFlag(override val i: DragDropFlags) : Flag<DragDropFlag> {
     AcceptNoDrawDefaultRect(1 shl 11),
 
     /** Request hiding the BeginDragDropSource tooltip from the BeginDragDropTarget site. */
-    AcceptNoPreviewTooltip(1 shl 12),
+    AcceptNoPreviewTooltip(1 shl 12);
 
-  /** For peeking ahead and inspecting the payload before delivery. */
-  AcceptPeekOnly(AcceptBeforeDelivery or AcceptNoDrawDefaultRect)
+    companion object {
+        /** For peeking ahead and inspecting the payload before delivery. */
+        val AcceptPeekOnly: DragDropFlags = AcceptBeforeDelivery or AcceptNoDrawDefaultRect
+    }
 }
 
 // Standard Drag and Drop payload types. Types starting with '_' are defined by Dear ImGui.
@@ -945,7 +994,7 @@ enum class SortDirection {
 }
 
 
-typealias KeyChord = Int
+typealias KeyChord = Flag<Key>
 
 // A key identifier (ImGuiKey_XXX or ImGuiMod_XXX value): can represent Keyboard, Mouse and Gamepad values.
 // All our named keys are >= 512. Keys value 0 to 511 are left unused as legacy native/opaque key values (< 1.87).
@@ -953,17 +1002,17 @@ typealias KeyChord = Int
 // Read details about the 1.87 and 1.89 transition : https://github.com/ocornut/imgui/issues/4921
 
 /** A key identifier (ImGui-side enum) */
-enum class Key(i: KeyChord? = null) : Flag<Key> {
-  // Keyboard
-  None, Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace, Space, Enter, Escape,
-  LeftCtrl, LeftShift, LeftAlt, LeftSuper,
-  RightCtrl, RightShift, RightAlt, RightSuper,
-  Menu,
-  `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`,
-  A, B, C, D, E, F, G, H, I, J,
-  K, L, M, N, O, P, Q, R, S, T,
-  U, V, W, X, Y, Z,
-  F1, F2, F3, F4, F5, F6,
+enum class Key(i: Int? = null) : Flag<Key> {
+    // Keyboard
+    None, Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace, Space, Enter, Escape,
+    LeftCtrl, LeftShift, LeftAlt, LeftSuper,
+    RightCtrl, RightShift, RightAlt, RightSuper,
+    Menu,
+    `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`,
+    A, B, C, D, E, F, G, H, I, J,
+    K, L, M, N, O, P, Q, R, S, T,
+    U, V, W, X, Y, Z,
+    F1, F2, F3, F4, F5, F6,
     F7, F8, F9, F10, F11, F12,
 
     /** ' */
@@ -1047,6 +1096,9 @@ enum class Key(i: KeyChord? = null) : Flag<Key> {
     //   backends tend to interfere and break that equivalence. The safer decision is to relay that ambiguity down to the end-user...
     Mod_None(0),
 
+    /** Alias for Ctrl (non-macOS) _or_ Super (macOS). */
+    Mod_Shortcut(1 shl 11),
+
     /** Ctrl */
     Mod_Ctrl(1 shl 12),
 
@@ -1057,13 +1109,9 @@ enum class Key(i: KeyChord? = null) : Flag<Key> {
     Mod_Alt(1 shl 14),
 
     /** Cmd/Super/Windows */
-    Mod_Super(1 shl 15),
+    Mod_Super(1 shl 15);
 
-    /** Alias for Ctrl (non-macOS) _or_ Super (macOS). */
-    Mod_Shortcut(1 shl 11),
-    Mod_Mask_(0xF800); // 5-bits
-
-  override val i: KeyChord = i ?: if (ordinal == 0) 0 else 511 + ordinal
+    override val i: Int = i ?: if (ordinal == 0) 0 else 511 + ordinal
 
     val index: Int
         get() = ordinal - 1
@@ -1078,7 +1126,8 @@ enum class Key(i: KeyChord? = null) : Flag<Key> {
         val Gamepad = values().drop(GamepadStart.ordinal).take(GamepadRStickDown.ordinal - GamepadStart.ordinal + 1)
         val Mouse = values().drop(MouseLeft.ordinal).take(MouseWheelY.ordinal - MouseLeft.ordinal + 1)
         val Aliases = Mouse
-        infix fun of(i: Int) = values().first { it.i == i }
+        val Mod_Mask = Mod_Shortcut or Mod_Ctrl or Mod_Shift or Mod_Alt or Mod_Super
+        infix fun of(chord: KeyChord) = values().first(chord::eq)
 
         // [Internal] Named shortcuts for Navigation
         internal val _NavKeyboardTweakSlow = Mod_Ctrl
@@ -1092,7 +1141,16 @@ enum class Key(i: KeyChord? = null) : Flag<Key> {
     }
 }
 
-infix fun Long.shl(key: Key) = shl(key.i)
+/** ~MouseButtonToKey */
+val MouseButton.key: Key
+    get() = when (this) {
+        MouseButton.None -> Key.None
+        MouseButton.Left -> Key.MouseLeft
+        MouseButton.Right -> Key.MouseRight
+        MouseButton.Middle -> Key.MouseMiddle
+        MouseButton._unused0 -> Key.MouseX1
+        MouseButton._unused1 -> Key.MouseX2
+    }
 
 // for IO.keyMap
 
@@ -1190,22 +1248,20 @@ operator fun FloatArray.set(index: NavInput, value: Float) {
 operator fun FloatArray.get(index: NavInput): Float = get(index.i)
 
 
-typealias ConfigFlags = Int
+typealias ConfigFlags = Flag<ConfigFlag>
 
 /** Configuration flags stored in io.configFlags
  *
  *  Flags: for io.ConfigFlags   */
-enum class ConfigFlag(override val i: ConfigFlags) : Flag<ConfigFlag> {
-  None(0),
+enum class ConfigFlag(override val i: Int) : Flag<ConfigFlag> {
+    /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.AddKeyEvent() calls. */
+    NavEnableKeyboard(1 shl 0),
 
-  /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.AddKeyEvent() calls. */
-  NavEnableKeyboard(1 shl 0),
+    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui backend to fill io.NavInputs[].
+     *  Backend also needs to set ImGuiBackendFlags_HasGamepad. */
+    NavEnableGamepad(1 shl 1),
 
-  /** Master gamepad navigation enable flag. This is mostly to instruct your imgui backend to fill io.NavInputs[].
-   *  Backend also needs to set ImGuiBackendFlags_HasGamepad. */
-  NavEnableGamepad(1 shl 1),
-
-  /** Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward.
+    /** Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward.
      *  Will update io.MousePos and set io.wantSetMousePos=true. If enabled you MUST honor io.wantSetMousePos requests in your backend,
      *  otherwise ImGui will react as if the mouse is jumping around back and forth. */
     NavEnableSetMousePos(1 shl 2),
@@ -1232,30 +1288,31 @@ enum class ConfigFlag(override val i: ConfigFlags) : Flag<ConfigFlag> {
     /** Application is SRGB-aware. */
     IsSRGB(1 shl 20),
 
-  /** Application is using a touch screen instead of a mouse. */
-  IsTouchScreen(1 shl 21)
+    /** Application is using a touch screen instead of a mouse. */
+    IsTouchScreen(1 shl 21)
 }
 
 
-typealias BackendFlags = Int
+typealias BackendFlags = Flag<BackendFlag>
 
 /** Backend capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom backend.
  *
  *  Flags: for io.BackendFlags  */
-enum class BackendFlag(override val i: BackendFlags) : Flag<BackendFlag> {
-  None(0),
+enum class BackendFlag : Flag<BackendFlag> {
 
-  /** Backend Platform supports gamepad and currently has one connected. */
-  HasGamepad(1 shl 0),
+    /** Backend Platform supports gamepad and currently has one connected. */
+    HasGamepad,
 
-  /** Backend Platform supports honoring GetMouseCursor() value to change the OS cursor shape. */
-  HasMouseCursors(1 shl 1),
+    /** Backend Platform supports honoring GetMouseCursor() value to change the OS cursor shape. */
+    HasMouseCursors,
 
-  /** Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
-  HasSetMousePos(1 shl 2),
+    /** Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
+    HasSetMousePos,
 
     /** Backend Platform supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices. */
-    RendererHasVtxOffset(1 shl 3);
+    RendererHasVtxOffset;
+
+    override val i: Int = 1 shl ordinal
 }
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
@@ -1457,22 +1514,19 @@ enum class StyleVar {
 }
 
 
-typealias ColorEditFlags = Int
+typealias ColorEditFlags = Flag<ColorEditFlag>
 
 /** Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()
  *
  *  Flags: for ColorEdit4(), ColorPicker4() etc.    */
-enum class ColorEditFlag(override val i: ColorEditFlags) : Flag<ColorEditFlag> {
+enum class ColorEditFlag(override val i: Int) : Flag<ColorEditFlag> {
+    /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer). */
+    NoAlpha(1 shl 1),
 
-  None(0),
+    /** ColorEdit: disable picker when clicking on color square.  */
+    NoPicker(1 shl 2),
 
-  /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer). */
-  NoAlpha(1 shl 1),
-
-  /** ColorEdit: disable picker when clicking on color square.  */
-  NoPicker(1 shl 2),
-
-  /** ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.   */
+    /** ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.   */
     NoOptions(1 shl 3),
 
     /** ColorEdit, ColorPicker: disable color square preview next to the inputs. (e.g. to show only the inputs)   */
@@ -1537,52 +1591,47 @@ enum class ColorEditFlag(override val i: ColorEditFlags) : Flag<ColorEditFlag> {
     InputRGB(1 shl 27),
 
     /** [Input]      // ColorEdit, ColorPicker: input and output data in HSV format. */
-    InputHSV(1 shl 28),
+    InputHSV(1 shl 28);
 
-    /** Defaults Options. You can set application defaults using SetColorEditOptions(). The intent is that you probably don't want to
-     *  override them in most of your calls. Let the user choose via the option menu and/or call SetColorEditOptions() once during startup. */
-    DefaultOptions(Uint8 or DisplayRGB or InputRGB or PickerHueBar),
+    companion object {
+        /** Defaults Options. You can set application defaults using SetColorEditOptions(). The intent is that you probably don't want to
+         *  override them in most of your calls. Let the user choose via the option menu and/or call SetColorEditOptions() once during startup. */
+        val DefaultOptions: ColorEditFlags = Uint8 or DisplayRGB or InputRGB or PickerHueBar
 
-    // [Internal] Masks
-    _DisplayMask(DisplayRGB or DisplayHSV or DisplayHEX),
-    _DataTypeMask(Uint8 or Float),
-  _PickerMask(PickerHueWheel or PickerHueBar),
-  _InputMask(InputRGB or InputHSV)
+        // [Internal] Masks
+        val _DisplayMask: ColorEditFlags = DisplayRGB or DisplayHSV or DisplayHEX
+        val _DataTypeMask: ColorEditFlags = Uint8 or Float
+        val _PickerMask: ColorEditFlags = PickerHueWheel or PickerHueBar
+        val _InputMask: ColorEditFlags = InputRGB or InputHSV
+    }
 }
 
 
 /** Flags for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.
  *  We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes it easier to swap them.
  *  (Those are per-item flags. There are shared flags in ImGuiIO: io.ConfigDragClickToInputText) */
-typealias SliderFlags = Int
+typealias SliderFlags = Flag<SliderFlag>
 
-enum class SliderFlag(override val i: SliderFlags) : Flag<SliderFlag> {
-  None(0),
+enum class SliderFlag(override val i: Int) : Flag<SliderFlag> {
+    /** Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
+    AlwaysClamp(1 shl 4),
 
-  /** Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
-  AlwaysClamp(1 shl 4),
+    /** Make the widget logarithmic (linear otherwise). Consider using ImGuiDragFlags_NoRoundToFormat with this if using a format-string with small amount of digits. */
+    Logarithmic(1 shl 5),
 
-  /** Make the widget logarithmic (linear otherwise). Consider using ImGuiDragFlags_NoRoundToFormat with this if using a format-string with small amount of digits. */
-  Logarithmic(1 shl 5),
-
-  /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
-  NoRoundToFormat(1 shl 6),
+    /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
+    NoRoundToFormat(1 shl 6),
 
     /** Disable CTRL+Click or Enter key allowing to input text directly into the widget */
     NoInput(1 shl 7),
 
-    /** [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API that
-     *  has got miscast to this enum, and will trigger an assert if needed. */
-    InvalidMask_(0x7000000F),
-
     /** [Private] Should this widget be orientated vertically? */
     _Vertical(1 shl 20),
 
-  _ReadOnly(1 shl 21)
+    _ReadOnly(1 shl 21);
 }
 
-/** Identify a mouse button.
- *  Those values are guaranteed to be stable and we frequently use 0/1 directly. Named enums provided for convenience. */
+/** Identify a mouse button. */
 enum class MouseButton {
     None, Left, Right, Middle, _unused0, _unused1;
 
@@ -1639,7 +1688,7 @@ enum class MouseCursor {
     }
 }
 
-typealias CondFlags = Int
+typealias CondFlags = Flag<Cond>
 
 /** Enumeration for ImGui::SetWindow***(), SetNextWindow***(), SetNextItem***() functions
  *  Represent a condition.
@@ -1647,22 +1696,21 @@ typealias CondFlags = Int
  *  All the functions above treat 0 as a shortcut to Cond.Always.
  *
  *  Enum: A condition for many Set*() functions */
-enum class Cond(override val i: CondFlags) : Flag<Cond> {
+enum class Cond : Flag<Cond> {
+    /** No condition (always set the variable), same as Always */
+    None,
 
-  /** No condition (always set the variable), same as _Always */
-  None(0),
+    /** No condition (always set the variable), same as None */
+    Always,
 
-  /** No condition (always set the variable), same as _None */
-  Always(1 shl 0),
+    /** Set the variable once per runtime session (only the first call will succeed)    */
+    Once,
 
-  /** Set the variable once per runtime session (only the first call will succeed)    */
-  Once(1 shl 1),
-
-  /** Set the variable if the object/window has no persistently saved data (no entry in .ini file)    */
-    FirstUseEver(1 shl 2),
+    /** Set the variable if the object/window has no persistently saved data (no entry in .ini file)    */
+    FirstUseEver,
 
     /** Set the variable if the object/window is appearing after being hidden/inactive (or the first time) */
-    Appearing(1 shl 3);
+    Appearing;
 
-    //    val isPowerOfTwo = i.isPowerOfTwo // JVM, kind of useless since it's used on cpp to avoid Cond masks
+    override val i: Int = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 }

@@ -1,9 +1,6 @@
 package imgui.internal.api
 
 import imgui.api.g
-import imgui.div
-import imgui.has
-import imgui.hasnt
 import imgui.internal.sections.ItemFlag
 
 // Disabling [BETA API]

@@ -1,15 +1,13 @@
 package imgui.api
 
-import glm_.hasnt
 import glm_.vec2.Vec2
+import imgui.HoveredFlags
 import imgui.ID
 import imgui.ImGui.isMouseClicked
 import imgui.MouseButton
-import imgui.has
-import imgui.hasnt
+import imgui.emptyFlags
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
-import imgui.or
 import imgui.HoveredFlag as Hf
 
 // Item/Widgets Utilities and Query Functions
@@ -21,9 +19,8 @@ interface itemWidgetsUtilities {
      *      - we allow hovering to be true when activeId==window.moveID, so that clicking on non-interactive items
      *          such as a text() item still returns true with isItemHovered()
      *      - this should work even for non-interactive items that have no ID, so we cannot use LastItemId  */
-    fun isItemHovered(flags: Hf) = isItemHovered(flags.i)
 
-    fun isItemHovered(flags: Int = Hf.None.i): Boolean {
+    fun isItemHovered(flags: HoveredFlags = emptyFlags()): Boolean {
 
         val window = g.currentWindow!!
         if (g.navDisableMouseHover && !g.navDisableHighlight && flags hasnt Hf.NoNavOverride) {
@@ -87,6 +84,9 @@ interface itemWidgetsUtilities {
         return true
     }
 
+    val isItemHovered : Boolean
+        get() = isItemHovered()
+
     /** Is the last item active? (e.g. button being held, text field being edited.
      *  This will continuously return true while holding mouse button on an item. Items that don't interact will always return false) */
     val isItemActive: Boolean
@@ -103,7 +103,7 @@ interface itemWidgetsUtilities {
      *  Important: this can be useful but it is NOT equivalent to the behavior of e.g.Button()!
      *  Most widgets have specific reactions based on mouse-up/down state, mouse position etc. */
     fun isItemClicked(mouseButton: MouseButton = MouseButton.Left): Boolean =
-        isMouseClicked(mouseButton) && isItemHovered(Hf.None)
+        isMouseClicked(mouseButton) && isItemHovered()
 
     /** Is the last item visible? (items may be out of sight because of clipping/scrolling)    */
     val isItemVisible: Boolean

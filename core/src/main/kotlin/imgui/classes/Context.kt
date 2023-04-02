@@ -12,7 +12,6 @@ import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
-import imgui.internal.BitArray
 import imgui.internal.DrawChannel
 import imgui.internal.classes.*
 import imgui.internal.hashStr
@@ -21,7 +20,6 @@ import imgui.static.*
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
-import kotlin.collections.ArrayList
 
 /** Main Dear ImGui context
  *
@@ -182,7 +180,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Activating with mouse or nav (gamepad/keyboard) */
     var activeIdSource = InputSource.None
 
-    var activeIdMouseButton = -1
+    var activeIdMouseButton = MouseButton.None
 
     var activeIdPreviousFrame: ID = 0
 
@@ -220,7 +218,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var currentFocusScopeId: ID = 0
 
     /** == g.ItemFlagsStack.back() */
-    var currentItemFlags = ItemFlag.None.i
+    var currentItemFlags: ItemFlags = emptyFlags()
 
     /** Storage for DebugLocateItemOnHover() feature: this is read by ItemAdd() so we keep it in a hot/cached location */
     var debugLocateId: ID = 0
@@ -293,7 +291,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** ~~ IsKeyPressed(ImGuiKey_Enter) || IsKeyPressed(ImGuiKey_NavGamepadInput) ? NavId : 0; ImGuiActivateFlags_PreferInput will be set and NavActivateId will be 0.  */
     var navActivateInputId: ID = 0
 
-    var navActivateFlags = ActivateFlag.None.i
+    var navActivateFlags: ActivateFlags = emptyFlags()
 
     /** Just navigated to this id (result of a successfully MoveRequest)    */
     var navJustMovedToId: ID = 0
@@ -301,12 +299,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Just navigated to this focus scope id (result of a successfully MoveRequest). */
     var navJustMovedToFocusScopeId: ID = 0
 
-    var navJustMovedToKeyMods: KeyChord = Key.Mod_None.i
+    var navJustMovedToKeyMods: KeyChord = Key.Mod_None
 
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
 
-    var navNextActivateFlags = ActivateFlag.None.i
+    var navNextActivateFlags: ActivateFlags = emptyFlags()
 
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
     var navInputSource = InputSource.None
@@ -354,11 +352,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navMoveForwardToNextFrame = false
 
-    var navMoveFlags: NavMoveFlags = NavMoveFlag.None.i
+    var navMoveFlags: NavMoveFlags = emptyFlags()
 
-    var navMoveScrollFlags = ScrollFlag.None.i
+    var navMoveScrollFlags: ScrollFlags = emptyFlags()
 
-    var navMoveKeyMods: KeyChord = Key.Mod_None.i
+    var navMoveKeyMods: KeyChord = Key.Mod_None
 
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */
     var navMoveDir = Dir.None
@@ -447,7 +445,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Set when within a BeginDragDropXXX/EndDragDropXXX block for a drag target. */
     var dragDropWithinTarget = false
 
-    var dragDropSourceFlags = DragDropFlag.None.i
+    var dragDropSourceFlags: DragDropFlags = emptyFlags()
 
     var dragDropSourceFrameCount = -1
 
@@ -460,7 +458,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var dragDropTargetId: ID = 0
 
-    var dragDropAcceptFlags = DragDropFlag.None.i
+    var dragDropAcceptFlags: DragDropFlags = emptyFlags()
 
     /** Target item surface (we resolve overlapping targets by prioritizing the smaller surface) */
     var dragDropAcceptIdCurrRectSurface = 0f
@@ -534,7 +532,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var tempInputId: ID = 0
 
     /** Store user options for color edit widgets   */
-    var colorEditOptions: ColorEditFlags = ColorEditFlag.DefaultOptions.i
+    var colorEditOptions: ColorEditFlags = ColorEditFlag.DefaultOptions
 
     /** Backup of last Hue associated to LastColor, so we can restore Hue in lossy RGB<>HSV round trips */
     var colorEditLastHue = 0f
@@ -659,7 +657,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Debug Tools
 
-    var debugLogFlags = DebugLogFlag.OutputToTTY or DebugLogFlag.EventMask_ wo DebugLogFlag.EventClipper
+    var debugLogFlags: DebugLogFlags = DebugLogFlag.OutputToTTY or DebugLogFlag.EventMask wo DebugLogFlag.EventClipper
     val debugLogBuf = StringBuilder()
 
     val debugLogIndex = TextIndex()

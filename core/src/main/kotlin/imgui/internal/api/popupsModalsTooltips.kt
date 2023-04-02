@@ -21,7 +21,6 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.has
 import imgui.internal.classes.PopupData
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -41,7 +40,7 @@ internal interface popupsModalsTooltips {
 
         val parentWindow = g.currentWindow!!
         var flags = flags_ or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf._ChildWindow
-        flags = flags or (parentWindow.flags and Wf.NoMove.i)  // Inherit the NoMove flag
+        flags = flags or (parentWindow.flags and Wf.NoMove)  // Inherit the NoMove flag
 
         // Size
         val contentAvail = contentRegionAvail
@@ -90,13 +89,13 @@ internal interface popupsModalsTooltips {
      *  level).
      *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
      *  to NULL)    */
-    fun openPopupEx(id: ID, popupFlags: PopupFlags = PopupFlag.None.i) {
+    fun openPopupEx(id: ID, popupFlags: PopupFlags = emptyFlags()) {
 
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.beginPopupStack.size
 
         if (popupFlags has PopupFlag.NoOpenOverExistingPopup)
-            if (isPopupOpen(0, PopupFlag.AnyPopupId.i))
+            if (isPopupOpen(0, PopupFlag.AnyPopupId))
                 return
 
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
@@ -205,7 +204,7 @@ internal interface popupsModalsTooltips {
     /** Supported flags: ImGuiPopupFlags_AnyPopupId, ImGuiPopupFlags_AnyPopupLevel
      *
      *  Test for id at the current BeginPopup() level of the popup stack (this doesn't scan the whole popup stack!) */
-    fun isPopupOpen(id: ID, popupFlags: PopupFlags = PopupFlag.None.i): Boolean = when {
+    fun isPopupOpen(id: ID, popupFlags: PopupFlags = emptyFlags()): Boolean = when {
         popupFlags has PopupFlag.AnyPopupId -> { // Return true if any popup is open at the current BeginPopup() level of the popup stack
             // This may be used to e.g. test for another popups already opened to handle popups priorities at the same level.
             assert(id == 0)
@@ -221,7 +220,7 @@ internal interface popupsModalsTooltips {
     /** Attention! BeginPopup() adds default flags which BeginPopupEx()! */
     fun beginPopupEx(id: ID, flags_: WindowFlags): Boolean {
 
-        if (!isPopupOpen(id, PopupFlag.None.i)) {
+        if (!isPopupOpen(id)) {
             g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
             return false
         }
@@ -240,7 +239,7 @@ internal interface popupsModalsTooltips {
 
     /** Not exposed publicly as BeginTooltip() because bool parameters are evil. Let's see if other needs arise first.
      *  @param extraWindowFlags WindowFlag   */
-    fun beginTooltipEx(tooltipFlags_: TooltipFlags, extraWindowFlags: WindowFlags) {
+    fun beginTooltipEx(tooltipFlags_: TooltipFlags = emptyFlags(), extraWindowFlags: WindowFlags = emptyFlags()) {
         var tooltipFlags = tooltipFlags_
         if (g.dragDropWithinSource || g.dragDropWithinTarget) { // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
             // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
@@ -249,7 +248,8 @@ internal interface popupsModalsTooltips {
             val tooltipPos = io.mousePos + Vec2(16 * style.mouseCursorScale, 8 * style.mouseCursorScale)
             setNextWindowPos(tooltipPos)
             setNextWindowBgAlpha(
-                style.colors[Col.PopupBg].w * 0.6f) //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This would be nice but e.g ColorButton with checkboard has issue with transparent colors :(
+                style.colors[Col.PopupBg].w * 0.6f
+            ) //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This would be nice but e.g ColorButton with checkboard has issue with transparent colors :(
             tooltipFlags = tooltipFlags or TooltipFlag.OverridePreviousTooltip
         }
 

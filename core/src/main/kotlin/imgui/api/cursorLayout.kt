@@ -11,12 +11,12 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.separatorEx
 import imgui.ImGui.style
-import imgui.div
 import imgui.internal.classes.GroupData
 import imgui.internal.classes.Rect
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
 import imgui.internal.sections.SeparatorFlag
+import imgui.internal.sections.SeparatorFlags
 import imgui.internal.sections.LayoutType as Lt
 
 
@@ -37,7 +37,8 @@ interface cursorLayout {
             return
 
         // Those flags should eventually be overridable by the user
-        var flags = if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical.i else SeparatorFlag.Horizontal.i
+        var flags: SeparatorFlags =
+            if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else SeparatorFlag.Horizontal
         flags /= SeparatorFlag.SpanAllColumns // NB: this only applies to legacy Columns() api as they relied on Separator() a lot.
         separatorEx(flags)
     }
@@ -178,7 +179,7 @@ interface cursorLayout {
 
         window.dc.currLineTextBaseOffset = window.dc.prevLineTextBaseOffset max groupData.backupCurrLineTextBaseOffset      // FIXME: Incorrect, we should grab the base offset from the *first line* of the group but it is hard to obtain now.
         itemSize(groupBb.size)
-        itemAdd(groupBb, 0, null, ItemFlag.NoTabStop.i)
+        itemAdd(groupBb, 0, null, ItemFlag.NoTabStop)
 
         // If the current ActiveId was declared within the boundary of our group, we copy it to LastItemId so IsItemActive(), IsItemDeactivated() etc. will be functional on the entire group.
         // It would be neater if we replaced window.DC.LastItemId by e.g. 'bool LastItemIsActive', but would put a little more burden on individual widgets.

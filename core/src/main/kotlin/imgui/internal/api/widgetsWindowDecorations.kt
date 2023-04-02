@@ -60,7 +60,7 @@ internal interface widgetsWindowDecorations {
         val window = g.currentWindow!!
         val bb = Rect(pos, pos + g.fontSize + ImGui.style.framePadding * 2f)
         ImGui.itemAdd(bb, id)
-        val (pressed, hovered, held) = ImGui.buttonBehavior(bb, id, ButtonFlag.None)
+        val (pressed, hovered, held) = ImGui.buttonBehavior(bb, id)
 
         // Render
         val bgCol = if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
@@ -90,7 +90,7 @@ internal interface widgetsWindowDecorations {
 
         // Calculate scrollbar bounding box
         val bb = window getScrollbarRect axis
-        var roundingCorners = DrawFlag.RoundCornersNone.i
+        var roundingCorners: DrawFlags = DrawFlag.RoundCornersNone
         if (axis == Axis.X) {
             roundingCorners = roundingCorners or DrawFlag.RoundCornersBottomLeft
             if (!window.scrollbar.y)
@@ -150,7 +150,7 @@ internal interface widgetsWindowDecorations {
         val grabHNorm = grabHPixels / scrollbarSizeV
 
         // Handle input right away. None of the code of Begin() is relying on scrolling position before calling Scrollbar().
-        ImGui.itemAdd(bbFrame, id, null, ItemFlag.NoNav.i)
+        ImGui.itemAdd(bbFrame, id, null, ItemFlag.NoNav)
         val (_, hovered, held) = ImGui.buttonBehavior(bb, id, ButtonFlag.NoNavFocus)
 
         val scrollMax = max(1L, sizeContentsV - sizeAvailV)

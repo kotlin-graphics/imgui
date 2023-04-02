@@ -215,14 +215,14 @@ interface parametersStacks {
     /** FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
      *
      *  == tab stop enable. Allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets */
-    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop.i, !allowKeyboardFocus)
+    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop, !allowKeyboardFocus)
 
     fun popAllowKeyboardFocus() = popItemFlag()
 
     /** in 'repeat' mode, Button*() functions return repeated true in a typematic manner
      *  (using io.KeyRepeatDelay/io.KeyRepeatRate setting). Note that you can call IsItemActive() after any Button() to
      *  tell if the button is held in the current frame.    */
-    fun pushButtonRepeat(repeat: Boolean) = pushItemFlag(If.ButtonRepeat.i, repeat)
+    fun pushButtonRepeat(repeat: Boolean) = pushItemFlag(If.ButtonRepeat, repeat)
 
     fun popButtonRepeat() = popItemFlag()
 

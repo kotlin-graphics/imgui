@@ -5,8 +5,8 @@ import imgui.ID
 import imgui.ImGui.debugHookIdInfo
 import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.setNavWindow
+import imgui.MouseButton
 import imgui.api.g
-import imgui.div
 import imgui.internal.classes.Window
 import imgui.internal.hashStr
 import imgui.internal.sections.*
@@ -47,7 +47,7 @@ internal interface basicAccessors {
             g.activeIdTimer = 0f
             g.activeIdHasBeenPressedBefore = false
             g.activeIdHasBeenEditedBefore = false
-            g.activeIdMouseButton = -1
+            g.activeIdMouseButton = MouseButton.None
             if (id != 0) {
                 g.lastActiveId = id
                 g.lastActiveIdTimer = 0f

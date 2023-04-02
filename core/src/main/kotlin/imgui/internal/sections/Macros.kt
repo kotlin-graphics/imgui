@@ -2,7 +2,6 @@ package imgui.internal.sections
 
 import imgui.ImGui
 import imgui.api.g
-import imgui.has
 import imgui.internal.classes.DebugLogFlag
 
 

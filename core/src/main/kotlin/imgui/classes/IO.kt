@@ -53,10 +53,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
 
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
-    var configFlags: ConfigFlags = ConfigFlag.None.i
+    var configFlags: ConfigFlags = emptyFlags()
 
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom backend to communicate features supported by the backend. */
-    var backendFlags: BackendFlags = BackendFlag.None.i
+    var backendFlags: BackendFlags = emptyFlags()
 
     /** Main display size, in pixels (generally == GetMainViewport()->Size). May change every frame.   */
     var displaySize = Vec2i(-1)
@@ -224,7 +224,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             backendUsingLegacyNavInputArray = false
 
         // Filter duplicate (in particular: key mods and gamepad analog values are commonly spammed)
-        val latestEvent = findLatestInputEvent<InputEvent.Key>(key.i)
+        val latestEvent = findLatestInputEvent(key)
         val keyData = key.data
         val latestKeyDown = latestEvent?.down ?: keyData.down
         val latestKeyAnalog = latestEvent?.analogValue ?: keyData.analogValue
@@ -254,15 +254,14 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     }
 
     /** Queue a mouse button change */
-    fun addMouseButtonEvent(mouseButton: Int, down: Boolean) {
+    fun addMouseButtonEvent(mouseButton: MouseButton, down: Boolean) {
         assert(g.io === this) { "Can only add events to current context." }
-        assert(mouseButton >= 0 && mouseButton < MouseButton.COUNT)
         if (!appAcceptingEvents)
             return
 
         // Filter duplicate
-        val latestEvent = findLatestInputEvent<InputEvent.MouseButton>(mouseButton)
-        val latestButtonDown = latestEvent?.down ?: g.io.mouseDown[mouseButton]
+        val latestEvent = findLatestInputEvent(mouseButton)
+        val latestButtonDown = latestEvent?.down ?: g.io.mouseDown[mouseButton.i]
         if (latestButtonDown == down)
             return
 
@@ -376,7 +375,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             keyData.downDurationPrev = -1f
         }
         keyCtrl = false; keyShift = false; keyAlt = false; keySuper = false
-        keyMods = Key.Mod_None.i
+        keyMods = Key.Mod_None
         mousePos put -Float.MAX_VALUE
         for (n in mouseDown.indices) {
             mouseDown[n] = false
@@ -477,7 +476,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
 
     /** Key mods flags (any of ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Alt/ImGuiMod_Super flags, same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags. DOES NOT CONTAINS ImGuiMod_Shortcut which is pretranslated). Read-only, updated by NewFrame() */
-    var keyMods: KeyChord = 0
+    var keyMods: KeyChord = emptyFlags()
 
     /** Key state for all known keys. Use IsKeyXXX() functions to access this. */
     val keysData = Array(Key.COUNT) { KeyData().apply { downDuration = -1f; downDurationPrev = -1f } }

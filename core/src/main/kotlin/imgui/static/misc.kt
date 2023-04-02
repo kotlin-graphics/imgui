@@ -67,7 +67,7 @@ fun updateAliasKey(key: Key, v: Boolean, analogValue: Float) {
 // [Internal] Do not use directly
 val mergedModsFromKeys: KeyChord
     get() {
-        var mods: KeyChord = 0
+        var mods: KeyChord = emptyFlags()
         if (Key.Mod_Ctrl.isDown) mods /= Key.Mod_Ctrl
         if (Key.Mod_Shift.isDown) mods /= Key.Mod_Shift
         if (Key.Mod_Alt.isDown) mods /= Key.Mod_Alt
@@ -170,7 +170,7 @@ fun Window.updateManualResize(sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCou
         if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
         if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
         val resizeGripId = getID(resizeGripN) // == GetWindowResizeCornerID()
-        ImGui.itemAdd(resizeRect, resizeGripId, null, ItemFlag.NoNav.i)
+        ImGui.itemAdd(resizeRect, resizeGripId, null, ItemFlag.NoNav)
         val (_, hovered, held) = ImGui.buttonBehavior(resizeRect, resizeGripId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
         //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
         if (hovered || held)
@@ -201,7 +201,7 @@ fun Window.updateManualResize(sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCou
         val axis = if (borderN == Dir.Left.i || borderN == Dir.Right.i) Axis.X else Axis.Y
         val borderRect = getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_HOVER_PADDING)
         val borderId = getID(borderN + 4) // == GetWindowResizeBorderID()
-        ImGui.itemAdd(borderRect, borderId, null, ItemFlag.NoNav.i)
+        ImGui.itemAdd(borderRect, borderId, null, ItemFlag.NoNav)
         val (_, hovered, held) = ImGui.buttonBehavior(borderRect, borderId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
         //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
         if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
@@ -269,7 +269,7 @@ fun Window.renderOuterBorders() {
 
     val rounding = windowRounding
     val borderSize = windowBorderSize
-    if (borderSize > 0f && flags hasnt WindowFlag.NoBackground) drawList.addRect(pos, pos + size, Col.Border.u32, rounding, 0, borderSize)
+    if (borderSize > 0f && flags hasnt WindowFlag.NoBackground) drawList.addRect(pos, pos + size, Col.Border.u32, rounding, thickness = borderSize)
 
     val borderHeld = resizeBorderHeld
     if (borderHeld != -1) {
@@ -277,14 +277,17 @@ fun Window.renderOuterBorders() {
         val borderR = getResizeBorderRect(borderHeld, rounding, 0f)
         drawList.apply {
             pathArcTo(borderR.min.lerp(borderR.max, def.segmentN1) + Vec2(0.5f) + def.innerDir * rounding,
-                      rounding,
-                      def.outerAngle - glm.PIf * 0.25f,
-                      def.outerAngle)
-            pathArcTo(borderR.min.lerp(borderR.max, def.segmentN2) + Vec2(0.5f) + def.innerDir * rounding,
-                      rounding,
-                      def.outerAngle,
-                      def.outerAngle + glm.PIf * 0.25f)
-            pathStroke(Col.SeparatorActive.u32, 0, 2f max borderSize) // Thicker than usual
+                rounding,
+                def.outerAngle - glm.PIf * 0.25f,
+                def.outerAngle
+            )
+            pathArcTo(
+                borderR.min.lerp(borderR.max, def.segmentN2) + Vec2(0.5f) + def.innerDir * rounding,
+                rounding,
+                def.outerAngle,
+                def.outerAngle + glm.PIf * 0.25f
+            )
+            pathStroke(Col.SeparatorActive.u32, thickness = 2f max borderSize) // Thicker than usual
         }
     }
     if (ImGui.style.frameBorderSize > 0f && flags hasnt WindowFlag.NoTitleBar) {
@@ -327,14 +330,16 @@ fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, h
                 else -> 1f
             }
             if (overrideAlpha) bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
-            drawList.addRectFilled(pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
-                                   if (flags has WindowFlag.NoTitleBar) 0 else DrawFlag.RoundCornersBottom.i)
+            drawList.addRectFilled(
+                pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
+                if (flags has WindowFlag.NoTitleBar) emptyFlags() else DrawFlag.RoundCornersBottom
+            )
         }
 
         // Title bar
         if (flags hasnt WindowFlag.NoTitleBar) {
             val titleBarCol = if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
-            drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, DrawFlag.RoundCornersTop.i)
+            drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, DrawFlag.RoundCornersTop)
         }
 
         // Menu bar
@@ -342,9 +347,11 @@ fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, h
             val menuBarRect = menuBarRect()
             menuBarRect clipWith rect() // Soft clipping, in particular child window don't have minimum size covering the menu bar so this is useful for them.
             val rounding = if (flags has WindowFlag.NoTitleBar) windowRounding else 0f
-            drawList.addRectFilled(menuBarRect.min + Vec2(windowBorderSize, 0f),
-                                   menuBarRect.max - Vec2(windowBorderSize, 0f),
-                                   Col.MenuBarBg.u32, rounding, DrawFlag.RoundCornersTop.i)
+            drawList.addRectFilled(
+                menuBarRect.min + Vec2(windowBorderSize, 0f),
+                menuBarRect.max - Vec2(windowBorderSize, 0f),
+                Col.MenuBarBg.u32, rounding, DrawFlag.RoundCornersTop
+            )
             if (ImGui.style.frameBorderSize > 0f && menuBarRect.max.y < pos.y + size.y)
                 drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, ImGui.style.frameBorderSize)
         }
@@ -514,7 +521,7 @@ fun renderDimmedBackgrounds() {
         if (window.drawList.cmdBuffer.isEmpty())
             window.drawList.addDrawCmd()
         window.drawList.pushClipRect(viewport.pos, viewport.pos + viewport.size)
-        window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), window.windowRounding, 0, 3f)
+        window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), window.windowRounding, thickness = 3f)
         window.drawList.popClipRect()
     }
 }
@@ -583,16 +590,11 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
     g.navWindowingToggleLayer = false
 }
 
-inline fun <reified T : InputEvent> findLatestInputEvent(arg: Int = -1): T? {
-    for (n in g.inputEventsQueue.lastIndex downTo 0) {
-        val e = g.inputEventsQueue[n]
-        if (e !is T)
-            continue
-        if (e is InputEvent.Key && e.key.i != arg)
-            continue
-        if (e is InputEvent.MouseButton && e.button != arg)
-            continue
-        return e
-    }
-    return null
-}
+inline fun <reified T : InputEvent> findLatestInputEvent(predicate: (T) -> Boolean = { true }): T? =
+    g.inputEventsQueue.asReversed().firstOrNull { it is T && predicate(it) } as T?
+
+fun findLatestInputEvent(key: Key? = null): InputEvent.Key? =
+    findLatestInputEvent<InputEvent.Key> { it.key == key }
+
+fun findLatestInputEvent(button: MouseButton? = null): InputEvent.MouseButton? =
+    findLatestInputEvent<InputEvent.MouseButton> { it.button == button }

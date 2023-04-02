@@ -1,6 +1,5 @@
 package imgui.static
 
-import gli_.has
 import glm_.*
 import glm_.vec2.Vec2
 import imgui.*
@@ -15,7 +14,6 @@ import imgui.internal.isBlankW
 import imgui.internal.sections.InputSource
 import imgui.internal.textCountCharsFromUtf8
 import imgui.internal.textStrFromUtf8
-import imgui.stb.te
 import uno.kotlin.NUL
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
@@ -119,7 +117,7 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
     if (flags has InputTextFlag.CallbackCharFilter) {
         callback!! //callback is non-null from all calling functions
         val itcd = InputTextCallbackData()
-        itcd.eventFlag = InputTextFlag.CallbackCharFilter.i
+        itcd.eventFlag = InputTextFlag.CallbackCharFilter
         itcd.eventChar = c
         itcd.flags = flags
         itcd.userData = userData

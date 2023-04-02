@@ -4,11 +4,8 @@ import glm_.*
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.api.g
-import imgui.classes.TableColumnSortSpecs
 import imgui.internal.*
 import imgui.internal.sections.NavLayer
-import imgui.TableColumnFlag as Tcf
-import imgui.TableFlag as Tf
 
 /** Special sentinel code which cannot be used as a regular color. */
 val COL32_DISABLE = COL32(0, 0, 0, 1)
@@ -30,7 +27,7 @@ typealias TableDrawChannelIdx = Int
 class TableColumn {
 
     /** Flags after some patching (not directly same as provided by user). See ImGuiTableColumnFlags_ */
-    var flags = Tcf.None.i
+    var flags: TableColumnFlags = emptyFlags()
 
     /** Final/actual width visible == (MaxX - MinX), locked in TableUpdateLayout(). May be > WidthRequest to honor minimum width, may be < WidthRequest to honor shrinking columns down in tight space. */
     var widthGiven = 0f
@@ -236,7 +233,7 @@ class TableSettings(
         var columnsCount: TableColumnIdx = 0) {
 
     /** Indicate data we want to save using the Resizable/Reorderable/Sortable/Hideable flags (could be using its own flags..) */
-    var saveFlags = Tf.None.i
+    var saveFlags: TableFlags = emptyFlags()
 
     /** Reference scale to be able to rescale columns on font/dpi changes. */
     var refScale = 0f

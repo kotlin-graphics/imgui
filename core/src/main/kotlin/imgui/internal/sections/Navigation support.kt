@@ -2,17 +2,14 @@ package imgui.internal.sections
 
 import imgui.Flag
 import imgui.internal.classes.Rect
-import imgui.or
 
 //-----------------------------------------------------------------------------
 // [SECTION] Navigation support
 //-----------------------------------------------------------------------------
 
-typealias ActivateFlags = Int
+typealias ActivateFlags = Flag<ActivateFlag>
 
 enum class ActivateFlag : Flag<ActivateFlag> {
-  None,
-
   /** Favor activation that requires keyboard text input (e.g. for Slider/Drag). Default if keyboard is available. */
   PreferInput,
 
@@ -22,56 +19,57 @@ enum class ActivateFlag : Flag<ActivateFlag> {
   /** Request widget to preserve state if it can (e.g. InputText will try to preserve cursor/selection) */
   TryToPreserveState;
 
-  override val i: ActivateFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+  override val i: Int = 1 shl ordinal
 }
 
-typealias ScrollFlags = Int
+typealias ScrollFlags = Flag<ScrollFlag>
 
-enum class ScrollFlag(override val i: ScrollFlags) : Flag<ScrollFlag> {
-  None(0),
-
+enum class ScrollFlag : Flag<ScrollFlag> {
   /** If item is not visible: scroll as little as possible on X axis to bring item back into view [default for X axis] */
-  KeepVisibleEdgeX(1 shl 0),
+  KeepVisibleEdgeX,
 
   /** If item is not visible: scroll as little as possible on Y axis to bring item back into view [default for Y axis for windows that are already visible] */
-  KeepVisibleEdgeY(1 shl 1),
+  KeepVisibleEdgeY,
 
   /** If item is not visible: scroll to make the item centered on X axis [rarely used] */
-  KeepVisibleCenterX(1 shl 2),
+  KeepVisibleCenterX,
 
-    /** If item is not visible: scroll to make the item centered on Y axis */
-    KeepVisibleCenterY(1 shl 3),
+  /** If item is not visible: scroll to make the item centered on Y axis */
+  KeepVisibleCenterY,
 
-    /** Always center the result item on X axis [rarely used] */
-    AlwaysCenterX(1 shl 4),
+  /** Always center the result item on X axis [rarely used] */
+  AlwaysCenterX,
 
-    /** Always center the result item on Y axis [default for Y axis for appearing window) */
-    AlwaysCenterY(1 shl 5),
+  /** Always center the result item on Y axis [default for Y axis for appearing window) */
+  AlwaysCenterY,
 
-    /** Disable forwarding scrolling to parent window if required to keep item/rect visible (only scroll window the function was applied to). */
-    NoScrollParent(1 shl 6),
-  MaskX_(KeepVisibleEdgeX or KeepVisibleCenterX or AlwaysCenterX),
-  MaskY_(KeepVisibleEdgeY or KeepVisibleCenterY or AlwaysCenterY)
+  /** Disable forwarding scrolling to parent window if required to keep item/rect visible (only scroll window the function was applied to). */
+  NoScrollParent;
+
+  override val i: Int = 1 shl ordinal
+
+  companion object {
+    val MaskX = KeepVisibleEdgeX or KeepVisibleCenterX or AlwaysCenterX
+    val MaskY = KeepVisibleEdgeY or KeepVisibleCenterY or AlwaysCenterY
+  }
 }
 
 
-typealias NavHighlightFlags = Int
+typealias NavHighlightFlags = Flag<NavHighlightFlag>
 
 enum class NavHighlightFlag : Flag<NavHighlightFlag> {
-  None, TypeDefault, TypeThin,
+  TypeDefault, TypeThin,
 
   /** Draw rectangular highlight if (g.NavId == id) _even_ when using the mouse. */
   AlwaysDraw,
   NoRounding;
 
-  override val i: NavHighlightFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+  override val i: Int = 1 shl ordinal
 }
 
-typealias NavMoveFlags = Int
+typealias NavMoveFlags = Flag<NavMoveFlag>
 
 enum class NavMoveFlag : Flag<NavMoveFlag> {
-  None,
-
   /** On failed request, restart from opposite side */
   LoopX,
   LoopY,
@@ -103,7 +101,7 @@ enum class NavMoveFlag : Flag<NavMoveFlag> {
     /** Do not alter the visible state of keyboard vs mouse nav highlight */
     DontSetNavHighlight;
 
-  override val i: NavMoveFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+  override val i: Int = 1 shl ordinal
 }
 
 enum class NavForward(val i: Int) {

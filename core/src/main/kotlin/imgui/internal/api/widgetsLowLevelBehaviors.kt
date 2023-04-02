@@ -1,7 +1,6 @@
 package imgui.internal.api
 
 import gli_.has
-import gli_.hasnt
 import glm_.*
 import glm_.func.common.max
 import glm_.vec2.Vec2
@@ -42,7 +41,6 @@ import imgui.ImGui.setOwner
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
 import imgui.ImGui.testOwner
-import imgui.ImGui.toKey
 import imgui.api.g
 import imgui.internal.classes.InputFlag
 import imgui.internal.classes.Rect
@@ -66,9 +64,6 @@ import imgui.internal.sections.ButtonFlag as Bf
 
 /** Widgets low-level behaviors */
 internal interface widgetsLowLevelBehaviors {
-
-    /** @return []pressed, hovered, held] */
-    fun buttonBehavior(bb: Rect, id: ID, flag: Bf) = buttonBehavior(bb, id, flag.i)
 
     /** @return []pressed, hovered, held]
      *
@@ -127,18 +122,18 @@ internal interface widgetsLowLevelBehaviors {
      *  -------------------------------------------------------------------------------------------------------------------------------------------------
      *
      *  @return [pressed, hovered, held] */
-    fun buttonBehavior(bb: Rect, id: ID, flags_: ButtonFlags = 0): BooleanArray {
+    fun buttonBehavior(bb: Rect, id: ID, flags_: ButtonFlags = emptyFlags()): BooleanArray {
 
         val window = currentWindow
         var flags = flags_
 
         // Default only reacts to left mouse button
-        if (flags hasnt Bf.MouseButtonMask_)
-            flags /= Bf.MouseButtonDefault_
+        if (flags hasnt Bf.MouseButtonMask)
+            flags /= Bf.MouseButtonDefault
 
         // Default behavior requires click + release inside bounding box
-        if (flags hasnt Bf.PressedOnMask_)
-            flags /= Bf.PressedOnDefault_
+        if (flags hasnt Bf.PressedOnMask)
+            flags /= Bf.PressedOnDefault
 
         val backupHoveredWindow = g.hoveredWindow
         val hoveredWindow = g.hoveredWindow
@@ -182,28 +177,28 @@ internal interface widgetsLowLevelBehaviors {
             // Poll mouse buttons
             // - 'mouse_button_clicked' is generally carried into ActiveIdMouseButton when setting ActiveId.
             // - Technically we only need some values in one code path, but since this is gated by hovered test this is fine.
-            var mouseButtonClicked = -1
-            var mouseButtonReleased = -1
-            for (button in 0..2)
-                if (flags has (Bf.MouseButtonLeft.i shl button)) { // Handle ImGuiButtonFlags_MouseButtonRight and ImGuiButtonFlags_MouseButtonMiddle here.
-
-                    val butt = MouseButton of button
-                    if (butt.isClicked(testOwnerId) && mouseButtonClicked == -1)
+            var mouseButtonClicked = MouseButton.None
+            var mouseButtonReleased = MouseButton.None
+            for (buttonIndex in 0..2) {
+                val button = MouseButton of buttonIndex
+                if (flags has button.buttonFlags) { // Handle ImGuiButtonFlags_MouseButtonRight and ImGuiButtonFlags_MouseButtonMiddle here.
+                    if (button.isClicked(testOwnerId) && mouseButtonClicked == MouseButton.None)
                         mouseButtonClicked = button
-                    if (butt.isReleased(testOwnerId) && mouseButtonReleased == -1)
+                    if (button.isReleased(testOwnerId) && mouseButtonClicked == MouseButton.None)
                         mouseButtonReleased = button
                 }
+            }
 
             // Process initial action
             if (flags hasnt Bf.NoKeyModifiers || (!g.io.keyCtrl && !g.io.keyShift && !g.io.keyAlt)) {
 
-                if (mouseButtonClicked != MouseButton.None.i && g.activeId != id) {
+                if (mouseButtonClicked != MouseButton.None && g.activeId != id) {
 
                     if (flags hasnt Bf.NoSetKeyOwner)
-                        (MouseButton of mouseButtonClicked).toKey().setOwner(id)
+                        mouseButtonClicked.key.setOwner(id)
                     if (flags has (Bf.PressedOnClickRelease or Bf.PressedOnClickReleaseAnywhere)) {
                         setActiveID(id, window)
-                        g.activeIdMouseButton = mouseButtonClicked.i
+                        g.activeIdMouseButton = mouseButtonClicked
                         if (flags hasnt Bf.NoNavFocus)
                             setFocusID(id, window)
                         focusWindow(window)
@@ -216,13 +211,14 @@ internal interface widgetsLowLevelBehaviors {
                             setActiveID(id, window) // Hold on ID
                         if (flags hasnt Bf.NoNavFocus)
                             setFocusID(id, window)
-                        g.activeIdMouseButton = mouseButtonClicked.i
+                        g.activeIdMouseButton = mouseButtonClicked
                         focusWindow(window)
                     }
                 }
                 if (flags has Bf.PressedOnRelease)
-                    if (mouseButtonReleased != -1) {
-                        val hasRepeatedAtLeastOnce = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
+                    if (mouseButtonReleased != MouseButton.None) {
+                        val hasRepeatedAtLeastOnce =
+                            flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased.i] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
                         if (!hasRepeatedAtLeastOnce)
                             pressed = true
                         if (flags hasnt Bf.NoNavFocus)
@@ -234,7 +230,7 @@ internal interface widgetsLowLevelBehaviors {
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
                 if (g.activeId == id && flags has Bf.Repeat)
-                    if (io.mouseDownDuration[g.activeIdMouseButton] > 0f && (MouseButton of g.activeIdMouseButton).isClicked(testOwnerId, InputFlag.Repeat.i))
+                    if (io.mouseDownDuration[g.activeIdMouseButton.i] > 0f && g.activeIdMouseButton.isClicked(testOwnerId, InputFlag.Repeat))
                         pressed = true
             }
 
@@ -274,7 +270,7 @@ internal interface widgetsLowLevelBehaviors {
                 if (g.activeIdIsJustActivated)
                     g.activeIdClickOffset = io.mousePos - bb.min
 
-                val mouseButton = MouseButton of g.activeIdMouseButton
+                val mouseButton = g.activeIdMouseButton
                 if (mouseButton isDown testOwnerId)
                     held = true
                 else {
@@ -284,7 +280,7 @@ internal interface widgetsLowLevelBehaviors {
                         // Report as pressed when releasing the mouse (this is the most common path)
                         val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && g.io.mouseReleased[mouseButton.i] && io.mouseClickedLastCount[mouseButton.i] == 2
                         val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton.i] >= io.keyRepeatDelay // Repeat mode trumps <on release>
-                        val isButtonAvailOrOwned = mouseButton.toKey() testOwner testOwnerId
+                        val isButtonAvailOrOwned = mouseButton.key testOwner testOwnerId
                         if (!isDoubleClickRelease && !isRepeatingAlready && isButtonAvailOrOwned)
                             pressed = true
                     }
@@ -310,13 +306,6 @@ internal interface widgetsLowLevelBehaviors {
                          pMin: KMutableProperty0<N>?, pMax: KMutableProperty0<N>?,
                          format: String, flags: SliderFlags): Boolean
             where N : Number, N : Comparable<N> {
-
-        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) {
-            """
-            Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
-            Invalid ImGuiSliderFlags flags! Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
-        }
-
         if (g.activeId == id)
         // Those are the things we can do easily outside the DragBehaviorT<> template, saves code generation.
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
@@ -426,13 +415,6 @@ internal interface widgetsLowLevelBehaviors {
                            pMin: KMutableProperty0<N>, pMax: KMutableProperty0<N>,
                            format: String, flags: SliderFlags, outGrabBb: Rect): Boolean
             where N : Number, N : Comparable<N> {
-
-        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) {
-            """
-            Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
-            Invalid ImGuiSliderFlags flag!  Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
-        }
-
         // Those are the things we can do easily outside the SliderBehaviorT<> template, saves code generation.
         if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
             return false
@@ -504,7 +486,7 @@ internal interface widgetsLowLevelBehaviors {
         var size2 by size2ptr
         val window = g.currentWindow!!
 
-        if (!itemAdd(bb, id, null, ItemFlag.NoNav.i))
+        if (!itemAdd(bb, id, null, ItemFlag.NoNav))
             return false
 
         val bbInteract = Rect(bb)
@@ -557,9 +539,10 @@ internal interface widgetsLowLevelBehaviors {
         return held
     }
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String): Boolean = treeNodeBehavior(id, flags, label.toByteArray())
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = emptyFlags(), label: String): Boolean =
+        treeNodeBehavior(id, flags, label.toByteArray())
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: ByteArray, labelEnd_: Int = -1): Boolean {
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = emptyFlags(), label: ByteArray, labelEnd_: Int = -1): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -614,13 +597,13 @@ internal interface widgetsLowLevelBehaviors {
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushOverrideID(id)
-            val f = if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
-            val f2 = if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
+            val f = if (isLeaf) emptyFlags() else ItemStatusFlag.Openable
+            val f2 = if (isOpen) ItemStatusFlag.Opened else emptyFlags()
             IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label.cStr, g.lastItemData.statusFlags or f or f2)
             return isOpen
         }
 
-        var buttonFlags = Bf.None.i
+        var buttonFlags: ButtonFlags = emptyFlags()
         if (flags has Tnf.AllowItemOverlap)
             buttonFlags = buttonFlags or Bf.AllowItemOverlap
         if (!isLeaf)
@@ -645,9 +628,9 @@ internal interface widgetsLowLevelBehaviors {
         // It is rather standard that arrow click react on Down rather than Up.
         // We set ImGuiButtonFlags_PressedOnClickRelease on OpenOnDoubleClick because we want the item to be active on the initial MouseDown in order for drag and drop to work.
         buttonFlags = buttonFlags or when {
-            isMouseXOverArrow -> Bf.PressedOnClick.i
+            isMouseXOverArrow -> Bf.PressedOnClick
             flags has Tnf.OpenOnDoubleClick -> Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
-            else -> Bf.PressedOnClickRelease.i
+            else -> Bf.PressedOnClickRelease
         }
 
 
@@ -694,7 +677,7 @@ internal interface widgetsLowLevelBehaviors {
 
         // Render
         val textCol = Col.Text.u32
-        val navHighlightFlags: NavHighlightFlags = NavHighlightFlag.TypeThin.i
+        val navHighlightFlags: NavHighlightFlags = NavHighlightFlag.TypeThin
         if (displayFrame) {
             // Framed type
             val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
@@ -734,8 +717,8 @@ internal interface widgetsLowLevelBehaviors {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushOverrideID(id)
-        val f = if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
-        val f2 = if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
+        val f = if (isLeaf) emptyFlags() else ItemStatusFlag.Openable
+        val f2 = if (isOpen) ItemStatusFlag.Opened else emptyFlags()
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label.cStr, g.lastItemData.statusFlags or f or f2)
         return isOpen
     }

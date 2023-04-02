@@ -23,10 +23,10 @@ import kotlin.math.max
 class InputTextCallbackData {
 
     /** One ImGuiInputTextFlags_Callback*    // Read-only */
-    var eventFlag: InputTextFlags = 0
+    var eventFlag: InputTextFlags = emptyFlags()
 
     /** What user passed to InputText()      // Read-only */
-    var flags: InputTextFlags = 0
+    var flags: InputTextFlags = emptyFlags()
 
     /** What user passed to InputText()      // Read-only */
     var userData: Any? = null

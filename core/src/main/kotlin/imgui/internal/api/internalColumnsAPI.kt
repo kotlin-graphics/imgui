@@ -144,7 +144,7 @@ internal interface internalColumnsAPI {
                 val columnId = columns.id + n
                 val columnHitHw = imgui.api.columns.COLUMNS_HIT_RECT_HALF_WIDTH
                 val columnHitRect = Rect(Vec2(x - columnHitHw, y1), Vec2(x + columnHitHw, y2))
-                if (!itemAdd(columnHitRect, columnId, null, ItemFlag.NoNav.i))
+                if (!itemAdd(columnHitRect, columnId, null, ItemFlag.NoNav))
                     continue
 
                 var hovered = false

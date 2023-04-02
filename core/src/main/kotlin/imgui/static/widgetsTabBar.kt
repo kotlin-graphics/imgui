@@ -262,7 +262,7 @@ fun TabBar.scrollClamp(scrolling: Float): Float = (scrolling min (widthAllTabs -
 fun TabBar.scrollToTab(tabId: ID, sections: Array<TabBarSection>) {
 
     val tab = findTabByID(tabId) ?: return
-    if (tab.flags has TabItemFlag._SectionMask_)
+    if (tab.flags has TabItemFlag._SectionMask)
         return
 
     val margin = g.fontSize * 1f // When to scroll to make Tab N+1 visible always make a bit of N visible to suggest more scrolling area (since we don't have a scrollbar)

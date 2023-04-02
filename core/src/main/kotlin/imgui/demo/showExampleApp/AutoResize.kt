@@ -14,7 +14,7 @@ object AutoResize {
     /** Demonstrate creating a window which gets auto-resized according to its content. */
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
-        if (!begin("Example: Auto-resizing window", open, Wf.AlwaysAutoResize.i)) {
+        if (!begin("Example: Auto-resizing window", open, Wf.AlwaysAutoResize)) {
             end()
             return
         }

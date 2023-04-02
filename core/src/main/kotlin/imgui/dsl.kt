@@ -12,6 +12,7 @@ import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.beginGroup
+import imgui.ImGui.beginListBox
 import imgui.ImGui.beginMainMenuBar
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
@@ -37,6 +38,7 @@ import imgui.ImGui.endCombo
 import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.endGroup
+import imgui.ImGui.endListBox
 import imgui.ImGui.endMainMenuBar
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
@@ -48,8 +50,6 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
 import imgui.ImGui.invisibleButton
-import imgui.ImGui.endListBox
-import imgui.ImGui.beginListBox
 import imgui.ImGui.menuItem
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.popButtonRepeat
@@ -77,7 +77,6 @@ import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.font.Font
-import imgui.internal.sections.OldColumnsFlag
 import imgui.internal.sections.OldColumnsFlags
 import kotlin.reflect.KMutableProperty0
 
@@ -86,8 +85,10 @@ object dsl {
 
     // Tables
 
-    inline fun table(strId: String, columns: Int, flags: TableFlags = TableFlag.None.i,
-                     outerSize: Vec2 = Vec2(), innerWidth: Float = 0f, block: () -> Unit) {
+    inline fun table(
+        strId: String, columns: Int, flags: TableFlags = emptyFlags(),
+        outerSize: Vec2 = Vec2(), innerWidth: Float = 0f, block: () -> Unit
+    ) {
         if (beginTable(strId, columns, flags, outerSize, innerWidth)) { // ~open
             block()
             endTable()
@@ -96,7 +97,7 @@ object dsl {
 
     // Windows
 
-    inline fun window(name: String, open: KMutableProperty0<Boolean>? = null, flags: WindowFlags = 0, block: () -> Unit) {
+    inline fun window(name: String, open: KMutableProperty0<Boolean>? = null, flags: WindowFlags = emptyFlags(), block: () -> Unit) {
         if (begin(name, open, flags)) // ~open
             block()
         end()
@@ -104,7 +105,7 @@ object dsl {
 
     // Child Windows
 
-    inline fun child(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: WindowFlags = 0, block: () -> Unit) {
+    inline fun child(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: WindowFlags = emptyFlags(), block: () -> Unit) {
         if (beginChild(strId, size, border, extraFlags)) // ~open
             block()
         endChild()
@@ -279,7 +280,7 @@ object dsl {
             block()
     }
 
-    inline fun checkboxFlags(label: String, vPtr: KMutableProperty0<Int>, flagsValue: Int, block: () -> Unit) {
+    inline fun <F : Flag<F>> checkboxFlags(label: String, vPtr: KMutableProperty0<Flag<F>>, flagsValue: Flag<F>, block: () -> Unit) {
         if (checkboxFlags(label, vPtr, flagsValue))
             block()
     }
@@ -298,7 +299,7 @@ object dsl {
     // Widgets: Combo Box
 
 
-    inline fun useCombo(label: String, previewValue: String?, flags: ComboFlags = 0, block: () -> Unit) {
+    inline fun useCombo(label: String, previewValue: String?, flags: ComboFlags = emptyFlags(), block: () -> Unit) {
         if (beginCombo(label, previewValue, flags)) {
             block()
             endCombo()
@@ -335,7 +336,7 @@ object dsl {
         }
     }
 
-    inline fun treeNodeEx(strID: String, flags: TreeNodeFlags = 0, block: () -> Unit) {
+    inline fun treeNodeEx(strID: String, flags: TreeNodeFlags = emptyFlags(), block: () -> Unit) {
         if (treeNodeEx(strID, flags)) {
             block()
             treePop()
@@ -368,12 +369,12 @@ object dsl {
     //        try { block() } finally { treePop() }
     //    }
 
-    inline fun collapsingHeader(label: String, flags: TreeNodeFlags = 0, block: () -> Unit) {
+    inline fun collapsingHeader(label: String, flags: TreeNodeFlags = emptyFlags(), block: () -> Unit) {
         if (collapsingHeader(label, flags))
             block()
     }
 
-    inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: TreeNodeFlags = 0, block: () -> Unit) {
+    inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: TreeNodeFlags = emptyFlags(), block: () -> Unit) {
         if (collapsingHeader(label, open, flags))
             block()
     }
@@ -381,7 +382,7 @@ object dsl {
 
     // Widgets: Selectables
 
-    inline fun selectable(label: String, selected: Boolean = false, flags: Int = 0, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
+    inline fun selectable(label: String, selected: Boolean = false, flags: SelectableFlags = emptyFlags(), sizeArg: Vec2 = Vec2(), block: () -> Unit) {
         if (selectable(label, selected, flags, sizeArg))
             block()
     }
@@ -427,35 +428,35 @@ object dsl {
 
     // Popups, Modals
 
-    inline fun popup(strId: String, flags: WindowFlags = 0, block: () -> Unit) {
+    inline fun popup(strId: String, flags: WindowFlags = emptyFlags(), block: () -> Unit) {
         if (beginPopup(strId, flags)) {
             block()
             endPopup()
         }
     }
 
-    inline fun popupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i, block: () -> Unit) {
+    inline fun popupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight, block: () -> Unit) {
         if (beginPopupContextItem(strId, popupFlags)) {
             block()
             endPopup()
         }
     }
 
-    inline fun popupContextWindow(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i, block: () -> Unit) {
+    inline fun popupContextWindow(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight, block: () -> Unit) {
         if (beginPopupContextWindow(strId, popupFlags)) {
             block()
             endPopup()
         }
     }
 
-    inline fun popupContextVoid(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i, block: () -> Unit) {
+    inline fun popupContextVoid(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight, block: () -> Unit) {
         if (beginPopupContextVoid(strId, popupFlags)) {
             block()
             endPopup()
         }
     }
 
-    inline fun popupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, extraFlags: WindowFlags = 0, block: () -> Unit) {
+    inline fun popupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, extraFlags: WindowFlags = emptyFlags(), block: () -> Unit) {
         if (beginPopupModal(name, pOpen, extraFlags)) {
             block()
             endPopup()
@@ -465,21 +466,21 @@ object dsl {
 
     // Tab Bars, Tabs
 
-    inline fun tabBar(strId: String, flags: TabBarFlags = 0, block: () -> Unit) {
+    inline fun tabBar(strId: String, flags: TabBarFlags = emptyFlags(), block: () -> Unit) {
         if (beginTabBar(strId, flags)) {
             block()
             endTabBar()
         }
     }
 
-    inline fun tabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0, block: () -> Unit) {
+    inline fun tabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = emptyFlags(), block: () -> Unit) {
         if (beginTabItem(label, pOpen, flags)) {
             block()
             endTabItem()
         }
     }
 
-    inline fun tabItem(label: String, pOpen: BooleanArray, ptr: Int, flags: TabItemFlags = 0, block: () -> Unit) {
+    inline fun tabItem(label: String, pOpen: BooleanArray, ptr: Int, flags: TabItemFlags = emptyFlags(), block: () -> Unit) {
         if (beginTabItem(label, pOpen, ptr, flags)) {
             block()
             endTabItem()
@@ -489,7 +490,7 @@ object dsl {
 
     // Drag and Drop
 
-    inline fun dragDropSource(flags: DragDropFlags = 0, block: () -> Unit) {
+    inline fun dragDropSource(flags: DragDropFlags = emptyFlags(), block: () -> Unit) {
         if (beginDragDropSource(flags)) {
             block()
             endDragDropSource()
@@ -515,7 +516,7 @@ object dsl {
 
     // Miscellaneous Utilities
 
-    inline fun childFrame(id: ID, size: Vec2, extraFlags: WindowFlags = 0, block: () -> Unit) {
+    inline fun childFrame(id: ID, size: Vec2, extraFlags: WindowFlags = emptyFlags(), block: () -> Unit) {
         beginChildFrame(id, size, extraFlags)
         block()
         endChildFrame()
@@ -523,8 +524,7 @@ object dsl {
 
     // Columns
 
-    inline fun columns(strId: String = "", columnsCount: Int,
-                       flags: OldColumnsFlags = OldColumnsFlag.None.i, block: () -> Unit) {
+    inline fun columns(strId: String = "", columnsCount: Int, flags: OldColumnsFlags = emptyFlags(), block: () -> Unit) {
         beginColumns(strId, columnsCount, flags)
         block()
         endColumns()

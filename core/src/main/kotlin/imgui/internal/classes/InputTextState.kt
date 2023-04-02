@@ -2,8 +2,11 @@ package imgui.internal.classes
 
 import glm_.glm
 import glm_.max
-import imgui.*
+import imgui.ID
+import imgui.InputTextFlag
+import imgui.InputTextFlags
 import imgui.classes.Context
+import imgui.emptyFlags
 import imgui.internal.isBlankW
 import imgui.internal.textCountUtf8BytesFromStr
 import imgui.static.inputTextCalcTextSizeW
@@ -57,7 +60,7 @@ class InputTextState(
     var edited = false
 
     /** copy of InputText() flags. may be used to check if e.g. ImGuiInputTextFlags_Password is set. */
-    var flags: InputTextFlags = 0
+    var flags: InputTextFlags = emptyFlags()
 
     fun clearText() {
         curLenW = 0

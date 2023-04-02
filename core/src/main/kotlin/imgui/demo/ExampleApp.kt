@@ -119,7 +119,7 @@ object ExampleApp {
                 StyleEditor()
             }
 
-        var windowFlags = 0
+        var windowFlags: WindowFlags = emptyFlags()
         if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
         if (noScrollbar) windowFlags = windowFlags or Wf.NoScrollbar
         if (!noMenu) windowFlags = windowFlags or Wf.MenuBar
@@ -212,13 +212,13 @@ object ExampleApp {
 
             treeNode("Configuration##2") {
 
-                checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
+                checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard)
                 sameLine(); helpMarker("Enable keyboard controls.")
-                checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
+                checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad)
                 sameLine(); helpMarker("Enable gamepad controls. Require backend to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
-                checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
+                checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos)
                 sameLine(); helpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
-                checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
+                checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse)
                 if (io.configFlags has ConfigFlag.NoMouse) {
                     // The "NoMouse" option can get us stuck with a disabled mouse! Let's provide an alternative way to fix it:
                     if ((time.f % 0.4f) < 0.2f) {
@@ -228,7 +228,7 @@ object ExampleApp {
                     if (Key.Space.isPressed)
                         io.configFlags = io.configFlags wo ConfigFlag.NoMouse
                 }
-                checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
+                checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange)
                 sameLine(); helpMarker("Instruct backend to not alter mouse cursor shape and visibility.")
                 checkbox("io.ConfigInputTrickleEventQueue", io::configInputTrickleEventQueue)
                 sameLine(); helpMarker("Enable input queue trickling: some types of events submitted during the same frame (e.g. button down + up) will be spread over multiple frames, improving interactions with low framerates.")
@@ -247,17 +247,19 @@ object ExampleApp {
                 separator()
             }
             treeNode("Backend Flags") {
-                helpMarker("""
+                helpMarker(
+                    """
                     Those flags are set by the backends (imgui_impl_xxx files) to specify their capabilities.
-                    Here we expose them as read-only fields to avoid breaking interactions with your backend.""".trimIndent())
+                    Here we expose them as read-only fields to avoid breaking interactions with your backend.""".trimIndent()
+                )
 
                 // Make a local copy to avoid modifying actual backend flags.
                 // FIXME: We don't use BeginDisabled() to keep label bright, maybe we need a BeginReadonly() equivalent..
-                val backendFlags = intArrayOf(io.backendFlags)
-                checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
-                checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
-                checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos.i)
-                checkboxFlags("io.BackendFlags: RendererHasVtxOffset", backendFlags, BackendFlag.RendererHasVtxOffset.i)
+                val backendFlags = flagArrayOf(io.backendFlags)
+                checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad)
+                checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors)
+                checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos)
+                checkboxFlags("io.BackendFlags: RendererHasVtxOffset", backendFlags, BackendFlag.RendererHasVtxOffset)
                 separator()
             }
 

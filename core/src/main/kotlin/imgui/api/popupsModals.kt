@@ -38,7 +38,7 @@ import imgui.WindowFlag as Wf
 interface popupsModals {
 
     /** return true if the popup is open, and you can start outputting to it. */
-    fun beginPopup(strId: String, flags_: WindowFlags = Wf.None.i): Boolean {
+    fun beginPopup(strId: String, flags_: WindowFlags = emptyFlags()): Boolean {
         if (g.openPopupStack.size <= g.beginPopupStack.size) {    // Early out for performance
             g.nextWindowData.clearFlags()    // We behave like Begin() and need to consume those values
             return false
@@ -52,7 +52,7 @@ interface popupsModals {
      *
      *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
      *  Note that popup visibility status is owned by Dear ImGui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
-    fun beginPopupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
+    fun beginPopupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = emptyFlags()): Boolean {
 
         val window = g.currentWindow!!
         val id = window.getID(name)
@@ -89,7 +89,7 @@ interface popupsModals {
 
         // Make all menus and popups wrap around for now, may need to expose that policy (e.g. focus scope could include wrap/loop policy flags used by new move requests)
         if (g.navWindow === window)
-            navMoveRequestTryWrapping(window, NavMoveFlag.LoopY.i)
+            navMoveRequestTryWrapping(window, NavMoveFlag.LoopY)
 
         // Child-popups don't need to be laid out
         assert(!g.withinEndChild)
@@ -110,29 +110,29 @@ interface popupsModals {
     //  - IMPORTANT: Notice that for OpenPopupOnItemClick() we exceptionally default flags to 1 (== ImGuiPopupFlags_MouseButtonRight) for backward compatibility with older API taking 'int mouse_button = 1' parameter
 
     /** call to mark popup as open (don't call every frame!). */
-    fun openPopup(strId: String, popupFlags: PopupFlags = PopupFlag.None.i) {
+    fun openPopup(strId: String, popupFlags: PopupFlags = emptyFlags()) {
         val id = g.currentWindow!!.getID(strId)
         IMGUI_DEBUG_LOG_POPUP("[popup] OpenPopup(\"$strId\" -> 0x%08X)", id)
         openPopupEx(id, popupFlags)
     }
 
     /** id overload to facilitate calling from nested stacks */
-    fun openPopup(id: ID, popupFlags: PopupFlags = 0) = openPopupEx(id, popupFlags)
+    fun openPopup(id: ID, popupFlags: PopupFlags = emptyFlags()) = openPopupEx(id, popupFlags)
 
     /** helper to open popup when clicked on last item. Default to ImGuiPopupFlags_MouseButtonRight == 1.
      *  (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)
      *
      *  Helper to open a popup if mouse button is released over the item
      *  - This is essentially the same as BeginPopupContextItem() but without the trailing BeginPopup() */
-    fun openPopupOnItemClick(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i) =
-            with(g.currentWindow!!) {
-                val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
-                if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
-                    val id = if (strId.isNotEmpty()) getID(strId) else g.lastItemData.id // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
-                    assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
-                    openPopupEx(id, popupFlags)
-                }
+    fun openPopupOnItemClick(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight) =
+        with(g.currentWindow!!) {
+            val mouseButton = popupFlags.mouseButton
+            if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
+                val id = if (strId.isNotEmpty()) getID(strId) else g.lastItemData.id // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
+                assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
+                openPopupEx(id, popupFlags)
             }
+        }
 
     /** cmanually close the popup we have begin-ed into.  */
     fun closeCurrentPopup() {
@@ -191,13 +191,13 @@ interface popupsModals {
      *    The main difference being that this is tweaked to avoid computing the ID twice.
      *
      *    open+begin popup when clicked on last item. Use str_id==NULL to associate the popup to previous item. If you want to use that on a non-interactive item such as Text() you need to pass in an explicit ID here. read comments in .cpp! */
-    fun beginPopupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean {
+    fun beginPopupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight): Boolean {
         val window = g.currentWindow!!
         if (window.skipItems)
             return false
         val id = if (strId.isNotEmpty()) window.getID(strId) else g.lastItemData.id // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
         assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)" }
-        val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
+        val mouseButton = popupFlags.mouseButton
         if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup))
             openPopupEx(id, popupFlags)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
@@ -206,10 +206,10 @@ interface popupsModals {
     /** Helper to open and begin popup when clicked on current window.
      *
      *  open+begin popup when clicked on current window.*/
-    fun beginPopupContextWindow(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean {
+    fun beginPopupContextWindow(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight): Boolean {
         val window = g.currentWindow!!
         val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
-        val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
+        val mouseButton = popupFlags.mouseButton
         if (isMouseReleased(mouseButton) && isWindowHovered(Hf.AllowWhenBlockedByPopup))
             if (popupFlags hasnt PopupFlag.NoOpenOverItems || !isAnyItemHovered)
                 openPopupEx(id, popupFlags)
@@ -219,10 +219,10 @@ interface popupsModals {
     /** helper to open and begin popup when clicked in void (where there are no imgui windows).
      *
      *  open+begin popup when clicked in void (where there are no windows). */
-    fun beginPopupContextVoid(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean {
+    fun beginPopupContextVoid(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight): Boolean {
         val window = g.currentWindow!!
         val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
-        val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
+        val mouseButton = popupFlags.mouseButton
         if (isMouseReleased(mouseButton) && !isWindowHovered(Hf.AnyWindow))
             if (topMostPopupModal == null)
                 openPopupEx(id, popupFlags)
@@ -237,7 +237,7 @@ interface popupsModals {
 
 
     /** return true if the popup is open. */
-    fun isPopupOpen(strId: String, popupFlags: PopupFlags = PopupFlag.None.i): Boolean {
+    fun isPopupOpen(strId: String, popupFlags: PopupFlags = emptyFlags()): Boolean {
         val id = if (popupFlags has PopupFlag.AnyPopupId) 0 else g.currentWindow!!.getID(strId)
         if (popupFlags has PopupFlag.AnyPopupLevel && id != 0)
             assert(false) { "Cannot use IsPopupOpen() with a string id and ImGuiPopupFlags_AnyPopupLevel." } // But non-string version is legal and used internally

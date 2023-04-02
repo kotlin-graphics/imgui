@@ -1,12 +1,10 @@
 package imgui.internal.api
 
-import gli_.has
 import glm_.b
 import glm_.func.common.max
 import glm_.func.common.min
 import glm_.glm
 import glm_.i
-import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -128,7 +126,7 @@ internal interface inputText {
         if (isMultiline) {
             val backupPos = Vec2(window.dc.cursorPos)
             itemSize(totalBb, style.framePadding.y)
-            if (!itemAdd(totalBb, id, frameBb, ItemFlag.Inputable.i)) {
+            if (!itemAdd(totalBb, id, frameBb, ItemFlag.Inputable)) {
                 itemSize(totalBb, style.framePadding.y)
                 endGroup()
                 return false
@@ -143,7 +141,7 @@ internal interface inputText {
             pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
             pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)
             pushStyleVar(StyleVar.WindowPadding, Vec2()) // Ensure no clip rect so mouse hover can reach FramePadding edges
-            val childVisible = beginChildEx(label, id, frameBb.size, true, Wf.NoMove.i)
+            val childVisible = beginChildEx(label, id, frameBb.size, true, Wf.NoMove)
             popStyleVar(3)
             popStyleColor()
             if (!childVisible) {
@@ -160,7 +158,7 @@ internal interface inputText {
             // Support for internal ImGuiInputTextFlags_MergedItem flag, which could be redesigned as an ItemFlags if needed (with test performed in ItemAdd)
             itemSize(totalBb, style.framePadding.y)
             if (flags hasnt Itf._MergedItem)
-                if (!itemAdd(totalBb, id, frameBb, ItemFlag.Inputable.i))
+                if (!itemAdd(totalBb, id, frameBb, ItemFlag.Inputable))
                     return false
             itemStatusFlags = g.lastItemData.statusFlags
         }
@@ -423,7 +421,7 @@ internal interface inputText {
 
             // Using Shortcut() with ImGuiInputFlags_RouteFocused (default policy) to allow routing operations for other code (e.g. calling window trying to use CTRL+A and CTRL+B: formet would be handled by InputText)
             // Otherwise we could simply assume that we own the keys as we are active.
-            val fRepeat = InputFlag.Repeat.i
+            val fRepeat = InputFlag.Repeat
             val isCut = (shortcut(Key.Mod_Shortcut or Key.X, id, fRepeat) || shortcut(Key.Mod_Shift or Key.Delete, id, fRepeat)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
             val isCopy = (shortcut(Key.Mod_Shortcut or Key.C, id, fRepeat) || shortcut(Key.Mod_Ctrl or Key.Insert, id, fRepeat)) && !isPassword && (!isMultiline || state.hasSelection)
             val isPaste = (shortcut(Key.Mod_Shortcut or Key.V, id, fRepeat) || shortcut(Key.Mod_Shift or Key.Insert, id, fRepeat)) && !isReadOnly
@@ -435,7 +433,7 @@ internal interface inputText {
             val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
             val isEnterPressed = Key.Enter.isPressed(true) || Key.KeypadEnter.isPressed(true)
             val isGamepadValidate = navGamepadActive && (Key._NavGamepadActivate.isPressed(false) || Key._NavGamepadInput.isPressed(false))
-            val isCancel = shortcut(Key.Escape.i, id, fRepeat) || (navGamepadActive && shortcut(Key._NavGamepadCancel.i, id, fRepeat))
+            val isCancel = shortcut(Key.Escape, id, fRepeat) || (navGamepadActive && shortcut(Key._NavGamepadCancel, id, fRepeat))
 
             // FIXME: Should use more Shortcut() and reduce IsKeyPressed()+SetKeyOwner(), but requires modifiers combination to be taken account of.
             when {
@@ -620,7 +618,7 @@ internal interface inputText {
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
                     callback!!
                     // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
-                    var eventFlag = Itf.None
+                    var eventFlag: InputTextFlags = emptyFlags()
                     var eventKey = Key.None
                     when {
                         flags has Itf.CallbackCompletion && Key.Tab.isPressed -> {
@@ -642,9 +640,9 @@ internal interface inputText {
                         flags has Itf.CallbackAlways -> eventFlag = Itf.CallbackAlways
                     }
 
-                    if (eventFlag != Itf.None) {
+                    if (eventFlag.isNotEmpty) {
                         val cbData = InputTextCallbackData()
-                        cbData.eventFlag = eventFlag.i
+                        cbData.eventFlag = eventFlag
                         cbData.flags = flags
                         cbData.userData = callbackUserData
 
@@ -671,7 +669,7 @@ internal interface inputText {
                         callbackData = if (isReadOnly) buf else state.textA // Pointer may have been invalidated by a resize callback
                         assert(cbData.buf === callbackData) { "Invalid to modify those fields" }
                         assert(cbData.bufSize == state.bufCapacityA)
-                        assert(cbData.flags == flags)
+                        assert(cbData.flags eq flags)
                         val bufDirty = cbData.bufDirty
                         if (cbData.cursorPos != utf8CursorPos || bufDirty) {
                             state.stb.cursor = textCountCharsFromUtf8(cbData.buf, cbData.cursorPos)
@@ -720,7 +718,7 @@ internal interface inputText {
             assert(applyNewTextLength >= 0)
             if (isResizable) {
                 val callbackData = InputTextCallbackData().also {
-                    it.eventFlag = Itf.CallbackResize.i
+                    it.eventFlag = Itf.CallbackResize
                     it.flags = flags
                     it.buf = buf
                     it.bufTextLen = applyNewTextLength

@@ -2,17 +2,17 @@ package imgui.api
 
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.currentWindow
+import imgui.ImGui.endDisabled
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.popColumnsBackground
-import imgui.ImGui.endDisabled
 import imgui.ImGui.pushColumnsBackground
-import imgui.ImGui.beginDisabled
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
@@ -23,7 +23,10 @@ import imgui.ImGui.tablePopBackgroundChannel
 import imgui.ImGui.tablePushBackgroundChannel
 import imgui.internal.classes.Rect
 import imgui.internal.floor
-import imgui.internal.sections.*
+import imgui.internal.sections.ButtonFlags
+import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.NavHighlightFlag
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -50,7 +53,7 @@ interface widgetsSelectables {
      *  size.x > 0f -> specify width
      *  size.y == 0f -> use label height
      *  size.y > 0f -> specify height   */
-    fun selectable(label: String, selected_: Boolean = false, flags: SelectableFlags = 0, sizeArg: Vec2 = Vec2()): Boolean {
+    fun selectable(label: String, selected_: Boolean = false, flags: SelectableFlags = emptyFlags(), sizeArg: Vec2 = Vec2()): Boolean {
 
         var selected = selected_
         val window = currentWindow
@@ -100,7 +103,7 @@ interface widgetsSelectables {
         }
 
         val disabledItem = flags has Sf.Disabled
-        val itemAdd = itemAdd(bb, id, null, if(disabledItem) If.Disabled.i else If.None.i)
+        val itemAdd = itemAdd(bb, id, null, if (disabledItem) If.Disabled else emptyFlags())
 
         if (spanAllColumns) {
             window.clipRect.min.x = backupClipRectMinX
@@ -122,7 +125,7 @@ interface widgetsSelectables {
             tablePushBackgroundChannel()
 
         // We use NoHoldingActiveID on menus so user can click and _hold_ on a menu then drag to browse child entries
-        var buttonFlags = 0
+        var buttonFlags: ButtonFlags = emptyFlags()
         if (flags has Sf._NoHoldingActiveID) buttonFlags /= Bf.NoHoldingActiveId
         if (flags has Sf._NoSetKeyOwner) buttonFlags /= Bf.NoSetKeyOwner
         if (flags has Sf._SelectOnClick) buttonFlags /= Bf.PressedOnClick
@@ -189,11 +192,11 @@ interface widgetsSelectables {
     }
 
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
-    fun selectable(label: String, selected: BooleanArray, index: Int, flags: SelectableFlags = 0, size: Vec2 = Vec2()): Boolean =
-            selectable(label, selected mutablePropertyAt index, flags, size)
+    fun selectable(label: String, selected: BooleanArray, index: Int, flags: SelectableFlags = emptyFlags(), size: Vec2 = Vec2()): Boolean =
+        selectable(label, selected mutablePropertyAt index, flags, size)
 
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
-    fun selectable(label: String, selectedPtr: KMutableProperty0<Boolean>, flags: SelectableFlags = 0, size: Vec2 = Vec2()): Boolean {
+    fun selectable(label: String, selectedPtr: KMutableProperty0<Boolean>, flags: SelectableFlags = emptyFlags(), size: Vec2 = Vec2()): Boolean {
         var selected by selectedPtr
         return if (selectable(label, selected, flags, size)) {
             selected = !selected

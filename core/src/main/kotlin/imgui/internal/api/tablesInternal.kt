@@ -16,13 +16,11 @@ import imgui.ImGui.setNextWindowContentSize
 import imgui.ImGui.setNextWindowScroll
 import imgui.api.g
 import imgui.classes.TableColumnSortSpecs
-import imgui.hasnt
 import imgui.internal.*
 import imgui.internal.classes.*
 import imgui.internal.sections.ButtonFlag
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.NavLayer
-import imgui.or
 import imgui.static.*
 import kool.BYTES
 import imgui.TableFlag as Tf
@@ -37,8 +35,10 @@ interface tablesInternal {
 
     fun tableFindByID(id: ID): Table? = g.tables.getByKey(id)
 
-    fun beginTableEx(name: String, id: ID, columnsCount: Int, flags_: TableFlags = Tf.None.i, outerSize: Vec2 = Vec2(),
-                     innerWidth: Float = 0f): Boolean {
+    fun beginTableEx(
+        name: String, id: ID, columnsCount: Int, flags_: TableFlags = emptyFlags(), outerSize: Vec2 = Vec2(),
+        innerWidth: Float = 0f
+    ): Boolean {
 
         var flags = flags_
         val outerWindow = ImGui.currentWindow
@@ -119,8 +119,8 @@ interface tablesInternal {
                 setNextWindowScroll(Vec2())
 
             // Create scrolling region (without border and zero window padding)
-            val childFlags = if (flags has Tf.ScrollX) Wf.HorizontalScrollbar else Wf.None
-            beginChildEx(name, instanceId, outerRect.size, false, childFlags.i)
+            val childFlags = if (flags has Tf.ScrollX) Wf.HorizontalScrollbar else emptyFlags()
+            beginChildEx(name, instanceId, outerRect.size, false, childFlags)
             table.innerWindow = g.currentWindow
             val inner = table.innerWindow!!
             table.workRect put inner.workRect
@@ -189,7 +189,7 @@ interface tablesInternal {
         table.currentColumn = -1
         table.currentRow = -1
         table.rowBgColorCounter = 0
-        table.lastRowFlags = Trf.None.i
+        table.lastRowFlags = emptyFlags()
         table.innerClipRect put if (innerWindow === outerWindow) table.workRect else innerWindow.clipRect
         table.innerClipRect clipWith table.workRect     // We need this to honor inner_width
         table.innerClipRect clipWithFull table.hostClipRect
@@ -220,7 +220,7 @@ interface tablesInternal {
 
         // Mark as used
         if (tableIdx >= g.tablesLastTimeActive.size)
-            for (i in g.tablesLastTimeActive.size..tableIdx.i)
+            for (i in g.tablesLastTimeActive.size..tableIdx)
                 g.tablesLastTimeActive += -1f
         g.tablesLastTimeActive[tableIdx.i] = g.time.f
         tempData.lastTimeActive = g.time.f
@@ -498,14 +498,14 @@ interface tablesInternal {
             // It would easily work without but we're not ready to guarantee it since e.g. names need resubmission anyway.
             // We take a slight shortcut but in theory we could be calling TableSetupColumn() here with dummy values, it should yield the same effect.
             if (declColumnsCount <= columnN) {
-                setupColumnFlags(column, TableColumnFlag.None.i)
+                setupColumnFlags(column)
                 column.nameOffset = -1
                 column.userID = 0
                 column.initStretchWeightOrWidth = -1f
             }
 
             // Update Enabled state, mark settings and sort specs dirty
-            if (flags hasnt Tf.Hideable || flags has TableColumnFlag.NoHide)
+            if (flags hasnt Tf.Hideable || column.flags has TableColumnFlag.NoHide)
                 column.isUserEnabledNextFrame = true
             if (column.isUserEnabled != column.isUserEnabledNextFrame) {
                 column.isUserEnabled = column.isUserEnabledNextFrame
@@ -595,7 +595,7 @@ interface tablesInternal {
             if (column.flags has TableColumnFlag.WidthFixed) {
                 // Apply same widths policy
                 var widthAuto = column.widthAuto
-                if (tableSizingPolicy == Tf.SizingFixedSame.i && (column.autoFitQueue != 0x00 || !columnIsResizable))
+                if (tableSizingPolicy eq Tf.SizingFixedSame && (column.autoFitQueue != 0x00 || !columnIsResizable))
                     widthAuto = fixedMaxWidthAuto
 
                 // Apply automatic width
@@ -619,7 +619,7 @@ interface tablesInternal {
                 if (column.autoFitQueue != 0x00 || column.stretchWeight < 0f || !columnIsResizable)
                     column.stretchWeight = when {
                         column.initStretchWeightOrWidth > 0f -> column.initStretchWeightOrWidth
-                        tableSizingPolicy == Tf.SizingStretchProp.i -> (column.widthAuto / stretchSumWidthAuto) * countStretch
+                        tableSizingPolicy eq Tf.SizingStretchProp -> (column.widthAuto / stretchSumWidthAuto) * countStretch
                         else -> 1f
                     }
 
@@ -721,7 +721,7 @@ interface tablesInternal {
             }
 
             // Clear status flags
-            column.flags = column.flags wo TableColumnFlag.StatusMask_
+            column.flags = column.flags wo TableColumnFlag.StatusMask
 
             if (enabledMaskByDisplayOrder hasnt (1L shl orderN)) {
                 // Hidden column: clear a few fields and we are done with it for the remainder of the function.
@@ -931,7 +931,7 @@ interface tablesInternal {
 
             val columnId = getColumnResizeID(columnN, instanceCurrent)
             val hitRect = Rect(column.maxX - hitHalfWidth, hitY1, column.maxX + hitHalfWidth, borderY2Hit)
-            ImGui.itemAdd(hitRect, columnId, null, ItemFlag.NoNav.i)
+            ImGui.itemAdd(hitRect, columnId, null, ItemFlag.NoNav)
             //GetForegroundDrawList()->AddRect(hit_rect.Min, hit_rect.Max, IM_COL32(255, 0, 0, 100));
 
             var (pressed, hovered, held) = ImGui.buttonBehavior(hitRect, columnId, ButtonFlag.FlattenChildren or ButtonFlag.AllowItemOverlap or ButtonFlag.PressedOnClick or ButtonFlag.PressedOnDoubleClick or ButtonFlag.NoNavFocus)
@@ -1019,7 +1019,7 @@ interface tablesInternal {
 
                 // Decide whether right-most column is visible
                 if (column.nextEnabledColumn == -1 && !isResizable)
-                    if (flags and Tf._SizingMask != Tf.SizingFixedSame.i || flags has Tf.NoHostExtendX)
+                    if (flags and Tf._SizingMask notEq Tf.SizingFixedSame || flags has Tf.NoHostExtendX)
                         continue
                 if (column.maxX <= column.clipRect.min.x) // FIXME-TABLE FIXME-STYLE: Assume BorderSize==1, this is problematic if we want to increase the border size..
                     continue
@@ -1050,8 +1050,8 @@ interface tablesInternal {
             // Either solution currently won't allow us to use a larger border size: the border would clipped.
             val outerBorder = Rect(outerRect) // [JVM] we need a local copy, shadowing is fine
             val outerCol = borderColorStrong
-            if ((flags and Tf.BordersOuter) == Tf.BordersOuter.i)
-                innerDrawlist.addRect(outerBorder.min, outerBorder.max, outerCol, 0f, 0, borderSize)
+            if (Tf.BordersOuter in flags)
+                innerDrawlist.addRect(outerBorder.min, outerBorder.max, outerCol, 0f, thickness = borderSize)
             else if (flags has Tf.BordersOuterV) {
                 innerDrawlist.addLine(outerBorder.min, Vec2(outerBorder.min.x, outerBorder.max.y), outerCol, borderSize)
                 innerDrawlist.addLine(Vec2(outerBorder.max.x, outerBorder.min.y), outerBorder.max, outerCol, borderSize)
@@ -1092,7 +1092,7 @@ interface tablesInternal {
             }
 
             val sizeAllDesc = when {
-                columnsEnabledFixedCount == columnsEnabledCount && flags and Tf._SizingMask != Tf.SizingFixedSame.i -> LocKey.TableSizeAllFit.msg // "###SizeAll" All fixed
+                columnsEnabledFixedCount == columnsEnabledCount && flags and Tf._SizingMask notEq Tf.SizingFixedSame -> LocKey.TableSizeAllFit.msg // "###SizeAll" All fixed
                 else -> LocKey.TableSizeAllDefault.msg // "###SizeAll" All stretch or mixed
             }
             if (menuItem(sizeAllDesc, ""))
@@ -1134,7 +1134,7 @@ interface tablesInternal {
                 ImGui.separator()
             wantSeparator = true
 
-            ImGui.pushItemFlag(ItemFlag.SelectableDontClosePopup.i, true)
+            ImGui.pushItemFlag(ItemFlag.SelectableDontClosePopup, true)
             for (otherColumnN in 0 until columnsCount) {
                 val otherColumn = columns[otherColumnN]
                 if (otherColumn.flags has TableColumnFlag.Disabled)
@@ -1145,7 +1145,7 @@ interface tablesInternal {
                     name = "<Unknown>"
 
                 // Make sure we can't hide the last active column
-                var menuItemActive = flags hasnt TableColumnFlag.NoHide
+                var menuItemActive = otherColumn?.flags?.hasnt(TableColumnFlag.NoHide) == true
                 if (otherColumn.isUserEnabled && columnsEnabledCount <= 1)
                     menuItemActive = false
                 if (ImGui.menuItem(name, "", otherColumn.isUserEnabled, menuItemActive))
@@ -1431,7 +1431,7 @@ interface tablesInternal {
         if (sortOrderCount == 0 && flags hasnt Tf.SortTristate)
             for (columnN in 0 until columnsCount) {
                 val column = columns[columnN]
-                if (column.isEnabled && flags hasnt TableColumnFlag.NoSort) {
+                if (column.isEnabled && column.flags hasnt TableColumnFlag.NoSort) {
                     sortOrderCount = 1
                     column.sortOrder = 0
                     column.sortDirection = tableGetColumnAvailSortDirection(column, 0)
@@ -1728,7 +1728,7 @@ interface tablesInternal {
         window.skipItems = column.isSkipItems
         if (column.isSkipItems) {
             g.lastItemData.id = 0
-            g.lastItemData.statusFlags = 0
+            g.lastItemData.statusFlags = emptyFlags()
         }
 
         if (flags has Tf.NoClip) {

@@ -190,16 +190,16 @@ internal interface renderHelpers {
         window.drawList.addRectFilled(pMin, pMax, fillCol, rounding)
         val borderSize = style.frameBorderSize
         if (border && borderSize > 0f) {
-            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, 0, borderSize)
-            window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0, borderSize)
+            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, thickness = borderSize)
+            window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding, thickness = borderSize)
         }
     }
 
     fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(g.currentWindow!!) {
         val borderSize = style.frameBorderSize
         if (borderSize > 0f) {
-            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, 0, borderSize)
-            drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0, borderSize)
+            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, thickness = borderSize)
+            drawList.addRect(pMin, pMax, Col.Border.u32, rounding, thickness = borderSize)
         }
     }
 
@@ -208,10 +208,12 @@ internal interface renderHelpers {
      * Spent a non reasonable amount of time trying to getting this right for ColorButton with rounding+anti-aliasing+ImGuiColorEditFlags_HalfAlphaPreview flag + various grid sizes and offsets, and eventually gave up... probably more reasonable to disable rounding altogether.
      * FIXME: uses ImGui::GetColorU32
      * [JVM] safe passing Vec2 instances */
-    fun renderColorRectWithAlphaCheckerboard(drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
-                                             gridOff: Vec2, rounding: Float = 0f, flags_: DrawFlags = 0) {
+    fun renderColorRectWithAlphaCheckerboard(
+        drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
+        gridOff: Vec2, rounding: Float = 0f, flags_: DrawFlags = emptyFlags()
+    ) {
         val flags = when {
-            flags_ hasnt DrawFlag.RoundCornersMask_ -> DrawFlag.RoundCornersDefault_.i
+            flags_ hasnt DrawFlag.RoundCornersMask -> DrawFlag.RoundCornersDefault
             else -> flags_
         }
         if (((col and COL32_A_MASK) ushr COL32_A_SHIFT) < 0xFF) {
@@ -237,7 +239,7 @@ internal interface renderHelpers {
                         x += gridStep * 2f
                         continue
                     }
-                    var cellFlags = DrawFlag.RoundCornersNone.i
+                    var cellFlags: DrawFlags = DrawFlag.RoundCornersNone
                     if (y1 <= pMin.y) {
                         if (x1 <= pMin.x) cellFlags = cellFlags or DrawFlag.RoundCornersTopLeft
                         if (x2 >= pMax.x) cellFlags = cellFlags or DrawFlag.RoundCornersTopRight
@@ -248,7 +250,7 @@ internal interface renderHelpers {
                     }
                     // Combine flags
                     cellFlags = when {
-                        flags == DrawFlag.RoundCornersNone.i || cellFlags == DrawFlag.RoundCornersNone.i -> DrawFlag.RoundCornersNone.i
+                        flags eq DrawFlag.RoundCornersNone || cellFlags eq DrawFlag.RoundCornersNone -> DrawFlag.RoundCornersNone
                         else -> cellFlags or flags
                     }
                     drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, rounding, cellFlags)
@@ -263,7 +265,7 @@ internal interface renderHelpers {
 
     /** Navigation highlight
      * @param flags: NavHighlightFlag  */
-    fun renderNavHighlight(bb: Rect, id: ID, flags: NavHighlightFlags = NavHighlightFlag.TypeDefault.i) {
+    fun renderNavHighlight(bb: Rect, id: ID, flags: NavHighlightFlags = NavHighlightFlag.TypeDefault) {
 
         if (id != g.navId) return
         if (g.navDisableHighlight && flags hasnt NavHighlightFlag.AlwaysDraw) return
@@ -280,13 +282,15 @@ internal interface renderHelpers {
             val fullyVisible = displayRect in window.clipRect
             if (!fullyVisible)
                 window.drawList.pushClipRect(displayRect) // check order here down
-            window.drawList.addRect(displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
-                    Col.NavHighlight.u32, rounding, 0, THICKNESS)
+            window.drawList.addRect(
+                displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
+                Col.NavHighlight.u32, rounding, thickness = THICKNESS
+            )
             if (!fullyVisible)
                 window.drawList.popClipRect()
         }
         if (flags has NavHighlightFlag.TypeThin)
-            window.drawList.addRect(displayRect.min, displayRect.max, Col.NavHighlight.u32, rounding, 0, 1f)
+            window.drawList.addRect(displayRect.min, displayRect.max, Col.NavHighlight.u32, rounding, thickness = 1f)
     }
 
     /** Find the optional ## from which we stop displaying text.    */
@@ -372,7 +376,7 @@ internal interface renderHelpers {
         pathLineTo(Vec2(bx - third, by - third))
         pathLineTo(Vec2(bx, by))
         pathLineTo(Vec2(bx + third * 2f, by - third * 2f))
-        pathStroke(col, 0, thickness)
+        pathStroke(col, thickness = thickness)
     }
 
     /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
@@ -440,18 +444,26 @@ internal interface renderHelpers {
         val fillR = inner.max.x < outer.max.x
         val fillU = inner.min.y > outer.min.y
         val fillD = inner.max.y < outer.max.y
-        if (fillL) addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
-                DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomLeft)
-        if (fillR) addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
-                DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopRight) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
-        if (fillU) addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
-                DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersTopRight)
-        if (fillD) addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
-                DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersBottomLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
-        if (fillL && fillU) addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft.i)
-        if (fillR && fillU) addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight.i)
-        if (fillL && fillD) addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomLeft.i)
-        if (fillR && fillD) addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomRight.i)
+        if (fillL) addRectFilled(
+            Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
+            DrawFlag.RoundCornersNone or (if (fillU) emptyFlags() else DrawFlag.RoundCornersTopLeft) or if (fillD) emptyFlags() else DrawFlag.RoundCornersBottomLeft
+        )
+        if (fillR) addRectFilled(
+            Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
+            DrawFlag.RoundCornersNone or (if (fillU) emptyFlags() else DrawFlag.RoundCornersTopRight) or if (fillD) emptyFlags() else DrawFlag.RoundCornersBottomRight
+        )
+        if (fillU) addRectFilled(
+            Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
+            DrawFlag.RoundCornersNone or (if (fillL) emptyFlags() else DrawFlag.RoundCornersTopLeft) or if (fillR) emptyFlags() else DrawFlag.RoundCornersTopRight
+        )
+        if (fillD) addRectFilled(
+            Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
+            DrawFlag.RoundCornersNone or (if (fillL) emptyFlags() else DrawFlag.RoundCornersBottomLeft) or if (fillR) emptyFlags() else DrawFlag.RoundCornersBottomRight
+        )
+        if (fillL && fillU) addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft)
+        if (fillR && fillU) addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight)
+        if (fillL && fillD) addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomLeft)
+        if (fillR && fillD) addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomRight)
     }
 
     companion object {

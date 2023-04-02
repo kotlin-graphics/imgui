@@ -27,7 +27,6 @@ import imgui.api.g
 import imgui.classes.ListClipper
 import imgui.classes.TextFilter
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -116,7 +115,7 @@ object Log {
             filter.draw("Filter", -100f)
 
             separator()
-            if(beginChild("scrolling", Vec2(0, 0), false, Wf.HorizontalScrollbar.i)) {
+            if (beginChild("scrolling", Vec2(0, 0), false, Wf.HorizontalScrollbar)) {
                 if (clear) clear()
                 if (copy) logToClipboard()
 

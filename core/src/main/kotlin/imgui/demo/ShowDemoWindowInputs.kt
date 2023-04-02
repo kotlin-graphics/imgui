@@ -65,8 +65,7 @@ object ShowDemoWindowInputs {
                 // User code should never have to go through such hoops: old code may use native keycodes, new code may use ImGuiKey codes.
 
                 text("Keys down:")
-                for (keyIdx in 0 until Key.Count.ordinal) {
-                    val key = Key of keyIdx
+                for (key in Key.values().take(Key.Count.ordinal)) {
                     if (!key.isDown) continue
                     sameLine(); text('"' + key.name + '"'); sameLine(); text("(%.02f)", key.data.downDuration)
                 }
@@ -109,9 +108,9 @@ object ShowDemoWindowInputs {
                                 "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.")
                     val captureOverrideDesc = listOf("None", "Set to false", "Set to true")
                     setNextItemWidth(ImGui.fontSize * 15)
-                    sliderInt("SetNextFrameWantCaptureMouse() on hover", ::captureOverrideMouse, -1, +1, captureOverrideDesc[captureOverrideMouse + 1], SliderFlag.AlwaysClamp.i)
+                    sliderInt("SetNextFrameWantCaptureMouse() on hover", ::captureOverrideMouse, -1, +1, captureOverrideDesc[captureOverrideMouse + 1], SliderFlag.AlwaysClamp)
                     setNextItemWidth(ImGui.fontSize * 15)
-                    sliderInt("SetNextFrameWantCaptureKeyboard() on hover", ::captureOverrideKeyboard, -1, +1, captureOverrideDesc[captureOverrideKeyboard + 1], SliderFlag.AlwaysClamp.i)
+                    sliderInt("SetNextFrameWantCaptureKeyboard() on hover", ::captureOverrideKeyboard, -1, +1, captureOverrideDesc[captureOverrideKeyboard + 1], SliderFlag.AlwaysClamp)
 
                     colorButton("##panel", Vec4(0.7f, 0.1f, 0.7f, 1f), ColorEditFlag.NoTooltip or ColorEditFlag.NoDragDrop, Vec2(128f, 96f)) // Dummy item
                     if (ImGui.isItemHovered() && captureOverrideMouse != -1)
@@ -130,7 +129,7 @@ object ShowDemoWindowInputs {
                 val current = ImGui.mouseCursor
                 text("Current mouse cursor = ${current.i}: $current")
                 beginDisabled(true)
-                checkboxFlags("io.BackendFlags: HasMouseCursors", io::backendFlags, BackendFlag.HasMouseCursors.i)
+                checkboxFlags("io.BackendFlags: HasMouseCursors", io::backendFlags, BackendFlag.HasMouseCursors)
                 endDisabled()
 
                 text("Hover to see mouse cursors:")

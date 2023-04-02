@@ -41,7 +41,6 @@ import imgui.classes.TextFilter
 import imgui.dsl.popupContextItem
 import uno.kotlin.getValue
 import uno.kotlin.setValue
-import java.util.*
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
@@ -125,7 +124,7 @@ object Console {
 
             // Reserve enough left-over height for 1 separator + 1 input text
             val footerHeightToReserve = style.itemSpacing.y + frameHeightWithSpacing
-            if(beginChild("ScrollingRegion", Vec2(0, -footerHeightToReserve), false, Wf.HorizontalScrollbar.i)) {
+            if (beginChild("ScrollingRegion", Vec2(0, -footerHeightToReserve), false, Wf.HorizontalScrollbar)) {
                 if (beginPopupContextWindow()) {
                     if (selectable("Clear")) clearLog()
                     endPopup()
@@ -231,8 +230,8 @@ object Console {
         }
 
         fun inputTextCallback(data: InputTextCallbackData): Boolean {
-            when (data.eventFlag) {
-                imgui.InputTextFlag.CallbackCompletion.i -> {
+            when {
+                data.eventFlag eq Itf.CallbackCompletion -> {
                     val wordEnd = data.cursorPos
                     var wordStart = wordEnd
                     while (wordStart > 0) {
@@ -278,7 +277,7 @@ object Console {
                         }
                     }
                 }
-                Itf.CallbackHistory.i -> {
+                data.eventFlag eq Itf.CallbackHistory -> {
                     val prevHistoryPos = historyPos
                     if (data.eventKey == Key.UpArrow) {
                         if (historyPos == -1) historyPos = history.size - 1

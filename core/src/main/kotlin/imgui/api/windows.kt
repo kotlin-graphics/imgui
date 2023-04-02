@@ -1,7 +1,5 @@
 package imgui.api
 
-import gli_.has
-import gli_.hasnt
 import glm_.d
 import glm_.f
 import glm_.max
@@ -78,7 +76,7 @@ interface windows {
 
     @return isOpen
      */
-    fun begin(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
+    fun begin(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = emptyFlags()): Boolean {
 
         assert(name.isNotEmpty()) { "Window name required" }
         assert(g.withinFrameScope) { "Forgot to call ImGui::newFrame()" }
@@ -91,7 +89,7 @@ interface windows {
         val window = findWindowByName(name) ?: createNewWindow(name, flags).also { windowJustCreated = true }
 
         // Automatically disable manual moving/resizing when NoInputs is set
-        if ((flags and Wf.NoInputs) == Wf.NoInputs.i)
+        if (Wf.NoInputs in flags)
             flags = flags or Wf.NoMove or Wf.NoResize
 
         if (flags has Wf._NavFlattened)
@@ -110,7 +108,7 @@ interface windows {
         }
         window.appearing = windowJustActivatedByUser
         if (window.appearing)
-            window.setConditionAllowFlags(Cond.Appearing.i, true)
+            window.setConditionAllowFlags(Cond.Appearing, true)
 
         // Update Flags, LastFrameActive, BeginOrderXXX fields
         if (firstBeginOfTheFrame) {
@@ -175,7 +173,7 @@ interface windows {
                     FIXME: Look into removing the branch so everything can go through this same code path for consistency.  */
                 window.setWindowPosVal put g.nextWindowData.posVal
                 window.setWindowPosPivot put g.nextWindowData.posPivotVal
-                window.setWindowPosAllowFlags = window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
+                window.setWindowPosAllowFlags = window.setWindowPosAllowFlags wo (Cond.Once or Cond.FirstUseEver or Cond.Appearing)
             } else window.setPos(g.nextWindowData.posVal, g.nextWindowData.posCond)
         }
         if (g.nextWindowData.flags has NextWindowDataFlag.HasSize) {
@@ -201,7 +199,7 @@ interface windows {
             window.setCollapsed(g.nextWindowData.collapsedVal, g.nextWindowData.collapsedCond)
         if (g.nextWindowData.flags has NextWindowDataFlag.HasFocus) focusWindow(window)
         if (window.appearing)
-            window.setConditionAllowFlags(Cond.Appearing.i, false)
+            window.setConditionAllowFlags(Cond.Appearing, false)
 
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
         if (firstBeginOfTheFrame) {
@@ -436,7 +434,7 @@ interface windows {
                 assert(window.idStack.size == 1)
                 val id = window.idStack.pop() // As window->IDStack[0] == window->ID here, make sure TestEngine doesn't erroneously see window as parent of itself.
                 IMGUI_TEST_ENGINE_ITEM_ADD(window.rect(), window.id)
-                IMGUI_TEST_ENGINE_ITEM_INFO(window.id, window.name, if (g.hoveredWindow === window) ItemStatusFlag.HoveredRect.i else ItemStatusFlag.None.i)
+                IMGUI_TEST_ENGINE_ITEM_INFO(window.id, window.name, if (g.hoveredWindow === window) ItemStatusFlag.HoveredRect else emptyFlags())
                 window.idStack += id
             }
 
@@ -690,8 +688,8 @@ interface windows {
 
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
-            val itemFlag = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)) ItemStatusFlag.HoveredRect else ItemStatusFlag.None
-            setLastItemData(window.moveId, g.currentItemFlags, itemFlag.i, titleBarRect)
+            val itemFlag = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)) ItemStatusFlag.HoveredRect else emptyFlags()
+            setLastItemData(window.moveId, g.currentItemFlags, itemFlag, titleBarRect)
 
             // [DEBUG]
             if (!IMGUI_DISABLE_DEBUG_TOOLS)

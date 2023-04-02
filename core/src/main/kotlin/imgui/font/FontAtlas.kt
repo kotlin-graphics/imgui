@@ -20,6 +20,7 @@ import unsigned.toUInt
 import java.nio.ByteBuffer
 import kotlin.math.sqrt
 
+typealias FontAtlasFlags = Flag<FontAtlas.Flag>
 /** Load and rasterize multiple TTF/OTF fonts into a same texture. The font atlas will build a single texture holding:
  *      - One or more fonts.
  *      - Custom graphics data needed to render the shapes needed by Dear ImGui.
@@ -369,9 +370,7 @@ class FontAtlas {
     //-------------------------------------------
 
     /** Flags: for ImFontAtlas build */
-    enum class Flag {
-        None,
-
+    enum class Flag : imgui.Flag<Flag> {
         /** Don't round the height to next power of two */
         NoPowerOfTwoHeight,
 
@@ -381,14 +380,11 @@ class FontAtlas {
         /** Don't build thick line textures into the atlas (save a little texture memory, allow support for point/nearest filtering). The AntiAliasedLinesUseTex features uses them, otherwise they will be rendered using polygons (more expensive for CPU/GPU). */
         NoBakedLines;
 
-        val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+        override val i = 1 shl ordinal
     }
 
-    infix fun Int.has(flag: Flag) = and(flag.i) != 0
-    infix fun Int.hasnt(flag: Flag) = and(flag.i) == 0
-
     /** Build flags (see ImFontAtlasFlags_) */
-    var flags = Flag.None.i
+    var flags: FontAtlasFlags = emptyFlags()
 
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
@@ -1028,7 +1024,7 @@ class FontAtlas {
 
         fun buildRenderLinesTexData(atlas: FontAtlas) {
 
-            if (atlas.flags has Flag.NoBakedLines.i)
+            if (atlas.flags has Flag.NoBakedLines)
                 return
 
             // This generates a triangular shape in the texture, with the various line widths stacked on top of each other to allow interpolation between them

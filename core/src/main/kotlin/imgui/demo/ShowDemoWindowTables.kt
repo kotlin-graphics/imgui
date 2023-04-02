@@ -4,7 +4,6 @@ import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import glm_.wo
 import imgui.*
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.beginDisabled
@@ -68,6 +67,7 @@ import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
+import imgui.TableColumnFlag
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
@@ -105,25 +105,26 @@ object ShowDemoWindowTables {
     class EnumDesc(val value: TableFlags, val name: String, val tooltip: String)
 
     val policies = arrayOf(
-        EnumDesc(Tf.None.i, "Default", "Use default sizing policy:\n- ImGuiTableFlags_SizingFixedFit if ScrollX is on or if host window has ImGuiWindowFlags_AlwaysAutoResize.\n- ImGuiTableFlags_SizingStretchSame otherwise."),
-        EnumDesc(Tf.SizingFixedFit.i, "ImGuiTableFlags_SizingFixedFit", "Columns default to _WidthFixed (if resizable) or _WidthAuto (if not resizable), matching contents width."),
-        EnumDesc(Tf.SizingFixedSame.i, "ImGuiTableFlags_SizingFixedSame", "Columns are all the same width, matching the maximum contents width.\nImplicitly disable ImGuiTableFlags_Resizable and enable ImGuiTableFlags_NoKeepColumnsVisible."),
-        EnumDesc(Tf.SizingStretchProp.i, "ImGuiTableFlags_SizingStretchProp", "Columns default to _WidthStretch with weights proportional to their widths."),
-        EnumDesc(Tf.SizingStretchSame.i, "ImGuiTableFlags_SizingStretchSame", "Columns default to _WidthStretch with same weights."))
+        EnumDesc(emptyFlags(), "Default", "Use default sizing policy:\n- ImGuiTableFlags_SizingFixedFit if ScrollX is on or if host window has ImGuiWindowFlags_AlwaysAutoResize.\n- ImGuiTableFlags_SizingStretchSame otherwise."),
+        EnumDesc(Tf.SizingFixedFit, "ImGuiTableFlags_SizingFixedFit", "Columns default to _WidthFixed (if resizable) or _WidthAuto (if not resizable), matching contents width."),
+        EnumDesc(Tf.SizingFixedSame, "ImGuiTableFlags_SizingFixedSame", "Columns are all the same width, matching the maximum contents width.\nImplicitly disable ImGuiTableFlags_Resizable and enable ImGuiTableFlags_NoKeepColumnsVisible."),
+        EnumDesc(Tf.SizingStretchProp, "ImGuiTableFlags_SizingStretchProp", "Columns default to _WidthStretch with weights proportional to their widths."),
+        EnumDesc(Tf.SizingStretchSame, "ImGuiTableFlags_SizingStretchSame", "Columns default to _WidthStretch with same weights.")
+    )
 
     /** Show a combo box with a choice of sizing policies */
-    fun editTableSizingFlags(flags: IntArray, ptr: Int) {
-        var flag = flags[ptr]
-        val idx = policies.indexOfFirst { it.value == flag and Tf._SizingMask }
+    fun editTableSizingFlags(flags: FlagArray<Tf>, ptr: Int) {
+        var flag by flags.mutablePropertyAt(ptr)
+        val idx = policies.indexOfFirst { it.value eq (flag and Tf._SizingMask) }
         val previewText = policies.getOrNull(idx)?.name?.substringAfter("ImGuiTableFlags") ?: ""
         useCombo("Sizing Policy", previewText) {
             for (n in policies.indices)
                 if (selectable(policies[n].name, idx == n))
-                    flag = (flag wo Tf._SizingMask.i) or policies[n].value
+                    flag = (flag wo Tf._SizingMask) or policies[n].value
         }
         sameLine()
         textDisabled("(?)")
-        if (ImGui.isItemHovered())
+        if (ImGui.isItemHovered)
             tooltip {
                 withTextWrapPos(ImGui.fontSize * 50f) {
                     for (m in policies.indices) {
@@ -138,36 +139,37 @@ object ShowDemoWindowTables {
     }
 
     fun editTableColumnsFlags(flags: TableColumnFlags): TableColumnFlags {
-        _i32 = flags
-        checkboxFlags("_Disabled", ::_i32, Tcf.Disabled.i); sameLine(); helpMarker("Master disable flag (also hide from context menu)")
-        checkboxFlags("_DefaultHide", ::_i32, Tcf.DefaultHide.i)
-        checkboxFlags("_DefaultSort", ::_i32, Tcf.DefaultSort.i)
-        if (checkboxFlags("_WidthStretch", ::_i32, Tcf.WidthStretch.i))
-            _i32 = _i32 wo (Tcf.WidthMask_ xor Tcf.WidthStretch)
-        if (checkboxFlags("_WidthFixed", ::_i32, Tcf.WidthFixed.i))
-            _i32 = _i32 wo (Tcf.WidthMask_ xor Tcf.WidthFixed)
-        checkboxFlags("_NoResize", ::_i32, Tcf.NoResize.i)
-        checkboxFlags("_NoReorder", ::_i32, Tcf.NoReorder.i)
-        checkboxFlags("_NoHide", ::_i32, Tcf.NoHide.i)
-        checkboxFlags("_NoClip", ::_i32, Tcf.NoClip.i)
-        checkboxFlags("_NoSort", ::_i32, Tcf.NoSort.i)
-        checkboxFlags("_NoSortAscending", ::_i32, Tcf.NoSortAscending.i)
-        checkboxFlags("_NoSortDescending", ::_i32, Tcf.NoSortDescending.i)
-        checkboxFlags("_NoHeaderLabel", ::_i32, Tcf.NoHeaderLabel.i)
-        checkboxFlags("_NoHeaderWidth", ::_i32, Tcf.NoHeaderWidth.i)
-        checkboxFlags("_PreferSortAscending", ::_i32, Tcf.PreferSortAscending.i)
-        checkboxFlags("_PreferSortDescending", ::_i32, Tcf.PreferSortDescending.i)
-        checkboxFlags("_IndentEnable", ::_i32, Tcf.IndentEnable.i); sameLine(); helpMarker("Default for column 0")
-        checkboxFlags("_IndentDisable", ::_i32, Tcf.IndentDisable.i); sameLine(); helpMarker("Default for column >0")
-        return _i32
+        val flagsRef = flags.mutableReference
+        var flags by flagsRef
+        checkboxFlags("_Disabled", flagsRef, Tcf.Disabled); sameLine(); helpMarker("Master disable flag (also hide from context menu)")
+        checkboxFlags("_DefaultHide", flagsRef, Tcf.DefaultHide)
+        checkboxFlags("_DefaultSort", flagsRef, Tcf.DefaultSort)
+        if (checkboxFlags("_WidthStretch", flagsRef, Tcf.WidthStretch))
+            flags = flags wo (Tcf.WidthMask xor Tcf.WidthStretch)
+        if (checkboxFlags("_WidthFixed", flagsRef, Tcf.WidthFixed))
+            flags = flags wo (Tcf.WidthMask xor Tcf.WidthFixed)
+        checkboxFlags("_NoResize", flagsRef, Tcf.NoResize)
+        checkboxFlags("_NoReorder", flagsRef, Tcf.NoReorder)
+        checkboxFlags("_NoHide", flagsRef, Tcf.NoHide)
+        checkboxFlags("_NoClip", flagsRef, Tcf.NoClip)
+        checkboxFlags("_NoSort", flagsRef, Tcf.NoSort)
+        checkboxFlags("_NoSortAscending", flagsRef, Tcf.NoSortAscending)
+        checkboxFlags("_NoSortDescending", flagsRef, Tcf.NoSortDescending)
+        checkboxFlags("_NoHeaderLabel", flagsRef, Tcf.NoHeaderLabel)
+        checkboxFlags("_NoHeaderWidth", flagsRef, Tcf.NoHeaderWidth)
+        checkboxFlags("_PreferSortAscending", flagsRef, Tcf.PreferSortAscending)
+        checkboxFlags("_PreferSortDescending", flagsRef, Tcf.PreferSortDescending)
+        checkboxFlags("_IndentEnable", flagsRef, Tcf.IndentEnable); sameLine(); helpMarker("Default for column 0")
+        checkboxFlags("_IndentDisable", flagsRef, Tcf.IndentDisable); sameLine(); helpMarker("Default for column >0")
+        return flags
     }
 
     fun showTableColumnsStatusFlags(flags: TableColumnFlags) {
-        _i32 = flags
-        checkboxFlags("_IsEnabled", ::_i32, Tcf.IsEnabled.i)
-        checkboxFlags("_IsVisible", ::_i32, Tcf.IsVisible.i)
-        checkboxFlags("_IsSorted", ::_i32, Tcf.IsSorted.i)
-        checkboxFlags("_IsHovered", ::_i32, Tcf.IsHovered.i)
+        val flag = flags.mutableReference
+        checkboxFlags("_IsEnabled", flag, Tcf.IsEnabled)
+        checkboxFlags("_IsVisible", flag, Tcf.IsVisible)
+        checkboxFlags("_IsSorted", flag, Tcf.IsSorted)
+        checkboxFlags("_IsHovered", flag, Tcf.IsHovered)
     }
 
     /* Stretch + ScrollX */
@@ -374,12 +376,12 @@ object ShowDemoWindowTables {
                         tableSetupColumn("B1")
                         tableHeadersRow()
 
-                        tableNextRow(Trf.None.i, rowsHeight)
+                        tableNextRow(rowMinHeight = rowsHeight)
                         tableNextColumn()
                         text("B0 Row 0")
                         tableNextColumn()
                         text("B1 Row 0")
-                        tableNextRow(Trf.None.i, rowsHeight)
+                        tableNextRow(rowMinHeight = rowsHeight)
                         tableNextColumn()
                         text("B0 Row 1")
                         tableNextColumn()
@@ -399,7 +401,7 @@ object ShowDemoWindowTables {
             table("table_row_height", 1, Tf.BordersOuter or Tf.BordersInnerV) {
                 for (row in 0..9) {
                     val minRowHeight = (TEXT_BASE_HEIGHT * 0.3f * row).i.f
-                    tableNextRow(Trf.None.i, minRowHeight)
+                    tableNextRow(rowMinHeight = minRowHeight)
                     tableNextColumn()
                     text("min_row_height = %.2f", minRowHeight)
                 }
@@ -471,32 +473,32 @@ object ShowDemoWindowTables {
                 // Expose a few Borders related flags interactively
 
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_RowBg", ::flags, Tf.RowBg.i)
-                    checkboxFlags("ImGuiTableFlags_Borders", ::flags, Tf.Borders.i)
+                    checkboxFlags("ImGuiTableFlags_RowBg", ::flags, Tf.RowBg)
+                    checkboxFlags("ImGuiTableFlags_Borders", ::flags, Tf.Borders)
                     sameLine(); helpMarker("ImGuiTableFlags_Borders\n = ImGuiTableFlags_BordersInnerV\n | ImGuiTableFlags_BordersOuterV\n | ImGuiTableFlags_BordersInnerV\n | ImGuiTableFlags_BordersOuterH")
                     indent()
 
-                    checkboxFlags("ImGuiTableFlags_BordersH", ::flags, Tf.BordersH.i)
+                    checkboxFlags("ImGuiTableFlags_BordersH", ::flags, Tf.BordersH)
                     indent()
-                    checkboxFlags("ImGuiTableFlags_BordersOuterH", ::flags, Tf.BordersOuterH.i)
-                    checkboxFlags("ImGuiTableFlags_BordersInnerH", ::flags, Tf.BordersInnerH.i)
+                    checkboxFlags("ImGuiTableFlags_BordersOuterH", ::flags, Tf.BordersOuterH)
+                    checkboxFlags("ImGuiTableFlags_BordersInnerH", ::flags, Tf.BordersInnerH)
                     unindent()
 
-                    checkboxFlags("ImGuiTableFlags_BordersV", ::flags, Tf.BordersV.i)
+                    checkboxFlags("ImGuiTableFlags_BordersV", ::flags, Tf.BordersV)
                     indent()
-                    checkboxFlags("ImGuiTableFlags_BordersOuterV", ::flags, Tf.BordersOuterV.i)
-                    checkboxFlags("ImGuiTableFlags_BordersInnerV", ::flags, Tf.BordersInnerV.i)
+                    checkboxFlags("ImGuiTableFlags_BordersOuterV", ::flags, Tf.BordersOuterV)
+                    checkboxFlags("ImGuiTableFlags_BordersInnerV", ::flags, Tf.BordersInnerV)
                     unindent()
 
-                    checkboxFlags("ImGuiTableFlags_BordersOuter", ::flags, Tf.BordersOuter.i)
-                    checkboxFlags("ImGuiTableFlags_BordersInner", ::flags, Tf.BordersInner.i)
+                    checkboxFlags("ImGuiTableFlags_BordersOuter", ::flags, Tf.BordersOuter)
+                    checkboxFlags("ImGuiTableFlags_BordersInner", ::flags, Tf.BordersInner)
                     unindent()
 
                     alignTextToFramePadding(); text("Cell contents:")
                     sameLine(); radioButton("Text", ::contentsType, ContentsType.Text.ordinal)
                     sameLine(); radioButton("FillButton", ::contentsType, ContentsType.FillButton.ordinal)
                     checkbox("Display headers", ::displayHeaders)
-                    checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody.i); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appear in Headers")
+                    checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appear in Headers")
                 }
 
                 table("table1", 3, flags) {
@@ -532,8 +534,8 @@ object ShowDemoWindowTables {
                 // By default, if we don't enable ScrollX the sizing policy for each columns is "Stretch"
                 // All columns maintain a sizing weight, and they will occupy all available width.
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable.i)
-                    checkboxFlags("ImGuiTableFlags_BordersV", ::flags, Tf.BordersV.i)
+                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable)
+                    checkboxFlags("ImGuiTableFlags_BordersV", ::flags, Tf.BordersV)
                     sameLine(); helpMarker("Using the _Resizable flag automatically enables the _BordersInnerV flag as well, this is why the resize borders are still showing when unchecking this.")
                 }
 
@@ -563,7 +565,7 @@ object ShowDemoWindowTables {
                             "Fixed-width columns generally makes more sense if you want to use horizontal scrolling.\n\n" +
                             "Double-click a column border to auto-fit the column to its contents.")
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags, Tf.NoHostExtendX.i)
+                    checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags, Tf.NoHostExtendX)
                 }
 
                 table("table1", 3, flags) {
@@ -587,9 +589,9 @@ object ShowDemoWindowTables {
                                    "When combining Fixed and Stretch columns, generally you only want one, maybe two trailing columns to use _WidthStretch.")
 
                 table("table1", 3, flags) {
-                    tableSetupColumn("AAA", Tcf.WidthFixed.i)
-                    tableSetupColumn("BBB", Tcf.WidthFixed.i)
-                    tableSetupColumn("CCC", Tcf.WidthStretch.i)
+                    tableSetupColumn("AAA", Tcf.WidthFixed)
+                    tableSetupColumn("BBB", Tcf.WidthFixed)
+                    tableSetupColumn("CCC", Tcf.WidthStretch)
                     tableHeadersRow()
                     for (row in 0..4) {
                         tableNextRow()
@@ -600,11 +602,11 @@ object ShowDemoWindowTables {
                     }
                 }
                 table("table2", 6, flags) {
-                    tableSetupColumn("AAA", Tcf.WidthFixed.i)
-                    tableSetupColumn("BBB", Tcf.WidthFixed.i)
+                    tableSetupColumn("AAA", Tcf.WidthFixed)
+                    tableSetupColumn("BBB", Tcf.WidthFixed)
                     tableSetupColumn("CCC", Tcf.WidthFixed or Tcf.DefaultHide)
-                    tableSetupColumn("DDD", Tcf.WidthStretch.i)
-                    tableSetupColumn("EEE", Tcf.WidthStretch.i)
+                    tableSetupColumn("DDD", Tcf.WidthStretch)
+                    tableSetupColumn("EEE", Tcf.WidthStretch)
                     tableSetupColumn("FFF", Tcf.WidthStretch or Tcf.DefaultHide)
                     tableHeadersRow()
                     for (row in 0..4) {
@@ -627,11 +629,11 @@ object ShowDemoWindowTables {
                     "Click and drag column headers to reorder columns.\n\n" +
                             "Right-click on a header to open a context menu.")
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable.i)
-                    checkboxFlags("ImGuiTableFlags_Reorderable", ::flags, Tf.Reorderable.i)
-                    checkboxFlags("ImGuiTableFlags_Hideable", ::flags, Tf.Hideable.i)
-                    checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody.i)
-                    checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags, Tf.NoBordersInBodyUntilResize.i); sameLine(); helpMarker("Disable vertical borders in columns Body until hovered for resize (borders will always appear in Headers)")
+                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable)
+                    checkboxFlags("ImGuiTableFlags_Reorderable", ::flags, Tf.Reorderable)
+                    checkboxFlags("ImGuiTableFlags_Hideable", ::flags, Tf.Hideable)
+                    checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody)
+                    checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags, Tf.NoBordersInBodyUntilResize); sameLine(); helpMarker("Disable vertical borders in columns Body until hovered for resize (borders will always appear in Headers)")
                 }
 
                 table("##table1", 3, flags) {
@@ -669,7 +671,7 @@ object ShowDemoWindowTables {
     }
 
     object Padding {
-        var flags1 = Tf.BordersV.i
+        var flags1 = Tf.BordersV
         var showHeaders = false
         var flags2 = Tf.Borders or Tf.RowBg
         val cellPadding = Vec2()
@@ -689,14 +691,14 @@ object ShowDemoWindowTables {
                                    "In this demo we don't show horizontal borders to emphasize how they don't affect default horizontal padding.")
 
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_PadOuterX", this::flags1, Tf.PadOuterX.i)
+                    checkboxFlags("ImGuiTableFlags_PadOuterX", this::flags1, Tf.PadOuterX)
                     sameLine(); helpMarker("Enable outer-most padding (default if ImGuiTableFlags_BordersOuterV is set)")
-                    checkboxFlags("ImGuiTableFlags_NoPadOuterX", this::flags1, Tf.NoPadOuterX.i)
+                    checkboxFlags("ImGuiTableFlags_NoPadOuterX", this::flags1, Tf.NoPadOuterX)
                     sameLine(); helpMarker("Disable outer-most padding (default if ImGuiTableFlags_BordersOuterV is not set)")
-                    checkboxFlags("ImGuiTableFlags_NoPadInnerX", this::flags1, Tf.NoPadInnerX.i)
+                    checkboxFlags("ImGuiTableFlags_NoPadInnerX", this::flags1, Tf.NoPadInnerX)
                     sameLine(); helpMarker("Disable inner padding between columns (double inner padding if BordersOuterV is on, single inner padding if BordersOuterV is off)")
-                    checkboxFlags("ImGuiTableFlags_BordersOuterV", this::flags1, Tf.BordersOuterV.i)
-                    checkboxFlags("ImGuiTableFlags_BordersInnerV", this::flags1, Tf.BordersInnerV.i)
+                    checkboxFlags("ImGuiTableFlags_BordersOuterV", this::flags1, Tf.BordersOuterV)
+                    checkboxFlags("ImGuiTableFlags_BordersInnerV", this::flags1, Tf.BordersInnerV)
                     checkbox("show_headers", ::showHeaders)
                 }
 
@@ -727,13 +729,13 @@ object ShowDemoWindowTables {
                 helpMarker("Setting style.CellPadding to (0,0) or a custom value.")
 
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_Borders", ::flags2, Tf.Borders.i)
-                    checkboxFlags("ImGuiTableFlags_BordersH", ::flags2, Tf.BordersH.i)
-                    checkboxFlags("ImGuiTableFlags_BordersV", ::flags2, Tf.BordersV.i)
-                    checkboxFlags("ImGuiTableFlags_BordersInner", ::flags2, Tf.BordersInner.i)
-                    checkboxFlags("ImGuiTableFlags_BordersOuter", ::flags2, Tf.BordersOuter.i)
-                    checkboxFlags("ImGuiTableFlags_RowBg", ::flags2, Tf.RowBg.i)
-                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags2, Tf.Resizable.i)
+                    checkboxFlags("ImGuiTableFlags_Borders", ::flags2, Tf.Borders)
+                    checkboxFlags("ImGuiTableFlags_BordersH", ::flags2, Tf.BordersH)
+                    checkboxFlags("ImGuiTableFlags_BordersV", ::flags2, Tf.BordersV)
+                    checkboxFlags("ImGuiTableFlags_BordersInner", ::flags2, Tf.BordersInner)
+                    checkboxFlags("ImGuiTableFlags_BordersOuter", ::flags2, Tf.BordersOuter)
+                    checkboxFlags("ImGuiTableFlags_RowBg", ::flags2, Tf.RowBg)
+                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags2, Tf.Resizable)
                     checkbox("show_widget_frame_bg", ::showWidgetFrameBg)
                     sliderVec2("CellPadding", cellPadding, 0f, 10f, "%.0f")
                 }
@@ -762,7 +764,7 @@ object ShowDemoWindowTables {
 
     object `Sizing policies` {
         var flags1 = Tf.BordersV or Tf.BordersOuterH or Tf.RowBg or Tf.ContextMenuInBody
-        val sizingPolicyFlags = intArrayOf(Tf.SizingFixedFit.i, Tf.SizingFixedSame.i, Tf.SizingStretchProp.i, Tf.SizingStretchSame.i)
+        val sizingPolicyFlags = flagArrayOf(Tf.SizingFixedFit, Tf.SizingFixedSame, Tf.SizingStretchProp, Tf.SizingStretchSame)
 
         enum class ContentsType { ShowWidth, ShortText, LongText, Button, FillButton, InputText }
 
@@ -774,8 +776,8 @@ object ShowDemoWindowTables {
         operator fun invoke() {
             treeNode("Sizing policies") {
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags1, Tf.Resizable.i)
-                    checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags1, Tf.NoHostExtendX.i)
+                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags1, Tf.Resizable)
+                    checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags1, Tf.NoHostExtendX)
                 }
 
                 for (tableN in 0..3)
@@ -811,7 +813,7 @@ object ShowDemoWindowTables {
                 pushingStyleCompact {
                     withID("Advanced") {
                         withItemWidth(TEXT_BASE_WIDTH * 30) {
-                            val f = intArrayOf(flags)
+                            val f = flagArrayOf(flags)
                             editTableSizingFlags(f, 0)
                             flags = f[0]
                             _i32 = contentsType1.ordinal
@@ -821,14 +823,14 @@ object ShowDemoWindowTables {
                                 sameLine()
                                 helpMarker("Be mindful that using right-alignment (e.g. size.x = -FLT_MIN) creates a feedback loop where contents width can feed into auto-column width can feed into contents width.")
                             }
-                            dragInt("Columns", ::columnCount, 0.1f, 1, 64, "%d", SliderFlag.AlwaysClamp.i)
-                            checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable.i)
-                            checkboxFlags("ImGuiTableFlags_PreciseWidths", ::flags, Tf.PreciseWidths.i)
+                            dragInt("Columns", ::columnCount, 0.1f, 1, 64, "%d", SliderFlag.AlwaysClamp)
+                            checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable)
+                            checkboxFlags("ImGuiTableFlags_PreciseWidths", ::flags, Tf.PreciseWidths)
                             sameLine(); helpMarker("Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.")
-                            checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable.i)
-                            checkboxFlags("ImGuiTableFlags_ScrollX", ::flags, Tf.ScrollX.i)
-                            checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY.i)
-                            checkboxFlags("ImGuiTableFlags_NoClip", ::flags, Tf.NoClip.i)
+                            checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable)
+                            checkboxFlags("ImGuiTableFlags_ScrollX", ::flags, Tf.ScrollX)
+                            checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY)
+                            checkboxFlags("ImGuiTableFlags_NoClip", ::flags, Tf.NoClip)
                         }
                     }
                 }
@@ -866,7 +868,7 @@ object ShowDemoWindowTables {
                 helpMarker("Here we activate ScrollY, which will create a child window container to allow hosting scrollable contents.\n\nWe also demonstrate using ImGuiListClipper to virtualize the submission of many items.")
 
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY.i)
+                    checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY)
                 }
 
                 // When using ScrollX or ScrollY we need to specify a size for our table container!
@@ -874,9 +876,9 @@ object ShowDemoWindowTables {
                 val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 8)
                 table("table_scrolly", 3, flags, outerSize) {
                     tableSetupScrollFreeze(0, 1) // Make top row always visible
-                    tableSetupColumn("One", Tcf.None.i)
-                    tableSetupColumn("Two", Tcf.None.i)
-                    tableSetupColumn("Three", Tcf.None.i)
+                    tableSetupColumn("One")
+                    tableSetupColumn("Two")
+                    tableSetupColumn("Three")
                     tableHeadersRow()
 
                     // Demonstrate using clipper for large vertical lists
@@ -909,13 +911,13 @@ object ShowDemoWindowTables {
                             "because the container window won't automatically extend vertically to fix contents (this may be improved in future versions).")
 
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable.i)
-                    checkboxFlags("ImGuiTableFlags_ScrollX", ::flags, Tf.ScrollX.i)
-                    checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY.i)
+                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable)
+                    checkboxFlags("ImGuiTableFlags_ScrollX", ::flags, Tf.ScrollX)
+                    checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY)
                     setNextItemWidth(ImGui.frameHeight)
-                    dragInt("freeze_cols", ::freezeCols, 0.2f, 0, 9, null, SliderFlag.NoInput.i)
+                    dragInt("freeze_cols", ::freezeCols, 0.2f, 0, 9, null, SliderFlag.NoInput)
                     setNextItemWidth(ImGui.frameHeight)
-                    dragInt("freeze_rows", ::freezeRows, 0.2f, 0, 9, null, SliderFlag.NoInput.i)
+                    dragInt("freeze_rows", ::freezeRows, 0.2f, 0, 9, null, SliderFlag.NoInput)
                 }
 
                 // When using ScrollX or ScrollY we need to specify a size for our table container!
@@ -923,7 +925,7 @@ object ShowDemoWindowTables {
                 val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 8)
                 table("table_scrollx", 7, flags, outerSize) {
                     tableSetupScrollFreeze(freezeCols, freezeRows)
-                    tableSetupColumn("Line #", Tcf.NoHide.i) // Make the first column not hideable to match our use of TableSetupScrollFreeze()
+                    tableSetupColumn("Line #", Tcf.NoHide) // Make the first column not hideable to match our use of TableSetupScrollFreeze()
                     tableSetupColumn("One")
                     tableSetupColumn("Two")
                     tableSetupColumn("Three")
@@ -960,7 +962,7 @@ object ShowDemoWindowTables {
                 pushingStyleCompact {
                     withID("flags3") {
                         withItemWidth(TEXT_BASE_WIDTH * 30) {
-                            checkboxFlags("ImGuiTableFlags_ScrollX", ::flags11, Tf.ScrollX.i)
+                            checkboxFlags("ImGuiTableFlags_ScrollX", ::flags11, Tf.ScrollX)
                             dragFloat("inner_width", ::innerWidth0, 1f, 0f, Float.MAX_VALUE, "%.1f")
                         }
                     }
@@ -978,14 +980,15 @@ object ShowDemoWindowTables {
     object `Columns flags` {
         var columnCount = 3
         val columnNames = arrayOf("One", "Two", "Three")
-        val columnFlags = intArrayOf(Tcf.DefaultSort.i, Tcf.None.i, Tcf.DefaultHide.i)
-        val columnFlagsOut = IntArray(columnCount) // Output from TableGetColumnFlags()
+        val columnFlags = flagArrayOf(Tcf.DefaultSort, emptyFlags(), Tcf.DefaultHide)
+        val columnFlagsOut = FlagArray<TableColumnFlag>(columnCount)// Output from TableGetColumnFlags()
+
         operator fun invoke() {
             treeNode("Columns flags") {
                 // Create a first table just to show all the options/flags we want to make visible in our example!
                 // -> begin of the class, as static
 
-                table("table_columns_flags_checkboxes", columnCount, Tf.None.i) {
+                table("table_columns_flags_checkboxes", columnCount) {
                     pushingStyleCompact {
                         for (column in 0 until columnCount) {
                             tableNextColumn()
@@ -1034,20 +1037,20 @@ object ShowDemoWindowTables {
 
     object `Columns widths` {
         var flags1 = Tf.Borders or Tf.NoBordersInBodyUntilResize
-        var flags2 = Tf.None.i
+        var flags2: TableFlags = emptyFlags()
         operator fun invoke() {
             treeNode("Columns widths") {
                 helpMarker("Using TableSetupColumn() to setup default width.")
 
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags1, Tf.Resizable.i)
-                    checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags1, Tf.NoBordersInBodyUntilResize.i)
+                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags1, Tf.Resizable)
+                    checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags1, Tf.NoBordersInBodyUntilResize)
                 }
                 table("table1", 3, flags1) {
                     // We could also set ImGuiTableFlags_SizingFixedFit on the table and all columns will default to ImGuiTableColumnFlags_WidthFixed.
-                    tableSetupColumn("one", Tcf.WidthFixed.i, 100f) // Default to 100.0f
-                    tableSetupColumn("two", Tcf.WidthFixed.i, 200f) // Default to 200.0f
-                    tableSetupColumn("three", Tcf.WidthFixed.i)       // Default to auto
+                    tableSetupColumn("one", Tcf.WidthFixed, 100f) // Default to 100.0f
+                    tableSetupColumn("two", Tcf.WidthFixed, 200f) // Default to 200.0f
+                    tableSetupColumn("three", Tcf.WidthFixed)       // Default to auto
                     tableHeadersRow()
                     for (row in 0..3) {
                         tableNextRow()
@@ -1064,17 +1067,17 @@ object ShowDemoWindowTables {
                 helpMarker("Using TableSetupColumn() to setup explicit width.\n\nUnless _NoKeepColumnsVisible is set, fixed columns with set width may still be shrunk down if there's not enough space in the host.")
 
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_NoKeepColumnsVisible", ::flags2, Tf.NoKeepColumnsVisible.i)
-                    checkboxFlags("ImGuiTableFlags_BordersInnerV", ::flags2, Tf.BordersInnerV.i)
-                    checkboxFlags("ImGuiTableFlags_BordersOuterV", ::flags2, Tf.BordersOuterV.i)
+                    checkboxFlags("ImGuiTableFlags_NoKeepColumnsVisible", ::flags2, Tf.NoKeepColumnsVisible)
+                    checkboxFlags("ImGuiTableFlags_BordersInnerV", ::flags2, Tf.BordersInnerV)
+                    checkboxFlags("ImGuiTableFlags_BordersOuterV", ::flags2, Tf.BordersOuterV)
                 }
 
                 table("table2", 4, flags2) {
                     // We could also set ImGuiTableFlags_SizingFixedFit on the table and all columns will default to ImGuiTableColumnFlags_WidthFixed.
-                    tableSetupColumn("", Tcf.WidthFixed.i, 100f)
-                    tableSetupColumn("", Tcf.WidthFixed.i, TEXT_BASE_WIDTH * 15f)
-                    tableSetupColumn("", Tcf.WidthFixed.i, TEXT_BASE_WIDTH * 30f)
-                    tableSetupColumn("", Tcf.WidthFixed.i, TEXT_BASE_WIDTH * 15f)
+                    tableSetupColumn("", Tcf.WidthFixed, 100f)
+                    tableSetupColumn("", Tcf.WidthFixed, TEXT_BASE_WIDTH * 15f)
+                    tableSetupColumn("", Tcf.WidthFixed, TEXT_BASE_WIDTH * 30f)
+                    tableSetupColumn("", Tcf.WidthFixed, TEXT_BASE_WIDTH * 15f)
                     for (row in 0..4) {
                         tableNextRow()
                         for (column in 0..3) {
@@ -1098,9 +1101,9 @@ object ShowDemoWindowTables {
                 // Important to that note how the two flags have slightly different behaviors!
                 text("Using NoHostExtendX and NoHostExtendY:")
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags, Tf.NoHostExtendX.i)
+                    checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags, Tf.NoHostExtendX)
                     sameLine(); helpMarker("Make outer width auto-fit to columns, overriding outer_size.x value.\n\nOnly available when ScrollX/ScrollY are disabled and Stretch columns are not used.")
-                    checkboxFlags("ImGuiTableFlags_NoHostExtendY", ::flags, Tf.NoHostExtendY.i)
+                    checkboxFlags("ImGuiTableFlags_NoHostExtendY", ::flags, Tf.NoHostExtendY)
                     sameLine(); helpMarker("Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit).\n\nOnly available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible.")
                 }
 
@@ -1132,7 +1135,7 @@ object ShowDemoWindowTables {
                 sameLine()
                 table("table3", 3, Tf.Borders or Tf.RowBg, Vec2(TEXT_BASE_WIDTH * 30, 0f)) {
                     for (row in 0..2) {
-                        tableNextRow(0, TEXT_BASE_HEIGHT * 1.5f)
+                        tableNextRow(rowMinHeight = TEXT_BASE_HEIGHT * 1.5f)
                         for (column in 0..2) {
                             tableNextColumn()
                             text("Cell $column,$row")
@@ -1144,7 +1147,7 @@ object ShowDemoWindowTables {
     }
 
     object `Background color` {
-        var flags = Tf.RowBg.i
+        var flags: TableFlags = Tf.RowBg
         var rowBgType = 1
         var rowBgTarget = 1
         var cellBgType = 1
@@ -1152,8 +1155,8 @@ object ShowDemoWindowTables {
             treeNode("Background color") {
 
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_Borders", ::flags, Tf.Borders.i)
-                    checkboxFlags("ImGuiTableFlags_RowBg", ::flags, Tf.RowBg.i)
+                    checkboxFlags("ImGuiTableFlags_Borders", ::flags, Tf.Borders)
+                    checkboxFlags("ImGuiTableFlags_RowBg", ::flags, Tf.RowBg)
                     sameLine(); helpMarker("ImGuiTableFlags_RowBg automatically sets RowBg0 to alternative colors pulled from the Style.")
                     combo("row bg type", ::rowBgType, "None\u0000Red\u0000Gradient\u0000")
                     combo("row bg target", ::rowBgTarget, "RowBg0\u0000RowBg1\u0000"); sameLine(); helpMarker("Target RowBg0 to override the alternating odd/even colors,\nTarget RowBg1 to blend with them.")
@@ -1207,7 +1210,7 @@ object ShowDemoWindowTables {
                     val node = nodes[index]
                     val isFolder = node.childCount > 0
                     if (isFolder) {
-                        val open = treeNodeEx(node.name, Tnf.SpanFullWidth.i)
+                        val open = treeNodeEx(node.name, Tnf.SpanFullWidth)
                         tableNextColumn()
                         textDisabled("--")
                         tableNextColumn()
@@ -1243,9 +1246,9 @@ object ShowDemoWindowTables {
             treeNode("Tree view") {
                 table("3ways", 3, flags) {
                     // The first column will use the default _WidthStretch when ScrollX is Off and _WidthFixed when ScrollX is On
-                    tableSetupColumn("Name", Tcf.NoHide.i)
-                    tableSetupColumn("Size", Tcf.WidthFixed.i, TEXT_BASE_WIDTH * 12f)
-                    tableSetupColumn("Type", Tcf.WidthFixed.i, TEXT_BASE_WIDTH * 18f)
+                    tableSetupColumn("Name", Tcf.NoHide)
+                    tableSetupColumn("Size", Tcf.WidthFixed, TEXT_BASE_WIDTH * 12f)
+                    tableSetupColumn("Type", Tcf.WidthFixed, TEXT_BASE_WIDTH * 18f)
                     tableHeadersRow()
 
                     MyTreeNode.displayNode(nodes, 0)
@@ -1260,8 +1263,9 @@ object ShowDemoWindowTables {
             treeNode("Item width") {
                 helpMarker(
                     "Showcase using PushItemWidth() and how it is preserved on a per-column basis.\n\n" +
-                            "Note that on auto-resizing non-resizable fixed columns, querying the content width for e.g. right-alignment doesn't make sense.")
-                table("table_item_width", 3, Tf.Borders.i) {
+                            "Note that on auto-resizing non-resizable fixed columns, querying the content width for e.g. right-alignment doesn't make sense."
+                )
+                table("table_item_width", 3, Tf.Borders) {
                     tableSetupColumn("small")
                     tableSetupColumn("half")
                     tableSetupColumn("right-align")
@@ -1308,7 +1312,7 @@ object ShowDemoWindowTables {
                     // FIXME: It would be nice to actually demonstrate full-featured selection using those checkbox.
 
                     // Instead of calling TableHeadersRow() we'll submit custom headers ourselves
-                    tableNextRow(Trf.Headers.i)
+                    tableNextRow(Trf.Headers)
                     for (column in 0 until COLUMNS_COUNT) {
                         tableSetColumnIndex(column)
                         val columnName = tableGetColumnName(column) // Retrieve name passed to TableSetupColumn()
@@ -1340,10 +1344,10 @@ object ShowDemoWindowTables {
             treeNode("Synced instances") {
                 helpMarker("Multiple tables with the same identifier will share their settings, width, visibility, order etc.")
 
-                checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY.i)
-                checkboxFlags("ImGuiTableFlags_SizingFixedFit", ::flags, Tf.SizingFixedFit.i)
+                checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY)
+                checkboxFlags("ImGuiTableFlags_SizingFixedFit", ::flags, Tf.SizingFixedFit)
                 for (n in 0..2) {
-                    val open = collapsingHeader("Synced Table $n", Tnf.DefaultOpen.i)
+                    val open = collapsingHeader("Synced Table $n", Tnf.DefaultOpen)
                     if (open && beginTable("Table", 3, flags, Vec2(0f, textLineHeightWithSpacing * 5))) {
                         tableSetupColumn("One")
                         tableSetupColumn("Two")
@@ -1368,7 +1372,7 @@ object ShowDemoWindowTables {
                 helpMarker("By default, right-clicking over a TableHeadersRow()/TableHeader() line will open the default context-menu.\nUsing ImGuiTableFlags_ContextMenuInBody we also allow right-clicking over columns body.")
 
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_ContextMenuInBody", ::flags, Tf.ContextMenuInBody.i)
+                    checkboxFlags("ImGuiTableFlags_ContextMenuInBody", ::flags, Tf.ContextMenuInBody)
                 }
 
                 // Context Menus: first example
@@ -1470,9 +1474,9 @@ object ShowDemoWindowTables {
 
                 // Options
                 pushingStyleCompact {
-                    checkboxFlags("ImGuiTableFlags_SortMulti", ::flags, Tf.SortMulti.i)
+                    checkboxFlags("ImGuiTableFlags_SortMulti", ::flags, Tf.SortMulti)
                     sameLine(); helpMarker("When sorting is enabled: hold shift when clicking headers to sort on multiple column. TableGetSortSpecs() may return specs where (SpecsCount > 1).")
-                    checkboxFlags("ImGuiTableFlags_SortTristate", ::flags, Tf.SortTristate.i)
+                    checkboxFlags("ImGuiTableFlags_SortTristate", ::flags, Tf.SortTristate)
                     sameLine(); helpMarker("When sorting is enabled: allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0).")
                 }
 
@@ -1485,7 +1489,7 @@ object ShowDemoWindowTables {
                     // - ImGuiTableColumnFlags_NoSort / ImGuiTableColumnFlags_NoSortAscending / ImGuiTableColumnFlags_NoSortDescending
                     // - ImGuiTableColumnFlags_PreferSortAscending / ImGuiTableColumnFlags_PreferSortDescending
                     tableSetupColumn("ID", Tcf.DefaultSort or Tcf.WidthFixed, 0f, MyItemColumnID.ID.ordinal)
-                    tableSetupColumn("Name", Tcf.WidthFixed.i, 0f, MyItemColumnID.Name.ordinal)
+                    tableSetupColumn("Name", Tcf.WidthFixed, 0f, MyItemColumnID.Name.ordinal)
                     tableSetupColumn("Action", Tcf.NoSort or Tcf.WidthFixed, 0f, MyItemColumnID.Action.ordinal)
                     tableSetupColumn("Quantity", Tcf.PreferSortDescending or Tcf.WidthStretch, 0f, MyItemColumnID.Quantity.ordinal)
                     tableSetupScrollFreeze(0, 1) // Make row always visible
@@ -1557,69 +1561,69 @@ object ShowDemoWindowTables {
                     pushingStyleCompact {
                         pushItemWidth(TEXT_BASE_WIDTH * 28f)
 
-                        treeNodeEx("Features:", Tnf.DefaultOpen.i) {
-                            checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable.i)
-                            checkboxFlags("ImGuiTableFlags_Reorderable", ::flags, Tf.Reorderable.i)
-                            checkboxFlags("ImGuiTableFlags_Hideable", ::flags, Tf.Hideable.i)
-                            checkboxFlags("ImGuiTableFlags_Sortable", ::flags, Tf.Sortable.i)
-                            checkboxFlags("ImGuiTableFlags_NoSavedSettings", ::flags, Tf.NoSavedSettings.i)
-                            checkboxFlags("ImGuiTableFlags_ContextMenuInBody", ::flags, Tf.ContextMenuInBody.i)
+                        treeNodeEx("Features:", Tnf.DefaultOpen) {
+                            checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable)
+                            checkboxFlags("ImGuiTableFlags_Reorderable", ::flags, Tf.Reorderable)
+                            checkboxFlags("ImGuiTableFlags_Hideable", ::flags, Tf.Hideable)
+                            checkboxFlags("ImGuiTableFlags_Sortable", ::flags, Tf.Sortable)
+                            checkboxFlags("ImGuiTableFlags_NoSavedSettings", ::flags, Tf.NoSavedSettings)
+                            checkboxFlags("ImGuiTableFlags_ContextMenuInBody", ::flags, Tf.ContextMenuInBody)
                         }
 
-                        treeNodeEx("Decorations:", Tnf.DefaultOpen.i) {
-                            checkboxFlags("ImGuiTableFlags_RowBg", ::flags, Tf.RowBg.i)
-                            checkboxFlags("ImGuiTableFlags_BordersV", ::flags, Tf.BordersV.i)
-                            checkboxFlags("ImGuiTableFlags_BordersOuterV", ::flags, Tf.BordersOuterV.i)
-                            checkboxFlags("ImGuiTableFlags_BordersInnerV", ::flags, Tf.BordersInnerV.i)
-                            checkboxFlags("ImGuiTableFlags_BordersH", ::flags, Tf.BordersH.i)
-                            checkboxFlags("ImGuiTableFlags_BordersOuterH", ::flags, Tf.BordersOuterH.i)
-                            checkboxFlags("ImGuiTableFlags_BordersInnerH", ::flags, Tf.BordersInnerH.i)
-                            checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody.i); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appear in Headers")
-                            checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags, Tf.NoBordersInBodyUntilResize.i); sameLine(); helpMarker("Disable vertical borders in columns Body until hovered for resize (borders will always appear in Headers)")
+                        treeNodeEx("Decorations:", Tnf.DefaultOpen) {
+                            checkboxFlags("ImGuiTableFlags_RowBg", ::flags, Tf.RowBg)
+                            checkboxFlags("ImGuiTableFlags_BordersV", ::flags, Tf.BordersV)
+                            checkboxFlags("ImGuiTableFlags_BordersOuterV", ::flags, Tf.BordersOuterV)
+                            checkboxFlags("ImGuiTableFlags_BordersInnerV", ::flags, Tf.BordersInnerV)
+                            checkboxFlags("ImGuiTableFlags_BordersH", ::flags, Tf.BordersH)
+                            checkboxFlags("ImGuiTableFlags_BordersOuterH", ::flags, Tf.BordersOuterH)
+                            checkboxFlags("ImGuiTableFlags_BordersInnerH", ::flags, Tf.BordersInnerH)
+                            checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appear in Headers")
+                            checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags, Tf.NoBordersInBodyUntilResize); sameLine(); helpMarker("Disable vertical borders in columns Body until hovered for resize (borders will always appear in Headers)")
                         }
 
-                        treeNodeEx("Sizing:", Tnf.DefaultOpen.i) {
-                            val flags = intArrayOf(flags)
+                        treeNodeEx("Sizing:", Tnf.DefaultOpen) {
+                            val flags = flagArrayOf(flags)
                             editTableSizingFlags(flags, 0)
                             this.flags = flags[0]
                             sameLine(); helpMarker("In the Advanced demo we override the policy of each column so those table-wide settings have less effect that typical.")
-                            checkboxFlags("ImGuiTableFlags_NoHostExtendX", this::flags, Tf.NoHostExtendX.i)
+                            checkboxFlags("ImGuiTableFlags_NoHostExtendX", this::flags, Tf.NoHostExtendX)
                             sameLine(); helpMarker("Make outer width auto-fit to columns, overriding outer_size.x value.\n\nOnly available when ScrollX/ScrollY are disabled and Stretch columns are not used.")
-                            checkboxFlags("ImGuiTableFlags_NoHostExtendY", this::flags, Tf.NoHostExtendY.i)
+                            checkboxFlags("ImGuiTableFlags_NoHostExtendY", this::flags, Tf.NoHostExtendY)
                             sameLine(); helpMarker("Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit).\n\nOnly available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible.")
-                            checkboxFlags("ImGuiTableFlags_NoKeepColumnsVisible", this::flags, Tf.NoKeepColumnsVisible.i)
+                            checkboxFlags("ImGuiTableFlags_NoKeepColumnsVisible", this::flags, Tf.NoKeepColumnsVisible)
                             sameLine(); helpMarker("Only available if ScrollX is disabled.")
-                            checkboxFlags("ImGuiTableFlags_PreciseWidths", this::flags, Tf.PreciseWidths.i)
+                            checkboxFlags("ImGuiTableFlags_PreciseWidths", this::flags, Tf.PreciseWidths)
                             sameLine(); helpMarker("Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.")
-                            checkboxFlags("ImGuiTableFlags_NoClip", this::flags, Tf.NoClip.i)
+                            checkboxFlags("ImGuiTableFlags_NoClip", this::flags, Tf.NoClip)
                             sameLine(); helpMarker("Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with ScrollFreeze options.")
                         }
 
-                        treeNodeEx("Padding:", Tnf.DefaultOpen.i) {
-                            checkboxFlags("ImGuiTableFlags_PadOuterX", ::flags, Tf.PadOuterX.i)
-                            checkboxFlags("ImGuiTableFlags_NoPadOuterX", ::flags, Tf.NoPadOuterX.i)
-                            checkboxFlags("ImGuiTableFlags_NoPadInnerX", ::flags, Tf.NoPadInnerX.i)
+                        treeNodeEx("Padding:", Tnf.DefaultOpen) {
+                            checkboxFlags("ImGuiTableFlags_PadOuterX", ::flags, Tf.PadOuterX)
+                            checkboxFlags("ImGuiTableFlags_NoPadOuterX", ::flags, Tf.NoPadOuterX)
+                            checkboxFlags("ImGuiTableFlags_NoPadInnerX", ::flags, Tf.NoPadInnerX)
                         }
 
-                        treeNodeEx("Scrolling:", Tnf.DefaultOpen.i) {
-                            checkboxFlags("ImGuiTableFlags_ScrollX", ::flags, Tf.ScrollX.i)
+                        treeNodeEx("Scrolling:", Tnf.DefaultOpen) {
+                            checkboxFlags("ImGuiTableFlags_ScrollX", ::flags, Tf.ScrollX)
                             sameLine()
                             setNextItemWidth(ImGui.frameHeight)
-                            dragInt("freeze_cols", ::freezeCols, 0.2f, 0, 9, null, SliderFlag.NoInput.i)
-                            checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY.i)
+                            dragInt("freeze_cols", ::freezeCols, 0.2f, 0, 9, null, SliderFlag.NoInput)
+                            checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY)
                             sameLine()
                             setNextItemWidth(ImGui.frameHeight)
-                            dragInt("freeze_rows", ::freezeRows, 0.2f, 0, 9, null, SliderFlag.NoInput.i)
+                            dragInt("freeze_rows", ::freezeRows, 0.2f, 0, 9, null, SliderFlag.NoInput)
                         }
 
-                        treeNodeEx("Sorting:", Tnf.DefaultOpen.i) {
-                            checkboxFlags("ImGuiTableFlags_SortMulti", ::flags, Tf.SortMulti.i)
+                        treeNodeEx("Sorting:", Tnf.DefaultOpen) {
+                            checkboxFlags("ImGuiTableFlags_SortMulti", ::flags, Tf.SortMulti)
                             sameLine(); helpMarker("When sorting is enabled: hold shift when clicking headers to sort on multiple column. TableGetSortSpecs() may return specs where (SpecsCount > 1).")
-                            checkboxFlags("ImGuiTableFlags_SortTristate", ::flags, Tf.SortTristate.i)
+                            checkboxFlags("ImGuiTableFlags_SortTristate", ::flags, Tf.SortTristate)
                             sameLine(); helpMarker("When sorting is enabled: allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0).")
                         }
 
-                        treeNodeEx("Other:", Tnf.DefaultOpen.i) {
+                        treeNodeEx("Other:", Tnf.DefaultOpen) {
                             checkbox("show_headers", ::showHeaders)
                             checkbox("show_wrapped_text", ::showWrappedText)
 
@@ -1675,10 +1679,10 @@ object ShowDemoWindowTables {
                     // We use the "user_id" parameter of TableSetupColumn() to specify a user id that will be stored in the sort specifications.
                     // This is so our sort function can identify a column given our own identifier. We could also identify them based on their index!
                     tableSetupColumn("ID", Tcf.DefaultSort or Tcf.WidthFixed or Tcf.NoHide, 0f, MyItemColumnID.ID.ordinal)
-                    tableSetupColumn("Name", Tcf.WidthFixed.i, 0f, MyItemColumnID.Name.ordinal)
+                    tableSetupColumn("Name", Tcf.WidthFixed, 0f, MyItemColumnID.Name.ordinal)
                     tableSetupColumn("Action", Tcf.NoSort or Tcf.WidthFixed, 0f, MyItemColumnID.Action.ordinal)
-                    tableSetupColumn("Quantity", Tcf.PreferSortDescending.i, 0f, MyItemColumnID.Quantity.ordinal)
-                    tableSetupColumn("Description", if (flags has Tf.NoHostExtendX) 0 else Tcf.WidthStretch.i, 0f, MyItemColumnID.Description.ordinal)
+                    tableSetupColumn("Quantity", Tcf.PreferSortDescending, 0f, MyItemColumnID.Quantity.ordinal)
+                    tableSetupColumn("Description", if (flags has Tf.NoHostExtendX) emptyFlags() else Tcf.WidthStretch, 0f, MyItemColumnID.Description.ordinal)
                     tableSetupColumn("Hidden", Tcf.DefaultHide or Tcf.NoSort)
                     tableSetupScrollFreeze(freezeCols, freezeRows)
 
@@ -1723,7 +1727,7 @@ object ShowDemoWindowTables {
 
                             val itemIsSelected = item.id in selection
                             pushID(item.id)
-                            tableNextRow(Trf.None.i, rowMinHeight)
+                            tableNextRow(rowMinHeight = rowMinHeight)
 
                             // For the demo purpose we can select among different type of items submitted in the first column
                             tableSetColumnIndex(0)
@@ -1740,7 +1744,7 @@ object ShowDemoWindowTables {
                             else if (type == ContentsType.Selectable || type == ContentsType.SelectableSpanRow) {
                                 val selectableFlags = when (type) {
                                     ContentsType.SelectableSpanRow -> SelectableFlag.SpanAllColumns or SelectableFlag.AllowItemOverlap
-                                    else -> SelectableFlag.None.i
+                                    else -> emptyFlags()
                                 }
                                 if (selectable(label, itemIsSelected, selectableFlags, Vec2(0f, rowMinHeight)))
                                     if (io.keyCtrl)

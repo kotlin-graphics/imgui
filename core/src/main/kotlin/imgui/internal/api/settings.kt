@@ -5,7 +5,6 @@ import imgui.IMGUI_DEBUG_INI_SETTINGS
 import imgui.ImGui.io
 import imgui.WindowFlag
 import imgui.api.g
-import imgui.hasnt
 import imgui.internal.classes.Window
 import imgui.internal.hashStr
 import imgui.internal.sections.SettingsHandler

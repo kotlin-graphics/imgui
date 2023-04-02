@@ -20,7 +20,7 @@ import kotlin.reflect.KMutableProperty0
 interface tabBarsTabs {
 
     /** create and append into a TabBar */
-    fun beginTabBar(strId: String, flags: TabBarFlags = 0): Boolean {
+    fun beginTabBar(strId: String, flags: TabBarFlags = emptyFlags()): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems) return false
@@ -62,11 +62,11 @@ interface tabBarsTabs {
     }
 
     /** create a Tab. Returns true if the Tab is selected. */
-    fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemFlags = 0): Boolean =
-            beginTabItem(label, pOpen mutablePropertyAt index, flags)
+    fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemFlags = emptyFlags()): Boolean =
+        beginTabItem(label, pOpen mutablePropertyAt index, flags)
 
     /** create a Tab. Returns true if the Tab is selected. */
-    fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0): Boolean {
+    fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = emptyFlags()): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems)
@@ -97,7 +97,7 @@ interface tabBarsTabs {
     }
 
     /** create a Tab behaving like a button. return true when clicked. cannot be selected in the tab bar. */
-    fun tabItemButton(label: String, flags: TabItemFlags = TabItemFlag.None.i): Boolean {
+    fun tabItemButton(label: String, flags: TabItemFlags = emptyFlags()): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems)

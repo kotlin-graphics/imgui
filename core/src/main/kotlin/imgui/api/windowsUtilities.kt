@@ -1,6 +1,5 @@
 package imgui.api
 
-import glm_.hasnt
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.currentWindow
@@ -31,10 +30,7 @@ interface windowsUtilities {
         get() = currentWindowRead!!.collapsed
 
     /** is current window focused? or its root/child, depending on flags. see flags for options.    */
-    fun isWindowFocused(flag: Ff): Boolean = isWindowFocused(flag.i)
-
-    /** is current window focused? or its root/child, depending on flags. see flags for options.    */
-    fun isWindowFocused(flags: FocusedFlags = Ff.None.i): Boolean {
+    fun isWindowFocused(flags: FocusedFlags = emptyFlags()): Boolean {
 
         val refWindow = g.navWindow ?: return false
         var curWindow = g.currentWindow
@@ -44,22 +40,20 @@ interface windowsUtilities {
 
         check(curWindow != null) { "Not inside a Begin() / End()" }
         val popupHierarchy = flags hasnt Ff.NoPopupHierarchy
-        if (flags has Hf.RootWindow)
+        if (flags has Ff.RootWindow)
             curWindow = getCombinedRootWindow(curWindow, popupHierarchy)
 
         return when {
-            flags has Hf.ChildWindows -> refWindow.isChildOf(curWindow, popupHierarchy)
+            flags has Ff.ChildWindows -> refWindow.isChildOf(curWindow, popupHierarchy)
             else -> refWindow === curWindow
         }
     }
 
-    /** iis current window hovered (and typically: not blocked by a popup/modal)? see flag for options. */
-    fun isWindowHovered(flag: Hf) = isWindowHovered(flag.i)
 
     /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
      *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
      *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
-    fun isWindowHovered(flags: HoveredFlags = Hf.None.i): Boolean {
+    fun isWindowHovered(flags: HoveredFlags = emptyFlags()): Boolean {
         assert(flags hasnt (Hf.AllowWhenOverlapped or Hf.AllowWhenDisabled)) { "Flags not supported by this function" }
         val refWindow = g.hoveredWindow ?: return false
         var curWindow = g.currentWindow

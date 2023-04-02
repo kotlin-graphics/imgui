@@ -11,7 +11,7 @@ internal interface parameterStacks {
      *  @param option = ItemFlag   */
     fun pushItemFlag(option: ItemFlags, enabled: Boolean) {
         var itemFlags = g.currentItemFlags
-        assert(itemFlags == g.itemFlagsStack.last())
+        assert(itemFlags eq g.itemFlagsStack.last())
         itemFlags = when {
             enabled -> itemFlags or option
             else -> itemFlags wo option

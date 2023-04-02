@@ -1,11 +1,10 @@
 package imgui.internal.sections
 
 import glm_.vec2.Vec2
-import imgui.Flag
-import imgui.ID
+import imgui.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.or
+import imgui.internal.sections.ButtonFlag.*
 
 
 //-----------------------------------------------------------------------------
@@ -17,21 +16,16 @@ import imgui.or
 // - output: stored in g.LastItemData.InFlags
 // Current window shared by all windows.
 /** Flags: for PushItemFlag(), g.LastItemData.InFlags */
-typealias ItemFlags = Int
+typealias ItemFlags = Flag<ItemFlag>
 
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
  *  This is going to be exposed in imgui.h when stabilized enough. */
-enum class ItemFlag(override val i: ItemFlags) : Flag<ItemFlag> {
+enum class ItemFlag(override val i: Int) : Flag<ItemFlag> {
+    // Controlled by user
+    /** Disable keyboard tabbing (FIXME: should merge with _NoNav) */
+    NoTabStop(1 shl 0),  // false
 
-
-  // Controlled by user
-
-  None(0),
-
-  /** Disable keyboard tabbing (FIXME: should merge with _NoNav) */
-  NoTabStop(1 shl 0),  // false
-
-  /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
+    /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
     ButtonRepeat(1 shl 1),  // false
 
     /** Disable interactions but doesn't affect visuals. See BeginDisabled()/EndDisabled(). See github.com/ocornut/imgui/issues/211 */
@@ -64,21 +58,19 @@ enum class ItemFlag(override val i: ItemFlags) : Flag<ItemFlag> {
 
 
 /** Flags: for g.LastItemData.StatusFlags */
-typealias ItemStatusFlags = Int
+typealias ItemStatusFlags = Flag<ItemStatusFlag>
 
 /** Status flags for an already submitted item
  *  - output: stored in g.LastItemData.StatusFlags   */
-enum class ItemStatusFlag(override val i: ItemStatusFlags) : Flag<ItemStatusFlag> {
-  None(0),
+enum class ItemStatusFlag(override val i: Int) : Flag<ItemStatusFlag> {
+    /** Mouse position is within item rectangle (does NOT mean that the window is in correct z-order and can be hovered!, this is only one part of the most-common IsItemHovered test) */
+    HoveredRect(1 shl 0),
 
-  /** Mouse position is within item rectangle (does NOT mean that the window is in correct z-order and can be hovered!, this is only one part of the most-common IsItemHovered test) */
-  HoveredRect(1 shl 0),
+    /** g.LastItemData.DisplayRect is valid */
+    HasDisplayRect(1 shl 1),
 
-  /** g.LastItemData.DisplayRect is valid */
-  HasDisplayRect(1 shl 1),
-
-  /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
-  Edited(1 shl 2),
+    /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
+    Edited(1 shl 2),
 
     /** Set when Selectable(), TreeNode() reports toggling a selection. We can't report "Selected", only state changes, in order to easily handle clipping with less issues. */
     ToggledSelection(1 shl 3),
@@ -108,24 +100,21 @@ enum class ItemStatusFlag(override val i: ItemStatusFlags) : Flag<ItemStatusFlag
     Openable(1 shl 20),
     Opened(1 shl 21),
 
-  /** Item is a checkable (e.g. CheckBox, MenuItem) */
-  Checkable(1 shl 22),
-  Checked(1 shl 23)
+    /** Item is a checkable (e.g. CheckBox, MenuItem) */
+    Checkable(1 shl 22),
+    Checked(1 shl 23)
 }
 
-typealias ButtonFlags = Int
+typealias ButtonFlags = Flag<ButtonFlag>
 
-enum class ButtonFlag(override val i: ButtonFlags) : Flag<ButtonFlag> {
+enum class ButtonFlag(override val i: Int) : Flag<ButtonFlag> {
+    /** React on left mouse button (default) */
+    MouseButtonLeft(1 shl 0),
 
-  None(0),
+    /** React on right mouse button */
+    MouseButtonRight(1 shl 1),
 
-  /** React on left mouse button (default) */
-  MouseButtonLeft(1 shl 0),
-
-  /** React on right mouse button */
-  MouseButtonRight(1 shl 1),
-
-  /** React on center mouse button */
+    /** React on center mouse button */
     MouseButtonMiddle(1 shl 2),
 
     /** return true on click (mouse down event) */
@@ -180,43 +169,51 @@ enum class ButtonFlag(override val i: ButtonFlags) : Flag<ButtonFlag> {
     NoSetKeyOwner(1 shl 20),
 
     /** don't test key/input owner when polling the key (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
-    NoTestKeyOwner(1 shl 21),
+    NoTestKeyOwner(1 shl 21);
 
-    MouseButtonMask_(MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
-    MouseButtonShift_(16),
-    MouseButtonDefault_(MouseButtonLeft.i),
-  PressedOnMask_(PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold),
-  PressedOnDefault_(PressedOnClickRelease.i)
+    companion object {
+        val MouseButtonMask: ButtonFlags = MouseButtonLeft or MouseButtonRight or MouseButtonMiddle
+        val PressedOnMask: ButtonFlags =
+            PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold
+        val MouseButtonDefault = MouseButtonLeft
+        val PressedOnDefault = PressedOnClickRelease
+    }
 }
 
-typealias SeparatorFlags = Int
+val MouseButton.buttonFlags: ButtonFlags
+    get() = when (this) {
+        MouseButton.Left -> MouseButtonLeft
+        MouseButton.Right -> MouseButtonRight
+        MouseButton.Middle -> MouseButtonMiddle
+        else -> emptyFlags()
+    }
+
+typealias SeparatorFlags = Flag<SeparatorFlag>
 
 enum class SeparatorFlag : Flag<SeparatorFlag> {
-  None,
+    /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
+    Horizontal,
+    Vertical,
+    SpanAllColumns;
 
-  /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
-  Horizontal,
-  Vertical,
-  SpanAllColumns;
-
-  override val i: SeparatorFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    override val i: Int = 1 shl ordinal
 }
 
-typealias TextFlags = Int
+typealias TextFlags = Flag<TextFlag>
 
 enum class TextFlag : Flag<TextFlag> {
-  None, NoWidthForLargeClippedText;
+    NoWidthForLargeClippedText;
 
-  override val i: TextFlags = ordinal
+    override val i: Int = 1 shl ordinal
 }
 
-typealias TooltipFlags = Int
+typealias TooltipFlags = Flag<TooltipFlag>
 
-enum class TooltipFlag(override val i: TooltipFlags) : Flag<TooltipFlag> {
-  None(0),
+enum class TooltipFlag : Flag<TooltipFlag> {
+    /** Override will clear/ignore previously submitted tooltip (defaults to append) */
+    OverridePreviousTooltip;
 
-  /** Override will clear/ignore previously submitted tooltip (defaults to append) */
-  OverridePreviousTooltip(1 shl 0)
+    override val i: Int = 1 shl ordinal
 }
 
 /** FIXME: this is in development, not exposed/functional as a generic feature yet.
@@ -262,22 +259,20 @@ enum class PlotType { Lines, Histogram }
 enum class PopupPositionPolicy { Default, ComboBox, Tooltip }
 
 
-typealias DrawFlags = Int
+typealias DrawFlags = Flag<DrawFlag>
 
 /** Flags for ImDrawList functions
  *  (Legacy: bit 0 must always correspond to ImDrawFlags_Closed to be backward compatible with old API using a bool. Bits 1..3 must be unused) */
-enum class DrawFlag(override val i: DrawFlags) : Flag<DrawFlag> {
-  None(0),
+enum class DrawFlag(override val i: Int) : Flag<DrawFlag> {
+    /** PathStroke(), AddPolyline(): specify that shape should be closed (Important: this is always == 1 for legacy reason) */
+    Closed(1 shl 0),
 
-  /** PathStroke(), AddPolyline(): specify that shape should be closed (Important: this is always == 1 for legacy reason) */
-  Closed(1 shl 0),
+    // (bits 1..3 unused to facilitate handling of legacy behavior and detection of Flags = 0x0F)
 
-  // (bits 1..3 unused to facilitate handling of legacy behavior and detection of Flags = 0x0F)
+    /** AddRect(), AddRectFilled(), PathRect(): enable rounding top-left corner only (when rounding > 0.0f, we default to all corners). Was 0x01. */
+    RoundCornersTopLeft(1 shl 4),
 
-  /** AddRect(), AddRectFilled(), PathRect(): enable rounding top-left corner only (when rounding > 0.0f, we default to all corners). Was 0x01. */
-  RoundCornersTopLeft(1 shl 4),
-
-  /** AddRect(), AddRectFilled(), PathRect(): enable rounding top-right corner only (when rounding > 0.0f, we default to all corners). Was 0x02. */
+    /** AddRect(), AddRectFilled(), PathRect(): enable rounding top-right corner only (when rounding > 0.0f, we default to all corners). Was 0x02. */
     RoundCornersTopRight(1 shl 5),
 
     /** AddRect(), AddRectFilled(), PathRect(): enable rounding bottom-left corner only (when rounding > 0.0f, we default to all corners). Was 0x04. */
@@ -287,53 +282,57 @@ enum class DrawFlag(override val i: DrawFlags) : Flag<DrawFlag> {
     RoundCornersBottomRight(1 shl 7),
 
     /** AddRect(), AddRectFilled(), PathRect(): disable rounding on all corners (when rounding > 0.0f). This is NOT zero, NOT an implicit flag! */
-    RoundCornersNone(1 shl 8),
-    RoundCornersTop(RoundCornersTopLeft or RoundCornersTopRight),
-    RoundCornersBottom(RoundCornersBottomLeft or RoundCornersBottomRight),
-    RoundCornersLeft(RoundCornersBottomLeft or RoundCornersTopLeft),
-    RoundCornersRight(RoundCornersBottomRight or RoundCornersTopRight),
-    RoundCornersAll(RoundCornersTopLeft or RoundCornersTopRight or RoundCornersBottomLeft or RoundCornersBottomRight),
+    RoundCornersNone(1 shl 8);
 
-  /** Default to ALL corners if none of the _RoundCornersXX flags are specified. */
-  RoundCornersDefault_(RoundCornersAll.i),
-  RoundCornersMask_(RoundCornersAll or RoundCornersNone)
+    companion object {
+        val RoundCornersAll: DrawFlags =
+            RoundCornersTopLeft or RoundCornersTopRight or RoundCornersBottomLeft or RoundCornersBottomRight
+
+        /** Default to ALL corners if none of the _RoundCornersXX flags are specified. */
+        val RoundCornersDefault: DrawFlags = RoundCornersAll
+        val RoundCornersMask: DrawFlags = RoundCornersAll or RoundCornersNone
+        val RoundCornersTop: DrawFlags = RoundCornersTopLeft or RoundCornersTopRight
+        val RoundCornersBottom: DrawFlags = RoundCornersBottomLeft or RoundCornersBottomRight
+        val RoundCornersLeft: DrawFlags = RoundCornersBottomLeft or RoundCornersTopLeft
+        val RoundCornersRight: DrawFlags = RoundCornersBottomRight or RoundCornersTopRight
+    }
 }
 
-typealias DrawListFlags = Int
+typealias DrawListFlags = Flag<DrawListFlag>
 
 /** Flags: for ImDrawList instance. Those are set automatically by ImGui:: functions from ImGuiIO settings, and generally not
  *  manipulated directly. It is however possible to temporarily alter flags between calls to ImDrawList:: functions. */
-enum class DrawListFlag(override val i: DrawListFlags) : Flag<DrawListFlag> {
-  None(0),
+enum class DrawListFlag : Flag<DrawListFlag> {
+    /** Enable anti-aliased lines/borders (*2 the number of triangles for 1.0f wide line or lines thin enough to be
+     *  drawn using textures, otherwise *3 the number of triangles) */
+    AntiAliasedLines,
 
-  /** Enable anti-aliased lines/borders (*2 the number of triangles for 1.0f wide line or lines thin enough to be
-   *  drawn using textures, otherwise *3 the number of triangles) */
-  AntiAliasedLines(1 shl 0),
+    /** Enable anti-aliased lines/borders using textures when possible. Require backend to render with bilinear filtering (NOT point/nearest filtering). */
+    AntiAliasedLinesUseTex,
 
-  /** Enable anti-aliased lines/borders using textures when possible. Require backend to render with bilinear filtering (NOT point/nearest filtering). */
-  AntiAliasedLinesUseTex(1 shl 1),
+    /** Enable anti-aliased edge around filled shapes (rounded rectangles, circles). */
+    AntiAliasedFill,
 
-  /** Enable anti-aliased edge around filled shapes (rounded rectangles, circles). */
-    AntiAliasedFill(1 shl 2),
+    /** Can emit 'VtxOffset > 0' to allow large meshes. Set when 'ImGuiBackendFlags_RendererHasVtxOffset' is enabled. */
+    AllowVtxOffset;
 
-  /** Can emit 'VtxOffset > 0' to allow large meshes. Set when 'ImGuiBackendFlags_RendererHasVtxOffset' is enabled. */
-  AllowVtxOffset(1 shl 3)
+    override val i: Int = 1 shl ordinal
 }
 
-typealias NextWindowDataFlags = Int
+typealias NextWindowDataFlags = Flag<NextWindowDataFlag>
 
 enum class NextWindowDataFlag : Flag<NextWindowDataFlag> {
-  None, HasPos, HasSize, HasContentSize, HasCollapsed, HasSizeConstraint, HasFocus, HasBgAlpha, HasScroll;
+    HasPos, HasSize, HasContentSize, HasCollapsed, HasSizeConstraint, HasFocus, HasBgAlpha, HasScroll;
 
-  override val i: NextWindowDataFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    override val i: Int = 1 shl ordinal
 }
 
-typealias NextItemDataFlags = Int
+typealias NextItemDataFlags = Flag<NextItemDataFlag>
 
-enum class NextItemDataFlag(override val i: NextItemDataFlags) : Flag<NextItemDataFlag> {
-  None(0),
-  HasWidth(1 shl 0),
-  HasOpen(1 shl 1)
+enum class NextItemDataFlag : Flag<NextItemDataFlag> {
+    HasWidth, HasOpen;
+
+    override val i: Int = 1 shl ordinal
 }
 
 /** Result of a gamepad/keyboard directional navigation move query result */
@@ -351,7 +350,7 @@ class NavItemData {
     lateinit var rectRel: Rect
 
     /** ????,Move    // Best candidate item flags */
-    var inFlags = ItemFlag.None.i
+    var inFlags: ItemFlags = emptyFlags()
 
     /**      Move    // Best candidate box distance to current NavId */
     var distBox = Float.MAX_VALUE

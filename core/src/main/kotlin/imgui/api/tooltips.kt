@@ -4,7 +4,6 @@ import imgui.ImGui.beginTooltipEx
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.end
 import imgui.ImGui.text
-import imgui.has
 import imgui.internal.sections.TooltipFlag
 import imgui.WindowFlag as Wf
 
@@ -13,7 +12,7 @@ import imgui.WindowFlag as Wf
 interface tooltips {
 
     /** begin/append a tooltip window. to create full-featured tooltip (with any kind of items). */
-    fun beginTooltip() = beginTooltipEx(TooltipFlag.None.i, Wf.None.i)
+    fun beginTooltip() = beginTooltipEx()
 
     fun endTooltip() {
         assert(currentWindowRead!!.flags has Wf._Tooltip) { "Mismatched BeginTooltip()/EndTooltip() calls" }
@@ -22,7 +21,7 @@ interface tooltips {
 
     /** set a text-only tooltip, typically use with ImGui::IsItemHovered(). override any previous call to SetTooltip(). */
     fun setTooltip(fmt: String, vararg args: Any) {
-        beginTooltipEx(TooltipFlag.OverridePreviousTooltip.i, Wf.None.i)
+        beginTooltipEx(TooltipFlag.OverridePreviousTooltip)
         text(fmt, *args)
         endTooltip()
     }

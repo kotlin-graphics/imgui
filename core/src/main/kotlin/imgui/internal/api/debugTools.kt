@@ -362,7 +362,7 @@ internal interface debugTools {
                     if (/*fgDrawList != null &&*/ isItemHovered()) {
                         val backupFlags = fgDrawList.flags
                         fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
-                        fgDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), DrawFlag.Closed.i, 1f)
+                        fgDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), DrawFlag.Closed, 1f)
                         fgDrawList.flags = backupFlags
                     }
                 }
@@ -395,7 +395,7 @@ internal interface debugTools {
                 idxN++
             }
             if (showMesh)
-                outDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), DrawFlag.Closed.i, 1f) // In yellow: mesh triangles
+                outDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), DrawFlag.Closed, 1f) // In yellow: mesh triangles
         }
         // Draw bounding boxes
         if (showAabb) {
@@ -552,14 +552,16 @@ internal interface debugTools {
     }
 
     companion object {
-        fun debugNodeTableGetSizingPolicyDesc(sizingPolicy: TableFlags): String =
-            when (sizingPolicy and TableFlag._SizingMask) {
-                TableFlag.SizingFixedFit.i -> "FixedFit"
-                TableFlag.SizingFixedSame.i -> "FixedSame"
-                TableFlag.SizingStretchProp.i -> "StretchProp"
-                TableFlag.SizingStretchSame.i -> "StretchSame"
+        fun debugNodeTableGetSizingPolicyDesc(sizingPolicy: TableFlags): String {
+            val flag = sizingPolicy and TableFlag._SizingMask
+            return when {
+                flag eq TableFlag.SizingFixedFit -> "FixedFit"
+                flag eq TableFlag.SizingFixedSame -> "FixedSame"
+                flag eq TableFlag.SizingStretchProp -> "StretchProp"
+                flag eq TableFlag.SizingStretchSame -> "StretchSame"
                 else -> "N/A"
             }
+        }
 
         /** Avoid naming collision with imgui_demo.cpp's HelpMarker() for unity builds. */
         fun metricsHelpMarker(desc: String) {
@@ -683,10 +685,10 @@ internal interface debugTools {
         }
 
         val isActive = window.wasActive
-        val treeNodeFlags = if (window === g.navWindow) TreeNodeFlag.Selected else TreeNodeFlag.None
+        val treeNodeFlags = if (window === g.navWindow) TreeNodeFlag.Selected else emptyFlags()
         if (!isActive)
             pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
-        val open = treeNodeEx(label, treeNodeFlags.i, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")
+        val open = treeNodeEx(label, treeNodeFlags, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")
         if (!isActive)
             popStyleColor()
         if (isItemHovered() && isActive)
@@ -836,7 +838,7 @@ internal interface debugTools {
             drawList.addRect(keyMin, keyMax, COL32(24, 24, 24, 255), keyRounding)
             val faceMin = Vec2(keyMin.x + keyFacePos.x, keyMin.y + keyFacePos.y)
             val faceMax = Vec2(faceMin.x + keyFaceSize.x, faceMin.y + keyFaceSize.y)
-            drawList.addRect(faceMin, faceMax, COL32(193, 193, 193, 255), keyFaceRounding, DrawFlag.None.i, 2f)
+            drawList.addRect(faceMin, faceMax, COL32(193, 193, 193, 255), keyFaceRounding, thickness = 2f)
             drawList.addRectFilled(faceMin, faceMax, COL32(252, 252, 252, 255), keyFaceRounding)
             val labelMin = Vec2(keyMin.x + keyLabelPos.x, keyMin.y + keyLabelPos.y)
             drawList.addText(labelMin, COL32(64, 64, 64, 255), keyData.label)

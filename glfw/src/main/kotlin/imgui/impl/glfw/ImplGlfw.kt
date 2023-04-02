@@ -1,6 +1,8 @@
 package imgui.impl.glfw
 
-import glm_.*
+import glm_.bool
+import glm_.c
+import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import glm_.vec2.Vec2i
@@ -300,7 +302,7 @@ class ImplGlfw @JvmOverloads constructor(
 
             updateKeyModifiers()
             if (button >= 0 && button < MouseButton.COUNT)
-                io.addMouseButtonEvent(button, action == GLFW_PRESS)
+                io.addMouseButtonEvent(MouseButton of button, action == GLFW_PRESS)
         }
 
         // X11 does not include current pressed/released modifier key in 'mods' flags submitted by GLFW

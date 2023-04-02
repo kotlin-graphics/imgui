@@ -16,7 +16,10 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.*
 import imgui.internal.classes.Rect
-import imgui.internal.sections.*
+import imgui.internal.sections.Axis
+import imgui.internal.sections.InputSource
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.get
 import imgui.static.DRAG_MOUSE_THRESHOLD_FACTOR
 import imgui.static.getMinimumStepAtDecimalPrecision
 import unsigned.Uint
@@ -2319,9 +2322,9 @@ internal interface templateFunctions {
         return vStr.replace(',', '.').d
     }
 
-    fun checkboxFlagsT(label: String, flagsPtr: KMutableProperty0<Int>, flagsValue: Int): Boolean {
+    fun <F: Flag<F>> checkboxFlagsT(label: String, flagsPtr: KMutableProperty0<Flag<F>>, flagsValue: Flag<F>): Boolean {
         var flags by flagsPtr
-        var allOn = (flags and flagsValue) == flagsValue
+        var allOn = flagsValue in flags
         _b = allOn
         val anyOn = flags has flagsValue
         val pressed = when {
@@ -2340,56 +2343,6 @@ internal interface templateFunctions {
             flags = when {
                 allOn -> flags or flagsValue
                 else -> flags wo flagsValue
-            }
-        return pressed
-    }
-
-    fun checkboxFlagsT(label: String, flagsPtr: KMutableProperty0<Long>, flagsValue: Long): Boolean {
-        var flags by flagsPtr
-        var allOn = (flags and flagsValue) == flagsValue
-        _b = allOn
-        val anyOn = flags has flagsValue
-        val pressed = when {
-            !allOn && anyOn -> {
-                val window = currentWindow
-                val backupItemFlags = g.currentItemFlags
-                g.currentItemFlags = g.currentItemFlags or ItemFlag.MixedValue
-                checkbox(label, ::_b).also {
-                    g.currentItemFlags = backupItemFlags
-                }
-            }
-            else -> checkbox(label, ::_b)
-        }
-        allOn = _b
-        if (pressed)
-            flags = when {
-                allOn -> flags or flagsValue
-                else -> flags wo flagsValue
-            }
-        return pressed
-    }
-
-    fun checkboxFlagsT(label: String, flagsPtr: KMutableProperty0<Ulong>, flagsValue: Ulong): Boolean {
-        val flags by flagsPtr
-        var allOn = (flags.v and flagsValue.v) == flagsValue.v
-        _b = allOn
-        val anyOn = flags.v has flagsValue.v
-        val pressed = when {
-            !allOn && anyOn -> {
-                val window = currentWindow
-                val backupItemFlags = g.currentItemFlags
-                g.currentItemFlags = g.currentItemFlags or ItemFlag.MixedValue
-                checkbox(label, ::_b).also {
-                    g.currentItemFlags = backupItemFlags
-                }
-            }
-            else -> checkbox(label, ::_b)
-        }
-        allOn = _b
-        if (pressed)
-            flags.v = when {
-                allOn -> flags.v or flagsValue.v
-                else -> flags.v wo flagsValue.v
             }
         return pressed
     }
