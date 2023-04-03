@@ -112,6 +112,7 @@ object ShowDemoWindowTables {
         EnumDesc(Tf.SizingStretchSame, "ImGuiTableFlags_SizingStretchSame", "Columns default to _WidthStretch with same weights.")
     )
 
+    @JvmName("editTableSizingFlags")
     /** Show a combo box with a choice of sizing policies */
     fun editTableSizingFlags(flags: FlagArray<Tf>, ptr: Int) {
         var flag by flags.mutablePropertyAt(ptr)

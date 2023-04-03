@@ -157,6 +157,10 @@ interface widgetsMain {
         return pressed
     }
 
+    // We use JvmName to ensure that the function can be seen in Java as checkboxFlags
+    // Suppressing the warning since we're in an interface.
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("checkboxFlags")
     fun <F : Flag<F>> checkboxFlags(label: String, flags: FlagArray<F>, flagsValue: Flag<F>): Boolean {
         _b = flagsValue in flags[0] // ~allOn
         val anyOn = flags[0] has flagsValue

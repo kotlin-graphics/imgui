@@ -33,6 +33,30 @@ value class FlagArray<F : Flag<F>> private constructor(private val array: IntArr
     // constructor from size
     constructor(size: Int) : this(IntArray(size))
 
+    // Provides Java-style constructors
+    companion object {
+        @JvmName("of")
+        @JvmStatic
+        fun <F : Flag<F>> of(flag: Flag<F>): FlagArray<F> = FlagArray(flag)
+        @JvmName("of")
+        @JvmStatic
+        fun <F : Flag<F>> of(vararg flags: Flag<F>): FlagArray<F> = FlagArray(flags)
+        @JvmName("of")
+        @JvmStatic
+        fun <F : Flag<F>> of(size: Int): FlagArray<F> = FlagArray(size)
+
+        @JvmName("get")
+        @JvmStatic
+        fun <F : Flag<F>> get(flagArray: FlagArray<F>, index: Int): Flag<F> = flagArray[index]
+        @JvmName("set")
+        @JvmStatic
+        fun <F : Flag<F>> set(flagArray: FlagArray<F>, index: Int, value: Flag<F>) {
+            flagArray[index] = value
+        }
+        @JvmName("iterator")
+        @JvmStatic
+        fun <F : Flag<F>> iterator(flagArray: FlagArray<F>): Iterator<Flag<F>> = flagArray.iterator()
+    }
     operator fun get(index: Int): Flag<F> = Flags(array[index])
     operator fun set(index: Int, value: Flag<F>) {
         array[index] = value.i

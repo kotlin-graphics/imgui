@@ -387,7 +387,7 @@ interface tables {
 
         // Assert when passing a width or weight if policy is entirely left to default, to avoid storing width into weight and vice-versa.
         // Give a grace to users of ImGuiTableFlags_ScrollX.
-        if (table.isDefaultSizingPolicy && flags hasnt Tcf.WidthMask && flags hasnt Tcf.IsEnabled)
+        if (table.isDefaultSizingPolicy && flags hasnt Tcf.WidthMask && table.flags hasnt Tf.ScrollX)
             assert(initWidthOrWeight <= 0f) { "Can only specify width/weight if sizing policy is set explicitly in either Table or Column." }
 
         // When passing a width automatically enforce WidthFixed policy

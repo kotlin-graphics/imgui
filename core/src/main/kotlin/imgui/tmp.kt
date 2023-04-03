@@ -69,6 +69,7 @@ class Property<V>(val get: () -> V) : KProperty0<V> {
 
 infix fun BooleanArray.mutablePropertyAt(index: Int) = MutableProperty({ this[index] }) { this[index] = it }
 infix fun <T> Array<T>.mutablePropertyAt(index: Int) = MutableProperty({ this[index] }) { this[index] = it }
+@JvmName("mutablePropertyAtFlagArray")
 infix fun <F: Flag<F>> FlagArray<F>.mutablePropertyAt(index: Int): MutableProperty<Flag<F>> = MutableProperty({ this[index] }) { this[index] = it }
 inline val <V> V.asMutableProperty
     get() = MutableProperty({ this })

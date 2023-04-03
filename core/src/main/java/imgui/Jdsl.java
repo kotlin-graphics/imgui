@@ -265,6 +265,11 @@ public class Jdsl {
             block.run();
     }
 
+    public static <F extends Flag<F>> void checkboxFlags(String label, int[] flags, Flag<F> flagsValue, Runnable block) {
+        if (imgui.checkboxFlags(label, flags, flagsValue))
+            block.run();
+    }
+
     public static void radioButton(String label, boolean active, Runnable block) {
         if (imgui.radioButton(label, active))
             block.run();
