@@ -14,6 +14,8 @@ import imgui.internal.hashStr
 import imgui.internal.linearSweep
 import imgui.internal.sections.ButtonFlag
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 /** This is called only once a frame before by the first call to ItemTab()
  *  The reason we're not calling it in BeginTabBar() is to leave a chance to the user to call the SetTabItemClosed() functions.

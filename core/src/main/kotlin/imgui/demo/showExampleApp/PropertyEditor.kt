@@ -1,13 +1,12 @@
 package imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
-import imgui.*
+import imgui.Cond
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
-import imgui.ImGui.columns
-import imgui.ImGui.dragFloat
+import imgui.ImGui.drag
 import imgui.ImGui.end
-import imgui.ImGui.inputFloat
+import imgui.ImGui.input
 import imgui.ImGui.nextColumn
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
@@ -15,7 +14,6 @@ import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
-import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.tableNextRow
 import imgui.ImGui.tableSetColumnIndex
@@ -23,8 +21,11 @@ import imgui.ImGui.text
 import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
+import imgui.StyleVar
+import imgui.TableFlag
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.dsl.table
+import imgui.or
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 
@@ -85,9 +86,9 @@ object PropertyEditor {
                     tableSetColumnIndex(1)
                     pushItemWidth(-Float.MIN_VALUE)
                     if (i >= 5)
-                        inputFloat("##value", placeholderMembers, i, 1f)
+                        input("##value", placeholderMembers, i, 1f)
                     else
-                        dragFloat("##value", placeholderMembers, i, 0.01f)
+                        drag("##value", placeholderMembers, i, 0.01f)
                     popItemWidth()
                     nextColumn()
                 }

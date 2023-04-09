@@ -35,18 +35,10 @@ import imgui.ImGui.colorPicker4
 import imgui.ImGui.combo
 import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
-import imgui.ImGui.dragFloat
-import imgui.ImGui.dragFloat2
-import imgui.ImGui.dragFloat3
-import imgui.ImGui.dragFloat4
-import imgui.ImGui.dragFloatRange2
-import imgui.ImGui.dragInt
-import imgui.ImGui.dragInt2
-import imgui.ImGui.dragInt3
-import imgui.ImGui.dragInt4
-import imgui.ImGui.dragIntRange2
-import imgui.ImGui.dragScalar
-import imgui.ImGui.dragVec4
+import imgui.ImGui.drag2
+import imgui.ImGui.drag3
+import imgui.ImGui.drag4
+import imgui.ImGui.dragRange
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endCombo
@@ -62,16 +54,9 @@ import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.image
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
-import imgui.ImGui.inputDouble
-import imgui.ImGui.inputFloat
-import imgui.ImGui.inputFloat2
-import imgui.ImGui.inputFloat3
-import imgui.ImGui.inputFloat4
-import imgui.ImGui.inputInt
-import imgui.ImGui.inputInt2
-import imgui.ImGui.inputInt3
-import imgui.ImGui.inputInt4
-import imgui.ImGui.inputScalar
+import imgui.ImGui.input2
+import imgui.ImGui.input3
+import imgui.ImGui.input4
 import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.inputTextWithHint
@@ -117,16 +102,10 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setTooltip
+import imgui.ImGui.slider2
+import imgui.ImGui.slider3
+import imgui.ImGui.slider4
 import imgui.ImGui.sliderAngle
-import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderFloat2
-import imgui.ImGui.sliderFloat3
-import imgui.ImGui.sliderFloat4
-import imgui.ImGui.sliderInt
-import imgui.ImGui.sliderInt2
-import imgui.ImGui.sliderInt3
-import imgui.ImGui.sliderInt4
-import imgui.ImGui.sliderScalar
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
@@ -145,9 +124,8 @@ import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
-import imgui.ImGui.vSliderFloat
-import imgui.ImGui.vSliderInt
 import imgui.ImGui.windowDrawList
+import imgui.api.*
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.Color
 import imgui.classes.InputTextCallbackData
@@ -283,7 +261,7 @@ object ShowDemoWindowWidgets {
         var f0 = 0.001f
         var f1 = 1e10f
         var d0 = 999999.00000001
-        val vec4 = floatArrayOf(0.1f, 0.2f, 0.3f, 0.44f)
+        val vec4 = Vec4(0.1f, 0.2f, 0.3f, 0.44f)
         var i1 = 50
         var i2 = 42
         var f2 = 1f
@@ -296,8 +274,8 @@ object ShowDemoWindowWidgets {
         enum class Element { Fire, Earth, Air, Water }
 
         var elem = Element.Fire.ordinal
-        val col1 = floatArrayOf(1f, 0f, 0.2f)
-        val col2 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
+        val col1 = Vec3(1f, 0f, 0.2f)
+        val col2 = Vec4(0.4f, 0.7f, 0f, 0.5f)
         var itemCurrent = 1
 
         operator fun invoke() {
@@ -374,36 +352,36 @@ object ShowDemoWindowWidgets {
 
                     inputTextWithHint("input text (w/ hint)", "enter text here", str1)
 
-                    inputInt("input int", ::i0)
+                    input("input int", ::i0)
 
-                    inputFloat("input float", ::f0, 0.01f, 1f, "%.3f")
+                    input("input float", ::f0, 0.01f, 1f, "%.3f")
 
-                    inputDouble("input double", ::d0, 0.01, 1.0, "%.8f")
+                    input("input double", ::d0, 0.01, 1.0, "%.8f")
 
-                    inputFloat("input scientific", ::f1, 0f, 0f, "%e")
+                    input("input scientific", ::f1, 0f, 0f, "%e")
                     sameLine(); helpMarker("""
                     You can input value using the scientific notation,
                       e.g. \"1e+8\" becomes \"100000000\".""".trimIndent())
 
-                    inputFloat3("input float3", vec4)
+                    input3("input float3", vec4)
                 }
                 run {
-                    dragInt("drag int", ::i1, 1f)
+                    drag("drag int", ::i1, 1f)
                     sameLine(); helpMarker("""
                     Click and drag to edit value.
                     Hold SHIFT/ALT for faster/slower edit.
                     Double-click or CTRL+click to input value.""".trimIndent())
 
-                    dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%", SliderFlag.AlwaysClamp)
+                    drag("drag int 0..100", ::i2, 1f, 0, 100, "%d%%", SliderFlag.AlwaysClamp)
 
-                    dragFloat("drag float", ::f2, 0.005f)
-                    dragFloat("drag small float", ::f3, 0.0001f, 0f, 0f, "%.06f ns")
+                    drag("drag float", ::f2, 0.005f)
+                    drag("drag small float", ::f3, 0.0001f, 0f, 0f, "%.06f ns")
                 }
                 run {
-                    sliderInt("slider int", ::i3, -1, 3)
+                    slider("slider int", ::i3, -1, 3)
                     sameLine(); helpMarker("CTRL+click to input value.")
 
-                    sliderFloat("slider float", ::f4, 0f, 1f, "ratio = %.3f")
+                    slider("slider float", ::f4, 0f, 1f, "ratio = %.3f")
                     //                TODO
                     //                sliderFloat("slider float (curve)", ::f5, -10f, 10f, "%.4f", 2f)
 
@@ -413,7 +391,7 @@ object ShowDemoWindowWidgets {
                     // Here we completely omit '%d' from the format string, so it'll only display a name.
                     // This technique can also be used with DragInt().
                     val elemName = Element.values().getOrNull(elem)?.name ?: "Unknown"
-                    sliderInt("slider enum", ::elem, 0, Element.values().lastIndex, elemName)
+                    slider("slider enum", ::elem, 0, Element.values().lastIndex, elemName)
                     sameLine(); helpMarker("Using the format string parameter to display a name instead of the underlying integer.")
                 }
 
@@ -602,7 +580,7 @@ object ShowDemoWindowWidgets {
                                 "for text wrapping follows simple rules suitable for English and possibly other languages.")
                     spacing()
 
-                    sliderFloat("Wrap width", ::wrapWidth, -20f, 600f, "%.0f")
+                    slider("Wrap width", ::wrapWidth, -20f, 600f, "%.0f")
 
                     val drawList = windowDrawList
                     for (n in 0..1) {
@@ -1166,17 +1144,14 @@ object ShowDemoWindowWidgets {
                         // Submit our regular tabs
                         var n = 0
                         while (n < activeTabs.size) {
-                            var open = true
+                            val openRef = true.mutableReference
+                            val open by openRef
                             val name = "%04d".format(activeTabs[n])
-                            _b = open
-                            tabItem(name, ::_b) {
+                            tabItem(name, openRef) {
                                 text("This is the $name tab!")
                             }
-                            open = _b
-                            if (!open)
-                                activeTabs.clear()
-                            else
-                                n++
+                            if (!open) activeTabs.clear()
+                            else n++
                         }
                     }
                     separator()
@@ -1237,10 +1212,13 @@ object ShowDemoWindowWidgets {
                 separator()
                 withItemWidth(fontSize * 8) { combo("func", ::funcType, "Sin\u0000Saw\u0000") }
                 sameLine()
-                sliderInt("Sample count", ::displayCount, 1, 400)
-                val func = if (funcType == 0) Funcs3::sin else Funcs3::saw
-                plotLines("Lines", func, displayCount, 0, "", -1f, 1f, Vec2(0, 80))
-                plotHistogram("Histogram", func, displayCount, 0, "", -1f, 1f, Vec2(0, 80))
+                slider("Sample count", ::displayCount, 1, 400)
+                plotLines("Lines", displayCount, 0, "", -1f, 1f, Vec2(0, 80)) {
+                    if (funcType == 0) Funcs3.sin(it) else Funcs3.saw(it)
+                }
+                plotHistogram("Histogram", displayCount, 0, "", -1f, 1f, Vec2(0, 80)) {
+                    if (funcType == 0) Funcs3.sin(it) else Funcs3.saw(it)
+                }
                 separator()
 
                 // Animate a simple progress bar
@@ -1312,7 +1290,7 @@ object ShowDemoWindowWidgets {
                 text("Color button with Custom Picker Popup:")
                 if (savedPaletteInit)
                     savedPalette.forEachIndexed { n, c ->
-                        colorConvertHSVtoRGB(n / 31f, 0.8f, 0.8f, c::x, c::y, c::z)
+                        colorConvertHSVtoRGB(n / 31f, 0.8f, 0.8f, c)
                         savedPalette[n].w = 1f // Alpha
                     }
                 savedPaletteInit = false
@@ -1425,7 +1403,7 @@ object ShowDemoWindowWidgets {
                 text("Color widget with InputHSV:")
                 colorEdit4("HSV shown as RGB##1", colorHsv, Cef.DisplayRGB or Cef.InputHSV or Cef.Float)
                 colorEdit4("HSV shown as HSV##1", colorHsv, Cef.DisplayHSV or Cef.InputHSV or Cef.Float)
-                dragVec4("Raw HSV values", colorHsv, 0.01f, 0f, 1f)
+                drag4("Raw HSV values", colorHsv, 0.01f, 0f, 1f)
             }
         }
     }
@@ -1450,16 +1428,16 @@ object ShowDemoWindowWidgets {
 
                 // Drags
                 text("Underlying float value: %f", dragF)
-                dragFloat("DragFloat (0 -> 1)", ::dragF, 0.005f, 0f, 1f, "%.3f", flags)
-                dragFloat("DragFloat (0 -> +inf)", ::dragF, 0.005f, 0f, Float.MAX_VALUE, "%.3f", flags)
-                dragFloat("DragFloat (-inf -> 1)", ::dragF, 0.005f, -Float.MAX_VALUE, 1f, "%.3f", flags)
-                dragFloat("DragFloat (-inf -> +inf)", ::dragF, 0.005f, -Float.MAX_VALUE, +Float.MAX_VALUE, "%.3f", flags)
-                dragInt("DragInt (0 -> 100)", ::dragI, 0.5f, 0, 100, "%d", flags)
+                drag("DragFloat (0 -> 1)", ::dragF, 0.005f, 0f, 1f, "%.3f", flags)
+                drag("DragFloat (0 -> +inf)", ::dragF, 0.005f, 0f, Float.MAX_VALUE, "%.3f", flags)
+                drag("DragFloat (-inf -> 1)", ::dragF, 0.005f, -Float.MAX_VALUE, 1f, "%.3f", flags)
+                drag("DragFloat (-inf -> +inf)", ::dragF, 0.005f, -Float.MAX_VALUE, +Float.MAX_VALUE, "%.3f", flags)
+                drag("DragInt (0 -> 100)", ::dragI, 0.5f, 0, 100, "%d", flags)
 
                 // Sliders
                 text("Underlying float value: %f", sliderF)
-                sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "%.3f", flags)
-                sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "%d", flags)
+                slider("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "%.3f", flags)
+                slider("SliderInt (0 -> 100)", ::sliderI, 0, 100, "%d", flags)
             }
         }
     }
@@ -1471,9 +1449,9 @@ object ShowDemoWindowWidgets {
         var endI = 1000
         operator fun invoke() {
             treeNode("Range Widgets") {
-                dragFloatRange2("range float", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%", SliderFlag.AlwaysClamp)
-                dragIntRange2("range int", ::beginI, ::endI, 5f, 0, 1000, "Min: %d units", "Max: %d units")
-                dragIntRange2("range int (no bounds)", ::beginI, ::endI, 5f, 0, 0, "Min: %d units", "Max: %d units")
+                dragRange("range float", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%", SliderFlag.AlwaysClamp)
+                dragRange("range int", ::beginI, ::endI, 5f, 0, 1000, "Min: %d units", "Max: %d units")
+                dragRange("range int (no bounds)", ::beginI, ::endI, 5f, 0, 0, "Min: %d units", "Max: %d units")
             }
         }
     }
@@ -1512,62 +1490,62 @@ object ShowDemoWindowWidgets {
         // Note: SliderScalar() functions have a maximum usable range of half the natural type maximum, hence the /2.
 
         // @formatter:off
-        var s8_zero: Byte = 0.b
-        var s8_one: Byte = 1.b
-        var s8_fifty: Byte = 50.b
-        var s8_min: Byte = (-128).b
-        var s8_max: Byte = 127.b
-        var u8_zero: Ubyte = Ubyte(0)
-        var u8_one: Ubyte = Ubyte(1)
-        var u8_fifty: Ubyte = Ubyte(50)
-        var u8_min: Ubyte = Ubyte(0)
-        var u8_max: Ubyte = Ubyte(255)
-        var s16_zero: Short = 0.s
-        var s16_one: Short = 1.s
-        var s16_fifty: Short = 50.s
-        var s16_min: Short = (-32768).s
-        var s16_max: Short = 32767.s
-        var u16_zero: Ushort = Ushort(0)
-        var u16_one = Ushort(1)
-        var u16_fifty: Ushort = Ushort(50)
-        var u16_min: Ushort = Ushort(0)
-        var u16_max: Ushort = Ushort(65535)
-        var s32_zero: Int = 0
-        var s32_one: Int = 1
-        var s32_fifty: Int = 50
-        var s32_min: Int = Int.MIN_VALUE / 2
-        var s32_max: Int = Int.MAX_VALUE / 2
-        var s32_hi_a = Int.MAX_VALUE / 2 - 100
-        var s32_hi_b = Int.MAX_VALUE / 2
-        var u32_zero: Uint = Uint(0)
-        var u32_one: Uint = Uint(1)
-        var u32_fifty: Uint = Uint(50)
-        var u32_min: Uint = Uint(0)
-        var u32_max: Uint = Uint.MAX / 2
-        var u32_hi_a = Uint.MAX / 2 - 100
-        var u32_hi_b: Uint = Uint.MAX / 2
-        var s64_zero: Long = 0L
-        var s64_one: Long = 1L
-        var s64_fifty: Long = 50L
-        var s64_min: Long = Long.MIN_VALUE / 2
-        var s64_max: Long = Long.MAX_VALUE / 2
-        var s64_hi_a: Long = Long.MAX_VALUE / 2 - 100
-        var s64_hi_b: Long = Long.MAX_VALUE / 2
-        var u64_zero: Ulong = Ulong(0)
-        var u64_one: Ulong = Ulong(1)
-        var u64_fifty: Ulong = Ulong(50)
-        var u64_min: Ulong = Ulong(0)
-        var u64_max: Ulong = Ulong.MAX / 2
-        var u64_hi_a: Ulong = Ulong.MAX / 2 - 100
-        var u64_hi_b: Ulong = Ulong.MAX / 2
-        var f32_zero: Float = 0f
-        var f32_one: Float = 1f
-        var f32_lo_a: Float = -10_000_000_000f
-        var f32_hi_a: Float = +10_000_000_000f
-        var f64_zero: Double = 0.0
-        var f64_one: Double = 1.0
-        var f64_lo_a: Double = -1_000_000_000_000_000.0
-        var f64_hi_a: Double = +1_000_000_000_000_000.0
+        val s8_zero: Byte = 0.b
+        val s8_one: Byte = 1.b
+        val s8_fifty: Byte = 50.b
+        val s8_min: Byte = (-128).b
+        val s8_max: Byte = 127.b
+        val u8_zero: Ubyte = Ubyte(0)
+        val u8_one: Ubyte = Ubyte(1)
+        val u8_fifty: Ubyte = Ubyte(50)
+        val u8_min: Ubyte = Ubyte(0)
+        val u8_max: Ubyte = Ubyte(255)
+        val s16_zero: Short = 0.s
+        val s16_one: Short = 1.s
+        val s16_fifty: Short = 50.s
+        val s16_min: Short = (-32768).s
+        val s16_max: Short = 32767.s
+        val u16_zero: Ushort = Ushort(0)
+        val u16_one = Ushort(1)
+        val u16_fifty: Ushort = Ushort(50)
+        val u16_min: Ushort = Ushort(0)
+        val u16_max: Ushort = Ushort(65535)
+        val s32_zero: Int = 0
+        val s32_one: Int = 1
+        val s32_fifty: Int = 50
+        val s32_min: Int = Int.MIN_VALUE / 2
+        val s32_max: Int = Int.MAX_VALUE / 2
+        val s32_hi_a = Int.MAX_VALUE / 2 - 100
+        val s32_hi_b = Int.MAX_VALUE / 2
+        val u32_zero: Uint = Uint(0)
+        val u32_one: Uint = Uint(1)
+        val u32_fifty: Uint = Uint(50)
+        val u32_min: Uint = Uint(0)
+        val u32_max: Uint = Uint.MAX / 2
+        val u32_hi_a = Uint.MAX / 2 - 100
+        val u32_hi_b: Uint = Uint.MAX / 2
+        val s64_zero: Long = 0L
+        val s64_one: Long = 1L
+        val s64_fifty: Long = 50L
+        val s64_min: Long = Long.MIN_VALUE / 2
+        val s64_max: Long = Long.MAX_VALUE / 2
+        val s64_hi_a: Long = Long.MAX_VALUE / 2 - 100
+        val s64_hi_b: Long = Long.MAX_VALUE / 2
+        val u64_zero: Ulong = Ulong(0)
+        val u64_one: Ulong = Ulong(1)
+        val u64_fifty: Ulong = Ulong(50)
+        val u64_min: Ulong = Ulong(0)
+        val u64_max: Ulong = Ulong.MAX / 2
+        val u64_hi_a: Ulong = Ulong.MAX / 2 - 100
+        val u64_hi_b: Ulong = Ulong.MAX / 2
+        val f32_zero: Float = 0f
+        val f32_one: Float = 1f
+        val f32_lo_a: Float = -10_000_000_000f
+        val f32_hi_a: Float = +10_000_000_000f
+        val f64_zero: Double = 0.0
+        val f64_one: Double = 1.0
+        val f64_lo_a: Double = -1_000_000_000_000_000.0
+        val f64_hi_a: Double = +1_000_000_000_000_000.0
         operator fun invoke() {
             treeNode("Data Types") {
 
@@ -1577,67 +1555,67 @@ object ShowDemoWindowWidgets {
                 sameLine(); helpMarker(
                 """As with every widget in dear imgui, we never modify values unless there is a user interaction.
                 You can override the clamping limits by using CTRL+Click to input a value.""".trimIndent())
-                dragScalar("drag s8", DataType.Byte, ::s8_v, dragSpeed, ::s8_zero.takeIf { dragClamp }, ::s8_fifty.takeIf { dragClamp })
-                dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, ::u8_zero.takeIf { dragClamp }, ::u8_fifty.takeIf { dragClamp }, "%d ms")
-                dragScalar("drag s16", DataType.Short, ::s16_v, dragSpeed, ::s16_zero.takeIf { dragClamp }, ::s16_fifty.takeIf { dragClamp })
-                dragScalar("drag u16", DataType.Ushort, ::u16_v, dragSpeed, ::u16_zero.takeIf { dragClamp }, ::u16_fifty.takeIf { dragClamp }, "%d ms")
-                dragScalar("drag s32", DataType.Int, ::s32_v, dragSpeed, ::s32_zero.takeIf { dragClamp }, ::s32_fifty.takeIf { dragClamp })
-                dragScalar("drag s32 hex", DataType.Int, ::s32_v, dragSpeed, ::s32_zero.takeIf { dragClamp }, ::s32_fifty.takeIf { dragClamp }, "0x%08X")
-                dragScalar("drag u32", DataType.Uint, ::u32_v, dragSpeed, ::u32_zero.takeIf { dragClamp }, ::u32_fifty.takeIf { dragClamp }, "%d ms")
-                dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, ::s64_zero.takeIf { dragClamp }, ::s64_fifty.takeIf { dragClamp })
-                dragScalar("drag u64", DataType.Ulong, ::u64_v, dragSpeed, ::u64_zero.takeIf { dragClamp }, ::u64_fifty.takeIf { dragClamp })
-                dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, ::f32_zero, ::f32_one, "%f")
-                dragScalar("drag float log", DataType.Float, ::f32_v, 0.005f, ::f32_zero, ::f32_one, "%f", SliderFlag.Logarithmic)
-                dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, ::f64_zero, null, "%.10f grams")
-                dragScalar("drag double log", DataType.Double, ::f64_v, 0.0005f, ::f64_zero, ::f64_one, "0 < %.10f < 1", SliderFlag.Logarithmic)
+                drag("drag s8", ::s8_v, dragSpeed, s8_zero.takeIf { dragClamp }, s8_fifty.takeIf { dragClamp })
+                drag("drag u8", ::u8_v, dragSpeed, u8_zero.takeIf { dragClamp }, u8_fifty.takeIf { dragClamp }, "%d ms")
+                drag("drag s16", ::s16_v, dragSpeed, s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })
+                drag("drag u16", ::u16_v, dragSpeed, u16_zero.takeIf { dragClamp }, u16_fifty.takeIf { dragClamp }, "%d ms")
+                drag("drag s32", ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp })
+                drag("drag s32 hex", ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp }, "0x%08X")
+                drag("drag u32", ::u32_v, dragSpeed, u32_zero.takeIf { dragClamp }, u32_fifty.takeIf { dragClamp }, "%d ms")
+                drag("drag s64", ::s64_v, dragSpeed, s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
+                drag("drag u64", ::u64_v, dragSpeed, u64_zero.takeIf { dragClamp }, u64_fifty.takeIf { dragClamp })
+                drag("drag float", ::f32_v, 0.005f, f32_zero, f32_one, "%f")
+                drag("drag float log", ::f32_v, 0.005f, f32_zero, f32_one, "%f", SliderFlag.Logarithmic)
+                drag("drag double", ::f64_v, 0.0005f, f64_zero, null, "%.10f grams")
+                drag("drag double log",  ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", SliderFlag.Logarithmic)
 
                 text("Sliders")
-                sliderScalar("slider s8 full", DataType.Byte, ::s8_v, ::s8_min, ::s8_max, "%d")
-                sliderScalar("slider u8 full", DataType.Ubyte, ::u8_v, ::u8_min, ::u8_max, "%d")
-                sliderScalar("slider s16 full", DataType.Short, ::s16_v, ::s16_min, ::s16_max, "%d")
-                sliderScalar("slider u16 full", DataType.Ushort, ::u16_v, ::u16_min, ::u16_max, "%d")
-                sliderScalar("slider s32 low", DataType.Int, ::s32_v, ::s32_zero, ::s32_fifty, "%d")
-                sliderScalar("slider s32 high", DataType.Int, ::s32_v, ::s32_hi_a, ::s32_hi_b, "%d")
-                sliderScalar("slider s32 full", DataType.Int, ::s32_v, ::s32_min, ::s32_max, "%d")
-                sliderScalar("slider s32 hex", DataType.Int, ::s32_v, ::s32_zero, ::s32_fifty, "0x%04X")
-                sliderScalar("slider u32 low", DataType.Uint, ::u32_v, ::u32_zero, ::u32_fifty, "%d")
-                sliderScalar("slider u32 high", DataType.Uint, ::u32_v, ::u32_hi_a, ::u32_hi_b, "%d")
-                sliderScalar("slider u32 full", DataType.Uint, ::u32_v, ::u32_min, ::u32_max, "%d")
-                sliderScalar("slider s64 low", DataType.Long, ::s64_v, ::s64_zero, ::s64_fifty, "%d")
-                sliderScalar("slider s64 high", DataType.Long, ::s64_v, ::s64_hi_a, ::s64_hi_b, "%d")
-                sliderScalar("slider s64 full", DataType.Long, ::s64_v, ::s64_min, ::s64_max, "%d")
-                sliderScalar("slider u64 low", DataType.Ulong, ::u64_v, ::u64_zero, ::u64_fifty, "%d ms")
-                sliderScalar("slider u64 high", DataType.Ulong, ::u64_v, ::u64_hi_a, ::u64_hi_b, "%d ms")
-                sliderScalar("slider u64 full", DataType.Ulong, ::u64_v, ::u64_min, ::u64_max, "%d ms")
-                sliderScalar("slider float low", DataType.Float, ::f32_v, ::f32_zero, ::f32_one)
-                sliderScalar("slider float low log", DataType.Float, ::f32_v, ::f32_zero, ::f32_one, "%.10f", SliderFlag.Logarithmic)
-                sliderScalar("slider float high", DataType.Float, ::f32_v, ::f32_lo_a, ::f32_hi_a, "%e")
-                sliderScalar("slider double low", DataType.Double, ::f64_v, ::f64_zero, ::f64_one, "%.10f grams")
-                sliderScalar("slider double low log", DataType.Double, ::f64_v, ::f64_zero, ::f64_one, "%.10f", SliderFlag.Logarithmic)
-                sliderScalar("slider double high", DataType.Double, ::f64_v, ::f64_lo_a, ::f64_hi_a, "%e grams")
+                slider("slider s8 full", ::s8_v, s8_min, s8_max, "%d")
+                slider("slider u8 full", ::u8_v, u8_min, u8_max, "%d")
+                slider("slider s16 full", ::s16_v, s16_min, s16_max, "%d")
+                slider("slider u16 full", ::u16_v, u16_min, u16_max, "%d")
+                slider("slider s32 low", ::s32_v, s32_zero, s32_fifty, "%d")
+                slider("slider s32 high", ::s32_v, s32_hi_a, s32_hi_b, "%d")
+                slider("slider s32 full", ::s32_v, s32_min, s32_max, "%d")
+                slider("slider s32 hex", ::s32_v, s32_zero, s32_fifty, "0x%04X")
+                slider("slider u32 low", ::u32_v, u32_zero, u32_fifty, "%d")
+                slider("slider u32 high", ::u32_v, u32_hi_a, u32_hi_b, "%d")
+                slider("slider u32 full", ::u32_v, u32_min, u32_max, "%d")
+                slider("slider s64 low", ::s64_v, s64_zero, s64_fifty, "%d")
+                slider("slider s64 high", ::s64_v, s64_hi_a, s64_hi_b, "%d")
+                slider("slider s64 full", ::s64_v, s64_min, s64_max, "%d")
+                slider("slider u64 low", ::u64_v, u64_zero, u64_fifty, "%d ms")
+                slider("slider u64 high", ::u64_v, u64_hi_a, u64_hi_b, "%d ms")
+                slider("slider u64 full",::u64_v, u64_min, u64_max, "%d ms")
+                slider("slider float low", ::f32_v, f32_zero, f32_one)
+                slider("slider float low log",::f32_v, f32_zero, f32_one, "%.10f", SliderFlag.Logarithmic)
+                slider("slider float high", ::f32_v, f32_lo_a, f32_hi_a, "%e")
+                slider("slider double low", ::f64_v, f64_zero, f64_one, "%.10f grams")
+                slider("slider double low log", ::f64_v, f64_zero, f64_one, "%.10f", SliderFlag.Logarithmic)
+                slider("slider double high",  ::f64_v, f64_lo_a, f64_hi_a, "%e grams")
 
                 text("Sliders (reverse)")
-                sliderScalar("slider s8 reverse", DataType.Byte, ::s8_v, ::s8_max, ::s8_min, "%d")
-                sliderScalar("slider u8 reverse", DataType.Ubyte, ::u8_v, ::u8_max, ::u8_min, "%d") // [JVM] %u -> %d
-                sliderScalar("slider s32 reverse", DataType.Int, ::s32_v, ::s32_fifty, ::s32_zero, "%d")
-                sliderScalar("slider u32 reverse", DataType.Uint, ::u32_v, ::u32_fifty, ::u32_zero, "%s") // [JVM] %u -> %d
-                sliderScalar("slider s64 reverse", DataType.Long, ::s64_v, ::s64_fifty, ::s64_zero, "%d") // [JVM] %I64d -> %d
-                sliderScalar("slider u64 reverse", DataType.Ulong, ::u64_v, ::u64_fifty, ::u64_zero, "%d ms") // [JVM] %I64u -> %d
+                slider("slider s8 reverse", ::s8_v, s8_max, s8_min, "%d")
+                slider("slider u8 reverse", ::u8_v, u8_max, u8_min, "%d") // [JVM] %u -> %d
+                slider("slider s32 reverse", ::s32_v, s32_fifty, s32_zero, "%d")
+                slider("slider u32 reverse", ::u32_v, u32_fifty, u32_zero, "%s") // [JVM] %u -> %d
+                slider("slider s64 reverse", ::s64_v, s64_fifty, s64_zero, "%d") // [JVM] %I64d -> %d
+                slider("slider u64 reverse", ::u64_v, u64_fifty, u64_zero, "%d ms") // [JVM] %I64u -> %d
 
                 text("Inputs")
                 checkbox("Show step buttons", ::inputsStep)
-                inputScalar("input s8", DataType.Byte, ::s8_v, s8_one.takeIf { inputsStep }, null, "%d")
-                inputScalar("input u8", DataType.Ubyte, ::u8_v, u8_one.takeIf { inputsStep }, null, "%d")
-                inputScalar("input s16", DataType.Short, ::s16_v, s16_one.takeIf { inputsStep }, null, "%d")
-                inputScalar("input u16", DataType.Ushort, ::u16_v, u16_one.takeIf { inputsStep }, null, "%d")
-                inputScalar("input s32", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%d")
-                inputScalar("input s32 hex", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%04X")
-                inputScalar("input u32", DataType.Uint, ::u32_v, u32_one.takeIf { inputsStep }, null, "%d")
-                inputScalar("input u32 hex", DataType.Uint, ::u32_v, u32_one.takeIf { inputsStep }, null, "%04X")
-                inputScalar("input s64", DataType.Long, ::s64_v, s64_one.takeIf { inputsStep })
-                inputScalar("input u64", DataType.Ulong, ::u64_v, u64_one.takeIf { inputsStep })
-                inputScalar("input float", DataType.Float, ::f32_v, f32_one.takeIf { inputsStep })
-                inputScalar("input double", DataType.Double, ::f64_v, f64_one.takeIf { inputsStep })
+                input("input s8", ::s8_v, s8_one.takeIf { inputsStep }, null, "%d")
+                input("input u8", ::u8_v, u8_one.takeIf { inputsStep }, null, "%d")
+                input("input s16", ::s16_v, s16_one.takeIf { inputsStep }, null, "%d")
+                input("input u16", ::u16_v, u16_one.takeIf { inputsStep }, null, "%d")
+                input("input s32", ::s32_v, s32_one.takeIf { inputsStep }, null, "%d")
+                input("input s32 hex", ::s32_v, s32_one.takeIf { inputsStep }, null, "%04X")
+                input("input u32", ::u32_v, u32_one.takeIf { inputsStep }, null, "%d")
+                input("input u32 hex", ::u32_v, u32_one.takeIf { inputsStep }, null, "%04X")
+                input("input s64", ::s64_v, s64_one.takeIf { inputsStep })
+                input("input u64", ::u64_v, u64_one.takeIf { inputsStep })
+                input("input float", ::f32_v, f32_one.takeIf { inputsStep })
+                input("input double", ::f64_v, f64_one.takeIf { inputsStep })
                 // @formatter:on
             }
         }
@@ -1649,28 +1627,28 @@ object ShowDemoWindowWidgets {
         operator fun invoke() {
             treeNode("Multi-component Widgets") {
 
-                inputFloat2("input float2", vec4f)
-                dragFloat2("drag float2", vec4f, 0.01f, 0f, 1f)
-                sliderFloat2("slider float2", vec4f, 0f, 1f)
-                inputInt2("input int2", vec4i)
-                dragInt2("drag int2", vec4i, 1f, 0, 255)
-                sliderInt2("slider int2", vec4i, 0, 255)
+                input2("input float2", vec4f)
+                drag2("drag float2", vec4f, 0.01f, 0f, 1f)
+                slider2("slider float2", vec4f, 0f, 1f)
+                input2("input int2", vec4i)
+                drag2("drag int2", vec4i, 1f, 0, 255)
+                slider2("slider int2", vec4i, 0, 255)
                 spacing()
 
-                inputFloat3("input float3", vec4f)
-                dragFloat3("drag float3", vec4f, 0.01f, 0.0f, 1.0f)
-                sliderFloat3("slider float3", vec4f, 0.0f, 1.0f)
-                inputInt3("input int3", vec4i)
-                dragInt3("drag int3", vec4i, 1f, 0, 255)
-                sliderInt3("slider int3", vec4i, 0, 255)
+                input3("input float3", vec4f)
+                drag3("drag float3", vec4f, 0.01f, 0.0f, 1.0f)
+                slider3("slider float3", vec4f, 0.0f, 1.0f)
+                input3("input int3", vec4i)
+                drag3("drag int3", vec4i, 1f, 0, 255)
+                slider3("slider int3", vec4i, 0, 255)
                 spacing()
 
-                inputFloat4("input float4", vec4f)
-                dragFloat4("drag float4", vec4f, 0.01f, 0.0f, 1.0f)
-                sliderFloat4("slider float4", vec4f, 0.0f, 1.0f)
-                inputInt4("input int4", vec4i)
-                dragInt4("drag int4", vec4i, 1f, 0, 255)
-                sliderInt4("slider int4", vec4i, 0, 255)
+                input4("input float4", vec4f)
+                drag4("drag float4", vec4f, 0.01f, 0.0f, 1.0f)
+                slider4("slider float4", vec4f, 0.0f, 1.0f)
+                input4("input int4", vec4i)
+                drag4("drag int4", vec4i, 1f, 0, 255)
+                slider4("slider int4", vec4i, 0, 255)
             }
         }
     }
@@ -1685,7 +1663,7 @@ object ShowDemoWindowWidgets {
 
                 withStyleVar(StyleVar.ItemSpacing, Vec2(spacing)) {
 
-                    vSliderInt("##int", Vec2(18, 160), ::intValue, 0, 5)
+                    vSlider("##int", Vec2(18, 160), ::intValue, 0, 5)
                     sameLine()
 
                     withID("set1") {
@@ -1698,7 +1676,7 @@ object ShowDemoWindowWidgets {
                                     Col.FrameBgActive, Color.hsv(i / 7f, 0.7f, 0.5f),
                                     Col.SliderGrab, Color.hsv(i / 7f, 0.9f, 0.9f)) {
 
-                                    withFloat(values, i) { vSliderFloat("##v", Vec2(18, 160), it, 0f, 1f, "") }
+                                    vSlider("##v", Vec2(18, 160), values mutablePropertyAt i, 0f, 1f, "")
                                     if (isItemActive || isItemHovered()) setTooltip("%.3f", values[i])
                                 }
                             }
@@ -1714,9 +1692,7 @@ object ShowDemoWindowWidgets {
                             group {
                                 for (ny in 0 until rows) {
                                     withID(nx * rows + ny) {
-                                        withFloat(values2, nx) { f ->
-                                            vSliderFloat("##v", smallSliderSize, f, 0f, 1f, "")
-                                        }
+                                        vSlider("##v", smallSliderSize, values2 mutablePropertyAt nx, 0f, 1f, "")
                                         if (isItemActive || isItemHovered())
                                             setTooltip("%.3f", values2[nx])
                                     }
@@ -1731,9 +1707,7 @@ object ShowDemoWindowWidgets {
                             if (i > 0) sameLine()
                             withID(i) {
                                 withStyleVar(StyleVar.GrabMinSize, 40f) {
-                                    withFloat(values, i) {
-                                        vSliderFloat("##v", Vec2(40, 160), it, 0f, 1f, "%.2f\nsec")
-                                    }
+                                    vSlider("##v", Vec2(40, 160), values mutablePropertyAt i, 0f, 1f, "%.2f\nsec")
                                 }
                             }
                         }
@@ -1744,16 +1718,13 @@ object ShowDemoWindowWidgets {
     }
 
     object `Drag and Drop` {
-        val col1 = floatArrayOf(1f, 0f, 0.2f)
-        val col2 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
+        val col1 = Vec3(1f, 0f, 0.2f)
+        val col2 = Vec4(0.4f, 0.7f, 0f, 0.5f)
 
         enum class Mode { Copy, Move, Swap }
 
         var mode = Mode.Copy
-        val names = arrayOf(
-            "Bobby", "Beatrice", "Betty",
-            "Brianna", "Barry", "Bernard",
-            "Bibi", "Blaine", "Bryn")
+        val names = arrayOf("Bobby", "Beatrice", "Betty", "Brianna", "Barry", "Bernard", "Bibi", "Blaine", "Bryn")
         val itemNames = arrayOf("Item One", "Item Two", "Item Three", "Item Four", "Item Five")
         operator fun invoke() {
             treeNode("Drag and Drop") {
@@ -1841,7 +1812,7 @@ object ShowDemoWindowWidgets {
         var itemType = 1
         var itemDisabled = false
         var b0 = false
-        val col = floatArrayOf(1f, 0.5f, 0f, 1f)
+        val col = Vec4(1f, 0.5f, 0f, 1f)
         val str = ByteArray(16)
         var current1 = 1
         var current2 = 1
@@ -1864,11 +1835,11 @@ object ShowDemoWindowWidgets {
                     1 -> button("ITEM: Button")   // Testing button
                     2 -> withButtonRepeat(true) { button("ITEM: Button") } // Testing button (with repeater)
                     3 -> checkbox("ITEM: Checkbox", ::b0) // Testing checkbox
-                    4 -> sliderFloat("ITEM: SliderFloat", col, 0, 0f, 1f)   // Testing basic item
+                    4 -> slider("ITEM: SliderFloat", col::x, 0f, 1f)   // Testing basic item
                     5 -> inputText("ITEM: InputText", str) // Testing input text (which handles tabbing)
                     6 -> inputTextMultiline("ITEM: InputTextMultiline", str) // Testing input text (which uses a child window)
-                    7 -> inputFloat("ITEM: InputFloat", col, 1f)  // Testing +/- buttons on scalar input
-                    8 -> inputFloat3("ITEM: InputFloat3", col)  // Testing multi-component items (IsItemXXX flags are reported merged)
+                    7 -> input("ITEM: InputFloat", col::x, 1f)  // Testing +/- buttons on scalar input
+                    8 -> input3("ITEM: InputFloat3", col)  // Testing multi-component items (IsItemXXX flags are reported merged)
                     9 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
                     10 -> selectable("ITEM: Selectable") // Testing selectable item
                     11 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)

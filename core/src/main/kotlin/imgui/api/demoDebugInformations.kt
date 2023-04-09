@@ -227,16 +227,16 @@ interface demoDebugInformations {
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
             setNextItemWidth(fontSize * 12)
-            _i32 = showWindowsRectType.ordinal
-            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ::_i32, WRT.names, WRT.names.size)
-            showWindowsRectType = WRT.values()[_i32]
+            val ordinalRef = showWindowsRectType.ordinal.mutableReference
+            val ordinal by ordinalRef
+            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ordinalRef, WRT.names, WRT.names.size)
+            showWindowsRectType = WRT.values()[ordinal]
             if (showWindowsRects) g.navWindow?.let { nav ->
                 bulletText("'${nav.name}':")
                 indent {
                     for (rectN in WRT.values()) {
                         val r = Funcs.getWindowRect(nav, rectN)
-                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${WRT.names[rectN.ordinal]}",
-                             r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${WRT.names[rectN.ordinal]}", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                     }
                 }
             }

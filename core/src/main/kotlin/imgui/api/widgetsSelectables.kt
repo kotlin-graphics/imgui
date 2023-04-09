@@ -29,6 +29,7 @@ import imgui.internal.sections.ItemStatusFlag
 import imgui.internal.sections.NavHighlightFlag
 import kool.getValue
 import kool.setValue
+import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf

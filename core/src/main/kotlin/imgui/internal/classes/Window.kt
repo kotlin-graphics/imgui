@@ -19,6 +19,7 @@ import imgui.internal.*
 import imgui.internal.sections.*
 import imgui.static.addTo
 import java.util.*
+import kotlin.math.max
 import imgui.WindowFlag as Wf
 
 /** Storage for one window */

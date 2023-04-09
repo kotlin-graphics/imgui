@@ -9,7 +9,6 @@ import imgui.ImGui.beginTooltip
 import imgui.ImGui.boundSettings
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
-import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
@@ -58,6 +57,7 @@ import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
+import imgui.api.drag
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
@@ -421,7 +421,7 @@ internal interface debugTools {
 
         // Display details
         setNextItemWidth(ImGui.fontSize * 8)
-        dragFloat("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
+        drag("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
         sameLine(); metricsHelpMarker(
             "Note than the default embedded font is NOT meant to be scaled.\n\n" +
                     "Font are currently rendered into bitmaps at a given size at the time of building the atlas. " +

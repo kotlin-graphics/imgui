@@ -24,6 +24,7 @@ import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
 import java.util.Stack
 import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.sqrt
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)

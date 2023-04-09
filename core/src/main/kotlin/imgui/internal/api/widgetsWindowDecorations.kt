@@ -103,9 +103,7 @@ internal interface widgetsWindowDecorations {
         }
         val sizeAvail = window.innerRect.max[axis] - window.innerRect.min[axis]
         val sizeContents = window.contentSize[axis] + window.windowPadding[axis] * 2f
-        _L = window.scroll[axis].L
-        scrollbarEx(bb, id, axis, ::_L, sizeAvail.L, sizeContents.L, roundingCorners)
-        window.scroll[axis] = _L.f
+        scrollbarEx(bb, id, axis, (window.scroll mutablePropertyAt axis).L, sizeAvail.L, sizeContents.L, roundingCorners)
     }
 
     /** Vertical/Horizontal scrollbar

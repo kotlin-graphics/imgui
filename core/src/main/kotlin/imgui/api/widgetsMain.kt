@@ -10,6 +10,7 @@ import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.checkboxFlagsT
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
 import imgui.ImGui.itemAdd
@@ -38,21 +39,6 @@ import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.internal.sections.ButtonFlag as Bf
-
-
-// @formatter:off
-val S8_MIN: Int = -128
-val S8_MAX: Int = 127
-val U8_MIN: Int = 0
-val U8_MAX: Int = 0xFF
-val S16_MIN: Int = -32768
-val S16_MAX: Int = 32767
-val U16_MIN: Int = 0
-val U16_MAX: Int = 0xFFFF
-val S32_MIN: Int = Integer.MIN_VALUE
-val S32_MAX: Int = Integer.MAX_VALUE
-// @formatter:on
-
 
 // Widgets: Main
 // - Most widgets return true when the value has been changed or when pressed/selected
@@ -98,12 +84,7 @@ interface widgetsMain {
     fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), emptyFlags)
 
     fun checkbox(label: String, v: BooleanArray) = checkbox(label, v, 0)
-    fun checkbox(label: String, v: BooleanArray, i: Int): Boolean {
-        _b = v[i]
-        return checkbox(label, ::_b).also {
-            v[i] = _b
-        }
-    }
+    fun checkbox(label: String, v: BooleanArray, i: Int): Boolean = checkbox(label, v mutablePropertyAt i)
 
     fun checkbox(label: String, vPtr: KMutableProperty0<Boolean>): Boolean {
 
@@ -161,39 +142,9 @@ interface widgetsMain {
     // Suppressing the warning since we're in an interface.
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("checkboxFlags")
-    fun <F : Flag<F>> checkboxFlags(label: String, flags: FlagArray<F>, flagsValue: Flag<F>): Boolean {
-        _b = flagsValue in flags[0] // ~allOn
-        val anyOn = flags[0] has flagsValue
-        val pressed = when {
-            !_b && anyOn -> {
-                val window = currentWindow
-                val backupItemFlags = g.currentItemFlags
-                g.currentItemFlags = g.currentItemFlags or ItemFlag.MixedValue
-                checkbox(label, ::_b).also {
-                    g.currentItemFlags = backupItemFlags
-                }
-            }
-            else -> checkbox(label, ::_b)
-        }
-        if (pressed)
-            flags[0] = when {
-                _b -> flags[0] or flagsValue
-                else -> flags[0] wo flagsValue
-            }
-        return pressed
-    }
+    fun <F : Flag<F>> checkboxFlags(label: String, flags: FlagArray<F>, flagsValue: Flag<F>): Boolean = checkboxFlagsT(label, flags mutablePropertyAt 0, flagsValue)
 
-    fun <F : Flag<F>> checkboxFlags(label: String, flagsPtr: KMutableProperty0<Flag<F>>, flagsValue: Flag<F>): Boolean {
-        var flags by flagsPtr
-        val v = booleanArrayOf(flagsValue in flags)
-        val pressed = checkbox(label, v)
-        if (pressed)
-            flags = when {
-                v[0] -> flags or flagsValue
-                else -> flags wo flagsValue
-            }
-        return pressed
-    }
+    fun <F : Flag<F>> checkboxFlags(label: String, flagsPtr: KMutableProperty0<Flag<F>>, flagsValue: Flag<F>): Boolean = checkboxFlagsT(label, flagsPtr, flagsValue)
 
     /** use with e.g. if (radioButton("one", myValue==1))  myValue = 1 */
     fun radioButton(label: String, active: Boolean): Boolean {

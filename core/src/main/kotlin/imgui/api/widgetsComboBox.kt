@@ -132,14 +132,7 @@ interface widgetsComboBox {
         combo(label, currentItem, items.toList(), heightInItems)
 
     /** Combo box helper allowing to pass all items in a single string literal holding multiple zero-terminated items "item1\0item2\0" */
-    fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
-        _i32 = currentItem[0]
-        val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
-        // FIXME-OPT: Avoid computing this, or at least only when combo is open
-        val res = combo(label, ::_i32, items, heightInItems)
-        currentItem[0] = _i32
-        return res
-    }
+    fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean = combo(label, currentItem mutablePropertyAt 0, itemsSeparatedByZeros, heightInItems)
 
     fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
         val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
@@ -148,12 +141,8 @@ interface widgetsComboBox {
     }
 
     /** Combo box function. */
-    fun combo(label: String, currentItem: IntArray, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
-        _i32 = currentItem[0]
-        val res = combo(label, ::_i32, items, popupMaxHeightInItem)
-        currentItem[0] = _i32
-        return res
-    }
+    fun combo(label: String, currentItem: IntArray, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean =
+            combo(label, currentItem mutablePropertyAt 0, items, popupMaxHeightInItem)
 
     fun combo(label: String, currentItemPtr: KMutableProperty0<Int>, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
 
@@ -191,9 +180,10 @@ interface widgetsComboBox {
 
         var currentItem by pCurrentItem
         // Call the getter to obtain the preview string which is a parameter to BeginCombo()
-        var previewValue by ::_s
+        val previewValueRef = "".mutableReference
+        val previewValue by previewValueRef
         if (currentItem >= 0 && currentItem < items.size)
-            itemsGetter(items, currentItem, ::_s)
+            itemsGetter(items, currentItem, previewValueRef)
 
         // The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't have/need it, but we emulate it here.
         if (popupMaxHeightInItems != -1 && g.nextWindowData.flags hasnt NextWindowDataFlag.HasSizeConstraint)
@@ -208,8 +198,9 @@ interface widgetsComboBox {
         for (i in items.indices) {
             pushID(i)
             val itemSelected = i == currentItem
-            var itemText by ::_s
-            if (!itemsGetter(items, i, ::_s))
+            val itemTextRef = "".mutableReference
+            var itemText by itemTextRef
+            if (!itemsGetter(items, i, itemTextRef))
                 itemText = "*Unknown item*"
             if (selectable(itemText, itemSelected)) {
                 valueChanged = true

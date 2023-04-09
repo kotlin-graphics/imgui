@@ -31,6 +31,7 @@ import imgui.internal.floor
 import imgui.internal.sections.*
 import imgui.internal.triangleContainsPoint
 import kotlin.math.abs
+import kotlin.math.min
 
 // Menus
 internal interface menus {

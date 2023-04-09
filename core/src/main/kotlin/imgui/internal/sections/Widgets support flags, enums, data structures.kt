@@ -256,6 +256,7 @@ enum class Axis {
 }
 
 operator fun <T> Array<T>.get(index: Axis) = get(index.i)
+infix fun <T> Array<T>.mutablePropertyAt(index: Axis) = mutablePropertyAt(index.i)
 operator fun <T> Array<T>.set(index: Axis, value: T) = set(index.i, value)
 
 operator fun Vec2.get(axis: Axis): Float = when (axis) {
@@ -263,6 +264,8 @@ operator fun Vec2.get(axis: Axis): Float = when (axis) {
     Axis.Y -> y
     else -> throw Error()
 }
+
+infix fun Vec2.mutablePropertyAt(index: Axis) = mutablePropertyAt(index.i)
 
 operator fun Vec2.set(axis: Axis, float: Float) = when (axis) {
     Axis.X -> x = float

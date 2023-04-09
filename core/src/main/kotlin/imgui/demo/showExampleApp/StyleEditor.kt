@@ -13,10 +13,9 @@ import imgui.ImGui.beginTabItem
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
-import imgui.ImGui.colorEditVec4
+import imgui.ImGui.colorEdit4
 import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
-import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
@@ -38,8 +37,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.showFontAtlas
 import imgui.ImGui.showFontSelector
-import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderVec2
+import imgui.ImGui.slider2
 import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
@@ -51,7 +49,9 @@ import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.api.demoDebugInformations.ShowStyleSelector
+import imgui.api.drag
 import imgui.api.g
+import imgui.api.slider
 import imgui.classes.Style
 import imgui.classes.TextFilter
 import imgui.dsl.button
@@ -105,8 +105,7 @@ object StyleEditor {
         showFontSelector("Fonts##Selector")
 
         // Simplified Settings (expose floating-pointer border sizes as boolean representing 0.0f or 1.0f)
-        if (sliderFloat("FrameRounding", style::frameRounding, 0f, 12f, "%.0f")) style.grabRounding =
-            style.frameRounding    // Make GrabRounding always the same value as FrameRounding
+        if (slider("FrameRounding", style::frameRounding, 0f, 12f, "%.0f")) style.grabRounding = style.frameRounding    // Make GrabRounding always the same value as FrameRounding
         run {
             border = style.windowBorderSize > 0f
             if (checkbox("WindowBorder", ::border)) style.windowBorderSize = border.f
@@ -139,51 +138,52 @@ object StyleEditor {
 
             if (beginTabItem("Sizes")) {
                 text("Main")
-                sliderVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
-                sliderVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
-                sliderVec2("CellPadding", style.cellPadding, 0f, 20f, "%.0f")
-                sliderVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
-                sliderVec2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
-                sliderVec2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
-                sliderFloat("IndentSpacing", style::indentSpacing, 0f, 30f, "%.0f")
-                sliderFloat("ScrollbarSize", style::scrollbarSize, 1f, 20f, "%.0f")
-                sliderFloat("GrabMinSize", style::grabMinSize, 1f, 20f, "%.0f")
+                slider2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
+                slider2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
+                slider2("CellPadding", style.cellPadding, 0f, 20f, "%.0f")
+                slider2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
+                slider2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
+                slider2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
+                slider("IndentSpacing", style::indentSpacing, 0f, 30f, "%.0f")
+                slider("ScrollbarSize", style::scrollbarSize, 1f, 20f, "%.0f")
+                slider("GrabMinSize", style::grabMinSize, 1f, 20f, "%.0f")
                 text("Borders")
-                sliderFloat("WindowBorderSize", style::windowBorderSize, 0f, 1f, "%.0f")
-                sliderFloat("ChildBorderSize", style::childBorderSize, 0f, 1f, "%.0f")
-                sliderFloat("PopupBorderSize", style::popupBorderSize, 0f, 1f, "%.0f")
-                sliderFloat("FrameBorderSize", style::frameBorderSize, 0f, 1f, "%.0f")
-                sliderFloat("TabBorderSize", style::tabBorderSize, 0f, 1f, "%.0f")
+                slider("WindowBorderSize", style::windowBorderSize, 0f, 1f, "%.0f")
+                slider("ChildBorderSize", style::childBorderSize, 0f, 1f, "%.0f")
+                slider("PopupBorderSize", style::popupBorderSize, 0f, 1f, "%.0f")
+                slider("FrameBorderSize", style::frameBorderSize, 0f, 1f, "%.0f")
+                slider("TabBorderSize", style::tabBorderSize, 0f, 1f, "%.0f")
                 text("Rounding")
-                sliderFloat("WindowRounding", style::windowRounding, 0f, 12f, "%.0f")
-                sliderFloat("ChildRounding", style::childRounding, 0f, 12f, "%.0f")
-                sliderFloat("FrameRounding", style::frameRounding, 0f, 12f, "%.0f")
-                sliderFloat("PopupRounding", style::popupRounding, 0f, 16f, "%.0f")
-                sliderFloat("ScrollbarRounding", style::scrollbarRounding, 0f, 12f, "%.0f")
-                sliderFloat("GrabRounding", style::grabRounding, 0f, 12f, "%.0f")
-                sliderFloat("LogSliderDeadzone", style::logSliderDeadzone, 0f, 12f, "%.0f")
-                sliderFloat("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
+                slider("WindowRounding", style::windowRounding, 0f, 12f, "%.0f")
+                slider("ChildRounding", style::childRounding, 0f, 12f, "%.0f")
+                slider("FrameRounding", style::frameRounding, 0f, 12f, "%.0f")
+                slider("PopupRounding", style::popupRounding, 0f, 16f, "%.0f")
+                slider("ScrollbarRounding", style::scrollbarRounding, 0f, 12f, "%.0f")
+                slider("GrabRounding", style::grabRounding, 0f, 12f, "%.0f")
+                slider("LogSliderDeadzone", style::logSliderDeadzone, 0f, 12f, "%.0f")
+                slider("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
                 text("Alignment")
-                sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
+                slider2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
                 run {
-                    _i32 = style.windowMenuButtonPosition.i + 1
-                    if (combo("WindowMenuButtonPosition", ::_i32,
-                            "None${NUL}Left${NUL}Right${NUL}")
-                    ) style.windowMenuButtonPosition = Dir.values().first { it.i == _i32 - 1 }
+                    val sideRef = (style.windowMenuButtonPosition.i + 1).mutableReference
+                    val side by sideRef
+                    if (combo("WindowMenuButtonPosition", sideRef, "None${NUL}Left${NUL}Right${NUL}")) {
+                        style.windowMenuButtonPosition = Dir.values().first { it.i == side - 1 }
+                    }
                 }
                 run {
-                    _i32 = style.colorButtonPosition.i
-                    combo("ColorButtonPosition", ::_i32, "Left\u0000Right\u0000")
-                    style.colorButtonPosition = Dir.values().first { it.i == _i32 }
+                    val sideRef = style.colorButtonPosition.i.mutableReference
+                    val side by sideRef
+                    combo("ColorButtonPosition", sideRef, "Left\u0000Right\u0000")
+                    style.colorButtonPosition = Dir.values().first { it.i == side }
                 }
-                sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
+                slider2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
                 sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")
-                sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f")
+                slider2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f")
                 sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
                 text("Safe Area Padding")
-                sameLine(); helpMarker(
-                    "Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
-                sliderVec2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
+                sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
+                slider2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
                 endTabItem()
             }
 
@@ -231,7 +231,7 @@ object StyleEditor {
                             val name = Col.values()[i].name
                             if (!filter.passFilter(name)) continue
                             withID(i) {
-                                colorEditVec4("##color", style.colors[i], Cef.AlphaBar or alphaFlags)
+                                colorEdit4("##color", style.colors[i], Cef.AlphaBar or alphaFlags)
                                 if (style.colors[i] != ref!!.colors[i]) { // Tips: in a real user application, you may want to merge and use an icon font into the main font,
                                     // so instead of "Save"/"Revert" you'd use icons!
                                     // Read the FAQ and docs/FONTS.txt about using icon fonts. It's really easy and super convenient!
@@ -262,12 +262,11 @@ object StyleEditor {
                 helpMarker("""
                     Those are old settings provided for convenience.
                     However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.
-                    Using those settings here will give you poor quality results.""".trimIndent()
-                )
+                    Using those settings here will give you poor quality results.""".trimIndent())
                 pushItemWidth(fontSize * 8)
-                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp)) // Scale only this window
+                if (drag("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp)) // Scale only this window
                     setWindowFontScale(windowScale)
-                dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp) // Scale everything
+                drag("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp) // Scale everything
                 popItemWidth()
 
                 endTabItem()
@@ -284,11 +283,11 @@ object StyleEditor {
 
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(fontSize * 8)
-                dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, 10f, "%.2f")
+                drag("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, 10f, "%.2f")
                 if (style.curveTessellationTol < 10f) style.curveTessellationTol = 0.1f
 
                 // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
-                dragFloat("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 5f, "%.2f", SliderFlag.AlwaysClamp)
+                drag("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 5f, "%.2f", SliderFlag.AlwaysClamp)
                 if (ImGui.isItemActive) {
                     setNextWindowPos(ImGui.cursorScreenPos)
                     tooltip {
@@ -324,13 +323,12 @@ object StyleEditor {
                     }
                 }
                 ImGui.sameLine()
-                helpMarker(
-                    "When drawing circle primitives with \"num_segments == 0\" tesselation will be calculated automatically.")
+                helpMarker("When drawing circle primitives with \"num_segments == 0\" tesselation will be calculated automatically.")
 
                 /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                     But application code could have a toggle to switch between zero and non-zero.             */
-                dragFloat("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f")
-                dragFloat("Disabled Alpha", style::disabledAlpha, 0.005f, 0f, 1f, "%.2f"); sameLine(); helpMarker("Additional alpha multiplier for disabled items (multiply over current value of Alpha).")
+                drag("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f")
+                drag("Disabled Alpha", style::disabledAlpha, 0.005f, 0f, 1f, "%.2f"); sameLine(); helpMarker("Additional alpha multiplier for disabled items (multiply over current value of Alpha).")
                 popItemWidth()
 
                 endTabItem()
@@ -356,7 +354,7 @@ object StyleEditor {
 
         // Display details
         setNextItemWidth(fontSize * 8)
-        dragFloat("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
+        drag("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
         sameLine()
         helpMarker("""
                         |Note than the default embedded font is NOT meant to be scaled.

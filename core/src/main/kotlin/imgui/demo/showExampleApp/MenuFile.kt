@@ -8,14 +8,14 @@ import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dummy
 import imgui.ImGui.endChild
-import imgui.ImGui.inputFloat
+import imgui.ImGui.input
 import imgui.ImGui.menuItem
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
-import imgui.ImGui.sliderFloat
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.windowDrawList
+import imgui.api.slider
 import imgui.dsl.menu
 
 object MenuFile {
@@ -49,11 +49,10 @@ object MenuFile {
         menu("Options") {
             menuItem("Enabled", "", ::enabled)
             beginChild("child", Vec2(0, 60), true)
-            for (i in 0 until 10)
-                text("Scrolling Text $i")
+            for (i in 0 until 10) text("Scrolling Text $i")
             endChild()
-            sliderFloat("Value", ::float, 0f, 1f)
-            inputFloat("Input", ::float, 0.1f)
+            slider("Value", ::float, 0f, 1f)
+            input("Input", ::float, 0.1f)
             combo("Combo", ::combo, "Yes\u0000No\u0000Maybe\u0000\u0000")
         }
 

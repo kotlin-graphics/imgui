@@ -12,7 +12,6 @@ import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.colorEdit4
 import imgui.ImGui.combo
-import imgui.ImGui.dragFloat
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
@@ -33,6 +32,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.drag
 import imgui.demo.showExampleApp.MenuFile
 import imgui.dsl.button
 import imgui.dsl.menu
@@ -200,7 +200,7 @@ object ShowDemoWindowPopups {
                         if (selectable("Set to zero")) value = 0.0f
                         if (selectable("Set to PI")) value = 3.1415f
                         setNextItemWidth(-Float.MIN_VALUE)
-                        dragFloat("##Value", ::value, 0.1f, 0f, 0f)
+                        drag("##Value", ::value, 0.1f, 0f, 0f)
                     }
 
                     // We can also use OpenPopupOnItemClick() to toggle the visibility of a given popup.
@@ -290,7 +290,7 @@ object ShowDemoWindowPopups {
                     // Also demonstrate passing a bool* to BeginPopupModal(), this will create a regular close button which
                     // will close the popup. Note that the visibility state of popups is owned by imgui, so the input value
                     // of the bool actually doesn't matter here.
-                    val unusedOpen = true.asMutableProperty
+                    val unusedOpen = true.mutableReference
                     if (beginPopupModal("Stacked 2", unusedOpen)) {
                         text("Hello from Stacked The Second!")
                         button("Close") { closeCurrentPopup() }

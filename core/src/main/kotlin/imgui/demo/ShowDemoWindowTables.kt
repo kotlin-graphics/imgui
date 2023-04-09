@@ -16,9 +16,7 @@ import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.combo
 import imgui.ImGui.contentRegionAvail
-import imgui.ImGui.dragFloat
-import imgui.ImGui.dragInt
-import imgui.ImGui.dragVec2
+import imgui.ImGui.drag2
 import imgui.ImGui.endDisabled
 import imgui.ImGui.endTable
 import imgui.ImGui.indent
@@ -41,8 +39,7 @@ import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.setNextItemWidth
-import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderVec2
+import imgui.ImGui.slider2
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
@@ -68,6 +65,8 @@ import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.drag
+import imgui.api.slider
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
 import imgui.classes.TableSortSpecs
@@ -737,7 +736,7 @@ object ShowDemoWindowTables {
                     checkboxFlags("ImGuiTableFlags_RowBg", ::flags2, Tf.RowBg)
                     checkboxFlags("ImGuiTableFlags_Resizable", ::flags2, Tf.Resizable)
                     checkbox("show_widget_frame_bg", ::showWidgetFrameBg)
-                    sliderVec2("CellPadding", cellPadding, 0f, 10f, "%.0f")
+                    slider2("CellPadding", cellPadding, 0f, 10f, "%.0f")
                 }
 
                 pushStyleVar(StyleVar.CellPadding, cellPadding)
@@ -816,14 +815,15 @@ object ShowDemoWindowTables {
                             val f = flagArrayOf(flags)
                             editTableSizingFlags(f, 0)
                             flags = f[0]
-                            _i32 = contentsType1.ordinal
-                            combo("Contents", ::_i32, "Show width\u0000Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
-                            contentsType1 = ContentsType.values()[_i32]
+                            val ordinalRef = contentsType1.ordinal.mutableReference
+                            val ordinal by ordinalRef
+                            combo("Contents", ordinalRef, "Show width\u0000Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
+                            contentsType1 = ContentsType.values()[ordinal]
                             if (contentsType1 == ContentsType.FillButton) {
                                 sameLine()
                                 helpMarker("Be mindful that using right-alignment (e.g. size.x = -FLT_MIN) creates a feedback loop where contents width can feed into auto-column width can feed into contents width.")
                             }
-                            dragInt("Columns", ::columnCount, 0.1f, 1, 64, "%d", SliderFlag.AlwaysClamp)
+                            drag("Columns", ::columnCount, 0.1f, 1, 64, "%d", SliderFlag.AlwaysClamp)
                             checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable)
                             checkboxFlags("ImGuiTableFlags_PreciseWidths", ::flags, Tf.PreciseWidths)
                             sameLine(); helpMarker("Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.")
@@ -915,9 +915,9 @@ object ShowDemoWindowTables {
                     checkboxFlags("ImGuiTableFlags_ScrollX", ::flags, Tf.ScrollX)
                     checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY)
                     setNextItemWidth(ImGui.frameHeight)
-                    dragInt("freeze_cols", ::freezeCols, 0.2f, 0, 9, null, SliderFlag.NoInput)
+                    drag("freeze_cols", ::freezeCols, 0.2f, 0, 9, null, SliderFlag.NoInput)
                     setNextItemWidth(ImGui.frameHeight)
-                    dragInt("freeze_rows", ::freezeRows, 0.2f, 0, 9, null, SliderFlag.NoInput)
+                    drag("freeze_rows", ::freezeRows, 0.2f, 0, 9, null, SliderFlag.NoInput)
                 }
 
                 // When using ScrollX or ScrollY we need to specify a size for our table container!
@@ -963,7 +963,7 @@ object ShowDemoWindowTables {
                     withID("flags3") {
                         withItemWidth(TEXT_BASE_WIDTH * 30) {
                             checkboxFlags("ImGuiTableFlags_ScrollX", ::flags11, Tf.ScrollX)
-                            dragFloat("inner_width", ::innerWidth0, 1f, 0f, Float.MAX_VALUE, "%.1f")
+                            drag("inner_width", ::innerWidth0, 1f, 0f, Float.MAX_VALUE, "%.1f")
                         }
                     }
                 }
@@ -1286,11 +1286,11 @@ object ShowDemoWindowTables {
                         // Draw our contents
                         withID(row) {
                             tableSetColumnIndex(0)
-                            sliderFloat("float0", ::dummyF, 0f, 1f)
+                            slider("float0", ::dummyF, 0f, 1f)
                             tableSetColumnIndex(1)
-                            sliderFloat("float1", ::dummyF, 0f, 1f)
+                            slider("float1", ::dummyF, 0f, 1f)
                             tableSetColumnIndex(2)
-                            sliderFloat("##float2", ::dummyF, 0f, 1f) // No visible label since right-aligned
+                            slider("##float2", ::dummyF, 0f, 1f) // No visible label since right-aligned
                         }
                     }
                 }
@@ -1609,11 +1609,11 @@ object ShowDemoWindowTables {
                             checkboxFlags("ImGuiTableFlags_ScrollX", ::flags, Tf.ScrollX)
                             sameLine()
                             setNextItemWidth(ImGui.frameHeight)
-                            dragInt("freeze_cols", ::freezeCols, 0.2f, 0, 9, null, SliderFlag.NoInput)
+                            drag("freeze_cols", ::freezeCols, 0.2f, 0, 9, null, SliderFlag.NoInput)
                             checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY)
                             sameLine()
                             setNextItemWidth(ImGui.frameHeight)
-                            dragInt("freeze_rows", ::freezeRows, 0.2f, 0, 9, null, SliderFlag.NoInput)
+                            drag("freeze_rows", ::freezeRows, 0.2f, 0, 9, null, SliderFlag.NoInput)
                         }
 
                         treeNodeEx("Sorting:", Tnf.DefaultOpen) {
@@ -1627,7 +1627,7 @@ object ShowDemoWindowTables {
                             checkbox("show_headers", ::showHeaders)
                             checkbox("show_wrapped_text", ::showWrappedText)
 
-                            dragVec2("##OuterSize", outerSizeValue)
+                            drag2("##OuterSize", outerSizeValue)
                             sameLine(0f, style.itemInnerSpacing.x)
                             checkbox("outer_size", ::outerSizeEnabled)
                             sameLine()
@@ -1640,12 +1640,12 @@ object ShowDemoWindowTables {
 
                             // From a user point of view we will tend to use 'inner_width' differently depending on whether our table is embedding scrolling.
                             // toying with this demo we will actually pass 0.0f to the BeginTable() when ScrollX is disabled.
-                            dragFloat("inner_width (when ScrollX active)", ::innerWidthWithScroll, 1f, 0f, Float.MAX_VALUE)
+                            drag("inner_width (when ScrollX active)", ::innerWidthWithScroll, 1f, 0f, Float.MAX_VALUE)
 
-                            dragFloat("row_min_height", ::rowMinHeight, 1f, 0f, Float.MAX_VALUE)
+                            drag("row_min_height", ::rowMinHeight, 1f, 0f, Float.MAX_VALUE)
                             sameLine(); helpMarker("Specify height of the Selectable item.")
 
-                            dragInt("items_count", ::itemsCount, 0.1f, 0, 9999)
+                            drag("items_count", ::itemsCount, 0.1f, 0, 9999)
                             combo("items_type (first column)", ::contentsType, contentsTypeNames)
                             //filter.Draw("filter");
                         }

@@ -381,7 +381,7 @@ class WindowStackData {
             assert(sizeOfFocusScopeStack == g.focusScopeStack.size) { "PushFocusScope/PopFocusScope Mismatch!" }
         }
     }
-};
+}
 
 class ShrinkWidthItem(var index: Int = 0,
                       var width: Float = 0f,

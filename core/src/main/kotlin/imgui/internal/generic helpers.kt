@@ -18,6 +18,7 @@ import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 import kotlin.math.abs
+import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 
 
@@ -841,7 +842,11 @@ fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
     }
 }
 
-fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
+fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray = FloatArray(3).apply {
+    triangleBarycentricCoords(a, b, c, p, ::put)
+}
+
+fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2, setter: Vec3Setter) {
     val v0 = b - a
     val v1 = c - a
     val v2 = p - a
@@ -849,7 +854,7 @@ fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
     val outV = (v2.x * v1.y - v1.x * v2.y) / denom
     val outW = (v0.x * v2.y - v2.x * v0.y) / denom
     val outU = 1f - outV - outW
-    return floatArrayOf(outU, outV, outW)
+    setter(outU, outV, outW)
 }
 
 fun triangleArea(a: Vec2, b: Vec2, c: Vec2): Float = abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y))) * 0.5f

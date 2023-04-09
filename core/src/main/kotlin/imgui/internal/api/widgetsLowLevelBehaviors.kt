@@ -1,8 +1,8 @@
 package imgui.internal.api
 
 import gli_.has
-import glm_.*
 import glm_.func.common.max
+import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
@@ -10,6 +10,7 @@ import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.data
+import imgui.ImGui.dragBehavior
 import imgui.ImGui.dragBehaviorT
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusWindow
@@ -38,6 +39,7 @@ import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setOwner
+import imgui.ImGui.sliderBehavior
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
 import imgui.ImGui.testOwner
@@ -49,10 +51,6 @@ import imgui.internal.sections.*
 import imgui.static.DRAGDROP_HOLD_TO_OPEN_TIMER
 import kool.getValue
 import kool.setValue
-import unsigned.Ubyte
-import unsigned.Uint
-import unsigned.Ulong
-import unsigned.Ushort
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
@@ -281,128 +279,39 @@ internal interface widgetsLowLevelBehaviors {
                         val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && g.io.mouseReleased[mouseButton.i] && io.mouseClickedLastCount[mouseButton.i] == 2
                         val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton.i] >= io.keyRepeatDelay // Repeat mode trumps <on release>
                         val isButtonAvailOrOwned = mouseButton.key testOwner testOwnerId
-                        if (!isDoubleClickRelease && !isRepeatingAlready && isButtonAvailOrOwned)
-                            pressed = true
+                        if (!isDoubleClickRelease && !isRepeatingAlready && isButtonAvailOrOwned) pressed = true
                     }
                     clearActiveID()
                 }
-                if (flags hasnt Bf.NoNavFocus)
-                    g.navDisableHighlight = true
+                if (flags hasnt Bf.NoNavFocus) g.navDisableHighlight = true
             } else if (g.activeIdSource == InputSource.Nav)
             // When activated using Nav, we hold on the ActiveID until activation button is released
-                if (g.navActivateDownId != id)
-                    clearActiveID()
-            if (pressed)
-                g.activeIdHasBeenPressedBefore = true
+                if (g.navActivateDownId != id) clearActiveID()
+            if (pressed) g.activeIdHasBeenPressedBefore = true
         }
         return booleanArrayOf(pressed, hovered, held)
     }
 
-    fun dragBehavior(id: ID, dataType: DataType, pV: FloatArray, ptr: Int, vSpeed: Float, min: Float?, max: Float?,
-                     format: String, flags: SliderFlags): Boolean =
-        withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, min?.asMutableProperty, max?.asMutableProperty, format, flags) }
+    fun dragBehavior(id: ID, pV: FloatArray, ptr: Int, vSpeed: Float, min: Float?, max: Float?, format: String, flags: SliderFlags): Boolean = dragBehavior(id, pV mutablePropertyAt ptr, vSpeed, min, max, format, flags)
 
-    fun <N> dragBehavior(id: ID, dataType: DataType, pV: KMutableProperty0<N>, vSpeed: Float,
-                         pMin: KMutableProperty0<N>?, pMax: KMutableProperty0<N>?,
-                         format: String, flags: SliderFlags): Boolean
-            where N : Number, N : Comparable<N> {
+    fun <N> NumberOps<N>.dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> {
         if (g.activeId == id)
         // Those are the things we can do easily outside the DragBehaviorT<> template, saves code generation.
-            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
-                clearActiveID()
-            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                clearActiveID()
+            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0]) clearActiveID()
+            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated) clearActiveID()
 
-        if (g.activeId != id)
-            return false
-        if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
-            return false
+        if (g.activeId != id) return false
+        if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly) return false
 
-        var v by pV
-
-        return when (v) {
-            is Byte -> {
-                _i32 = v.i
-                val min = pMin?.get() ?: Byte.MIN_VALUE
-                val max = pMax?.get() ?: Byte.MAX_VALUE
-                dragBehaviorT(DataType.Int, ::_i32, vSpeed, min.i, max.i, format, flags).also {
-                    if (it)
-                        v = _i32.b as N
-                }
-            }
-            is Ubyte -> {
-                _ui.v = v.i
-                val min = pMin?.get() ?: Ubyte.MIN_VALUE
-                val max = pMax?.get() ?: Ubyte.MAX_VALUE
-                dragBehaviorT(DataType.Uint, ::_ui, vSpeed, min.ui, max.ui, format, flags).also {
-                    if (it)
-                        (v as Ubyte).v = _ui.b
-                }
-            }
-            is Short -> {
-                _i32 = v.i
-                val min = pMin?.get() ?: Short.MIN_VALUE
-                val max = pMax?.get() ?: Short.MAX_VALUE
-                dragBehaviorT(DataType.Int, ::_i32, vSpeed, min.i, max.i, format, flags).also {
-                    if (it)
-                        v = _i32.s as N
-                }
-            }
-            is Ushort -> {
-                _ui.v = v.i
-                val min = pMin?.get() ?: Ushort.MIN_VALUE
-                val max = pMax?.get() ?: Ushort.MAX_VALUE
-                dragBehaviorT(DataType.Uint, ::_ui, vSpeed, min.ui, max.ui, format, flags).also {
-                    if (it)
-                        (v as Ushort).v = _ui.s
-                }
-            }
-            is Int -> {
-                val min = pMin?.get() ?: Int.MIN_VALUE
-                val max = pMax?.get() ?: Int.MAX_VALUE
-                dragBehaviorT(DataType.Int, pV as KMutableProperty0<Int>, vSpeed, min.i, max.i, format, flags)
-            }
-            is Uint -> {
-                val min = pMin?.get() ?: Uint.MIN_VALUE
-                val max = pMax?.get() ?: Uint.MAX_VALUE
-                dragBehaviorT(DataType.Uint, pV as KMutableProperty0<Uint>, vSpeed, min.ui, max.ui, format, flags)
-            }
-            is Long -> {
-                val min = pMin?.get() ?: Long.MIN_VALUE
-                val max = pMax?.get() ?: Long.MAX_VALUE
-                dragBehaviorT(DataType.Long, pV as KMutableProperty0<Long>, vSpeed, min.L, max.L, format, flags)
-            }
-            is Ulong -> {
-                val min = pMin?.get() ?: Ulong.MIN_VALUE
-                val max = pMax?.get() ?: Ulong.MAX_VALUE
-                dragBehaviorT(DataType.Ulong, pV as KMutableProperty0<Ulong>, vSpeed, min.ul, max.ul, format, flags)
-            }
-            is Float -> {
-                val min = pMin?.get() ?: Float.MIN_VALUE
-                val max = pMax?.get() ?: Float.MAX_VALUE
-                dragBehaviorT(DataType.Float, pV as KMutableProperty0<Float>, vSpeed, min.f, max.f, format, flags)
-            }
-            is Double -> {
-                val min = pMin?.get() ?: Double.MIN_VALUE
-                val max = pMax?.get() ?: Double.MAX_VALUE
-                dragBehaviorT(DataType.Double, pV as KMutableProperty0<Double>, vSpeed, min.d, max.d, format, flags)
-            }
-            else -> error("Invalid") // ~IM_ASSERT(0); return false;
-        }
+        return fpOps.dragBehaviorT(pV, vSpeed, min ?: this.min, max ?: this.max, format, flags)
     }
 
     /** For 32-bits and larger types, slider bounds are limited to half the natural type range.
      *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
      *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
-    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String,
-                       flags: SliderFlags, outGrabBb: Rect): Boolean =
-        sliderBehavior(bb, id, pV, 0, pMin, pMax, format, flags, outGrabBb)
+    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean = sliderBehavior(bb, id, pV, 0, pMin, pMax, format, flags, outGrabBb)
 
-    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, ptr: Int, min: Float, max: Float,
-                       format: String, flags: SliderFlags, outGrabBb: Rect): Boolean =
-        withFloat(pV, ptr) {
-            sliderBehavior(bb, id, DataType.Float, it, min.asMutableProperty, max.asMutableProperty, format, flags, outGrabBb)
-        }
+    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, ptr: Int, min: Float, max: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean = sliderBehavior(bb, id, pV mutablePropertyAt ptr, min, max, format, flags, outGrabBb)
 
     //    fun <N> sliderBehavior(bb: Rect, id: ID,
     //                           v: KMutableProperty0<N>,
@@ -410,77 +319,19 @@ internal interface widgetsLowLevelBehaviors {
     //                           format: String, power: Float,
     //                           flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
     //            sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
+    fun <N> NumberOps<N>.sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = fpOps.sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
 
-    fun <N> sliderBehavior(bb: Rect, id: ID, dataType: DataType, pV: KMutableProperty0<N>,
-                           pMin: KMutableProperty0<N>, pMax: KMutableProperty0<N>,
-                           format: String, flags: SliderFlags, outGrabBb: Rect): Boolean
-            where N : Number, N : Comparable<N> {
-        // Those are the things we can do easily outside the SliderBehaviorT<> template, saves code generation.
-        if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
-            return false
+    fun <N, FP> NumberFpOps<N, FP>.sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> {
+        // Those are the things we can do easily outside sliderBehaviorT
+        if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly) return false
 
-        var v by pV
-
-        return when (dataType) {
-            DataType.Byte -> {
-                _i32 = v.i
-                sliderBehaviorT(bb, id, dataType, ::_i32, pMin().i, pMax().i, format, flags, outGrabBb).also {
-                    if (it)
-                        v = _i32.b as N
-                }
-            }
-            DataType.Ubyte -> {
-                _ui.v = v.i
-                sliderBehaviorT(bb, id, dataType, ::_ui, pMin().ui, pMax().ui, format, flags, outGrabBb).also {
-                    if (it)
-                        (v as Ubyte).v = _ui.b
-                }
-            }
-            DataType.Short -> {
-                _i32 = v.i
-                sliderBehaviorT(bb, id, dataType, ::_i32, pMin().i, pMax().i, format, flags, outGrabBb).also {
-                    if (it)
-                        v = _i32.s as N
-                }
-            }
-            DataType.Ushort -> {
-                _ui.v = v.i
-                sliderBehaviorT(bb, id, dataType, ::_ui, pMin().ui, pMax().ui, format, flags, outGrabBb).also {
-                    if (it)
-                        (v as Ushort).v = _ui.s
-                }
-            }
-            DataType.Int -> {
-                assert(pMin() as Int >= Int.MIN_VALUE / 2 && pMax() as Int <= Int.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Int>, pMin() as Int, pMax() as Int, format, flags, outGrabBb)
-            }
-            DataType.Uint -> {
-                assert(pMax() as Uint <= Uint.MAX / 2)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Uint>, pMin() as Uint, pMax() as Uint, format, flags, outGrabBb)
-            }
-            DataType.Long -> {
-                assert(pMin() as Long >= Long.MIN_VALUE / 2 && pMax() as Long <= Long.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Long>, pMin() as Long, pMax() as Long, format, flags, outGrabBb)
-            }
-            DataType.Ulong -> {
-                assert(pMax() as Ulong <= Ulong.MAX / 2)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Ulong>, pMin() as Ulong, pMax() as Ulong, format, flags, outGrabBb)
-            }
-            DataType.Float -> {
-                assert(pMin() as Float >= -Float.MAX_VALUE / 2f && pMax() as Float <= Float.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Float>, pMin() as Float, pMax() as Float, format, flags, outGrabBb)
-            }
-            DataType.Double -> {
-                assert(pMin() as Double >= -Double.MAX_VALUE / 2f && pMax() as Double <= Double.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Double>, pMin() as Double, pMax() as Double, format, flags, outGrabBb)
-            }
-            else -> throw Error()
-        }
+        // We allow the full range for bytes and shorts
+        assert(isSmallerThanInt || min >= this.min / 2.coerced && max <= this.max / 2.coerced)
+        return sliderBehaviorT(bb, id, pV, min, max, format, flags, outGrabBb)
     }
 
     /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
-    fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
-                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f, bgCol: Int = 0): Boolean {
+    fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>, minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f, bgCol: Int = 0): Boolean {
 
         var size1 by size1ptr
         var size2 by size2ptr
@@ -756,18 +607,19 @@ internal interface widgetsLowLevelBehaviors {
                     isOpen = g.nextItemData.openVal
                     storage[id] = isOpen
                     treeNodeSetOpen(id, isOpen)
-                } else
-                    isOpen = storedValue != 0
+                } else isOpen = storedValue != 0
             }
-        } else
-            isOpen = storage[id] ?: (flags has Tnf.DefaultOpen)
+        } else isOpen = storage[id] ?: (flags has Tnf.DefaultOpen)
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).
             NB- If we are above max depth we still allow manually opened nodes to be logged.    */
-        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && (window.dc.treeDepth - g.logDepthRef) < g.logDepthToExpand)
-            isOpen = true
+        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && (window.dc.treeDepth - g.logDepthRef) < g.logDepthToExpand) isOpen = true
 
         return isOpen
     }
 }
+
+inline fun <reified N> dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> = numberFpOps<N, Nothing>().dragBehavior(id, pV, vSpeed, min, max, format, flags)
+
+inline fun <reified N> sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = numberFpOps<N, Nothing>().sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)

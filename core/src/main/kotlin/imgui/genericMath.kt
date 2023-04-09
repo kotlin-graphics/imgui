@@ -1,238 +1,332 @@
 package imgui
 
 import glm_.*
-import unsigned.Ubyte
-import unsigned.Uint
-import unsigned.Ulong
-import unsigned.Ushort
-import java.math.BigInteger
-import kotlin.div
-import kotlin.minus
-import kotlin.plus
-import kotlin.times
-import imgui.internal.lerp as ilerp
+import imgui.internal.addClampOverflow
+import imgui.internal.parseFormatSanitizeForScanning
+import imgui.internal.subClampOverflow
+import uno.kotlin.NUL
+import unsigned.*
+import unsigned.parseUnsignedLong
+import kotlin.reflect.KMutableProperty0
+import kotlin.math.ln as realLn
+import kotlin.math.pow as realPow
 
-@Suppress("UNCHECKED_CAST")
+infix fun <N : Comparable<N>> N.min(other: N): N = if (this < other) this else other
+infix fun <N : Comparable<N>> N.max(other: N): N = if (this > other) this else other
 
-//infix operator fun <N> N.plus(other: N): N where N : Number, N : Comparable<N> = when {
-//    this is Byte && other is Byte -> (this + other).b
-//    this is Ubyte && other is Ubyte -> (this + other).b
-//    this is Short && other is Short -> (this + other).s
-//    this is Ushort && other is Ushort -> (this + other).s
-//    this is Int && other is Int -> this + other
-//    this is Uint && other is Uint -> this + other
-//    this is Long && other is Long -> this + other
-//    this is Ulong && other is Ulong -> this + other
-//    this is Float && other is Float -> this + other
-//    this is Double && other is Double -> this + other
-//    this is BigInteger && other is BigInteger -> this + other
-//    else -> error("Invalid operand types")
-//} as N
-
-infix operator fun <Type> Type.minus(other: Type): Type
-        where Type : Number, Type : Comparable<Type> = when {
-    this is Byte && other is Byte -> this - other
-    this is Ubyte && other is Ubyte -> this - other
-    this is Short && other is Short -> this - other
-    this is Ushort && other is Ushort -> this - other
-    this is Int && other is Int -> this - other
-    this is Uint && other is Uint -> this - other
-    this is Long && other is Long -> this - other
-    this is Ulong && other is Ulong -> this - other
-    this is Float && other is Float -> this - other
-    this is Double && other is Double -> this - other
-    this is BigInteger && other is BigInteger -> this - other
-    else -> error("Invalid operand types")
-} as Type
-
-infix operator fun <N> N.times(other: N): N where N : Number, N : Comparable<N> = when {
-    this is Byte && other is Byte -> (this * other).b
-    this is Ubyte && other is Ubyte -> (this * other).b
-    this is Short && other is Short -> (this * other).s
-    this is Ushort && other is Ushort -> (this * other).s
-    this is Int && other is Int -> this * other
-    this is Uint && other is Uint -> this * other
-    this is Long && other is Long -> this * other
-    this is Ulong && other is Ulong -> this * other
-    this is Float && other is Float -> this * other
-    this is Double && other is Double -> this * other
-    this is BigInteger && other is BigInteger -> this * other
-    else -> error("Invalid operand types")
-} as N
-
-infix operator fun <N> N.div(other: N): N where N : Number, N : Comparable<N> = when {
-    this is Byte && other is Byte -> (this / other).b
-    this is Ubyte && other is Ubyte -> (this / other).b
-    this is Short && other is Short -> (this / other).s
-    this is Ushort && other is Ushort -> (this / other).s
-    this is Int && other is Int -> this / other
-    this is Uint && other is Uint -> this / other
-    this is Long && other is Long -> this / other
-    this is Ulong && other is Ulong -> this / other
-    this is Float && other is Float -> this / other
-    this is Double && other is Double -> this / other
-    this is BigInteger && other is BigInteger -> this / other
-    else -> error("Invalid operand types")
-} as N
-
-
-infix operator fun <N> N.plus(float: Float): N where N : Number, N : Comparable<N> = when (this) {
-    is Byte -> (this + float).b
-    is Ubyte -> (v + float).b
-    is Short -> (this + float).s
-    is Ushort -> (v + float).s
-    is Int -> (this + float).i
-    is Uint -> (v + float).i
-    is Long -> (this + float).L
-    is Ulong -> (v + float).L
-    is Float -> this + float
-    is Double -> (this + float).d
-    else -> error("Invalid operand types")
-} as N
-
-infix operator fun <N> N.plus(double: Double): N where N : Number, N : Comparable<N> = when (this) {
-    is Byte -> (this + double).b
-    is Ubyte -> (v + double).b
-    is Short -> (this + double).s
-    is Ushort -> (v + double).s
-    is Int -> (this + double).i
-    is Uint -> (v + double).i
-    is Long -> (this + double).L
-    is Ulong -> (v + double).L
-    is Float -> (this + double).f
-    is Double -> this + double
-    else -> error("Invalid operand types")
-} as N
-
-infix operator fun <N> N.plus(int: Int): N where N : Number, N : Comparable<N> = when (this) {
-    is Byte -> (this + int).b
-    is Ubyte -> (v + int).b
-    is Short -> (this + int).s
-    is Ushort -> (v + int).s
-    is Int -> (this + int).i
-    is Uint -> (v + int).i
-    is Long -> (this + int).L
-    is Ulong -> (v + int).L
-    is Float -> this + int
-    is Double -> (this + int).d
-    else -> error("Invalid operand types")
-} as N
-
-infix operator fun <N> N.compareTo(int: Int): Int where N : Number, N : Comparable<N> = when (this) {
-    is Byte -> compareTo(int)
-    is Ubyte -> compareTo(int)
-    is Short -> compareTo(int)
-    is Ushort -> compareTo(int)
-    is Int -> compareTo(int)
-    is Uint -> compareTo(int)
-    is Long -> compareTo(int)
-    is Ulong -> compareTo(int.L)
-    is Float -> compareTo(int)
-    is Double -> compareTo(int)
-    else -> error("Invalid operand types")
+@JvmName("clampReceiver")
+fun <N : Comparable<N>> N.clamp(min: N?, max: N?): N = when {
+    min != null && this < min -> min
+    max != null && this > max -> max
+    else -> this
 }
 
-fun <N> Number.`as`(n: N): N where N : Number, N : Comparable<N> = when (n) {
-    is Byte -> b
-    is Ubyte -> n.v
-    is Short -> s
-    is Ushort -> n.v
-    is Int -> i
-    is Uint -> n.v
-    is Long -> L
-    is Ulong -> n.v
-    is Float -> f
-    is Double -> d
-    else -> error("invalid")
-} as N
+fun <N : Comparable<N>> clamp(value: N, min: N?, max: N?): N = value.clamp(min, max)
 
-val <N> N.asSigned: N where N : Number, N : Comparable<N>
-    get() = when (this) {
-        is Byte, is Short -> i // TODO utypes
-        else -> this
-    } as N
+sealed interface NumberOps<N> where N : Number, N : Comparable<N> {
+    val min: N
+    val max: N
+    val zero: N
+    val one: N
+    val N.isNegative: Boolean
+        get() = this < zero
+    val N.sign: Int
+        get() = when {
+            isNegative -> -1
+            this == zero -> 0
+            else -> 1
+        }
+    val dataType: DataType
+    val Number.coerced: N
 
-fun <N> clamp(a: N, min: N, max: N): N where N : Number, N : Comparable<N> =
-        if (a < min) min else if (a > max) max else a
+    /** return true if modified */
+    fun KMutableProperty0<N>.applyFromText(buf: String, format: String): Boolean {
+        val initial = get()
+        val v = parse(buf, format)
+        return v?.let { v ->
+            this.set(v)
+            get() != initial
+        } == true
+    }
 
-fun <Type> min(a: Type, b: Type): Type
-        where Type : Number, Type : Comparable<Type> = if (a < b) a else b
+    fun parse(buf: String, format: String, radix: Int): N
+    val String.parsed: N
 
-fun <Type> max(a: Type, b: Type): Type
-        where Type : Number, Type : Comparable<Type> = if (a > b) a else b
+    fun N.format(format: String): String {
+        // [JVM] we have to filter `.`, since `%.03d` causes `IllegalFormatPrecisionException`, but `%03d` doesn't
+        return format.replace(".", "").format(when (this) {
+            // we need to intervene since java printf cant handle %u
+            is Ubyte -> i
+            is Ushort -> i
+            is Uint -> L
+            is Ulong -> toBigInt()
+            else -> this
+        })
+    }
 
-fun <N> lerp(a: N, b: N, t: Float): N where N : Number, N : Comparable<N> = when (a) {
-    is Byte -> ilerp(a.i, b.i, t).b
-    is Short -> ilerp(a.i, b.i, t).s
-    is Int -> ilerp(a, b as Int, t)
-    is Long -> ilerp(a, b as Long, t)
-    is Float -> ilerp(a, b as Float, t)
-    is Double -> ilerp(a, b as Double, t)
-    else -> error("Invalid type")
-} as N
-
-//infix operator fun <N> Float.times(n: N): N where N : Number, N : Comparable<N> = when (n) {
-//    is Byte -> (b * n).b
-//    is Short -> (s * n).s
-//    is Int -> i * n
-//    is Long -> L * n
-//    is Float -> this * n
-//    is Double -> d * n
-//    else -> error("Invalid operand types")
-//} as N
-//
-//infix operator fun <N> Float.div(n: N): N where N : Number, N : Comparable<N> = when (n) {
-//    is Byte -> (b / n).b
-//    is Short -> (s / n).s
-//    is Int -> i / n
-//    is Long -> L / n
-//    is Float -> this / n
-//    is Double -> d / n
-//    else -> error("Invalid operand types")
-//} as N
-
-
-infix operator fun <Type> Type.compareTo(float: Float): Int where Type : Number, Type : Comparable<Type> = when (this) {
-    is Byte -> compareTo(float)
-    is Short -> compareTo(float)
-    is Int -> compareTo(float)
-    is Long -> compareTo(float)
-    is Ubyte, is Ushort, is Uint, is Ulong -> f.compareTo(float) // TODO -> unsigned
-    is Float -> compareTo(float)
-    is Double -> compareTo(float)
-    else -> error("invalid")
+    operator fun N.plus(other: N): N
+    operator fun N.minus(other: N): N
+    operator fun N.times(other: N): N = with(fpOps) { nTimesN(this@times, other) }
+    operator fun N.div(other: N): N = with(fpOps) { nDivN(this@div, other) }
 }
 
-@JvmName("min_")
-fun <Type, N> min(n: N, t: Type): Type
-        where Type : Number, Type : Comparable<Type>,
-              N : Number, N : Comparable<N> = when (t) {
-    is Byte -> if (n.b < t) n.b else t
-    is Ubyte -> if (n.ub < t) n.ub else t
-    is Short -> if (n.s < t) n.s else t
-    is Ushort -> if (n.us < t) n.us else t
-    is Int -> if (n.i < t) n.i else t
-    is Uint -> if (n.ui < t) n.ui else t
-    is Long -> if (n.L < t) n.L else t
-    is Ulong -> if (n.ul < t) n.ul else t
-    is Float -> if (n.f < t) n.f else t
-    is Double -> if (n.d < t) n.d else t
-    else -> error("invalid")
-} as Type
+private fun <N, FP> NumberFpOps<N, FP>.nTimesN(n: N, other: N): N where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> = (n.fp * other.fp).n
+private fun <N, FP> NumberFpOps<N, FP>.nDivN(n: N, other: N): N where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> = (n.fp / other.fp).n
 
-@JvmName("max_")
-fun <Type, N> max(n: N, t: Type): Type
-        where Type : Number, Type : Comparable<Type>,
-              N : Number, N : Comparable<N> = when (t) {
-    is Byte -> if (n.b > t) n.b else t
-    is Ubyte -> if (n.ub > t) n.ub else t
-    is Short -> if (n.s > t) n.s else t
-    is Ushort -> if (n.us > t) n.us else t
-    is Int -> if (n.i > t) n.i else t
-    is Uint -> if (n.ui > t) n.ui else t
-    is Long -> if (n.L > t) n.L else t
-    is Ulong -> if (n.ul > t) n.ul else t
-    is Float -> if (n.f > t) n.f else t
-    is Double -> if (n.d > t) n.d else t
+fun <N> NumberOps<N>.parse(buf: String, format: String): N? where N : Number, N : Comparable<N> {
+    // ImCharIsBlankA
+    @Suppress("NAME_SHADOWING") val buf = buf.replace(Regex("\\s+"), "").replace("\t", "").removeSuffix("\u0000")
+
+    if (buf.isEmpty()) return null
+
+    val radix = if (format.last().lowercaseChar() == 'x') 16 else 10
+
+    // Sanitize format
+    return parse(buf, parseFormatSanitizeForScanning(format), radix)
+}
+
+fun NumberOps<*>.defaultInputCharsFilter(format: String): InputTextFlag.Single {
+    if (dataType == DataType.Float || dataType == DataType.Double) return InputTextFlag.CharsScientific
+    return when (if (format.isNotEmpty()) format.last() else NUL) {
+        'x', 'X' -> InputTextFlag.CharsHexadecimal
+        else -> InputTextFlag.CharsDecimal
+    }
+}
+val NumberOps<*>.defaultFormat: String
+    get() = when (dataType) {
+        DataType.Float, DataType.Double -> "%.3f"
+        else -> "%d"
+    }
+val NumberOps<*>.isSigned: Boolean
+    get() = !dataType.isUnsigned
+
+val NumberOps<*>.isFloatingPoint: Boolean
+    get() = dataType == DataType.Float || dataType == DataType.Double
+
+val <N> NumberOps<N>.isSmallerThanInt: Boolean where N : Number, N : Comparable<N> get() = dataType < DataType.Int
+
+inline fun <reified N> numberOps(): NumberOps<N> where N : Number, N : Comparable<N> = numberFpOps<N, Nothing>()
+inline fun <reified N, FP> numberFpOps(): NumberFpOps<N, FP> where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> = dataTypeOf<N>().fpOps()
+fun <N> DataType.ops(): NumberOps<N> where N : Number, N : Comparable<N> = fpOps<N, Nothing>()
+fun <N, FP> DataType.fpOps(): NumberFpOps<N, FP> where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> = when (this) {
+    DataType.Byte -> ByteOps
+    DataType.Ubyte -> UbyteOps
+    DataType.Short -> ShortOps
+    DataType.Ushort -> UshortOps
+    DataType.Int -> IntOps
+    DataType.Uint -> UintOps
+    DataType.Long -> LongOps
+    DataType.Ulong -> UlongOps
+    DataType.Float -> FloatOps
+    DataType.Double -> DoubleOps
     else -> error("invalid")
-} as Type
+} as NumberFpOps<N, FP>
+
+val <N> NumberOps<N>.fpOps: NumberFpOps<N, Nothing> where N : Number, N : Comparable<N>
+    get() = if (this is NumberFpOps<*, *>) this as NumberFpOps<N, Nothing> else dataType.fpOps()
+
+sealed interface FloatingPointOps<FP> where  FP : Number, FP : Comparable<FP> {
+    val Float.fp: FP get() = coercedFp
+
+    val Number.coercedFp: FP
+    operator fun FP.unaryMinus(): FP
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpPlus")
+    operator fun FP.plus(other: FP): FP
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpMinus")
+    operator fun FP.minus(other: FP): FP
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpTimes")
+    operator fun FP.times(other: FP): FP
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpDiv")
+    operator fun FP.div(other: FP): FP
+    infix fun FP.pow(other: FP): FP
+    fun ln(fp: FP): FP
+    fun abs(fp: FP): FP = when {
+        fp < 0f.fp -> -fp
+        else -> fp
+    }
+}
+
+sealed interface NumberFpOps<N, FP> : NumberOps<N>, FloatingPointOps<FP> where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> {
+    // These are defined to signal that no coercion should be happening between the types
+    // In other words, coerced* properties should usually be avoided
+    val N.fp: FP get() = coercedFp
+    val FP.n: N get() = coerced
+}
+
+fun <N, FP> NumberFpOps<N, FP>.lerp(a: N, b: N, t: FP): FP where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> = a.fp + (b - a).fp * t
+fun <FP> FloatingPointOps<FP>.lerp(a: FP, b: FP, t: FP): FP where FP : Number, FP : Comparable<FP> = a + (b - a) * t
+
+object ByteOps : NumberFpOps<Byte, Float>, FloatingPointOps<Float> by FloatOps {
+    override val min = Byte.MIN_VALUE
+    override val max = Byte.MAX_VALUE
+    override val zero: Byte = 0
+    override val one: Byte = 1
+    override val Number.coerced get() = b
+    override val dataType: DataType = DataType.Byte
+    override fun parse(buf: String, format: String, radix: Int): Byte = format.format(buf.parseInt(radix)).toByte(radix)
+    override val String.parsed: Byte get() = b
+    override fun Byte.plus(other: Byte): Byte = addClampOverflow(i, other.i, min.i, max.i).b
+    override fun Byte.minus(other: Byte): Byte = subClampOverflow(i, other.i, min.i, max.i).b
+}
+
+object UbyteOps : NumberFpOps<Ubyte, Float>, FloatingPointOps<Float> by FloatOps {
+    override val min = Ubyte.MIN
+    override val max = Ubyte.MAX
+    override val zero = 0.ub
+    override val one = 1.ub
+    override val Ubyte.isNegative: Boolean get() = false
+    override val Number.coerced get() = ub
+    override val dataType: DataType = DataType.Ubyte
+    override fun parse(buf: String, format: String, radix: Int): Ubyte = format.format(buf.parseInt(radix)).toInt(radix).ub
+    override val String.parsed: Ubyte get() = ub
+    override fun Ubyte.plus(other: Ubyte): Ubyte = addClampOverflow(i, other.i, min.i, max.i).ub
+    override fun Ubyte.minus(other: Ubyte): Ubyte = subClampOverflow(i, other.i, min.i, max.i).ub
+}
+
+object ShortOps : NumberFpOps<Short, Float>, FloatingPointOps<Float> by FloatOps {
+    override val min = Short.MIN_VALUE
+    override val max = Short.MAX_VALUE
+    override val zero: Short = 0
+    override val one: Short = 1
+    override val Number.coerced get() = s
+    override val dataType: DataType = DataType.Short
+    override fun parse(buf: String, format: String, radix: Int): Short = format.format(buf.parseInt(radix)).toShort(radix)
+    override val String.parsed: Short get() = s
+    override fun Short.plus(other: Short): Short = addClampOverflow(i, other.i, min.i, max.i).s
+    override fun Short.minus(other: Short): Short = subClampOverflow(i, other.i, min.i, max.i).s
+}
+
+object UshortOps : NumberFpOps<Ushort, Float>, FloatingPointOps<Float> by FloatOps {
+    override val min = Ushort.MIN
+    override val max = Ushort.MAX
+    override val zero = 0.us
+    override val one = 1.us
+    override val Ushort.isNegative: Boolean get() = false
+    override val Number.coerced get() = us
+    override val dataType: DataType = DataType.Ushort
+    override fun parse(buf: String, format: String, radix: Int): Ushort = format.format(buf.parseInt(radix)).toInt(radix).us
+    override val String.parsed: Ushort get() = us
+    override fun Ushort.plus(other: Ushort): Ushort = addClampOverflow(i, other.i, min.i, max.i).us
+    override fun Ushort.minus(other: Ushort): Ushort = subClampOverflow(i, other.i, min.i, max.i).us
+}
+
+object IntOps : NumberFpOps<Int, Float>, FloatingPointOps<Float> by FloatOps {
+    override val min = Int.MIN_VALUE
+    override val max = Int.MAX_VALUE
+    override val zero = 0
+    override val one = 1
+    override val Number.coerced get() = i
+    override val dataType: DataType = DataType.Int
+    override fun parse(buf: String, format: String, radix: Int): Int = format.format(buf.parseInt(radix)).toInt(radix)
+    override val String.parsed: Int get() = i
+    override fun Int.plus(other: Int): Int = addClampOverflow(this, other, min, max)
+    override fun Int.minus(other: Int): Int = subClampOverflow(this, other, min, max)
+}
+
+object UintOps : NumberFpOps<Uint, Float>, FloatingPointOps<Float> by FloatOps {
+    override val min = Uint.MIN
+    override val max = Uint.MAX
+    override val zero = 0.ui
+    override val one = 1.ui
+    override val Uint.isNegative: Boolean get() = false
+    override val Number.coerced get() = ui
+    override val dataType: DataType = DataType.Uint
+    override fun parse(buf: String, format: String, radix: Int): Uint = format.format(buf.parseLong(radix)).toLong(radix).ui
+    override val String.parsed: Uint get() = ui
+    override fun Uint.plus(other: Uint): Uint = addClampOverflow(L, other.L, min.L, max.L).ui
+    override fun Uint.minus(other: Uint): Uint = subClampOverflow(L, other.L, min.L, max.L).ui
+}
+
+object LongOps : NumberFpOps<Long, Double>, FloatingPointOps<Double> by DoubleOps {
+    override val min = Long.MIN_VALUE
+    override val max = Long.MAX_VALUE
+    override val zero = 0L
+    override val one = 1L
+    override val Number.coerced get() = L
+    override val dataType: DataType = DataType.Long
+    override fun parse(buf: String, format: String, radix: Int): Long = format.format(buf.parseUnsignedLong(radix)).toLong(radix)
+    override val String.parsed: Long get() = L
+    override fun Long.plus(other: Long): Long = addClampOverflow(this, other, min, max)
+    override fun Long.minus(other: Long): Long = subClampOverflow(this, other, min, max)
+}
+
+object UlongOps : NumberFpOps<Ulong, Double>, FloatingPointOps<Double> by DoubleOps {
+    override val min = Ulong.MIN
+    override val max = Ulong.MAX
+    override val zero = 0.ul
+    override val one = 1.ul
+    override val Ulong.isNegative: Boolean get() = false
+    override val Number.coerced get() = ul
+    override val dataType: DataType = DataType.Ulong
+    override fun parse(buf: String, format: String, radix: Int): Ulong = format.format(buf.parseUnsignedLong(radix)).toBigInteger(radix).ul
+    override val String.parsed: Ulong get() = ul
+    override fun Ulong.plus(other: Ulong): Ulong = addClampOverflow(toBigInt(), other.toBigInt(), min.toBigInt(), max.toBigInt()).ul
+    override fun Ulong.minus(other: Ulong): Ulong = subClampOverflow(toBigInt(), other.toBigInt(), min.toBigInt(), max.toBigInt()).ul
+}
+
+object FloatOps : NumberFpOps<Float, Float> {
+    override val min = -Float.MAX_VALUE
+    override val max = Float.MAX_VALUE
+    override val zero = 0f
+    override val one = 1f
+    override val Float.fp: Float get() = this
+    override val Number.coerced get() = f
+    override val Number.coercedFp: Float get() = f
+    override val dataType: DataType = DataType.Float
+    override fun Float.format(format: String): String = format.format(this)
+    override fun parse(buf: String, format: String, radix: Int): Float = "%f".format(buf.parseFloat).f
+    override val String.parsed: Float get() = f
+    override fun Float.unaryMinus(): Float = -this
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpPlus")
+    override fun Float.plus(other: Float): Float = this + other
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpMinus")
+    override fun Float.minus(other: Float): Float = this - other
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpTimes")
+    override fun Float.times(other: Float): Float = this * other
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpDiv")
+    override fun Float.div(other: Float): Float = this / other
+    override fun Float.pow(other: Float): Float = this.realPow(other)
+    override fun ln(fp: Float): Float = realLn(fp)
+}
+
+object DoubleOps : NumberFpOps<Double, Double> {
+    override val min = -Double.MAX_VALUE
+    override val max = Double.MAX_VALUE
+    override val zero = 0.0
+    override val one = 1.0
+    override val Number.coerced get() = d
+    override val Number.coercedFp: Double get() = d
+    override val dataType: DataType = DataType.Double
+    override fun Double.format(format: String): String = format.format(this)
+    override fun parse(buf: String, format: String, radix: Int): Double = "%f".format(buf.parseDouble).d
+    override val String.parsed: Double get() = d
+    override fun Double.unaryMinus(): Double = -this
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpPlus")
+    override fun Double.plus(other: Double): Double = this + other
+
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpMinus")
+    override fun Double.minus(other: Double): Double = this - other
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpTimes")
+    override fun Double.times(other: Double): Double = this * other
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("fpDiv")
+    override fun Double.div(other: Double): Double = this / other
+    override fun Double.pow(other: Double): Double = this.realPow(other)
+    override fun ln(fp: Double): Double = realLn(fp)
+}

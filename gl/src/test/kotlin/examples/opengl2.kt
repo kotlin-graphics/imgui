@@ -5,10 +5,10 @@ package examples
 //import org.lwjgl.util.remotery.RemoteryGL
 import glm_.vec4.Vec4
 import gln.checkError
-import gln.glClearColor
 import gln.glViewport
 import imgui.DEBUG
 import imgui.ImGui
+import imgui.api.slider
 import imgui.classes.Context
 import imgui.impl.gl.ImplGL2
 import imgui.impl.glfw.ImplGlfw
@@ -140,7 +140,7 @@ private class ImGuiOpenGL2 {
                 checkbox("Demo Window", ::showDemo)             // Edit bools storing our window open/close state
                 checkbox("Another Window", ::showAnotherWindow)
 
-                sliderFloat("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
+                slider("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
                 colorEdit3("clear color", clearColor)           // Edit 3 floats representing a color
 
                 if (button("Button"))                           // Buttons return true when clicked (most widgets return true when edited/activated)

@@ -30,6 +30,8 @@ import imgui.static.navCalcPreferredRefPos
 import imgui.static.navRestoreLastChildNavWindow
 import uno.kotlin.getValue
 import uno.kotlin.setValue
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 

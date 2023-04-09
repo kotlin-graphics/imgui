@@ -16,13 +16,10 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clipboardText
 import imgui.ImGui.currentWindow
-import imgui.ImGui.dataTypeApplyFromText
-import imgui.ImGui.dataTypeClamp
 import imgui.ImGui.dummy
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
 import imgui.ImGui.focusWindow
-import imgui.ImGui.format
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getScrollbarID
 import imgui.ImGui.io
@@ -58,7 +55,10 @@ import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.LastItemData
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
-import imgui.static.*
+import imgui.static.inputTextCalcTextLenAndLineCount
+import imgui.static.inputTextCalcTextSizeW
+import imgui.static.inputTextFilterCharacter
+import imgui.static.inputTextReconcileUndoStateAfterUserCallback
 import imgui.stb.te.clamp
 import imgui.stb.te.click
 import imgui.stb.te.cut
@@ -102,17 +102,16 @@ internal interface inputText {
         val isPassword = flags has Itf.Password
         val isUndoable = flags hasnt Itf.NoUndoRedo
         val isResizable = flags has Itf.CallbackResize
-        if (isResizable)
-            assert(callback != null) { "Must provide a callback if you set the ImGuiInputTextFlags_CallbackResize flag!" }
-        if (flags has Itf.CallbackCharFilter)
-            assert(callback != null) { "Must provide a callback if you want a char filter!" }
+        if (isResizable) assert(callback != null) { "Must provide a callback if you set the ImGuiInputTextFlags_CallbackResize flag!" }
+        if (flags has Itf.CallbackCharFilter) assert(callback != null) { "Must provide a callback if you want a char filter!" }
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope (including the scrollbar)
             beginGroup()
         val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
+        // Arbitrary default of 8 lines high for multi-line
         val h = if (isMultiline) g.fontSize * 8f else labelSize.y
-        val frameSize = calcItemSize(sizeArg, calcItemWidth(), h + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
+        val frameSize = calcItemSize(sizeArg, calcItemWidth(), h + style.framePadding.y * 2f)
         val totalSize = Vec2(frameSize.x + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, frameSize.y)
 
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
@@ -120,7 +119,8 @@ internal interface inputText {
 
         var drawWindow = window
         val innerSize = Vec2(frameSize)
-        var bufEnd = 0
+        val bufEndRef = 0.mutableReference
+        val bufEnd by bufEndRef
         val itemStatusFlags: ItemStatusFlags
         lateinit var itemDataBackup: LastItemData
         if (isMultiline) {
@@ -211,7 +211,7 @@ internal interface inputText {
             else if (state.textW.size > buf.size)
                 state.textW[buf.size] = NUL
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
-            state.curLenW = textStrFromUtf8(state.textW, buf, -1, bufEnd.mutableProperty { bufEnd = it })
+            state.curLenW = textStrFromUtf8(state.textW, buf, -1, bufEndRef)
             state.curLenA = bufEnd // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
 
             if (recycleState)
@@ -280,7 +280,7 @@ internal interface inputText {
                 state.textW = CharArray(buf.size)
             else if (state.textW.size > buf.size)
                 state.textW[buf.size] = NUL
-            state.curLenW = textStrFromUtf8(state.textW, buf, -1, bufEnd.mutableProperty { bufEnd = it })
+            state.curLenW = textStrFromUtf8(state.textW, buf, -1, bufEndRef)
             state.curLenA = bufEnd
             state.cursorClamp()
             renderSelection = renderSelection && state.hasSelection
@@ -364,10 +364,8 @@ internal interface inputText {
                 state.cursorAnimReset()
             } else if (io.mouseClicked[0] && !state.selectedAllMouseLock) {
                 if (hovered) {
-                    if (io.keyShift)
-                        state.drag(mouseX, mouseY)
-                    else
-                        state.click(mouseX, mouseY)
+                    if (io.keyShift) state.drag(mouseX, mouseY)
+                    else state.click(mouseX, mouseY)
                     state.cursorAnimReset()
                 }
             } else if (io.mouseDown[0] && !state.selectedAllMouseLock && (io.mouseDelta.x != 0f || io.mouseDelta.y != 0f)) { // TODO -> glm once anyNotEqual gets fixed
@@ -375,31 +373,33 @@ internal interface inputText {
                 state.cursorAnimReset()
                 state.cursorFollow = true
             }
-            if (state.selectedAllMouseLock && !io.mouseDown[0])
-                state.selectedAllMouseLock = false
+            if (state.selectedAllMouseLock && !io.mouseDown[0]) state.selectedAllMouseLock = false
 
             // We expect backends to emit a Tab key but some also emit a Tab character which we ignore (#2467, #1336)
             // (For Tab and Enter: Win32/SFML/Allegro are sending both keys and chars, GLFW and SDL are only sending keys. For Space they all send all threes)
             val ignoreCharInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
-            if (flags has Itf.AllowTabInput && Key.Tab.isPressed && !ignoreCharInputs && !io.keyShift && !isReadOnly)
-                withChar {
-                    it.set('\t') // Insert TAB
-                    if (inputTextFilterCharacter(it, flags, callback, callbackUserData, InputSource.Keyboard))
-                        state.onKeyPressed(it().i)
+            // Insert TAB
+            if (flags has Itf.AllowTabInput && Key.Tab.isPressed && !ignoreCharInputs && !io.keyShift && !isReadOnly) {
+                val charRef = '\t'.mutableReference
+                val char by charRef
+                if (inputTextFilterCharacter(charRef, flags, callback, callbackUserData, InputSource.Keyboard)) {
+                    state.onKeyPressed(char.i)
                 }
+            }
 
             // Process regular text input (before we check for Return because using some IME will effectively send a Return?)
             // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
             if (io.inputQueueCharacters.isNotEmpty()) {
-                if (!ignoreCharInputs && !isReadOnly && !inputRequestedByNav)
-                    for (n in io.inputQueueCharacters.indices) {
-                        // Insert character if they pass filtering
-                        var c = io.inputQueueCharacters[n]
-                        if (c == NUL || c == '\t') // Skip Tab, see above.
-                            continue
-                        if (inputTextFilterCharacter(c mutableProperty { c = it }, flags, callback, callbackUserData, InputSource.Keyboard))
-                            state.onKeyPressed(c.i)
+                if (!ignoreCharInputs && !isReadOnly && !inputRequestedByNav) for (n in io.inputQueueCharacters.indices) {
+                    // Insert character if they pass filtering
+                    val cRef = io.inputQueueCharacters[n].mutableReference
+                    val c by cRef
+                    if (c == NUL || c == '\t') // Skip Tab, see above.
+                        continue
+                    if (inputTextFilterCharacter(cRef, flags, callback, callbackUserData, InputSource.Keyboard)) {
+                        state.onKeyPressed(c.i)
                     }
+                }
                 // Consume characters
                 io.inputQueueCharacters.clear()
             }
@@ -486,17 +486,17 @@ internal interface inputText {
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
                     if (!isMultiline || isGamepadValidate || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
                         validated = true
-                        if (io.configInputTextEnterKeepActive && !isMultiline)
-                            state.selectAll() // No need to scroll
-                        else
-                            clearActiveId = true
+                        if (io.configInputTextEnterKeepActive && !isMultiline) state.selectAll() // No need to scroll
+                        else clearActiveId = true
 
-                    } else if (!isReadOnly)
-                        withChar('\n') { c ->
-                            // Insert new line
-                            if (inputTextFilterCharacter(c, flags, callback, callbackUserData, InputSource.Keyboard))
-                                state.onKeyPressed(c().i)
+                    } else if (!isReadOnly) {
+                        // Insert new line
+                        val charRef = '\n'.mutableReference
+                        val char by charRef
+                        if (inputTextFilterCharacter(charRef, flags, callback, callbackUserData, InputSource.Keyboard)) {
+                            state.onKeyPressed(char.i)
                         }
+                    }
                 }
 
                 isCancel ->
@@ -547,12 +547,11 @@ internal interface inputText {
                     val clipboardFiltered = CharArray(clipboardLen)
                     var clipboardFilteredLen = 0
                     for (c in clipboard) {
-                        if (c == NUL)
-                            break
-                        _c = c
-                        if (!inputTextFilterCharacter(::_c, flags, callback, callbackUserData, InputSource.Keyboard))
-                            continue
-                        clipboardFiltered[clipboardFilteredLen++] = _c
+                        if (c == NUL) break
+                        val cRef = c.mutableReference
+                        val c by cRef
+                        if (!inputTextFilterCharacter(cRef, flags, callback, callbackUserData, InputSource.Keyboard)) continue
+                        clipboardFiltered[clipboardFilteredLen++] = c
                     }
                     if (clipboardFilteredLen > 0) { // If everything was filtered, ignore the pasting operation
                         state.paste(clipboardFiltered, clipboardFilteredLen)
@@ -887,16 +886,16 @@ internal interface inputText {
                             if (text[p++] == '\n')
                                 break
                     } else {
-                        val rectSize = withInt {
-                            inputTextCalcTextSizeW(g, text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
-                        }
+                        val remainingRef = 0.mutableReference
+                        val remaining by remainingRef
+                        val rectSize = inputTextCalcTextSizeW(g, text, p, textSelectedEnd, remainingRef, stopOnNewLine = true)
+                        p = remaining
                         // So we can see selected empty lines
                         if (rectSize.x <= 0f) rectSize.x = floor(g.font.getCharAdvance(' ') * 0.5f)
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect clipWith clipRect_
-                        if (rect overlaps clipRect_)
-                            drawWindow.drawList.addRectFilled(rect.min, rect.max, bgColor)
+                        if (rect overlaps clipRect_) drawWindow.drawList.addRectFilled(rect.min, rect.max, bgColor)
                     }
                     rectPos.x = drawPos.x - drawScroll.x
                     rectPos.y += g.fontSize
@@ -1011,44 +1010,39 @@ internal interface inputText {
      *  ImGuiSliderFlags_AlwaysClamp flag is set!
      *  This is intended: this way we allow CTRL+Click manual input to set a value out of bounds, for maximum flexibility.
      *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
-    fun <N> tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>, format_: String,
-                            pClampMin: KMutableProperty0<N>? = null, pClampMax: KMutableProperty0<N>? = null): Boolean
-            where N : Number, N : Comparable<N> {
-
+    fun <N> NumberOps<N>.tempInputScalar(bb: Rect, id: ID, label: String, pData: KMutableProperty0<N>, format_: String, clampMin: N? = null, clampMax: N? = null): Boolean where N : Number, N : Comparable<N> {
+        var p by pData
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
         val init = g.tempInputId != id
-        if (init)
-            clearActiveID()
+        if (init) clearActiveID()
 
         val format = parseFormatTrimDecorations(format_)
-        val dataBuf = pData.format(dataType, format)
-                .trim()
+        val dataBuf = p.format(format).trim()
 
-        var flags = Itf.AutoSelectAll or Itf._NoMarkEdited
-        flags /= inputScalarDefaultCharsFilter(dataType, format)
+        val flags = Itf.AutoSelectAll or Itf._NoMarkEdited or defaultInputCharsFilter(format)
 
         val buf = dataBuf.toByteArray(32)
         var valueChanged = false
         if (tempInputText(bb, id, label, buf, flags)) {
             // Backup old value
-            val dataBackup = pData()
+            val dataBackup = p
 
             // Apply new value (or operations) then clamp
-            dataTypeApplyFromText(buf.cStr, dataType, pData, format)
-            if (pClampMin != null || pClampMax != null) {
-                if (pClampMin != null && pClampMax != null) {
-                    var clampMin by pClampMin
-                    var clampMax by pClampMax
+            p = parse(buf.cStr, format) ?: p
+            if (clampMin != null || clampMax != null) {
+                var clampMin = clampMin
+                var clampMax = clampMax
+                if (clampMin != null && clampMax != null) {
                     if (clampMin > clampMax) {
                         val swap = clampMin; clampMin = clampMax; clampMax = swap
                     }
                 }
-                dataTypeClamp(dataType, pData, pClampMin?.get(), pClampMax?.get())
+                p = p.clamp(clampMin, clampMax)
             }
 
             // Only mark as edited if new value is different
-            valueChanged = dataBackup != pData()
+            valueChanged = dataBackup != p
 
             if (valueChanged)
                 markItemEdited(id)
