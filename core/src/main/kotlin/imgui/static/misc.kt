@@ -67,7 +67,7 @@ fun updateAliasKey(key: Key, v: Boolean, analogValue: Float) {
 // [Internal] Do not use directly
 val mergedModsFromKeys: KeyChord
     get() {
-        var mods: KeyChord = emptyFlags()
+        var mods: KeyChord = emptyFlags
         if (Key.Mod_Ctrl.isDown) mods /= Key.Mod_Ctrl
         if (Key.Mod_Shift.isDown) mods /= Key.Mod_Shift
         if (Key.Mod_Alt.isDown) mods /= Key.Mod_Alt
@@ -332,7 +332,7 @@ fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, h
             if (overrideAlpha) bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
             drawList.addRectFilled(
                 pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
-                if (flags has WindowFlag.NoTitleBar) emptyFlags() else DrawFlag.RoundCornersBottom
+                if (flags has WindowFlag.NoTitleBar) emptyFlags else DrawFlag.RoundCornersBottom
             )
         }
 

@@ -7,6 +7,7 @@ import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.setNavWindow
 import imgui.MouseButton
 import imgui.api.g
+import imgui.div
 import imgui.internal.classes.Window
 import imgui.internal.hashStr
 import imgui.internal.sections.*

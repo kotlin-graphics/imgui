@@ -230,8 +230,8 @@ object Console {
         }
 
         fun inputTextCallback(data: InputTextCallbackData): Boolean {
-            when {
-                data.eventFlag eq Itf.CallbackCompletion -> {
+            when (data.eventFlag) {
+                Itf.CallbackCompletion -> {
                     val wordEnd = data.cursorPos
                     var wordStart = wordEnd
                     while (wordStart > 0) {
@@ -244,8 +244,8 @@ object Console {
                     val candidates = ArrayList<String>()
                     for (c in commands) if (c.startsWith(word)) candidates += c
                     when { // No match
-                        candidates.isEmpty() -> addLog("No match for \"%s\"!\n",
-                            word) // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
+                        candidates.isEmpty() -> addLog("No match for \"%s\"!\n", word)
+                        // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
                         candidates.size == 1 -> { // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
                             data.deleteChars(wordStart, wordEnd)
                             data.insertChars(data.cursorPos, candidates[0])
@@ -277,7 +277,8 @@ object Console {
                         }
                     }
                 }
-                data.eventFlag eq Itf.CallbackHistory -> {
+
+                Itf.CallbackHistory -> {
                     val prevHistoryPos = historyPos
                     if (data.eventKey == Key.UpArrow) {
                         if (historyPos == -1) historyPos = history.size - 1

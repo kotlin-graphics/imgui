@@ -25,7 +25,7 @@ interface inputUtilitiesMouse {
     }
 
     /** did mouse button clicked? (went from !Down to Down). Same as GetMouseClickedCount() == 1. */
-    fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean = button.isClicked(KeyOwner_Any, if (repeat) InputFlag.Repeat else emptyFlags())
+    fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean = button.isClicked(KeyOwner_Any, if (repeat) InputFlag.Repeat else emptyFlags)
 
     fun isMouseReleased(button: Int): Boolean = isMouseReleased(MouseButton of button)
 

@@ -27,15 +27,15 @@ val TABLE_RESIZE_SEPARATOR_FEEDBACK_TIMER = 0.06f
 /** Adjust flags: default width mode + stretch columns are not allowed when auto extending
  *
  *  ~static void TableSetupColumnFlags(ImGuiTable* table, ImGuiTableColumn* column, ImGuiTableColumnFlags flags_in) */
-fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnFlags = emptyFlags()) {
+fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnSetupFlags = emptyFlags) {
 
     var flags = flagsIn
 
     // Sizing Policy
     if (flags hasnt TableColumnFlag.WidthMask) {
         val tableSizingPolicy = this.flags and TableFlag._SizingMask
-        flags = flags or when {
-            tableSizingPolicy eq TableFlag.SizingFixedFit || tableSizingPolicy eq TableFlag.SizingFixedSame -> TableColumnFlag.WidthFixed
+        flags = flags or when (tableSizingPolicy) {
+            TableFlag.SizingFixedFit, TableFlag.SizingFixedSame -> TableColumnFlag.WidthFixed
             else -> TableColumnFlag.WidthStretch
         }
     } else
@@ -119,7 +119,7 @@ fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
         }
 
     // Adjust flags: enable NoKeepColumnsVisible when using ImGuiTableFlags_SizingFixedSame
-    if (flags and TableFlag._SizingMask eq TableFlag.SizingFixedSame)
+    if (flags and TableFlag._SizingMask == TableFlag.SizingFixedSame)
         flags = flags or TableFlag.NoKeepColumnsVisible
 
     // Adjust flags: enforce borders when resizable

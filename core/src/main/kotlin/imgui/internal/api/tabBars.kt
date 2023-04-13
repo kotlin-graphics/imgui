@@ -57,7 +57,7 @@ internal interface tabBars {
         }
 
         // Ensure correct ordering when toggling ImGuiTabBarFlags_Reorderable flag, ensure tabs are ordered based on their submission order.
-        if ((flags and TabBarFlag.Reorderable) notEq (this.flags and TabBarFlag.Reorderable) || (tabsAddedNew && flags hasnt TabBarFlag.Reorderable))
+        if ((flags and TabBarFlag.Reorderable) != (this.flags and TabBarFlag.Reorderable) || (tabsAddedNew && flags hasnt TabBarFlag.Reorderable))
             if (tabs.size > 1)
                 tabs.sortBy(TabItem::beginOrder)
         tabsAddedNew = false
@@ -155,7 +155,7 @@ internal interface tabBars {
                 i += dir
                 break
             }
-            if ((dstTab.flags and TabItemFlag._SectionMask) notEq (srcTab.flags and TabItemFlag._SectionMask)) {
+            if ((dstTab.flags and TabItemFlag._SectionMask) != (srcTab.flags and TabItemFlag._SectionMask)) {
                 i += dir
                 break
             }
@@ -192,7 +192,7 @@ internal interface tabBars {
         val tab2 = tabs[tab2Order]
         if (tab2.flags has TabItemFlag.NoReorder)
             return false
-        if ((tab1.flags and TabItemFlag._SectionMask) notEq (tab2.flags and TabItemFlag._SectionMask))
+        if ((tab1.flags and TabItemFlag._SectionMask) != (tab2.flags and TabItemFlag._SectionMask))
             return false
 
 //        ImGuiTabItem item_tmp = * tab1;
@@ -233,7 +233,7 @@ internal interface tabBars {
         }
 
         assert(pOpen == null || flags hasnt TabItemFlag._Button)
-        assert((flags and (TabItemFlag.Leading or TabItemFlag.Trailing)) notEq (TabItemFlag.Leading or TabItemFlag.Trailing)) { "Can't use both Leading and Trailing" }
+        assert((TabItemFlag.Leading or TabItemFlag.Trailing) !in flags) { "Can't use both Leading and Trailing" }
 
         // Store into ImGuiTabItemFlags_NoCloseButton, also honor ImGuiTabItemFlags_NoCloseButton passed by user (although not documented)
         if (flags has TabItemFlag._NoCloseButton)

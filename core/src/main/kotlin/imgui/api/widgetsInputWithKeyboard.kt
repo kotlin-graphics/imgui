@@ -48,7 +48,7 @@ interface widgetsInputWithKeyboard {
 
     /** String overload */
     fun inputText(
-        label: String, pString: KMutableProperty0<String>, flags: InputTextFlags = emptyFlags(),
+        label: String, pString: KMutableProperty0<String>, flags: InputTextSingleFlags = emptyFlags,
         callback: InputTextCallback? = null, userData: Any? = null
     ): Boolean {
         val buf = pString.get().toByteArray()
@@ -59,13 +59,13 @@ interface widgetsInputWithKeyboard {
 
     /** String overload */
     fun inputText(
-        label: String, buf: String, flags: InputTextFlags = emptyFlags(),
+        label: String, buf: String, flags: InputTextSingleFlags = emptyFlags,
         callback: InputTextCallback? = null, userData: Any? = null
     ): Boolean =
         inputText(label, buf.toByteArray(), flags, callback, userData)
 
     fun inputText(
-        label: String, buf: StringBuilder, flags: InputTextFlags = emptyFlags(),
+        label: String, buf: StringBuilder, flags: InputTextSingleFlags = emptyFlags,
         callback: InputTextCallback? = null, userData: Any? = null
     ): Boolean {
         val array = buf.toString().toByteArray()
@@ -76,115 +76,110 @@ interface widgetsInputWithKeyboard {
     }
 
     fun inputText(
-        label: String, buf: ByteArray, flags: InputTextFlags = emptyFlags(),
+        label: String, buf: ByteArray, flags: InputTextSingleFlags = emptyFlags,
         callback: InputTextCallback? = null, userData: Any? = null
-    ): Boolean {
-        assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }
-        return inputTextEx(label, null, buf, Vec2(), flags, callback, userData)
-    }
+    ): Boolean = inputTextEx(label, null, buf, Vec2(), flags, callback, userData)
 
     /** String overload */
     fun inputTextMultiline(
-        label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextFlags = emptyFlags(),
+        label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextSingleFlags = emptyFlags,
         callback: InputTextCallback? = null, userData: Any? = null
     ): Boolean =
         inputTextEx(label, null, buf.toByteArray(), size, flags or Itf._Multiline, callback, userData)
 
     fun inputTextMultiline(
-        label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextFlags = emptyFlags(),
+        label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextSingleFlags = emptyFlags,
         callback: InputTextCallback? = null, userData: Any? = null
     ): Boolean =
         inputTextEx(label, null, buf, size, flags or Itf._Multiline, callback, userData)
 
     /** String overload */
     fun inputTextWithHint(
-        label: String, hint: String, buf: String, flags: InputTextFlags = emptyFlags(),
+        label: String, hint: String, buf: String, flags: InputTextSingleFlags = emptyFlags,
         callback: InputTextCallback? = null, userData: Any? = null
     ): Boolean =
         inputTextWithHint(label, hint, buf.toByteArray(), flags)
 
+    /** call InputTextMultiline() or InputTextEx() manually if you need multi-line + hint. */
     fun inputTextWithHint(
-        label: String, hint: String, buf: ByteArray, flags: InputTextFlags = emptyFlags(),
+        label: String, hint: String, buf: ByteArray, flags: InputTextSingleFlags = emptyFlags,
         callback: InputTextCallback? = null, userData: Any? = null
-    ): Boolean {
-        assert(flags hasnt Itf._Multiline) { "call InputTextMultiline() or InputTextEx() manually if you need multi-line + hint." }
-        return inputTextEx(label, hint, buf, Vec2(), flags, callback, userData)
-    }
+    ): Boolean = inputTextEx(label, hint, buf, Vec2(), flags, callback, userData)
 
 
     fun inputFloat(
         label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f,
-        format: String = "%.3f", flags: InputTextFlags = emptyFlags()
+        format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags
     ): Boolean =
         inputFloat(label, v, 0, step, stepFast, format, flags)
 
     fun inputFloat(
         label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f,
-        format: String = "%.3f", flags: InputTextFlags = emptyFlags()
+        format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags
     ): Boolean =
         withFloat(v, ptr) { inputFloat(label, it, step, stepFast, format, flags) }
 
     fun inputFloat(
         label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f,
-        format: String = "%.3f", flags_: InputTextFlags = emptyFlags()
+        format: String = "%.3f", flags_: InputTextSingleFlags = emptyFlags
     ): Boolean {
         val flags = flags_ or Itf.CharsScientific
         return inputScalar(label, DataType.Float, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, flags)
     }
 
 
-    fun inputFloat2(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputFloat2(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Float>(label, DataType.Float, v, 2, null, null, format, flags)
 
-    fun inputVec2(label: String, v: Vec2, format: String = "%.3f", flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputVec2(label: String, v: Vec2, format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Float>(label, DataType.Float, v to _fa, Vec2.length, null, null, format, flags)
             .also { v put _fa }
 
-    fun inputFloat3(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputFloat3(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Float>(label, DataType.Float, v, 3, null, null, format, flags)
 
-    fun inputVec3(label: String, v: Vec3, format: String = "%.3f", flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputVec3(label: String, v: Vec3, format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Float>(label, DataType.Float, v to _fa, Vec3.length, null, null, format, flags)
             .also { v put _fa }
 
-    fun inputFloat4(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputFloat4(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Float>(label, DataType.Float, v, 4, null, null, format, flags)
 
-    fun inputVec4(label: String, v: Vec4, format: String = "%.3f", flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputVec4(label: String, v: Vec4, format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Float>(label, DataType.Float, v to _fa, Vec4.length, null, null, format, flags)
             .also { v put _fa }
 
-    fun inputInt(label: String, v: KMutableProperty0<Int>, step: Int = 1, stepFast: Int = 100, flags: InputTextFlags = emptyFlags()): Boolean {
+    fun inputInt(label: String, v: KMutableProperty0<Int>, step: Int = 1, stepFast: Int = 100, flags: InputTextSingleFlags = emptyFlags): Boolean {
         /*  Hexadecimal input provided as a convenience but the flag name is awkward. Typically you'd use inputText()
             to parse your own data, if you want to handle prefixes.             */
         val format = if (flags has Itf.CharsHexadecimal) "%08X" else "%d"
         return inputScalar(label, DataType.Int, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, flags)
     }
 
-    fun inputInt2(label: String, v: IntArray, flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputInt2(label: String, v: IntArray, flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Int>(label, DataType.Int, v, 2, null, null, "%d", flags)
 
-    fun inputVec2i(label: String, v: Vec2i, flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputVec2i(label: String, v: Vec2i, flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Int>(label, DataType.Int, v to _ia, Vec2i.length, null, null, "%d", flags)
             .also { v put _ia }
 
-    fun inputInt3(label: String, v: IntArray, flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputInt3(label: String, v: IntArray, flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Int>(label, DataType.Int, v, 3, null, null, "%d", flags)
 
-    fun inputVec3i(label: String, v: Vec3i, flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputVec3i(label: String, v: Vec3i, flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Int>(label, DataType.Int, v to _ia, Vec3i.length, null, null, "%d", flags)
             .also { v put _ia }
 
-    fun inputInt4(label: String, v: IntArray, flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputInt4(label: String, v: IntArray, flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Int>(label, DataType.Int, v, 4, null, null, "%d", flags)
 
-    fun inputVec4i(label: String, v: Vec4i, flags: InputTextFlags = emptyFlags()): Boolean =
+    fun inputVec4i(label: String, v: Vec4i, flags: InputTextSingleFlags = emptyFlags): Boolean =
         inputScalarN<Int>(label, DataType.Int, v to _ia, Vec4i.length, null, null, "%d", flags)
             .also { v put _ia }
 
     fun inputDouble(
         label: String, v: KMutableProperty0<Double>, step: Double = 0.0, stepFast: Double = 0.0,
-        format: String? = "%.6f", flags_: InputTextFlags = emptyFlags()
+        format: String? = "%.6f", flags_: InputTextSingleFlags = emptyFlags
     ): Boolean {
         val flags = flags_ or Itf.CharsScientific
         /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
@@ -194,14 +189,14 @@ interface widgetsInputWithKeyboard {
 
     fun <N> inputScalar(
         label: String, dataType: DataType, pData: IntArray, step: Int?, stepFast: Int?,
-        format: String? = null, flags: InputTextFlags = emptyFlags()
+        format: String? = null, flags: InputTextSingleFlags = emptyFlags
     )
             : Boolean where N : Number, N : Comparable<N> =
         withInt(pData) { inputScalar(label, dataType, it, step, stepFast, format, flags) }
 
     fun <N> inputScalar(
         label: String, dataType: DataType, pData: KMutableProperty0<N>, step: N? = null, stepFast: N? = null,
-        format_: String? = null, flags_: InputTextFlags = emptyFlags()
+        format_: String? = null, flags_: InputTextSingleFlags = emptyFlags
     ): Boolean where N : Number, N : Comparable<N> {
 
         var data by pData
@@ -213,6 +208,7 @@ interface widgetsInputWithKeyboard {
                 DataType.Float, DataType.Double -> "%f"
                 else -> "%d"
             }
+
             else -> format_
         }
 
@@ -274,7 +270,7 @@ interface widgetsInputWithKeyboard {
 
     fun <N> inputScalarN(
         label: String, dataType: DataType, v: Any, components: Int, step: N? = null, stepFast: N? = null,
-        format: String? = null, flags: InputTextFlags = emptyFlags()
+        format: String? = null, flags: InputTextSingleFlags = emptyFlags
     ): Boolean where N : Number, N : Comparable<N> {
 
         val window = currentWindow

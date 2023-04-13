@@ -11,6 +11,7 @@ import imgui.ImGui.setNavWindow
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.ScrollFlag
+import imgui.or
 import imgui.static.navUpdateAnyRequestFlag
 
 

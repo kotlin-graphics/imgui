@@ -1,7 +1,7 @@
 package imgui.internal.api
 
 import glm_.max
-import imgui.ImGui
+import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.fixColumnSortDirection
 import imgui.ImGui.getMaxColumnWidth
@@ -12,9 +12,7 @@ import imgui.ImGui.tableGetColumnCount
 import imgui.ImGui.tableGetColumnFlags
 import imgui.ImGui.tableGetColumnName
 import imgui.ImGui.updateColumnsWeightFromWidth
-import imgui.SortDirection
 import imgui.api.g
-import imgui.clamp
 import imgui.internal.classes.TableColumnIdx
 import imgui.internal.hashStr
 import imgui.TableColumnFlag as Tcf

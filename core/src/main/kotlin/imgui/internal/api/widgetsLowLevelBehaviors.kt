@@ -122,7 +122,7 @@ internal interface widgetsLowLevelBehaviors {
      *  -------------------------------------------------------------------------------------------------------------------------------------------------
      *
      *  @return [pressed, hovered, held] */
-    fun buttonBehavior(bb: Rect, id: ID, flags_: ButtonFlags = emptyFlags()): BooleanArray {
+    fun buttonBehavior(bb: Rect, id: ID, flags_: ButtonFlags = emptyFlags): BooleanArray {
 
         val window = currentWindow
         var flags = flags_
@@ -539,10 +539,10 @@ internal interface widgetsLowLevelBehaviors {
         return held
     }
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = emptyFlags(), label: String): Boolean =
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = emptyFlags, label: String): Boolean =
         treeNodeBehavior(id, flags, label.toByteArray())
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = emptyFlags(), label: ByteArray, labelEnd_: Int = -1): Boolean {
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = emptyFlags, label: ByteArray, labelEnd_: Int = -1): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -597,13 +597,13 @@ internal interface widgetsLowLevelBehaviors {
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushOverrideID(id)
-            val f = if (isLeaf) emptyFlags() else ItemStatusFlag.Openable
-            val f2 = if (isOpen) ItemStatusFlag.Opened else emptyFlags()
+            val f = if (isLeaf) emptyFlags else ItemStatusFlag.Openable
+            val f2 = if (isOpen) ItemStatusFlag.Opened else emptyFlags
             IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label.cStr, g.lastItemData.statusFlags or f or f2)
             return isOpen
         }
 
-        var buttonFlags: ButtonFlags = emptyFlags()
+        var buttonFlags: ButtonFlags = emptyFlags
         if (flags has Tnf.AllowItemOverlap)
             buttonFlags = buttonFlags or Bf.AllowItemOverlap
         if (!isLeaf)
@@ -717,8 +717,8 @@ internal interface widgetsLowLevelBehaviors {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushOverrideID(id)
-        val f = if (isLeaf) emptyFlags() else ItemStatusFlag.Openable
-        val f2 = if (isOpen) ItemStatusFlag.Opened else emptyFlags()
+        val f = if (isLeaf) emptyFlags else ItemStatusFlag.Openable
+        val f2 = if (isOpen) ItemStatusFlag.Opened else emptyFlags
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label.cStr, g.lastItemData.statusFlags or f or f2)
         return isOpen
     }

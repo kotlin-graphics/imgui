@@ -1,6 +1,8 @@
 package imgui.internal.sections
 
+import com.livefront.sealedenum.GenSealedEnum
 import imgui.Flag
+import imgui.FlagBase
 import imgui.ID
 import imgui.emptyFlags
 import imgui.internal.DrawListSplitter
@@ -15,24 +17,28 @@ import imgui.internal.classes.Rect
 typealias OldColumnsFlags = Flag<OldColumnsFlag>
 
 /** Flags: for Columns(), BeginColumns() */
-enum class OldColumnsFlag : Flag<OldColumnsFlag> {
+sealed class OldColumnsFlag : FlagBase<OldColumnsFlag>() {
+
     /** Disable column dividers */
-    NoBorder,
+    object NoBorder : OldColumnsFlag()
 
     /** Disable resizing columns when clicking on the dividers  */
-    NoResize,
+    object NoResize : OldColumnsFlag()
 
     /** Disable column width preservation when adjusting columns    */
-    NoPreserveWidths,
+    object NoPreserveWidths : OldColumnsFlag()
 
     /** Disable forcing columns to fit within window    */
-    NoForceWithinWindow,
+    object NoForceWithinWindow : OldColumnsFlag()
 
     /** (WIP) Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the columns
      *  width at all_. Will eventually remove.  */
-    GrowParentContentsSize;
+    object GrowParentContentsSize : OldColumnsFlag()
 
     override val i: Int = 1 shl ordinal
+
+    @GenSealedEnum
+    companion object
 }
 
 /** Storage data for a single column for legacy Columns() api */
@@ -42,14 +48,14 @@ class OldColumnData {
     var offsetNormBeforeResize = 0f
 
     /** Not exposed */
-    var flags: OldColumnsFlags = emptyFlags()
+    var flags: OldColumnsFlags = emptyFlags
     var clipRect = Rect()
 }
 
 /** Storage data for a columns set for legacy Columns() api */
 class OldColumns {
     var id: ID = 0
-    var flags: OldColumnsFlags = emptyFlags()
+    var flags: OldColumnsFlags = emptyFlags
     var isFirstFrame = false
     var isBeingResized = false
     var current = 0

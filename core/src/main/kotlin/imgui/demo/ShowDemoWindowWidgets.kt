@@ -200,10 +200,11 @@ object ShowDemoWindowWidgets {
     /* Text Input */
     object Funcs2 {
         val MyResizeCallback: InputTextCallback = { data ->
-            if (data.eventFlag eq Itf.CallbackResize) {
+            if (data.eventFlag == Itf.CallbackResize) {
                 val myString = data.userData as ByteArray
                 assert(myString.contentEquals(data.buf))
-                data.userData = ByteArray(data.bufSize)  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
+                // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
+                data.userData = ByteArray(data.bufSize)
                 data.buf = myString
             }
             false
@@ -211,7 +212,7 @@ object ShowDemoWindowWidgets {
 
         // Note: Because ImGui:: is a namespace you would typically add your own function into the namespace.
         // For example, you code may declare a function 'ImGui::InputText(const char* label, MyString* my_str)'
-        val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: InputTextFlags) -> Boolean =
+        val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: InputTextSingleFlags) -> Boolean =
             { label, myStr, size, flags ->
                 assert(flags hasnt Itf.CallbackResize)
                 inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
@@ -727,7 +728,7 @@ object ShowDemoWindowWidgets {
     }
 
     object Combo {
-        var flags: ComboFlags = emptyFlags()
+        var flags: ComboFlags = emptyFlags
         var itemCurrentIdx = 0
         var itemCurrent2 = 0
         var itemCurrent3 = 0
@@ -959,7 +960,7 @@ object ShowDemoWindowWidgets {
         ${'\t'}lock cmpxchg8b eax
         
         """.trimIndent().toByteArray(1024 * 16)
-        var flags: InputTextFlags = Itf.AllowTabInput
+        var flags: InputTextSingleFlags = Itf.AllowTabInput
         val bufs = Array(6) { ByteArray(64) }
 
         object TextFilters {
@@ -973,9 +974,9 @@ object ShowDemoWindowWidgets {
 
         object Funcs1 {
             val myCallback: InputTextCallback = { data: InputTextCallbackData ->
-                when {
-                    data.eventFlag eq Itf.CallbackCompletion -> data.insertChars(data.cursorPos, "..")
-                    data.eventFlag eq Itf.CallbackHistory ->
+                when (data.eventFlag) {
+                    Itf.CallbackCompletion -> data.insertChars(data.cursorPos, "..")
+                    Itf.CallbackHistory ->
                         if (data.eventKey == Key.UpArrow) {
                             data.deleteChars(0, data.bufTextLen)
                             data.insertChars(0, "Pressed Up!")
@@ -985,7 +986,8 @@ object ShowDemoWindowWidgets {
                             data.insertChars(0, "Pressed Down!")
                             data.selectAll()
                         }
-                    data.eventFlag eq Itf.CallbackEdit -> {
+
+                    Itf.CallbackEdit -> {
                         // Toggle casing of first character
                         val c = data.buf[0].c
                         if (c in 'a'..'z' || c in 'A'..'Z')
@@ -1061,7 +1063,7 @@ object ShowDemoWindowWidgets {
                     // than usually reported by a typical string class.
                     if (myStr.isEmpty())
                         myStr = ByteArray(1)
-                    Funcs2.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), emptyFlags())
+                    Funcs2.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), emptyFlags)
                     text("Data: ${myStr.hashCode()}\nSize: ${myStr.strlen()}\nCapacity: ${myStr.size}")
                 }
             }
@@ -1281,7 +1283,7 @@ object ShowDemoWindowWidgets {
                 checkbox("With Drag and Drop", ::dragAndDrop)
                 checkbox("With Options Menu", ::optionsMenu); sameLine(); helpMarker("Right-click on the individual color widget to show options.")
                 checkbox("With HDR", ::hdr); sameLine(); helpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
-                var miscFlags = if (hdr) Cef.HDR else emptyFlags()
+                var miscFlags = if (hdr) Cef.HDR else emptyFlags
                 if (!dragAndDrop) miscFlags = miscFlags or Cef.NoDragDrop
                 if (alphaHalfPreview) miscFlags = miscFlags or Cef.AlphaPreviewHalf
                 else if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview
@@ -1362,7 +1364,7 @@ object ShowDemoWindowWidgets {
                 }
                 text("Color button only:")
                 checkbox("ImGuiColorEditFlags_NoBorder", ::noBorder)
-                colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else emptyFlags(), Vec2(80))
+                colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else emptyFlags, Vec2(80))
 
                 text("Color picker:")
                 checkbox("With Alpha", ::alpha)
@@ -1429,7 +1431,7 @@ object ShowDemoWindowWidgets {
     }
 
     object `DragSlider Flags` {
-        var flags: SliderFlags = emptyFlags()
+        var flags: SliderFlags = emptyFlags
         var dragF = 0.5f
         var dragI = 50
         var sliderF = 0.5f

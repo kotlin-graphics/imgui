@@ -38,7 +38,7 @@ import imgui.WindowFlag as Wf
 interface popupsModals {
 
     /** return true if the popup is open, and you can start outputting to it. */
-    fun beginPopup(strId: String, flags_: WindowFlags = emptyFlags()): Boolean {
+    fun beginPopup(strId: String, flags_: WindowFlags = emptyFlags): Boolean {
         if (g.openPopupStack.size <= g.beginPopupStack.size) {    // Early out for performance
             g.nextWindowData.clearFlags()    // We behave like Begin() and need to consume those values
             return false
@@ -52,7 +52,7 @@ interface popupsModals {
      *
      *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
      *  Note that popup visibility status is owned by Dear ImGui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
-    fun beginPopupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = emptyFlags()): Boolean {
+    fun beginPopupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = emptyFlags): Boolean {
 
         val window = g.currentWindow!!
         val id = window.getID(name)
@@ -110,14 +110,14 @@ interface popupsModals {
     //  - IMPORTANT: Notice that for OpenPopupOnItemClick() we exceptionally default flags to 1 (== ImGuiPopupFlags_MouseButtonRight) for backward compatibility with older API taking 'int mouse_button = 1' parameter
 
     /** call to mark popup as open (don't call every frame!). */
-    fun openPopup(strId: String, popupFlags: PopupFlags = emptyFlags()) {
+    fun openPopup(strId: String, popupFlags: PopupFlags = emptyFlags) {
         val id = g.currentWindow!!.getID(strId)
         IMGUI_DEBUG_LOG_POPUP("[popup] OpenPopup(\"$strId\" -> 0x%08X)", id)
         openPopupEx(id, popupFlags)
     }
 
     /** id overload to facilitate calling from nested stacks */
-    fun openPopup(id: ID, popupFlags: PopupFlags = emptyFlags()) = openPopupEx(id, popupFlags)
+    fun openPopup(id: ID, popupFlags: PopupFlags = emptyFlags) = openPopupEx(id, popupFlags)
 
     /** helper to open popup when clicked on last item. Default to ImGuiPopupFlags_MouseButtonRight == 1.
      *  (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)
@@ -237,7 +237,7 @@ interface popupsModals {
 
 
     /** return true if the popup is open. */
-    fun isPopupOpen(strId: String, popupFlags: PopupFlags = emptyFlags()): Boolean {
+    fun isPopupOpen(strId: String, popupFlags: PopupFlags = emptyFlags): Boolean {
         val id = if (popupFlags has PopupFlag.AnyPopupId) 0 else g.currentWindow!!.getID(strId)
         if (popupFlags has PopupFlag.AnyPopupLevel && id != 0)
             assert(false) { "Cannot use IsPopupOpen() with a string id and ImGuiPopupFlags_AnyPopupLevel." } // But non-string version is legal and used internally

@@ -218,7 +218,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var currentFocusScopeId: ID = 0
 
     /** == g.ItemFlagsStack.back() */
-    var currentItemFlags: ItemFlags = emptyFlags()
+    var currentItemFlags: ItemFlags = emptyFlags
 
     /** Storage for DebugLocateItemOnHover() feature: this is read by ItemAdd() so we keep it in a hot/cached location */
     var debugLocateId: ID = 0
@@ -291,7 +291,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** ~~ IsKeyPressed(ImGuiKey_Enter) || IsKeyPressed(ImGuiKey_NavGamepadInput) ? NavId : 0; ImGuiActivateFlags_PreferInput will be set and NavActivateId will be 0.  */
     var navActivateInputId: ID = 0
 
-    var navActivateFlags: ActivateFlags = emptyFlags()
+    var navActivateFlags: ActivateFlags = emptyFlags
 
     /** Just navigated to this id (result of a successfully MoveRequest)    */
     var navJustMovedToId: ID = 0
@@ -304,7 +304,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
 
-    var navNextActivateFlags: ActivateFlags = emptyFlags()
+    var navNextActivateFlags: ActivateFlags = emptyFlags
 
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
     var navInputSource = InputSource.None
@@ -352,9 +352,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navMoveForwardToNextFrame = false
 
-    var navMoveFlags: NavMoveFlags = emptyFlags()
+    var navMoveFlags: NavMoveFlags = emptyFlags
 
-    var navMoveScrollFlags: ScrollFlags = emptyFlags()
+    var navMoveScrollFlags: ScrollFlags = emptyFlags
 
     var navMoveKeyMods: KeyChord = Key.Mod_None
 
@@ -445,7 +445,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Set when within a BeginDragDropXXX/EndDragDropXXX block for a drag target. */
     var dragDropWithinTarget = false
 
-    var dragDropSourceFlags: DragDropFlags = emptyFlags()
+    var dragDropSourceFlags: DragDropFlags = emptyFlags
 
     var dragDropSourceFrameCount = -1
 
@@ -458,7 +458,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var dragDropTargetId: ID = 0
 
-    var dragDropAcceptFlags: DragDropFlags = emptyFlags()
+    var dragDropAcceptFlags: DragDropFlags = emptyFlags
 
     /** Target item surface (we resolve overlapping targets by prioritizing the smaller surface) */
     var dragDropAcceptIdCurrRectSurface = 0f

@@ -1,5 +1,6 @@
 package imgui
 
+import com.livefront.sealedenum.GenSealedEnum
 import glm_.vec2.Vec2
 import imgui.classes.DrawList
 import imgui.internal.sections.ViewportP
@@ -11,17 +12,20 @@ import imgui.internal.sections.ViewportP
 typealias ViewportFlags = Flag<ViewportFlag>
 
 /** Flags stored in ImGuiViewport::Flags, giving indications to the platform backends. */
-enum class ViewportFlag : Flag<ViewportFlag> {
+sealed class ViewportFlag : FlagBase<ViewportFlag>() {
     /** Represent a Platform Window */
-    IsPlatformWindow,
+    object IsPlatformWindow : ViewportFlag()
 
     /** Represent a Platform Monitor (unused yet) */
-    IsPlatformMonitor,
+    object IsPlatformMonitor : ViewportFlag()
 
     /** Platform Window: is created/managed by the application (rather than a dear imgui backend) */
-    OwnedByApp;
+    object OwnedByApp : ViewportFlag()
 
     override val i: Int = 1 shl ordinal
+
+    @GenSealedEnum
+    companion object
 }
 
 // - Currently represents the Platform Window created by the application which is hosting our Dear ImGui windows.
@@ -33,7 +37,7 @@ enum class ViewportFlag : Flag<ViewportFlag> {
 //   - Windows are generally trying to stay within the Work Area of their host viewport.
 open class Viewport {
     /** See ImGuiViewportFlags_ */
-    var flags: ViewportFlags = emptyFlags()
+    var flags: ViewportFlags = emptyFlags
 
     /** Main Area: Position of the viewport (Dear ImGui coordinates are the same as OS desktop/native coordinates) */
     val pos = Vec2()

@@ -34,7 +34,7 @@ interface inputsUtilitiesKeyboardMouseGamepad {
      *  uses io.KeyRepeatDelay / KeyRepeatRate
      *
      *  was key pressed (went from !Down to Down)? if repeat=true, uses io.KeyRepeatDelay / KeyRepeatRate */
-    infix fun Key.isPressed(repeat: Boolean): Boolean = isPressed(KeyOwner_Any, if (repeat) InputFlag.Repeat else emptyFlags())
+    infix fun Key.isPressed(repeat: Boolean): Boolean = isPressed(KeyOwner_Any, if (repeat) InputFlag.Repeat else emptyFlags)
 
     /** ~IsKeyPressed() */
     val Key.isPressed: Boolean

@@ -85,21 +85,21 @@ interface widgetsColorEditorPicker {
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
-    fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags()): Boolean =
+    fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags): Boolean =
         colorEdit4(label, col to _fa, flags or Cef.NoAlpha)
             .also { col put _fa }
 
-    fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = emptyFlags()): Boolean =
+    fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = emptyFlags): Boolean =
         colorEdit4(label, col, flags or Cef.NoAlpha)
 
     /** Edit colors components (each component in 0.0f..1.0f range).
      *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
      *  With typical options: Left-click on color square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
-    fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags()): Boolean =
+    fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags): Boolean =
         colorEdit4(label, col to _fa, flags).also { col put _fa }
 
-    fun colorEdit4(label: String, col: FloatArray, flags_: ColorEditFlags = emptyFlags()): Boolean {
+    fun colorEdit4(label: String, col: FloatArray, flags_: ColorEditFlags = emptyFlags): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -315,7 +315,7 @@ interface widgetsColorEditorPicker {
         }
     }
 
-    fun colorEditVec4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags()): Boolean {
+    fun colorEditVec4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags): Boolean {
         val col4 = floatArrayOf(col.x, col.y, col.z, col.w)
         val valueChanged = colorEdit4(label, col4, flags)
         col.x = col4[0]
@@ -325,11 +325,11 @@ interface widgetsColorEditorPicker {
         return valueChanged
     }
 
-    fun colorPicker3(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags()): Boolean =
+    fun colorPicker3(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags): Boolean =
         colorPicker3(label, col to _fa, flags)
             .also { col put _fa }
 
-    fun colorPicker3(label: String, col: FloatArray, flags: ColorEditFlags = emptyFlags()): Boolean {
+    fun colorPicker3(label: String, col: FloatArray, flags: ColorEditFlags = emptyFlags): Boolean {
         val col4 = floatArrayOf(*col, 1f)
         if (!colorPicker4(label, col4, flags or Cef.NoAlpha)) return false
         col[0] = col4[0]; col[1] = col4[1]; col[2] = col4[2]
@@ -342,7 +342,7 @@ interface widgetsColorEditorPicker {
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
      *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
-    fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags(), refCol: Vec4? = null): Boolean =
+    fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags, refCol: Vec4? = null): Boolean =
         colorPicker4(label, col to _fa, flags, refCol?.to(_fa2))
             .also { col put _fa; refCol?.put(_fa2) }
 
@@ -352,7 +352,7 @@ interface widgetsColorEditorPicker {
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
      *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
-    fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = emptyFlags(), refCol: FloatArray? = null): Boolean {
+    fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = emptyFlags, refCol: FloatArray? = null): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -629,7 +629,7 @@ interface widgetsColorEditorPicker {
             val cosHueAngle = glm.cos(H * 2f * glm.PIf)
             val sinHueAngle = glm.sin(H * 2f * glm.PIf)
             val hueCursorPos = Vec2(wheelCenter.x + cosHueAngle * (wheelRInner + wheelROuter) * 0.5f,
-                                    wheelCenter.y + sinHueAngle * (wheelRInner + wheelROuter) * 0.5f)
+                wheelCenter.y + sinHueAngle * (wheelRInner + wheelROuter) * 0.5f)
             val hueCursorRad = wheelThickness * if (valueChangedH) 0.65f else 0.55f
             val hueCursorSegments = glm.clamp((hueCursorRad / 1.4f).i, 9, 32)
             drawList.addCircleFilled(hueCursorPos, hueCursorRad, hueColor32, hueCursorSegments)
@@ -705,7 +705,7 @@ interface widgetsColorEditorPicker {
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
      *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.
      *  Note that 'col' may be encoded in HSV if ImGuiColorEditFlags_InputHSV is set.   */
-    fun colorButton(descId: String, col: Vec4, flags_: ColorEditFlags = emptyFlags(), sizeArg: Vec2 = Vec2()): Boolean {
+    fun colorButton(descId: String, col: Vec4, flags_: ColorEditFlags = emptyFlags, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
         if (window.skipItems)

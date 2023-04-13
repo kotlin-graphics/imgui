@@ -6,6 +6,7 @@ import imgui.ImGui.endRow
 import imgui.ImGui.rectRelToAbs
 import imgui.api.g
 import imgui.clamp
+import imgui.has
 import imgui.internal.isAboveGuaranteedIntegerPrecision
 import imgui.internal.sections.IMGUI_DEBUG_LOG_CLIPPER
 import imgui.internal.sections.ListClipperData

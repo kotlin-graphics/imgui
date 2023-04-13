@@ -192,7 +192,7 @@ fun inputTextCalcTextSizeW(ctx: Context, text: CharArray, textBegin: Int, textEn
     return textSize
 }
 
-fun inputScalarDefaultCharsFilter(dataType: DataType, format: String): InputTextFlag {
+fun inputScalarDefaultCharsFilter(dataType: DataType, format: String): InputTextFlag.Single {
     if (dataType == DataType.Float || dataType == DataType.Double)
         return InputTextFlag.CharsScientific
     val formatLastChar = if (format.isNotEmpty()) format.last() else NUL

@@ -1,8 +1,7 @@
 package imgui.internal.api
 
-import imgui.ImGui
+import imgui.*
 import imgui.ImGui.isWithinBeginStackOf
-import imgui.WindowFlag
 import imgui.api.g
 import imgui.internal.classes.Window
 import imgui.internal.sections.NavLayer
@@ -67,7 +66,7 @@ internal interface windowsDisplayAndFocusOrder {
             val window = g.windowsFocusOrder[i]
             assert(window === window.rootWindow)
             if (window !== ignoreWindow && window.wasActive)
-                if ((window.flags and (WindowFlag.NoMouseInputs or WindowFlag.NoNavInputs)) notEq (WindowFlag.NoMouseInputs or WindowFlag.NoNavInputs)) {
+                if ((WindowFlag.NoMouseInputs or WindowFlag.NoNavInputs) !in window.flags) {
                     focusWindow(navRestoreLastChildNavWindow(window))
                     return
                 }

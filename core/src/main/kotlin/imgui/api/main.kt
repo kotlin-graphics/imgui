@@ -40,8 +40,6 @@ import org.lwjgl.system.Platform
 import imgui.WindowFlag as Wf
 import imgui.internal.sections.DrawListFlag as Dlf
 
-@Suppress("UNCHECKED_CAST")
-
 /** Main */
 interface main {
 
@@ -100,7 +98,7 @@ interface main {
         g.drawListSharedData.clipRectFullscreen = virtualSpace.toVec4()
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
         g.drawListSharedData.setCircleTessellationMaxError_(style.circleTessellationMaxError)
-        var flags: DrawListFlags = emptyFlags()
+        var flags: DrawListFlags = emptyFlags
         if (style.antiAliasedLines)
             flags = flags or Dlf.AntiAliasedLines
         if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines)
@@ -260,7 +258,7 @@ interface main {
         g.currentWindowStack.clear()
         g.beginPopupStack.clear()
         g.itemFlagsStack.clear()
-        g.itemFlagsStack += emptyFlags()
+        g.itemFlagsStack += emptyFlags
         g.groupStack.clear()
 
         // // [DEBUG] Update debug features

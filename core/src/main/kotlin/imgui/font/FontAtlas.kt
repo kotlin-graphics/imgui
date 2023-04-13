@@ -1,5 +1,6 @@
 package imgui.font
 
+import com.livefront.sealedenum.GenSealedEnum
 import gli_.has
 import glm_.*
 import glm_.vec2.Vec2
@@ -370,21 +371,24 @@ class FontAtlas {
     //-------------------------------------------
 
     /** Flags: for ImFontAtlas build */
-    enum class Flag : imgui.Flag<Flag> {
+    sealed class Flag : FlagBase<Flag>() {
         /** Don't round the height to next power of two */
-        NoPowerOfTwoHeight,
+        object NoPowerOfTwoHeight : Flag()
 
         /** Don't build software mouse cursors into the atlas (save a little texture memory) */
-        NoMouseCursors,
+        object NoMouseCursors : Flag()
 
         /** Don't build thick line textures into the atlas (save a little texture memory, allow support for point/nearest filtering). The AntiAliasedLinesUseTex features uses them, otherwise they will be rendered using polygons (more expensive for CPU/GPU). */
-        NoBakedLines;
+        object NoBakedLines : Flag()
 
-        override val i = 1 shl ordinal
+        override val i: Int = 1 shl ordinal
+
+        @GenSealedEnum
+        companion object
     }
 
     /** Build flags (see ImFontAtlasFlags_) */
-    var flags: FontAtlasFlags = emptyFlags()
+    var flags: FontAtlasFlags = emptyFlags
 
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
@@ -827,7 +831,7 @@ class FontAtlas {
                 val q = AlignedQuad()
                 getPackedQuad(srcTmp.packedChars, texSize.x, texSize.y, glyphIdx, q = q)
                 dstFont.addGlyph(cfg, codepoint, q.x0 + fontOff.x, q.y0 + fontOff.y,
-                                 q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
+                    q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
             }
         }
 //        bufPackedchars.free()
@@ -926,7 +930,7 @@ class FontAtlas {
             val uv1 = Vec2()
             calcCustomRectUV(r, uv0, uv1)
             font.addGlyph(null, r.glyphID, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
-                          uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
+                uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
         }
         // Build all fonts lookup tables
         fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }

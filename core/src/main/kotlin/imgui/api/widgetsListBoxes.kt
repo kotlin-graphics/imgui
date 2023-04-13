@@ -25,6 +25,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.WindowFlag
 import imgui.classes.ListClipper
+import imgui.has
 import imgui.internal.classes.Rect
 import imgui.internal.floor
 import imgui.withBool

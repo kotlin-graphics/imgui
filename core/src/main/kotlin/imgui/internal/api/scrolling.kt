@@ -2,10 +2,8 @@ package imgui.internal.api
 
 import glm_.min
 import glm_.vec2.Vec2
-import imgui.ImGui
-import imgui.WindowFlag
+import imgui.*
 import imgui.api.g
-import imgui.emptyFlags
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.floor
@@ -60,15 +58,15 @@ internal interface scrolling {
     }
 
     // Early work-in-progress API (ScrollToItem() will become public)
-    fun scrollToItem(flags: ScrollFlags = emptyFlags()) {
+    fun scrollToItem(flags: ScrollFlags = emptyFlags) {
         val window = g.currentWindow!!
         scrollToRectEx(window, g.lastItemData.navRect, flags)
     }
 
-    fun scrollToRect(window: Window, rect: Rect, flags: ScrollFlags = emptyFlags()): Vec2 =
+    fun scrollToRect(window: Window, rect: Rect, flags: ScrollFlags = emptyFlags): Vec2 =
         scrollToRectEx(window, rect, flags)
 
-    fun scrollToRectEx(window: Window, itemRect: Rect, flags_: ScrollFlags = emptyFlags()): Vec2 {
+    fun scrollToRectEx(window: Window, itemRect: Rect, flags_: ScrollFlags = emptyFlags): Vec2 {
 
         var flags = flags_
 

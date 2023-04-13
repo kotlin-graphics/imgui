@@ -30,7 +30,7 @@ interface windowsUtilities {
         get() = currentWindowRead!!.collapsed
 
     /** is current window focused? or its root/child, depending on flags. see flags for options.    */
-    fun isWindowFocused(flags: FocusedFlags = emptyFlags()): Boolean {
+    fun isWindowFocused(flags: FocusedFlags = emptyFlags): Boolean {
 
         val refWindow = g.navWindow ?: return false
         var curWindow = g.currentWindow
@@ -53,8 +53,7 @@ interface windowsUtilities {
     /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
      *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
      *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
-    fun isWindowHovered(flags: HoveredFlags = emptyFlags()): Boolean {
-        assert(flags hasnt (Hf.AllowWhenOverlapped or Hf.AllowWhenDisabled)) { "Flags not supported by this function" }
+    fun isWindowHovered(flags: WindowHoveredFlags = emptyFlags): Boolean {
         val refWindow = g.hoveredWindow ?: return false
         var curWindow = g.currentWindow
 

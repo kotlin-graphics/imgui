@@ -305,7 +305,7 @@ object ShowDemoWindowLayout {
 
                 // Child 2: rounded border
                 run {
-                    var windowFlags: WindowFlags = emptyFlags()
+                    var windowFlags: WindowFlags = emptyFlags
                     if (disableMouseWheel)
                         windowFlags = windowFlags or Wf.NoScrollWithMouse
                     if (!disableMenu)
@@ -581,7 +581,7 @@ object ShowDemoWindowLayout {
                         val names = arrayOf("Top", "25%%", "Center", "75%%", "Bottom") // double quote for ::format escaping
                         textUnformatted(names[i])
 
-                        val childFlags = if (enableExtraDecorations) Wf.MenuBar else emptyFlags()
+                        val childFlags = if (enableExtraDecorations) Wf.MenuBar else emptyFlags
                         val childId = getID(i.L)
                         val childIsVisible = beginChild(childId, Vec2(childW, 200f), true, childFlags)
                         menuBar { textUnformatted("abc") }
@@ -615,7 +615,7 @@ object ShowDemoWindowLayout {
                 pushID("##HorizontalScrolling")
                 for (i in 0..4) {
                     val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
-                    val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else emptyFlags()
+                    val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else emptyFlags
                     val childId = getID(i.L)
                     val childIsVisible = beginChild(childId, Vec2(-100f, childHeight), true, childFlags)
                     if (scrollToOff)
@@ -697,7 +697,7 @@ object ShowDemoWindowLayout {
                 if (showHorizontalContentsSizeDemoWindow) {
                     if (explicitContentSize)
                         setNextWindowContentSize(Vec2(contentsSizeX, 0f))
-                    begin("Horizontal contents size demo window", ::showHorizontalContentsSizeDemoWindow, if (showHscrollbar) Wf.HorizontalScrollbar else emptyFlags())
+                    begin("Horizontal contents size demo window", ::showHorizontalContentsSizeDemoWindow, if (showHscrollbar) Wf.HorizontalScrollbar else emptyFlags)
                     pushStyleVar(StyleVar.ItemSpacing, Vec2(2, 0))
                     pushStyleVar(StyleVar.FramePadding, Vec2(2, 0))
                     helpMarker("Test of different widgets react and impact the work rectangle growing when horizontal scrolling is enabled.\n\nUse 'Metrics->Tools->Show windows rectangles' to visualize rectangles.")

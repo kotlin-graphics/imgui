@@ -210,7 +210,7 @@ internal interface renderHelpers {
      * [JVM] safe passing Vec2 instances */
     fun renderColorRectWithAlphaCheckerboard(
         drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
-        gridOff: Vec2, rounding: Float = 0f, flags_: DrawFlags = emptyFlags()
+        gridOff: Vec2, rounding: Float = 0f, flags_: DrawFlags = emptyFlags
     ) {
         val flags = when {
             flags_ hasnt DrawFlag.RoundCornersMask -> DrawFlag.RoundCornersDefault
@@ -250,7 +250,7 @@ internal interface renderHelpers {
                     }
                     // Combine flags
                     cellFlags = when {
-                        flags eq DrawFlag.RoundCornersNone || cellFlags eq DrawFlag.RoundCornersNone -> DrawFlag.RoundCornersNone
+                        flags == DrawFlag.RoundCornersNone || cellFlags == DrawFlag.RoundCornersNone -> DrawFlag.RoundCornersNone
                         else -> cellFlags or flags
                     }
                     drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, rounding, cellFlags)
@@ -446,19 +446,19 @@ internal interface renderHelpers {
         val fillD = inner.max.y < outer.max.y
         if (fillL) addRectFilled(
             Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
-            DrawFlag.RoundCornersNone or (if (fillU) emptyFlags() else DrawFlag.RoundCornersTopLeft) or if (fillD) emptyFlags() else DrawFlag.RoundCornersBottomLeft
+            DrawFlag.RoundCornersNone or (if (fillU) emptyFlags else DrawFlag.RoundCornersTopLeft) or if (fillD) emptyFlags else DrawFlag.RoundCornersBottomLeft
         )
         if (fillR) addRectFilled(
             Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
-            DrawFlag.RoundCornersNone or (if (fillU) emptyFlags() else DrawFlag.RoundCornersTopRight) or if (fillD) emptyFlags() else DrawFlag.RoundCornersBottomRight
+            DrawFlag.RoundCornersNone or (if (fillU) emptyFlags else DrawFlag.RoundCornersTopRight) or if (fillD) emptyFlags else DrawFlag.RoundCornersBottomRight
         )
         if (fillU) addRectFilled(
             Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
-            DrawFlag.RoundCornersNone or (if (fillL) emptyFlags() else DrawFlag.RoundCornersTopLeft) or if (fillR) emptyFlags() else DrawFlag.RoundCornersTopRight
+            DrawFlag.RoundCornersNone or (if (fillL) emptyFlags else DrawFlag.RoundCornersTopLeft) or if (fillR) emptyFlags else DrawFlag.RoundCornersTopRight
         )
         if (fillD) addRectFilled(
             Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
-            DrawFlag.RoundCornersNone or (if (fillL) emptyFlags() else DrawFlag.RoundCornersBottomLeft) or if (fillR) emptyFlags() else DrawFlag.RoundCornersBottomRight
+            DrawFlag.RoundCornersNone or (if (fillL) emptyFlags else DrawFlag.RoundCornersBottomLeft) or if (fillR) emptyFlags else DrawFlag.RoundCornersBottomRight
         )
         if (fillL && fillU) addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft)
         if (fillR && fillU) addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight)

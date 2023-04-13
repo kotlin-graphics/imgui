@@ -21,7 +21,7 @@ class TabBar {
 
     val tabs = ArrayList<TabItem>()
 
-    var flags: TabBarFlags = emptyFlags()
+    var flags: TabBarFlags = emptyFlags
 
     /** Zero for tab-bars used by docking */
     var id: ID = 0

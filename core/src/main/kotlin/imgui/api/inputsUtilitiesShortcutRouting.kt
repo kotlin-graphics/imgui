@@ -36,7 +36,7 @@ interface inputsUtilitiesShortcutRouting {
     // - Route is granted to a single owner. When multiple requests are made we have policies to select the winning route.
     // - Multiple read sites may use the same owner id and will all get the granted route.
     // - For routing: when owner_id is 0 we use the current Focus Scope ID as a default owner in order to identify our location.
-    fun shortcut(keyChord_: KeyChord, ownerId: ID = 0, flags_: InputFlags = emptyFlags()): Boolean {
+    fun shortcut(keyChord_: KeyChord, ownerId: ID = 0, flags_: InputFlags = emptyFlags): Boolean {
 
         var flags = flags_
         // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter with this, so IsKeyPressed() is fine with he 0/Any.

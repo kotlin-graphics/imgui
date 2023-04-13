@@ -1,8 +1,9 @@
 package imgui.internal.api
 
-import glm_.wo
 import imgui.api.g
 import imgui.internal.sections.ItemFlags
+import imgui.or
+import imgui.wo
 
 // Parameter stacks (shared)
 internal interface parameterStacks {
@@ -11,7 +12,7 @@ internal interface parameterStacks {
      *  @param option = ItemFlag   */
     fun pushItemFlag(option: ItemFlags, enabled: Boolean) {
         var itemFlags = g.currentItemFlags
-        assert(itemFlags eq g.itemFlagsStack.last())
+        assert(itemFlags == g.itemFlagsStack.last())
         itemFlags = when {
             enabled -> itemFlags or option
             else -> itemFlags wo option

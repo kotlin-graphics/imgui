@@ -43,7 +43,7 @@ import imgui.ComboFlag as Cf
 // - The old Combo() api are helpers over BeginCombo()/EndCombo() which are kept available for convenience purpose. This is analogous to how ListBox are created.
 interface widgetsComboBox {
 
-    fun beginCombo(label: String, previewValue_: String?, flags: ComboFlags = emptyFlags()): Boolean {
+    fun beginCombo(label: String, previewValue_: String?, flags: ComboFlags = emptyFlags): Boolean {
 
         var previewValue = previewValue_
 

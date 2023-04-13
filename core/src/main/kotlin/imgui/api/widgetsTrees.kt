@@ -3,8 +3,7 @@ package imgui.api
 import gli_.has
 import glm_.max
 import glm_.vec2.Vec2
-import imgui.Cond
-import imgui.Dir
+import imgui.*
 import imgui.ImGui.closeButton
 import imgui.ImGui.currentWindow
 import imgui.ImGui.getIDWithSeed
@@ -17,8 +16,6 @@ import imgui.ImGui.setNavID
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
-import imgui.TreeNodeFlags
-import imgui.emptyFlags
 import imgui.internal.classes.Rect
 import imgui.internal.formatStringToTempBuffer
 import imgui.internal.sections.NextItemDataFlag
@@ -39,17 +36,17 @@ interface widgetsTrees {
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(strID: String, fmt: String, vararg args: Any): Boolean = treeNodeEx(strID, emptyFlags(), fmt, *args)
+    fun treeNode(strID: String, fmt: String, vararg args: Any): Boolean = treeNodeEx(strID, emptyFlags, fmt, *args)
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(ptrID: Any, fmt: String, vararg args: Any): Boolean = treeNodeEx(ptrID, emptyFlags(), fmt, *args)
+    fun treeNode(ptrID: Any, fmt: String, vararg args: Any): Boolean = treeNodeEx(ptrID, emptyFlags, fmt, *args)
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(intPtr: Long, fmt: String, vararg args: Any): Boolean = treeNodeEx(intPtr, emptyFlags(), fmt, *args)
+    fun treeNode(intPtr: Long, fmt: String, vararg args: Any): Boolean = treeNodeEx(intPtr, emptyFlags, fmt, *args)
 
-    fun treeNodeEx(label: String, flags: TreeNodeFlags = emptyFlags()): Boolean {
+    fun treeNodeEx(label: String, flags: TreeNodeFlags = emptyFlags): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -125,7 +122,7 @@ interface widgetsTrees {
      *      treeNodeEx(label, TreeNodeFlag.CollapsingHeader)
      *  You can remove the _NoTreePushOnOpen flag if you want behavior closer to normal TreeNode().
      *  If returning 'true' the header is open. doesn't indent nor push on ID stack. user doesn't have to call TreePop().   */
-    fun collapsingHeader(label: String, flags: TreeNodeFlags = emptyFlags()): Boolean {
+    fun collapsingHeader(label: String, flags: TreeNodeFlags = emptyFlags): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -140,7 +137,7 @@ interface widgetsTrees {
      *  p_visible != NULL && *p_visible == true  : show a small close button on the corner of the header, clicking the button will set *p_visible = false
      *  p_visible != NULL && *p_visible == false : do not show the header at all
      *  Do not mistake this with the Open state of the header itself, which you can adjust with SetNextItemOpen() or ImGuiTreeNodeFlags_DefaultOpen. */
-    fun collapsingHeader(label: String, visible: KMutableProperty0<Boolean>?, flags_: TreeNodeFlags = emptyFlags()): Boolean {
+    fun collapsingHeader(label: String, visible: KMutableProperty0<Boolean>?, flags_: TreeNodeFlags = emptyFlags): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false

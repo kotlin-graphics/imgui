@@ -1,5 +1,6 @@
 package imgui.internal.classes
 
+import com.livefront.sealedenum.GenSealedEnum
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -124,23 +125,25 @@ class LocEntry(val key: LocKey, val text: String)
 
 typealias DebugLogFlags = Flag<DebugLogFlag>
 
-enum class DebugLogFlag(i: Int? = null) : Flag<DebugLogFlag> {
+sealed class DebugLogFlag(val int: Int? = null) : FlagBase<DebugLogFlag>() {
     // Event types
-    EventActiveId,
-    EventFocus,
-    EventPopup,
-    EventNav,
-    EventClipper,
-    EventIO,
+    object EventActiveId : DebugLogFlag()
+
+    object EventFocus : DebugLogFlag()
+    object EventPopup : DebugLogFlag()
+    object EventNav : DebugLogFlag()
+    object EventClipper : DebugLogFlag()
+    object EventIO : DebugLogFlag()
 
     /** Also send output to TTY */
-    OutputToTTY(1 shl 10);
+    object OutputToTTY : DebugLogFlag(1 shl 10)
 
+    @GenSealedEnum
     companion object {
-        val EventMask: DebugLogFlags = EventActiveId or EventFocus or EventPopup or EventNav or EventClipper or EventIO
+        val EventMask: DebugLogFlags get() = EventActiveId or EventFocus or EventPopup or EventNav or EventClipper or EventIO
     }
 
-    override val i: Int = i ?: (1 shl ordinal)
+    override val i: Int = int ?: (1 shl ordinal)
 }
 
 // (+ for upcoming advanced versions of IsKeyPressed()/IsMouseClicked()/SetKeyOwner()/SetItemKeyOwner() that are currently in imgui_internal.h)
@@ -149,27 +152,27 @@ typealias InputFlags = Flag<InputFlag>
 
 /** Flags for extended versions of IsKeyPressed(), IsMouseClicked(), Shortcut(), SetKeyOwner(), SetItemKeyOwner()
  *  Don't mistake with ImGuiInputTextFlags! (for ImGui::InputText() function) */
-enum class InputFlag : Flag<InputFlag> {
+sealed class InputFlag : FlagBase<InputFlag>() {
     /** Return true on successive repeats. Default for legacy IsKeyPressed(). NOT Default for legacy IsMouseClicked(). MUST BE == 1. */
-    Repeat,
+    object Repeat : InputFlag()
 
     // Repeat rate
-    RepeatRateDefault,   // Repeat rate: Regular (default)
-    RepeatRateNavMove,   // Repeat rate: Fast
-    RepeatRateNavTweak,   // Repeat rate: Faster
+    object RepeatRateDefault : InputFlag()   // Repeat rate: Regular (default)
+    object RepeatRateNavMove : InputFlag()   // Repeat rate: Fast
+    object RepeatRateNavTweak : InputFlag()   // Repeat rate: Faster
 
 
     // Flags for SetItemKeyOwner()
-    CondHovered,   // Only set if item is hovered (default to both)
-    CondActive,   // Only set if item is active (default to both)
+    object CondHovered : InputFlag()   // Only set if item is hovered (default to both)
+    object CondActive : InputFlag()   // Only set if item is active (default to both)
 
     // Flags for SetKeyOwner(), SetItemKeyOwner()
 
     /** Access to key data will require EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared at end of frame. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
-    LockThisFrame,
+    object LockThisFrame : InputFlag()
 
     /** Access to key data will require EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared when the key is released or at end of each frame if key is released. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
-    LockUntilRelease,
+    object LockUntilRelease : InputFlag()
 
     // Routing policies for Shortcut() + low-level SetShortcutRouting()
     // - The general idea is that several callers register interest in a shortcut, and only one owner gets it.
@@ -183,42 +186,42 @@ enum class InputFlag : Flag<InputFlag> {
     // - Can select only 1 policy among all available.
 
     /** (Default) Register focused route: Accept inputs if window is in focus stack. Deep-most focused window takes inputs. ActiveId takes inputs over deep-most focused window. */
-    RouteFocused,
+    object RouteFocused : InputFlag()
 
     /** Register route globally (lowest priority: unless a focused window or active item registered the route) -> recommended Global priority. */
-    RouteGlobalLow,
+    object RouteGlobalLow : InputFlag()
 
     /** Register route globally (medium priority: unless an active item registered the route, e.g. CTRL+A registered by InputText). */
-    RouteGlobal,
+    object RouteGlobal : InputFlag()
 
     /** Register route globally (highest priority: unlikely you need to use that: will interfere with every active items) */
-    RouteGlobalHigh,
-
+    object RouteGlobalHigh : InputFlag()
 
     /** Do not register route, poll keys directly. */
-    RouteAlways,
+    object RouteAlways : InputFlag()
 
     /** Global routes will not be applied if underlying background/void is focused (== no Dear ImGui windows are focused). Useful for overlay applications. */
-    RouteUnlessBgFocused;
+    object RouteUnlessBgFocused : InputFlag()
 
     override val i: Int = 1 shl ordinal
 
+    @GenSealedEnum
     companion object {
-        val RepeatRateMask = RepeatRateDefault or RepeatRateNavMove or RepeatRateNavTweak
-        val CondDefault = CondHovered or CondActive
-        val CondMask = CondHovered or CondActive
+        val RepeatRateMask get() = RepeatRateDefault or RepeatRateNavMove or RepeatRateNavTweak
+        val CondDefault get() = CondHovered or CondActive
+        val CondMask get() = CondHovered or CondActive
 
         /** _Always not part of this! */
-        val RouteMask = RouteFocused or RouteGlobal or RouteGlobalLow or RouteGlobalHigh
+        val RouteMask get() = RouteFocused or RouteGlobal or RouteGlobalLow or RouteGlobalHigh
 
         // [Internal] Mask of which function support which flags
-        val RouteExtraMask = RouteAlways or RouteUnlessBgFocused
+        val RouteExtraMask get() = RouteAlways or RouteUnlessBgFocused
 
         // [Internal] Mask of which function support which flags
-        val SupportedByIsKeyPressed = Repeat or RepeatRateMask
-        val SupportedByShortcut = Repeat or RepeatRateMask or RouteMask or RouteExtraMask
-        val SupportedBySetKeyOwner = LockThisFrame or LockUntilRelease
-        val SupportedBySetItemKeyOwner = SupportedBySetKeyOwner or CondMask
+        val SupportedByIsKeyPressed get() = Repeat or RepeatRateMask
+        val SupportedByShortcut get() = Repeat or RepeatRateMask or RouteMask or RouteExtraMask
+        val SupportedBySetKeyOwner get() = LockThisFrame or LockUntilRelease
+        val SupportedBySetItemKeyOwner get() = SupportedBySetKeyOwner or CondMask
     }
 }
 
@@ -255,10 +258,10 @@ class StackTool {
 
 /** Storage for SetNextWindow** functions    */
 class NextWindowData {
-    var flags: NextWindowDataFlags = emptyFlags()
-    var posCond = Cond.None
-    var sizeCond = Cond.None
-    var collapsedCond = Cond.None
+    var flags: NextWindowDataFlags = emptyFlags
+    var posCond: Cond = Cond.None
+    var sizeCond: Cond = Cond.None
+    var collapsedCond: Cond = Cond.None
     val posVal = Vec2()
     val posPivotVal = Vec2()
     val sizeVal = Vec2()
@@ -278,12 +281,12 @@ class NextWindowData {
     var menuBarOffsetMinVal = Vec2()
 
     fun clearFlags() {
-        flags = emptyFlags()
+        flags = emptyFlags
     }
 }
 
 data class NextItemData(
-    var flags: NextItemDataFlags = emptyFlags(),
+    var flags: NextItemDataFlags = emptyFlags,
 
     /** Set by SetNextItemWidth() */
     var width: Float = 0f,
@@ -298,7 +301,7 @@ data class NextItemData(
 
     /** Also cleared manually by ItemAdd()! */
     fun clearFlags() {
-        flags = emptyFlags()
+        flags = emptyFlags
     }
 }
 
@@ -306,8 +309,8 @@ data class NextItemData(
 // TODO -> data class?
 class LastItemData {
     var id: ID = 0
-    var inFlags: ItemFlags = emptyFlags() // See ImGuiItemFlags_
-    var statusFlags: ItemStatusFlags = emptyFlags() // See ImGuiItemStatusFlags_
+    var inFlags: ItemFlags = emptyFlags // See ImGuiItemFlags_
+    var statusFlags: ItemStatusFlags = emptyFlags // See ImGuiItemStatusFlags_
     val rect = Rect() // Full rectangle
     val navRect = Rect() // Navigation scoring rectangle (not displayed)
     val displayRect = Rect() // Display rectangle (only if ImGuiItemStatusFlags_HasDisplayRect is set)
@@ -480,7 +483,7 @@ class ComboPreviewData {
 /** Storage for one active tab item (sizeof() 40 bytes) */
 class TabItem {
     var id: ID = 0
-    var flags: TabItemFlags = emptyFlags()
+    var flags: TabItemFlags = emptyFlags
     var lastFrameVisible = -1
 
     /** This allows us to infer an ordered list of the last activated tabs with little maintenance */

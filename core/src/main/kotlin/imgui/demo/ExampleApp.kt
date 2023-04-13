@@ -119,7 +119,7 @@ object ExampleApp {
                 StyleEditor()
             }
 
-        var windowFlags: WindowFlags = emptyFlags()
+        var windowFlags: WindowFlags = emptyFlags
         if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
         if (noScrollbar) windowFlags = windowFlags or Wf.NoScrollbar
         if (!noMenu) windowFlags = windowFlags or Wf.MenuBar
@@ -192,7 +192,7 @@ object ExampleApp {
             bulletText("Sections below are demonstrating many aspects of the library.")
             bulletText("The \"Examples\" menu above leads to more demo contents.")
             bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
-                               "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
+                "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
             separator()
 
             text("PROGRAMMER GUIDE:")

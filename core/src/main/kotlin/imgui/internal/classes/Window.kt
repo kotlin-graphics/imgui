@@ -30,7 +30,7 @@ class Window(var context: Context,
     val id: ID = hashStr(name)
 
     /** See enum ImGuiWindowFlags_ */
-    var flags: WindowFlags = emptyFlags()
+    var flags: WindowFlags = emptyFlags
 
     /** Always set in Begin(). Inactive windows may have a NULL value here if their viewport was discarded. */
     var viewport: ViewportP? = null
@@ -421,7 +421,7 @@ class Window(var context: Context,
     }
 
     val isContentHoverable: Boolean
-        get() = isContentHoverable(emptyFlags())
+        get() = isContentHoverable(emptyFlags)
 
     /** ~CalcWindowAutoFitSize */
     fun calcAutoFitSize(sizeContents: Vec2): Vec2 {
@@ -516,9 +516,9 @@ class Window(var context: Context,
             newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x
             newSize.y = if (cr.min.y >= 0 && cr.max.y >= 0) glm.clamp(newSize.y, cr.min.y, cr.max.y) else sizeFull.y
             g.nextWindowData.sizeCallback?.invoke(SizeCallbackData(userData = g.nextWindowData.sizeCallbackUserData,
-                                                                   pos = Vec2(this@Window.pos),
-                                                                   currentSize = sizeFull,
-                                                                   desiredSize = newSize))
+                pos = Vec2(this@Window.pos),
+                currentSize = sizeFull,
+                desiredSize = newSize))
             newSize.x = floor(newSize.x)
             newSize.y = floor(newSize.y)
         }

@@ -536,7 +536,7 @@ public class Jdsl {
         tabItem(label, pOpen, Flag.empty(), block);
     }
 
-    public static void tabItem(String label, MutableProperty0<Boolean> pOpen, Flag<TabItemFlag> tabItemFlags, Runnable block) {
+    public static void tabItem(String label, MutableProperty0<Boolean> pOpen, Flag<TabItemFlag.ItemOnly> tabItemFlags, Runnable block) {
         if (imgui.beginTabItem(label, pOpen, tabItemFlags))
             block.run();
         imgui.endTabItem();

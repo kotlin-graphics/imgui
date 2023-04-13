@@ -68,7 +68,7 @@ class DrawListSharedData {
     var clipRectFullscreen = Vec4()
 
     /** Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards) */
-    var initialFlags: DrawListFlags = emptyFlags()
+    var initialFlags: DrawListFlags = emptyFlags
 
     /** [Internal] Temp write buffer */
     val tempBuffer = ArrayList<Vec2>()

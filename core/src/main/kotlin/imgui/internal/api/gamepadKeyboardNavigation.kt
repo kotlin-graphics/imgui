@@ -182,7 +182,7 @@ internal interface gamepadKeyboardNavigation {
         // Activate
         if (g.navMoveFlags has NavMoveFlag.Activate) {
             g.navNextActivateId = result.id
-            g.navNextActivateFlags = emptyFlags()
+            g.navNextActivateFlags = emptyFlags
         }
 
         // Enable nav highlight
@@ -204,7 +204,7 @@ internal interface gamepadKeyboardNavigation {
      *  on the next frame when the item is encountered again.  */
     fun activateItem(id: ID) {
         g.navNextActivateId = id
-        g.navNextActivateFlags = emptyFlags()
+        g.navNextActivateFlags = emptyFlags
     }
 
     // FIXME-NAV: The existence of SetNavID vs SetFocusID vs FocusWindow() needs to be clarified/reworked.

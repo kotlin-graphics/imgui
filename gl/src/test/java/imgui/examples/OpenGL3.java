@@ -172,7 +172,7 @@ public class OpenGL3 {
         if (showDemo[0]) {
             /*  Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
                     Here we just want to make the demo initial state a bit more friendly!                 */
-            imgui.setNextWindowPos(new Vec2(650, 20), Cond.FirstUseEver, new Vec2());
+            imgui.setNextWindowPos(new Vec2(650, 20), Cond.FirstUseEver.INSTANCE, new Vec2());
             imgui.showDemoWindow(showDemo);
         }
 

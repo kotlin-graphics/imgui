@@ -39,7 +39,7 @@ internal interface dragAndDrop {
     fun clearDragDrop() = with(g) {
         dragDropActive = false
         dragDropPayload.clear()
-        dragDropAcceptFlags = emptyFlags()
+        dragDropAcceptFlags = emptyFlags
         dragDropAcceptIdPrev = 0
         dragDropAcceptIdCurr = 0
         dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE

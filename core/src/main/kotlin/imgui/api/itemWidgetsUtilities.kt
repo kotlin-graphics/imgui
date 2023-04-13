@@ -1,11 +1,8 @@
 package imgui.api
 
 import glm_.vec2.Vec2
-import imgui.HoveredFlags
-import imgui.ID
+import imgui.*
 import imgui.ImGui.isMouseClicked
-import imgui.MouseButton
-import imgui.emptyFlags
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
 import imgui.HoveredFlag as Hf
@@ -20,7 +17,7 @@ interface itemWidgetsUtilities {
      *          such as a text() item still returns true with isItemHovered()
      *      - this should work even for non-interactive items that have no ID, so we cannot use LastItemId  */
 
-    fun isItemHovered(flags: HoveredFlags = emptyFlags()): Boolean {
+    fun isItemHovered(flags: ItemHoveredFlags = emptyFlags): Boolean {
 
         val window = g.currentWindow!!
         if (g.navDisableMouseHover && !g.navDisableHighlight && flags hasnt Hf.NoNavOverride) {
@@ -34,7 +31,6 @@ interface itemWidgetsUtilities {
             val statusFlags = g.lastItemData.statusFlags
             if (statusFlags hasnt ItemStatusFlag.HoveredRect)
                 return false
-            assert(flags hasnt (Hf.AnyWindow or Hf.RootWindow or Hf.ChildWindows or Hf.NoPopupHierarchy)) { "Flags not supported by this function" }
 
             // Done with rectangle culling so we can perform heavier checks now
             // Test if we are hovering the right window (our window could be behind another window)

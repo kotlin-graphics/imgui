@@ -85,7 +85,7 @@ object StyleEditor {
 
     var outputDest = 0
     var outputOnlyModified = true
-    var alphaFlags: ColorEditFlags = emptyFlags()
+    var alphaFlags: ColorEditFlags = emptyFlags
     val filter = TextFilter()
     var windowScale = 1f
 
@@ -168,7 +168,7 @@ object StyleEditor {
                 run {
                     _i32 = style.windowMenuButtonPosition.i + 1
                     if (combo("WindowMenuButtonPosition", ::_i32,
-                              "None${NUL}Left${NUL}Right${NUL}")
+                            "None${NUL}Left${NUL}Right${NUL}")
                     ) style.windowMenuButtonPosition = Dir.values().first { it.i == _i32 - 1 }
                 }
                 run {
@@ -211,9 +211,9 @@ object StyleEditor {
 
                 filter.draw("Filter colors", fontSize * 16)
 
-                radioButton("Opaque", alphaFlags.isEmpty) { alphaFlags = emptyFlags() }; sameLine()
-                radioButton("Alpha", alphaFlags eq Cef.AlphaPreview) { alphaFlags = Cef.AlphaPreview }; sameLine()
-                radioButton("Both", alphaFlags eq Cef.AlphaPreviewHalf) {
+                radioButton("Opaque", alphaFlags.isEmpty) { alphaFlags = emptyFlags }; sameLine()
+                radioButton("Alpha", alphaFlags == Cef.AlphaPreview) { alphaFlags = Cef.AlphaPreview }; sameLine()
+                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf) {
                     alphaFlags = Cef.AlphaPreviewHalf
                 }; sameLine()
                 helpMarker("""
@@ -343,8 +343,8 @@ object StyleEditor {
     fun debugNodeFont(font: Font) {
         val name = font.configData.getOrNull(0)?.name ?: ""
         val fontDetailsOpened = treeNode(font,
-                                         "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)",
-                                         font.fontSize)
+            "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)",
+            font.fontSize)
         sameLine(); smallButton("Set as default") { io.fontDefault = font }
         if (!fontDetailsOpened)
             return
@@ -401,11 +401,11 @@ object StyleEditor {
                     val drawList = windowDrawList
                     for (n in 0 until 256) {
                         val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize + cellSpacing),
-                                          basePos.y + (n / 16) * (cellSize + cellSpacing))
+                            basePos.y + (n / 16) * (cellSize + cellSpacing))
                         val cellP2 = Vec2(cellP1.x + cellSize, cellP1.y + cellSize)
                         val glyph = font.findGlyphNoFallback((base + n).c)
                         drawList.addRect(cellP1, cellP2, COL32(255, 255, 255,
-                                                               if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
+                            if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
                         // available here and thus cannot easily generate a zero-terminated UTF-8 encoded string.
                         if (glyph != null) {
                             font.renderChar(drawList, cellSize, cellP1, Col.Text.u32, (base + n).c)

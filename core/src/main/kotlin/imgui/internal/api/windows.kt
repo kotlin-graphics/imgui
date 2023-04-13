@@ -1,10 +1,8 @@
 package imgui.internal.api
 
 import glm_.vec2.Vec2
-import imgui.Cond
-import imgui.ID
+import imgui.*
 import imgui.ImGui.markIniSettingsDirty
-import imgui.WindowFlags
 import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.classes.ShrinkWidthItem
@@ -13,8 +11,6 @@ import imgui.internal.floor
 import imgui.internal.hashStr
 import imgui.WindowFlag as Wf
 
-
-@Suppress("UNCHECKED_CAST")
 
 internal interface windows {
 

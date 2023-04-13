@@ -69,7 +69,7 @@ class KeyRoutingData {
     var nextEntryIndex: KeyRoutingIndex = -1
 
     /** Technically we'd only need 4-bits but for simplify we store ImGuiMod_ values which need 16-bits. ImGuiMod_Shortcut is already translated to Ctrl/Super. */
-    var mods: KeyChord = emptyFlags()
+    var mods: KeyChord = emptyFlags
     var routingNextScore = 255               // Lower is better (0: perfect score)
     var routingCurr: ID = KeyOwner_None
     var routingNext: ID = KeyOwner_None

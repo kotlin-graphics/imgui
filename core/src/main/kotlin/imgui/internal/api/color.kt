@@ -3,7 +3,7 @@ package imgui.internal.api
 import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.ColorEditFlags
+import imgui.*
 import imgui.ImGui.beginPopup
 import imgui.ImGui.beginTooltipEx
 import imgui.ImGui.button
@@ -29,7 +29,6 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.api.g
-import imgui.flagArrayOf
 import imgui.internal.F32_TO_INT8_SAT
 import imgui.internal.sections.TooltipFlag
 import imgui.ColorEditFlag as Cef

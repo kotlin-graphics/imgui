@@ -554,11 +554,11 @@ internal interface debugTools {
     companion object {
         fun debugNodeTableGetSizingPolicyDesc(sizingPolicy: TableFlags): String {
             val flag = sizingPolicy and TableFlag._SizingMask
-            return when {
-                flag eq TableFlag.SizingFixedFit -> "FixedFit"
-                flag eq TableFlag.SizingFixedSame -> "FixedSame"
-                flag eq TableFlag.SizingStretchProp -> "StretchProp"
-                flag eq TableFlag.SizingStretchSame -> "StretchSame"
+            return when (flag) {
+                TableFlag.SizingFixedFit -> "FixedFit"
+                TableFlag.SizingFixedSame -> "FixedSame"
+                TableFlag.SizingStretchProp -> "StretchProp"
+                TableFlag.SizingStretchSame -> "StretchSame"
                 else -> "N/A"
             }
         }
@@ -685,7 +685,7 @@ internal interface debugTools {
         }
 
         val isActive = window.wasActive
-        val treeNodeFlags = if (window === g.navWindow) TreeNodeFlag.Selected else emptyFlags()
+        val treeNodeFlags = if (window === g.navWindow) TreeNodeFlag.Selected else emptyFlags
         if (!isActive)
             pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
         val open = treeNodeEx(label, treeNodeFlags, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")

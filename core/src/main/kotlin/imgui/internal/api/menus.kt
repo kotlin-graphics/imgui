@@ -220,7 +220,7 @@ internal interface menus {
         if (wantClose && isPopupOpen(id))
             closePopupToLevel(g.beginPopupStack.size, true)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else emptyFlags())
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else emptyFlags)
         popID()
 
         if (wantOpen && !menuIsOpen && g.openPopupStack.size > g.beginPopupStack.size)
@@ -310,7 +310,7 @@ internal interface menus {
                     window.drawList.renderCheckMark(pos + Vec2(offsets.offsetMark + stretchW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f), Col.Text.u32, g.fontSize * 0.866f)
             }
         }
-        IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else emptyFlags())
+        IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else emptyFlags)
         if (!enabled)
             endDisabled()
         popID()

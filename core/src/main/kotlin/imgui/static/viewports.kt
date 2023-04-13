@@ -2,6 +2,7 @@ package imgui.static
 
 import imgui.ViewportFlag
 import imgui.api.g
+import imgui.or
 
 // Viewports
 

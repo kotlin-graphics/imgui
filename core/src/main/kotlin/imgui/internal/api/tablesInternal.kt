@@ -36,7 +36,7 @@ interface tablesInternal {
     fun tableFindByID(id: ID): Table? = g.tables.getByKey(id)
 
     fun beginTableEx(
-        name: String, id: ID, columnsCount: Int, flags_: TableFlags = emptyFlags(), outerSize: Vec2 = Vec2(),
+        name: String, id: ID, columnsCount: Int, flags_: TableFlags = emptyFlags, outerSize: Vec2 = Vec2(),
         innerWidth: Float = 0f
     ): Boolean {
 
@@ -119,7 +119,7 @@ interface tablesInternal {
                 setNextWindowScroll(Vec2())
 
             // Create scrolling region (without border and zero window padding)
-            val childFlags = if (flags has Tf.ScrollX) Wf.HorizontalScrollbar else emptyFlags()
+            val childFlags = if (flags has Tf.ScrollX) Wf.HorizontalScrollbar else emptyFlags
             beginChildEx(name, instanceId, outerRect.size, false, childFlags)
             table.innerWindow = g.currentWindow
             val inner = table.innerWindow!!
@@ -189,7 +189,7 @@ interface tablesInternal {
         table.currentColumn = -1
         table.currentRow = -1
         table.rowBgColorCounter = 0
-        table.lastRowFlags = emptyFlags()
+        table.lastRowFlags = emptyFlags
         table.innerClipRect put if (innerWindow === outerWindow) table.workRect else innerWindow.clipRect
         table.innerClipRect clipWith table.workRect     // We need this to honor inner_width
         table.innerClipRect clipWithFull table.hostClipRect
@@ -595,7 +595,7 @@ interface tablesInternal {
             if (column.flags has TableColumnFlag.WidthFixed) {
                 // Apply same widths policy
                 var widthAuto = column.widthAuto
-                if (tableSizingPolicy eq Tf.SizingFixedSame && (column.autoFitQueue != 0x00 || !columnIsResizable))
+                if (tableSizingPolicy == Tf.SizingFixedSame && (column.autoFitQueue != 0x00 || !columnIsResizable))
                     widthAuto = fixedMaxWidthAuto
 
                 // Apply automatic width
@@ -619,7 +619,7 @@ interface tablesInternal {
                 if (column.autoFitQueue != 0x00 || column.stretchWeight < 0f || !columnIsResizable)
                     column.stretchWeight = when {
                         column.initStretchWeightOrWidth > 0f -> column.initStretchWeightOrWidth
-                        tableSizingPolicy eq Tf.SizingStretchProp -> (column.widthAuto / stretchSumWidthAuto) * countStretch
+                        tableSizingPolicy == Tf.SizingStretchProp -> (column.widthAuto / stretchSumWidthAuto) * countStretch
                         else -> 1f
                     }
 
@@ -1019,7 +1019,7 @@ interface tablesInternal {
 
                 // Decide whether right-most column is visible
                 if (column.nextEnabledColumn == -1 && !isResizable)
-                    if (flags and Tf._SizingMask notEq Tf.SizingFixedSame || flags has Tf.NoHostExtendX)
+                    if (flags and Tf._SizingMask != Tf.SizingFixedSame || flags has Tf.NoHostExtendX)
                         continue
                 if (column.maxX <= column.clipRect.min.x) // FIXME-TABLE FIXME-STYLE: Assume BorderSize==1, this is problematic if we want to increase the border size..
                     continue
@@ -1092,7 +1092,7 @@ interface tablesInternal {
             }
 
             val sizeAllDesc = when {
-                columnsEnabledFixedCount == columnsEnabledCount && flags and Tf._SizingMask notEq Tf.SizingFixedSame -> LocKey.TableSizeAllFit.msg // "###SizeAll" All fixed
+                columnsEnabledFixedCount == columnsEnabledCount && flags and Tf._SizingMask != Tf.SizingFixedSame -> LocKey.TableSizeAllFit.msg // "###SizeAll" All fixed
                 else -> LocKey.TableSizeAllDefault.msg // "###SizeAll" All stretch or mixed
             }
             if (menuItem(sizeAllDesc, ""))
@@ -1728,7 +1728,7 @@ interface tablesInternal {
         window.skipItems = column.isSkipItems
         if (column.isSkipItems) {
             g.lastItemData.id = 0
-            g.lastItemData.statusFlags = emptyFlags()
+            g.lastItemData.statusFlags = emptyFlags
         }
 
         if (flags has Tf.NoClip) {

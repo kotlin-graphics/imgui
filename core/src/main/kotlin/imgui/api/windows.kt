@@ -76,7 +76,7 @@ interface windows {
 
     @return isOpen
      */
-    fun begin(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = emptyFlags()): Boolean {
+    fun begin(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = emptyFlags): Boolean {
 
         assert(name.isNotEmpty()) { "Window name required" }
         assert(g.withinFrameScope) { "Forgot to call ImGui::newFrame()" }
@@ -434,7 +434,7 @@ interface windows {
                 assert(window.idStack.size == 1)
                 val id = window.idStack.pop() // As window->IDStack[0] == window->ID here, make sure TestEngine doesn't erroneously see window as parent of itself.
                 IMGUI_TEST_ENGINE_ITEM_ADD(window.rect(), window.id)
-                IMGUI_TEST_ENGINE_ITEM_INFO(window.id, window.name, if (g.hoveredWindow === window) ItemStatusFlag.HoveredRect else emptyFlags())
+                IMGUI_TEST_ENGINE_ITEM_INFO(window.id, window.name, if (g.hoveredWindow === window) ItemStatusFlag.HoveredRect else emptyFlags)
                 window.idStack += id
             }
 
@@ -471,7 +471,7 @@ interface windows {
                 if (window.scrollbar.x && !window.scrollbar.y) window.scrollbar.y =
                     neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f,
-                                          if (window.scrollbar.x) style.scrollbarSize else 0f)
+                    if (window.scrollbar.x) style.scrollbarSize else 0f)
 
                 // Amend the partially filled window->DecorationXXX values.
                 window.decoOuterSizeX2 += window.scrollbarSizes.x
@@ -505,9 +505,9 @@ interface windows {
                 // - NavUpdatePageUpPageDown()
                 // - Scrollbar()
                 innerRect.put(minX = pos.x + decoOuterSizeX1,
-                              minY = pos.y + decoOuterSizeY1,
-                              maxX = pos.x + size.x - decoOuterSizeX2,
-                              maxY = pos.y + size.y - decoOuterSizeY2)
+                    minY = pos.y + decoOuterSizeY1,
+                    maxX = pos.x + size.x - decoOuterSizeX2,
+                    maxY = pos.y + size.y - decoOuterSizeY2)
 
                 // Inner clipping rectangle.
                 // Will extend a little bit outside the normal work region.
@@ -602,7 +602,7 @@ interface windows {
                     else -> max(if (allowScrollbarY) window.contentSize.y else 0f, size.y - windowPadding.y * 2f - (decoOuterSizeY1 + decoOuterSizeY2))
                 }
                 workRect.min.put(floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
-                                 floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
+                    floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
                 workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
                 parentWorkRect put workRect
 
@@ -612,9 +612,9 @@ interface windows {
                 // Used by:
                 // - Mouse wheel scrolling + many other things
                 contentRegionRect.min.put(pos.x - scroll.x + windowPadding.x + decoOuterSizeX1,
-                                          pos.y - scroll.y + windowPadding.y + decoOuterSizeY1)
+                    pos.y - scroll.y + windowPadding.y + decoOuterSizeY1)
                 contentRegionRect.max.put(contentRegionRect.min.x + if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else size.x - windowPadding.x * 2f - (decoOuterSizeX1 + decoOuterSizeX2),
-                                          contentRegionRect.min.y + if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else size.y - windowPadding.y * 2f - (decoOuterSizeY1 + decoOuterSizeY2))
+                    contentRegionRect.min.y + if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else size.y - windowPadding.y * 2f - (decoOuterSizeY1 + decoOuterSizeY2))
 
                 // Setup drawing context
                 // (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold transient data only. Nowadays difference between window-> and window->DC-> is dubious.)
@@ -688,7 +688,7 @@ interface windows {
 
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
-            val itemFlag = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)) ItemStatusFlag.HoveredRect else emptyFlags()
+            val itemFlag = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)) ItemStatusFlag.HoveredRect else emptyFlags
             setLastItemData(window.moveId, g.currentItemFlags, itemFlag, titleBarRect)
 
             // [DEBUG]

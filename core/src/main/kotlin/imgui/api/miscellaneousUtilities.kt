@@ -53,7 +53,7 @@ interface miscellaneousUtilities {
 
 
     /** helper to create a child window / scrolling region that looks like a normal widget frame    */
-    fun beginChildFrame(id: ID, size: Vec2, extraFlags: WindowFlags = emptyFlags()): Boolean {
+    fun beginChildFrame(id: ID, size: Vec2, extraFlags: WindowFlags = emptyFlags): Boolean {
         pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
         pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
         pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)

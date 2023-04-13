@@ -89,7 +89,7 @@ internal interface popupsModalsTooltips {
      *  level).
      *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
      *  to NULL)    */
-    fun openPopupEx(id: ID, popupFlags: PopupFlags = emptyFlags()) {
+    fun openPopupEx(id: ID, popupFlags: PopupFlags = emptyFlags) {
 
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.beginPopupStack.size
@@ -101,8 +101,8 @@ internal interface popupsModalsTooltips {
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val openPopupPos = navCalcPreferredRefPos()
         val popupRef = PopupData(popupId = id, window = null, backupNavWindow = g.navWindow, // When popup closes focus may be restored to NavWindow (depend on window type).
-                                 openFrameCount = g.frameCount, openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
-                                 openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
+            openFrameCount = g.frameCount, openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
+            openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
 
         IMGUI_DEBUG_LOG_POPUP("[popup] OpenPopupEx(0x%08X)", id)
         if (g.openPopupStack.size < currentStackSize + 1) g.openPopupStack += popupRef
@@ -204,7 +204,7 @@ internal interface popupsModalsTooltips {
     /** Supported flags: ImGuiPopupFlags_AnyPopupId, ImGuiPopupFlags_AnyPopupLevel
      *
      *  Test for id at the current BeginPopup() level of the popup stack (this doesn't scan the whole popup stack!) */
-    fun isPopupOpen(id: ID, popupFlags: PopupFlags = emptyFlags()): Boolean = when {
+    fun isPopupOpen(id: ID, popupFlags: PopupFlags = emptyFlags): Boolean = when {
         popupFlags has PopupFlag.AnyPopupId -> { // Return true if any popup is open at the current BeginPopup() level of the popup stack
             // This may be used to e.g. test for another popups already opened to handle popups priorities at the same level.
             assert(id == 0)
@@ -239,7 +239,7 @@ internal interface popupsModalsTooltips {
 
     /** Not exposed publicly as BeginTooltip() because bool parameters are evil. Let's see if other needs arise first.
      *  @param extraWindowFlags WindowFlag   */
-    fun beginTooltipEx(tooltipFlags_: TooltipFlags = emptyFlags(), extraWindowFlags: WindowFlags = emptyFlags()) {
+    fun beginTooltipEx(tooltipFlags_: TooltipFlags = emptyFlags, extraWindowFlags: WindowFlags = emptyFlags) {
         var tooltipFlags = tooltipFlags_
         if (g.dragDropWithinSource || g.dragDropWithinTarget) { // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
             // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.

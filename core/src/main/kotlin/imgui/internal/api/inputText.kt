@@ -618,8 +618,8 @@ internal interface inputText {
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
                     callback!!
                     // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
-                    var eventFlag: InputTextFlags = emptyFlags()
-                    var eventKey = Key.None
+                    var eventFlag: InputTextFlags = emptyFlags
+                    var eventKey: Key = Key.None
                     when {
                         flags has Itf.CallbackCompletion && Key.Tab.isPressed -> {
                             eventFlag = Itf.CallbackCompletion
@@ -669,7 +669,7 @@ internal interface inputText {
                         callbackData = if (isReadOnly) buf else state.textA // Pointer may have been invalidated by a resize callback
                         assert(cbData.buf === callbackData) { "Invalid to modify those fields" }
                         assert(cbData.bufSize == state.bufCapacityA)
-                        assert(cbData.flags eq flags)
+                        assert(cbData.flags == flags)
                         val bufDirty = cbData.bufDirty
                         if (cbData.cursorPos != utf8CursorPos || bufDirty) {
                             state.stb.cursor = textCountCharsFromUtf8(cbData.buf, cbData.cursorPos)
