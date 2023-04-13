@@ -6,7 +6,7 @@ import glm_.vec4.Vec4;
 import imgui.Cond;
 import imgui.Flag;
 import imgui.ImGui;
-import imgui.MutableProperty0;
+import imgui.MutableReference;
 import imgui.classes.Context;
 import imgui.classes.IO;
 import imgui.impl.gl.ImplGL3;
@@ -39,8 +39,8 @@ public class OpenGL3 {
 
     private float[] f = {0f};
     private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
-    // Java users can use both a MutableProperty0 or a Boolean Array
-    private MutableProperty0<Boolean> showAnotherWindow = new MutableProperty0<>(false);
+    // Java users can use both a MutableReference or a Boolean Array
+    private MutableReference<Boolean> showAnotherWindow = new MutableReference<>(false);
     private boolean[] showDemo = {true};
     private int[] counter = {0};
 

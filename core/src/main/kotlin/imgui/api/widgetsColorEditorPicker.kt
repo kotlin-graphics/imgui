@@ -127,8 +127,8 @@ interface widgetsColorEditorPicker {
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
      *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
-    fun colorPicker4(label: String, col: Vec3, flags: ColorEditFlags = emptyFlags, refCol: Vec4?): Boolean = if (refCol != null) colorPicker4(label, col.x, col.y, col.z, 1f, flags, col::put, refCol::put)
-    else colorPicker4(label, col.x, col.y, col.z, 1f, flags, col::put)
+    fun colorPicker4(label: String, col: Vec3, flags: ColorEditFlags = emptyFlags, refCol: Vec4?): Boolean =
+        colorPicker4(label, col.x, col.y, col.z, 1f, flags, refCol, col::put)
 
     /** ColorPicker
      *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
@@ -136,8 +136,8 @@ interface widgetsColorEditorPicker {
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
      *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
-    fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags, refCol: Vec4? = null): Boolean = if (refCol != null) colorPicker4(label, col.x, col.y, col.z, col.w, flags, col::put, refCol::put)
-    else colorPicker4(label, col.x, col.y, col.z, col.w, flags, col::put)
+    fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags, refCol: Vec4? = null): Boolean =
+        colorPicker4(label, col.x, col.y, col.z, col.w, flags, refCol, col::put)
 
     fun colorButton(descId: String, col: Vec3, flags: ColorEditFlags = emptyFlags, sizeArg: Vec2 = Vec2()): Boolean = colorButton(descId, col.x, col.y, col.z, 1f, flags, sizeArg)
 
@@ -334,7 +334,7 @@ inline fun colorEdit4(label: String, x: Float, y: Float, z: Float, w: Float, fla
             val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
             val pickerFlags = (flags_ and pickerFlagsToForward) or Cef._DisplayMask or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
             setNextItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
-            valueChanged /= colorPicker4("##picker", x, y, z, w, pickerFlags, colSetter, g.colorPickerRef::put)
+            valueChanged /= colorPicker4("##picker", x, y, z, w, pickerFlags, g.colorPickerRef, colSetter)
             endPopup()
         }
     }
@@ -403,9 +403,9 @@ inline fun colorPicker3(label: String, r: Float, g: Float, b: Float, flags: Colo
  *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
  *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
  *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
-inline fun colorPicker4(label: String, x: Float, y: Float, z: Float, w: Float, flags: ColorEditFlags = emptyFlags, colSetter: Vec4Setter = { _, _, _, _ -> }, refColSetter: Vec4Setter = { _, _, _, _ -> }): Boolean {
+inline fun colorPicker4(label: String, x: Float, y: Float, z: Float, w: Float, flags: ColorEditFlags = emptyFlags, refCol: Vec4? = null, colSetter: Vec4Setter = { _, _, _, _ -> }): Boolean {
     val col = Vec4(x, y, z, w)
-    return colorPicker4(label, col, flags, refColSetter).also { col into colSetter }
+    return colorPicker4(label, col, flags, refCol).also { col into colSetter }
 }
 
 /** ColorPicker
@@ -414,7 +414,7 @@ inline fun colorPicker4(label: String, x: Float, y: Float, z: Float, w: Float, f
  *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
  *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
  *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
-inline fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = emptyFlags, refColSetter: Vec4Setter = { _, _, _, _ -> }): Boolean {
+fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = emptyFlags, refCol: Vec4? = null): Boolean {
     val window = currentWindow
     if (window.skipItems) return false
 
@@ -562,10 +562,12 @@ inline fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = empty
 
         val subFlagsToForward = Cef._InputMask or Cef.HDR or Cef.AlphaPreview or Cef.AlphaPreviewHalf or Cef.NoTooltip
         colorButton("##current", col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3], flags and subFlagsToForward, Vec2(squareSz * 3, squareSz * 2))
-        text("Original")
-        if (colorButton("##original", col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3], flags and subFlagsToForward, Vec2(squareSz * 3, squareSz * 2))) {
-            col into refColSetter
-            valueChanged = true
+        if (refCol != null) {
+            text("Original")
+            if (colorButton("##original", refCol[0], refCol[1], refCol[2], if (flags has Cef.NoAlpha) 1f else refCol[3], flags and subFlagsToForward, Vec2(squareSz * 3, squareSz * 2))) {
+                repeat(components) { i -> col[i] = refCol[i] }
+                valueChanged = true
+            }
         }
         popItemFlag()
         endGroup()
