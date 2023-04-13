@@ -57,7 +57,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     var vtxBuffer = DrawVert_Buffer(0)
 
     /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
-    var flags: DrawListFlags = DrawListFlag.None.i
+    var flags: DrawListFlags = emptyFlags
 
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -166,28 +166,28 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (col hasnt COL32_A_MASK) return
         pathLineTo(p1 + Vec2(0.5f))
         pathLineTo(p2 + Vec2(0.5f))
-        pathStroke(col, 0, thickness)
+        pathStroke(col, thickness = thickness)
     }
 
     /** Note we don't render 1 pixels sized rectangles properly.
      * @param pMin: upper-left
      * @param pMax: lower-right
      * (== upper-left + size)   */
-    fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = 0, thickness: Float = 1f) {
+    fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = emptyFlags, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
         if (this.flags has DrawListFlag.AntiAliasedLines)
             pathRect(pMin + 0.5f, pMax - 0.5f, rounding, flags)
         else    // Better looking lower-right corner and rounded non-AA shapes.
             pathRect(pMin + 0.5f, pMax - 0.49f, rounding, flags)
-        pathStroke(col, DrawFlag.Closed.i, thickness)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     /** @param pMin: upper-left
      *  @param pMax: lower-right
      *  (== upper-left + size) */
-    fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = 0) {
+    fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = emptyFlags) {
         if (col hasnt COL32_A_MASK) return
-        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
+        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask) == DrawFlag.RoundCornersNone) {
             primReserve(6, 4)
             primRect(Vec2(pMin), pMax, col) // [JVM] `pMin` safety first
         } else {
@@ -224,7 +224,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathLineTo(p2)
         pathLineTo(p3)
         pathLineTo(p4)
-        pathStroke(col, DrawFlag.Closed.i, thickness)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     fun addQuadFilled(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int) {
@@ -245,7 +245,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathLineTo(p1)
         pathLineTo(p2)
         pathLineTo(p3)
-        pathStroke(col, DrawFlag.Closed.i, thickness)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     fun addTriangleFilled(p1: Vec2, p2: Vec2, p3: Vec2, col: Int) {
@@ -276,7 +276,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
         }
 
-        pathStroke(col, DrawFlag.Closed.i, thickness)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0) {
@@ -308,7 +308,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = (glm.πf * 2f) * (numSegments.f - 1f) / numSegments.f
         pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
-        pathStroke(col, DrawFlag.Closed.i, thickness)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     /** Guaranteed to honor 'num_segments' */
@@ -385,7 +385,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             // - If AA_SIZE is not 1.0f we cannot use the texture path.
             val useTexture = this.flags has DrawListFlag.AntiAliasedLinesUseTex && integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f && AA_SIZE == 1f
 
-            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i) { "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off" }
+            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines) { "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off" }
 
             val idxCount = if (useTexture) count * 6 else (count * if (thickLine) 18 else 12)
             val vtxCount = if (useTexture) pointsCount * 2 else (pointsCount * if (thickLine) 4 else 3)
@@ -707,7 +707,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         pathLineTo(p1)
         pathBezierCubicCurveTo(p2, p3, p4, numSegments)
-        pathStroke(col, 0, thickness)
+        pathStroke(col, thickness = thickness)
     }
 
     /** Quad Bezier (3 control points)
@@ -719,7 +719,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         pathLineTo(p1)
         pathBezierQuadraticCurveTo(p2, p3, numSegments)
-        pathStroke(col, 0, thickness)
+        pathStroke(col, thickness = thickness)
     }
 
 
@@ -733,7 +733,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun addImage(
         userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
         uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE,
-                ) {
+    ) {
 
         if (col hasnt COL32_A_MASK) return
 
@@ -750,7 +750,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
         uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
         uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE,
-                    ) {
+    ) {
 
         if (col hasnt COL32_A_MASK) return
 
@@ -765,12 +765,12 @@ class DrawList(sharedData: DrawListSharedData?) {
             popTextureID()
     }
 
-    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float, flags_: DrawFlags = 0) {
+    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float, flags_: DrawFlags = emptyFlags) {
         if (col hasnt COL32_A_MASK)
             return
 
         val flags = fixRectCornerFlags(flags_)
-        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
+        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask) == DrawFlag.RoundCornersNone) {
             addImage(userTextureId, pMin, pMax, uvMin, uvMax, col)
             return
         }
@@ -803,7 +803,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathFillConvex(col: Int) = addConvexPolyFilled(_path, col).also { pathClear() }
 
     /** rounding_corners_flags: 4 bits corresponding to which corner to round   */
-    fun pathStroke(col: Int, flags: DrawFlags = 0, thickness: Float = 1.0f) = addPolyline(_path, col, flags, thickness).also { pathClear() }
+    fun pathStroke(col: Int, flags: DrawFlags = emptyFlags, thickness: Float = 1.0f) =
+        addPolyline(_path, col, flags, thickness).also { pathClear() }
 
     /** @param center must be a new instance */
     fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 0) {
@@ -928,9 +929,11 @@ class DrawList(sharedData: DrawListSharedData?) {
         var flags = flags_
         // If this triggers, please update your code replacing hardcoded values with new ImDrawFlags_RoundCorners* values.
         // Note that ImDrawFlags_Closed (== 0x01) is an invalid flag for AddRect(), AddRectFilled(), PathRect() etc...
-        check(flags hasnt 0x0F) { "Misuse of legacy hardcoded ImDrawCornerFlags values!" }
+        // [JVM]: Since we're using type-safe flags, this shouldn't be an issue. THe only DrawFlag that could've
+        // triggered the previous type-unsafe version of this is Df.Closed, and so we handle it here.
+        check(flags hasnt DrawFlag.Closed) { "Misuse of legacy hardcoded ImDrawCornerFlags values!" }
 
-        if (flags hasnt DrawFlag.RoundCornersMask_)
+        if (flags hasnt DrawFlag.RoundCornersMask)
             flags = flags or DrawFlag.RoundCornersAll
 
         return flags
@@ -955,14 +958,14 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, flags_: DrawFlags = 0) {
+    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, flags_: DrawFlags = emptyFlags) {
         val flags = fixRectCornerFlags(flags_)
-        var cond = ((flags and DrawFlag.RoundCornersTop) == DrawFlag.RoundCornersTop.i) or ((flags and DrawFlag.RoundCornersBottom) == DrawFlag.RoundCornersBottom.i)
+        var cond = (DrawFlag.RoundCornersTop in flags) or (DrawFlag.RoundCornersBottom in flags)
         var rounding = rounding_ min ((b.x - a.x).abs * (if (cond) 0.5f else 1f) - 1f)
-        cond = ((flags and DrawFlag.RoundCornersLeft) == DrawFlag.RoundCornersLeft.i) or ((flags and DrawFlag.RoundCornersRight) == DrawFlag.RoundCornersRight.i)
+        cond = (DrawFlag.RoundCornersLeft in flags) or (DrawFlag.RoundCornersRight in flags)
         rounding = rounding min ((b.y - a.y).abs * (if (cond) 0.5f else 1f) - 1f)
 
-        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
+        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask) == DrawFlag.RoundCornersNone) {
             pathLineTo(a)
             pathLineTo(Vec2(b.x, a.y))
             pathLineTo(b)
@@ -1193,7 +1196,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             idxBuffer = idxBuffer.resize(0)
             vtxBuffer = vtxBuffer.resize(0)
         }
-        flags = DrawListFlag.None.i
+        flags = emptyFlags
         _vtxCurrentIdx = 0
         _vtxWritePtr = 0
         _idxWritePtr = 0
@@ -1349,7 +1352,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
                 val s = _data.arcFastVtx[sampleIndex]
                 _path += Vec2(center.x + s.x * radius,
-                              center.y + s.y * radius)
+                    center.y + s.y * radius)
 
                 a += aStep; sampleIndex += aStep; aStep = aNextStep
             }
@@ -1362,7 +1365,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
                 val s = _data.arcFastVtx[sampleIndex]
                 _path += Vec2(center.x + s.x * radius,
-                              center.y + s.y * radius)
+                    center.y + s.y * radius)
 
                 a -= aStep; sampleIndex -= aStep; aStep = aNextStep
             }
@@ -1375,7 +1378,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
             val s = _data.arcFastVtx[normalizedMaxSample]
             _path += Vec2(center.x + s.x * radius,
-                          center.y + s.y * radius)
+                center.y + s.y * radius)
         }
 
         //        IM_ASSERT_PARANOID(_Path.Data + _Path.Size == out_ptr)

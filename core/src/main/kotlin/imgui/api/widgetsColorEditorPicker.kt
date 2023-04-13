@@ -1,6 +1,5 @@
 package imgui.api
 
-import gli_.has
 import glm_.func.cos
 import glm_.func.sin
 import glm_.glm
@@ -66,7 +65,6 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.classes.DrawList
-import imgui.has
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -87,21 +85,21 @@ interface widgetsColorEditorPicker {
     /** 3-4 components color edition. Click on colored squared to open a color picker, right-click for options.
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
-    fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
-            colorEdit4(label, col to _fa, flags or Cef.NoAlpha)
-                    .also { col put _fa }
+    fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags): Boolean =
+        colorEdit4(label, col to _fa, flags or Cef.NoAlpha)
+            .also { col put _fa }
 
-    fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean =
-            colorEdit4(label, col, flags or Cef.NoAlpha)
+    fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = emptyFlags): Boolean =
+        colorEdit4(label, col, flags or Cef.NoAlpha)
 
     /** Edit colors components (each component in 0.0f..1.0f range).
      *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
      *  With typical options: Left-click on color square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
-    fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
-            colorEdit4(label, col to _fa, flags).also { col put _fa }
+    fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags): Boolean =
+        colorEdit4(label, col to _fa, flags).also { col put _fa }
 
-    fun colorEdit4(label: String, col: FloatArray, flags_: ColorEditFlags = 0): Boolean {
+    fun colorEdit4(label: String, col: FloatArray, flags_: ColorEditFlags = emptyFlags): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -184,7 +182,7 @@ interface widgetsColorEditorPicker {
                 } else
                     valueChanged /= dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n])
                 if (flags hasnt Cef.NoOptions)
-                    openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
+                    openPopupOnItemClick("context", PopupFlag.MouseButtonRight)
             }
 
         } else if (flags has Cef.DisplayHEX && flags hasnt Cef.NoInputs) {
@@ -205,7 +203,7 @@ interface widgetsColorEditorPicker {
                 str.substring(p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }
             if (flags hasnt Cef.NoOptions)
-                openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
+                openPopupOnItemClick("context", PopupFlag.MouseButtonRight)
         }
 
         var pickerActiveWindow: Window? = null
@@ -225,7 +223,7 @@ interface widgetsColorEditorPicker {
                     setNextWindowPos(g.lastItemData.rect.bl + Vec2(0f, style.itemSpacing.y))
                 }
             if (flags hasnt Cef.NoOptions)
-                openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
+                openPopupOnItemClick("context", PopupFlag.MouseButtonRight)
 
             if (beginPopup("picker"))
                 if (g.currentWindow!!.beginCount == 1) {
@@ -317,7 +315,7 @@ interface widgetsColorEditorPicker {
         }
     }
 
-    fun colorEditVec4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean {
+    fun colorEditVec4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags): Boolean {
         val col4 = floatArrayOf(col.x, col.y, col.z, col.w)
         val valueChanged = colorEdit4(label, col4, flags)
         col.x = col4[0]
@@ -327,11 +325,11 @@ interface widgetsColorEditorPicker {
         return valueChanged
     }
 
-    fun colorPicker3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
-            colorPicker3(label, col to _fa, flags)
-                    .also { col put _fa }
+    fun colorPicker3(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags): Boolean =
+        colorPicker3(label, col to _fa, flags)
+            .also { col put _fa }
 
-    fun colorPicker3(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean {
+    fun colorPicker3(label: String, col: FloatArray, flags: ColorEditFlags = emptyFlags): Boolean {
         val col4 = floatArrayOf(*col, 1f)
         if (!colorPicker4(label, col4, flags or Cef.NoAlpha)) return false
         col[0] = col4[0]; col[1] = col4[1]; col[2] = col4[2]
@@ -344,9 +342,9 @@ interface widgetsColorEditorPicker {
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
      *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
-    fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = 0, refCol: Vec4? = null): Boolean =
-            colorPicker4(label, col to _fa, flags, refCol?.to(_fa2))
-                    .also { col put _fa; refCol?.put(_fa2) }
+    fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = emptyFlags, refCol: Vec4? = null): Boolean =
+        colorPicker4(label, col to _fa, flags, refCol?.to(_fa2))
+            .also { col put _fa; refCol?.put(_fa2) }
 
     /** ColorPicker
      *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
@@ -354,7 +352,7 @@ interface widgetsColorEditorPicker {
      *  FIXME: we adjust the big color square height based on item width, which may cause a flickering feedback loop
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
      *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
-    fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = 0, refCol: FloatArray? = null): Boolean {
+    fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = emptyFlags, refCol: FloatArray? = null): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -378,9 +376,9 @@ interface widgetsColorEditorPicker {
 
         // Read stored options
         if (flags hasnt Cef._PickerMask)
-            flags = flags or ((if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef.DefaultOptions.i) and Cef._PickerMask)
+            flags = flags or ((if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef.DefaultOptions) and Cef._PickerMask)
         if (flags hasnt Cef._InputMask)
-            flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef.DefaultOptions.i) and Cef._InputMask)
+            flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef.DefaultOptions) and Cef._InputMask)
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check that only 1 is selected" }
         assert((flags and Cef._InputMask).isPowerOfTwo)  // Check that only 1 is selected
         if (flags hasnt Cef.NoOptions)
@@ -426,7 +424,7 @@ interface widgetsColorEditorPicker {
         var valueChangedH = false
         var valueChangedSv = false
 
-        pushItemFlag(ItemFlag.NoNav.i, true)
+        pushItemFlag(ItemFlag.NoNav, true)
         if (flags has Cef.PickerHueWheel) {
             // Hue wheel + SV triangle logic
             invisibleButton("hsv", Vec2(svPickerSize + style.itemInnerSpacing.x + barsWidth, svPickerSize))
@@ -457,7 +455,7 @@ interface widgetsColorEditorPicker {
                 }
             }
             if (flags hasnt Cef.NoOptions)
-                openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
+                openPopupOnItemClick("context", PopupFlag.MouseButtonRight)
 
         } else if (flags has Cef.PickerHueBar) {
             // SV rectangle logic
@@ -472,7 +470,7 @@ interface widgetsColorEditorPicker {
                 valueChangedSv = true; valueChanged = true
             }
             if (flags hasnt Cef.NoOptions)
-                openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
+                openPopupOnItemClick("context", PopupFlag.MouseButtonRight)
             // Hue bar logic
             cursorScreenPos = Vec2(bar0PosX, pickerPos.y)
             invisibleButton("hue", Vec2(barsWidth, svPickerSize))
@@ -508,7 +506,7 @@ interface widgetsColorEditorPicker {
             }
         }
         if (flags hasnt Cef.NoSidePreview) {
-            pushItemFlag(ItemFlag.NoNavDefaultFocus.i, true)
+            pushItemFlag(ItemFlag.NoNavDefaultFocus, true)
             val colV4 = Vec4(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
             if (flags has Cef.NoLabel)
                 text("Current")
@@ -618,7 +616,7 @@ interface widgetsColorEditorPicker {
                 val a1 = (n + 1f) / 6f * 2f * glm.PIf + aeps
                 val vertStartIdx = drawList.vtxBuffer.size
                 drawList.pathArcTo(wheelCenter, (wheelRInner + wheelROuter) * 0.5f, a0, a1, segmentPerArc)
-                drawList.pathStroke(colWhite, 0, wheelThickness)
+                drawList.pathStroke(colWhite, thickness = wheelThickness)
                 val vertEndIdx = drawList.vtxBuffer.size
 
                 // Paint colors over existing vertices
@@ -631,7 +629,7 @@ interface widgetsColorEditorPicker {
             val cosHueAngle = glm.cos(H * 2f * glm.PIf)
             val sinHueAngle = glm.sin(H * 2f * glm.PIf)
             val hueCursorPos = Vec2(wheelCenter.x + cosHueAngle * (wheelRInner + wheelROuter) * 0.5f,
-                                    wheelCenter.y + sinHueAngle * (wheelRInner + wheelROuter) * 0.5f)
+                wheelCenter.y + sinHueAngle * (wheelRInner + wheelROuter) * 0.5f)
             val hueCursorRad = wheelThickness * if (valueChangedH) 0.65f else 0.55f
             val hueCursorSegments = glm.clamp((hueCursorRad / 1.4f).i, 9, 32)
             drawList.addCircleFilled(hueCursorPos, hueCursorRad, hueColor32, hueCursorSegments)
@@ -707,7 +705,7 @@ interface widgetsColorEditorPicker {
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
      *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.
      *  Note that 'col' may be encoded in HSV if ImGuiColorEditFlags_InputHSV is set.   */
-    fun colorButton(descId: String, col: Vec4, flags_: ColorEditFlags = 0, sizeArg: Vec2 = Vec2()): Boolean {
+    fun colorButton(descId: String, col: Vec4, flags_: ColorEditFlags = emptyFlags, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -725,7 +723,7 @@ interface widgetsColorEditorPicker {
 
         var flags = flags_
         if (flags has Cef.NoAlpha)
-            flags = flags and (Cef.AlphaPreview or Cef.AlphaPreviewHalf).inv()
+            flags = flags wo (Cef.AlphaPreview or Cef.AlphaPreviewHalf)
 
         val colRgb = Vec4(col)
         if (flags has Cef.InputHSV)
@@ -742,9 +740,11 @@ interface widgetsColorEditorPicker {
         }
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
-            renderColorRectWithAlphaCheckerboard(window.drawList, Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max,
-                                                 getColorU32(colRgb), gridStep, Vec2(-gridStep + off, off), rounding, DrawFlag.RoundCornersRight.i)
-            window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding, DrawFlag.RoundCornersLeft.i)
+            renderColorRectWithAlphaCheckerboard(
+                window.drawList, Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max,
+                getColorU32(colRgb), gridStep, Vec2(-gridStep + off, off), rounding, DrawFlag.RoundCornersRight
+            )
+            window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding, DrawFlag.RoundCornersLeft)
         } else {
             /*  Because getColorU32() multiplies by the global style alpha and we don't want to display a checkerboard 
                 if the source code had no alpha */

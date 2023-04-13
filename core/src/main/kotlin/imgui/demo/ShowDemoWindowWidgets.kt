@@ -167,8 +167,6 @@ import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
 import imgui.dsl.withTextWrapPos
-import imgui.internal.sections.ItemFlags
-import imgui.or
 import unsigned.Ubyte
 import unsigned.Uint
 import unsigned.Ulong
@@ -202,10 +200,11 @@ object ShowDemoWindowWidgets {
     /* Text Input */
     object Funcs2 {
         val MyResizeCallback: InputTextCallback = { data ->
-            if (data.eventFlag == Itf.CallbackResize.i) {
+            if (data.eventFlag == Itf.CallbackResize) {
                 val myString = data.userData as ByteArray
                 assert(myString.contentEquals(data.buf))
-                data.userData = ByteArray(data.bufSize)  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
+                // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
+                data.userData = ByteArray(data.bufSize)
                 data.buf = myString
             }
             false
@@ -213,7 +212,7 @@ object ShowDemoWindowWidgets {
 
         // Note: Because ImGui:: is a namespace you would typically add your own function into the namespace.
         // For example, you code may declare a function 'ImGui::InputText(const char* label, MyString* my_str)'
-        val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: ItemFlags) -> Boolean =
+        val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: InputTextSingleFlags) -> Boolean =
             { label, myStr, size, flags ->
                 assert(flags hasnt Itf.CallbackResize)
                 inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
@@ -395,7 +394,7 @@ object ShowDemoWindowWidgets {
                     Hold SHIFT/ALT for faster/slower edit.
                     Double-click or CTRL+click to input value.""".trimIndent())
 
-                    dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%", SliderFlag.AlwaysClamp.i)
+                    dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%", SliderFlag.AlwaysClamp)
 
                     dragFloat("drag float", ::f2, 0.005f)
                     dragFloat("drag small float", ::f3, 0.0001f, 0f, 0f, "%.06f ns")
@@ -498,10 +497,10 @@ object ShowDemoWindowWidgets {
                     helpMarker("""
                     This is a more typical looking tree with selectable nodes.
                     Click to select, CTRL+Click to toggle, click on arrows or double-click to open.""".trimIndent())
-                    checkboxFlags("ImGuiTreeNodeFlags_OpenOnArrow", ::baseFlags, Tnf.OpenOnArrow.i)
-                    checkboxFlags("ImGuiTreeNodeFlags_OpenOnDoubleClick", ::baseFlags, Tnf.OpenOnDoubleClick.i)
-                    checkboxFlags("ImGuiTreeNodeFlags_SpanAvailWidth", ::baseFlags, Tnf.SpanAvailWidth.i); sameLine(); helpMarker("Extend hit area to all available width instead of allowing more items to be laid out after the node.")
-                    checkboxFlags("ImGuiTreeNodeFlags_SpanFullWidth", ::baseFlags, Tnf.SpanFullWidth.i)
+                    checkboxFlags("ImGuiTreeNodeFlags_OpenOnArrow", ::baseFlags, Tnf.OpenOnArrow)
+                    checkboxFlags("ImGuiTreeNodeFlags_OpenOnDoubleClick", ::baseFlags, Tnf.OpenOnDoubleClick)
+                    checkboxFlags("ImGuiTreeNodeFlags_SpanAvailWidth", ::baseFlags, Tnf.SpanAvailWidth); sameLine(); helpMarker("Extend hit area to all available width instead of allowing more items to be laid out after the node.")
+                    checkboxFlags("ImGuiTreeNodeFlags_SpanFullWidth", ::baseFlags, Tnf.SpanFullWidth)
                     checkbox("Align label with current X position", ::alignLabelWithCurrentXposition)
                     checkbox("Test tree node as drag source", ::testDragAndDrop)
                     text("Hello!")
@@ -567,7 +566,7 @@ object ShowDemoWindowWidgets {
         operator fun invoke() {
             treeNode("Collapsing Headers") {
                 checkbox("Show 2nd header", ::closableGroup)
-                collapsingHeader("Header", Tnf.None.i) {
+                collapsingHeader("Header") {
                     text("IsItemHovered: ${isItemHovered()}")
                     for (i in 0..4) text("Some content $i")
                 }
@@ -729,7 +728,7 @@ object ShowDemoWindowWidgets {
     }
 
     object Combo {
-        var flags = ComboFlag.None.i
+        var flags: ComboFlags = emptyFlags
         var itemCurrentIdx = 0
         var itemCurrent2 = 0
         var itemCurrent3 = 0
@@ -746,11 +745,11 @@ object ShowDemoWindowWidgets {
             treeNode("Combo") {
                 // Combo Boxes are also called "Dropdown" in other systems
                 // Expose flags as checkbox for the demo
-                checkboxFlags("ComboFlag.PopupAlignLeft", ::flags, ComboFlag.PopupAlignLeft.i)
+                checkboxFlags("ComboFlag.PopupAlignLeft", ::flags, ComboFlag.PopupAlignLeft)
                 sameLine(); helpMarker("Only makes a difference if the popup is larger than the combo")
-                if (checkboxFlags("ComboFlag.NoArrowButton", ::flags, ComboFlag.NoArrowButton.i))
+                if (checkboxFlags("ComboFlag.NoArrowButton", ::flags, ComboFlag.NoArrowButton))
                     flags = flags wo ComboFlag.NoPreview     // Clear the other flag, as we cannot combine both
-                if (checkboxFlags("ComboFlag.NoPreview", ::flags, ComboFlag.NoPreview.i))
+                if (checkboxFlags("ComboFlag.NoPreview", ::flags, ComboFlag.NoPreview))
                     flags = flags wo ComboFlag.NoArrowButton // Clear the other flag, as we cannot combine both
 
                 // Using the generic BeginCombo() API, you have full control over how to display the combo contents.
@@ -849,7 +848,7 @@ object ShowDemoWindowWidgets {
                     selectable("2. I am selectable", selection0, 1)
                     text("(I am not selectable)")
                     selectable("4. I am selectable", selection0, 2)
-                    if (selectable("5. I am double clickable", selection0[3], Sf.AllowDoubleClick.i))
+                    if (selectable("5. I am double clickable", selection0[3], Sf.AllowDoubleClick))
                         if (isMouseDoubleClicked(MouseButton.Left)) selection0[3] = !selection0[3]
                 }
                 treeNode("Selection State: Single Selection") {
@@ -888,7 +887,7 @@ object ShowDemoWindowWidgets {
                             val label = "Item $i"
                             tableNextRow()
                             tableNextColumn()
-                            selectable(label, selected2, i, imgui.SelectableFlag.SpanAllColumns.i)
+                            selectable(label, selected2, i, imgui.SelectableFlag.SpanAllColumns)
                             tableNextColumn()
                             text("Some other contents")
                             tableNextColumn()
@@ -910,7 +909,7 @@ object ShowDemoWindowWidgets {
                             if (x > 0)
                                 sameLine()
                             pushID(y * 4 + x)
-                            if (selectable("Sailor", selected3[y][x] != 0, 0, Vec2(50))) {
+                            if (selectable("Sailor", selected3[y][x] != 0, sizeArg = Vec2(50))) {
                                 // Toggle clicked cell + toggle neighbors
                                 selected3[y][x] = selected3[y][x] xor 1
                                 if (x > 0) selected3[y][x - 1] = selected3[y][x - 1] xor 1
@@ -938,7 +937,7 @@ object ShowDemoWindowWidgets {
                             val name = "(%.1f,%.1f)".format(alignment.x, alignment.y)
                             if (x > 0) sameLine()
                             pushStyleVar(StyleVar.SelectableTextAlign, alignment)
-                            selectable(name, selected4, 3 * y + x, Sf.None.i, Vec2(80))
+                            selectable(name, selected4, 3 * y + x, size = Vec2(80))
                             popStyleVar()
                         }
                 }
@@ -961,7 +960,7 @@ object ShowDemoWindowWidgets {
         ${'\t'}lock cmpxchg8b eax
         
         """.trimIndent().toByteArray(1024 * 16)
-        var flags = Itf.AllowTabInput.i
+        var flags: InputTextSingleFlags = Itf.AllowTabInput
         val bufs = Array(6) { ByteArray(64) }
 
         object TextFilters {
@@ -976,8 +975,8 @@ object ShowDemoWindowWidgets {
         object Funcs1 {
             val myCallback: InputTextCallback = { data: InputTextCallbackData ->
                 when (data.eventFlag) {
-                    Itf.CallbackCompletion.i -> data.insertChars(data.cursorPos, "..")
-                    Itf.CallbackHistory.i ->
+                    Itf.CallbackCompletion -> data.insertChars(data.cursorPos, "..")
+                    Itf.CallbackHistory ->
                         if (data.eventKey == Key.UpArrow) {
                             data.deleteChars(0, data.bufTextLen)
                             data.insertChars(0, "Pressed Up!")
@@ -987,7 +986,8 @@ object ShowDemoWindowWidgets {
                             data.insertChars(0, "Pressed Down!")
                             data.selectAll()
                         }
-                    Itf.CallbackEdit.i -> {
+
+                    Itf.CallbackEdit -> {
                         // Toggle casing of first character
                         val c = data.buf[0].c
                         if (c in 'a'..'z' || c in 'A'..'Z')
@@ -1016,35 +1016,35 @@ object ShowDemoWindowWidgets {
                     /*  Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
                         and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.  */
                     helpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp because we don't want to include <string> in here)") // TODO fix bug, some '?' appear at the end of the line
-                    checkboxFlags("ImGuiInputTextFlags_ReadOnly", ::flags, Itf.ReadOnly.i)
-                    checkboxFlags("ImGuiInputTextFlags_AllowTabInput", ::flags, Itf.AllowTabInput.i)
-                    checkboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", ::flags, Itf.CtrlEnterForNewLine.i)
+                    checkboxFlags("ImGuiInputTextFlags_ReadOnly", ::flags, Itf.ReadOnly)
+                    checkboxFlags("ImGuiInputTextFlags_AllowTabInput", ::flags, Itf.AllowTabInput)
+                    checkboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", ::flags, Itf.CtrlEnterForNewLine)
                     inputTextMultiline("##source", text, Vec2(-Float.MIN_VALUE, textLineHeight * 16), flags)
                 }
 
                 treeNode("Filtered Text Input") {
                     inputText("default", bufs[0])
-                    inputText("decimal", bufs[1], Itf.CharsDecimal.i)
+                    inputText("decimal", bufs[1], Itf.CharsDecimal)
                     inputText("hexadecimal", bufs[2], Itf.CharsHexadecimal or Itf.CharsUppercase)
-                    inputText("uppercase", bufs[3], Itf.CharsUppercase.i)
-                    inputText("no blank", bufs[4], Itf.CharsNoBlank.i)
-                    inputText("\"imgui\" letters", bufs[5], Itf.CallbackCharFilter.i, TextFilters.filterImGuiLetters)
+                    inputText("uppercase", bufs[3], Itf.CharsUppercase)
+                    inputText("no blank", bufs[4], Itf.CharsNoBlank)
+                    inputText("\"imgui\" letters", bufs[5], Itf.CallbackCharFilter, TextFilters.filterImGuiLetters)
                 }
                 treeNode("Password Input") {
-                    inputText("password", password, Itf.Password.i)
+                    inputText("password", password, Itf.Password)
                     sameLine(); helpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.")
-                    inputTextWithHint("password (w/ hint)", "<password>", password, Itf.Password.i)
+                    inputTextWithHint("password (w/ hint)", "<password>", password, Itf.Password)
                     inputText("password (clear)", password)
                 }
 
                 treeNode("Completion, History, Edit Callbacks") {
-                    inputText("Completion", buf1, Itf.CallbackCompletion.i, Funcs1.myCallback)
+                    inputText("Completion", buf1, Itf.CallbackCompletion, Funcs1.myCallback)
                     sameLine(); helpMarker("Here we append \"..\" each time Tab is pressed. See 'Examples>Console' for a more meaningful demonstration of using this callback.")
 
-                    inputText("History", buf2, Itf.CallbackHistory.i, Funcs1.myCallback)
+                    inputText("History", buf2, Itf.CallbackHistory, Funcs1.myCallback)
                     sameLine(); helpMarker("Here we replace and select text each time Up/Down are pressed. See 'Examples>Console' for a more meaningful demonstration of using this callback.")
 
-                    inputText("Edit", buf3, Itf.CallbackEdit.i, Funcs1.myCallback, ::editCount)
+                    inputText("Edit", buf3, Itf.CallbackEdit, Funcs1.myCallback, ::editCount)
                     sameLine(); helpMarker("Here we toggle the casing of the first character on every edit + count edits.")
                     sameLine(); text("($editCount)")
                 }
@@ -1063,7 +1063,7 @@ object ShowDemoWindowWidgets {
                     // than usually reported by a typical string class.
                     if (myStr.isEmpty())
                         myStr = ByteArray(1)
-                    Funcs2.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), 0)
+                    Funcs2.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), emptyFlags)
                     text("Data: ${myStr.hashCode()}\nSize: ${myStr.strlen()}\nCapacity: ${myStr.size}")
                 }
             }
@@ -1071,7 +1071,7 @@ object ShowDemoWindowWidgets {
     }
 
     object Tabs {
-        var tabBarFlags1 = TabBarFlag.Reorderable.i
+        var tabBarFlags1: TabBarFlags = TabBarFlag.Reorderable
         val opened = BooleanArray(4) { true } // Persistent user state
         val activeTabs = ArrayList<Int>()
         var nextTabId = 0
@@ -1082,8 +1082,7 @@ object ShowDemoWindowWidgets {
             // Tabs
             treeNode("Tabs") {
                 treeNode("Basic") {
-                    val tabBarFlags = TabBarFlag.None.i
-                    tabBar("MyTabBar", tabBarFlags) {
+                    tabBar("MyTabBar") {
                         tabItem("Avocado") {
                             text("This is the Avocado tab!\nblah blah blah blah blah")
                         }
@@ -1099,16 +1098,16 @@ object ShowDemoWindowWidgets {
 
                 treeNode("Advanced & Close Button") {
                     // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
-                    checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags1, TabBarFlag.Reorderable.i)
-                    checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags1, TabBarFlag.AutoSelectNewTabs.i)
-                    checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags1, TabBarFlag.TabListPopupButton.i)
-                    checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags1, TabBarFlag.NoCloseWithMiddleMouseButton.i)
-                    if (tabBarFlags1 hasnt TabBarFlag.FittingPolicyMask_)
-                        tabBarFlags1 = tabBarFlags1 or TabBarFlag.FittingPolicyDefault_
-                    if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags1, TabBarFlag.FittingPolicyResizeDown.i))
-                        tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
-                    if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags1, TabBarFlag.FittingPolicyScroll.i))
-                        tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
+                    checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags1, TabBarFlag.Reorderable)
+                    checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags1, TabBarFlag.AutoSelectNewTabs)
+                    checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags1, TabBarFlag.TabListPopupButton)
+                    checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags1, TabBarFlag.NoCloseWithMiddleMouseButton)
+                    if (tabBarFlags1 hasnt TabBarFlag.FittingPolicyMask)
+                        tabBarFlags1 = tabBarFlags1 or TabBarFlag.FittingPolicyDefault
+                    if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags1, TabBarFlag.FittingPolicyResizeDown))
+                        tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask xor TabBarFlag.FittingPolicyResizeDown)
+                    if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags1, TabBarFlag.FittingPolicyScroll))
+                        tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask xor TabBarFlag.FittingPolicyScroll)
 
                     // Tab Bar
                     val names = listOf("Artichoke", "Beetroot", "Celery", "Daikon")
@@ -1122,7 +1121,7 @@ object ShowDemoWindowWidgets {
                     tabBar("MyTabBar", tabBarFlags1) {
                         for (n in opened.indices)
                             if (opened[n])
-                                tabItem(names[n], opened, n, TabItemFlag.None.i) {
+                                tabItem(names[n], opened, n) {
                                     text("This is the ${names[n]} tab!")
                                     if (n has 1)
                                         text("I am an odd tab.")
@@ -1143,11 +1142,11 @@ object ShowDemoWindowWidgets {
                     checkbox("Show Trailing TabItemButton()", ::showTrailingButton)
 
                     // Expose some other flags which are useful to showcase how they interact with Leading/Trailing tabs
-                    checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags2, TabBarFlag.TabListPopupButton.i)
-                    if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags2, TabBarFlag.FittingPolicyResizeDown.i))
-                        tabBarFlags2 = tabBarFlags2 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
-                    if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags2, TabBarFlag.FittingPolicyScroll.i))
-                        tabBarFlags2 = tabBarFlags2 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
+                    checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags2, TabBarFlag.TabListPopupButton)
+                    if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags2, TabBarFlag.FittingPolicyResizeDown))
+                        tabBarFlags2 = tabBarFlags2 wo (TabBarFlag.FittingPolicyMask xor TabBarFlag.FittingPolicyResizeDown)
+                    if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags2, TabBarFlag.FittingPolicyScroll))
+                        tabBarFlags2 = tabBarFlags2 wo (TabBarFlag.FittingPolicyMask xor TabBarFlag.FittingPolicyScroll)
 
                     tabBar("MyTabBar", tabBarFlags2) {
                         // Demo a Leading TabItemButton(): click the "?" button to open a menu
@@ -1170,7 +1169,7 @@ object ShowDemoWindowWidgets {
                             var open = true
                             val name = "%04d".format(activeTabs[n])
                             _b = open
-                            tabItem(name, ::_b, TabItemFlag.None.i) {
+                            tabItem(name, ::_b) {
                                 text("This is the $name tab!")
                             }
                             open = _b
@@ -1284,7 +1283,7 @@ object ShowDemoWindowWidgets {
                 checkbox("With Drag and Drop", ::dragAndDrop)
                 checkbox("With Options Menu", ::optionsMenu); sameLine(); helpMarker("Right-click on the individual color widget to show options.")
                 checkbox("With HDR", ::hdr); sameLine(); helpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
-                var miscFlags = if (hdr) Cef.HDR.i else Cef.None.i
+                var miscFlags = if (hdr) Cef.HDR else emptyFlags
                 if (!dragAndDrop) miscFlags = miscFlags or Cef.NoDragDrop
                 if (alphaHalfPreview) miscFlags = miscFlags or Cef.AlphaPreviewHalf
                 else if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview
@@ -1365,7 +1364,7 @@ object ShowDemoWindowWidgets {
                 }
                 text("Color button only:")
                 checkbox("ImGuiColorEditFlags_NoBorder", ::noBorder)
-                colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else Cef.None, Vec2(80))
+                colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else emptyFlags, Vec2(80))
 
                 text("Color picker:")
                 checkbox("With Alpha", ::alpha)
@@ -1432,7 +1431,7 @@ object ShowDemoWindowWidgets {
     }
 
     object `DragSlider Flags` {
-        var flags = SliderFlag.None.i
+        var flags: SliderFlags = emptyFlags
         var dragF = 0.5f
         var dragI = 50
         var sliderF = 0.5f
@@ -1440,13 +1439,13 @@ object ShowDemoWindowWidgets {
         operator fun invoke() {
             treeNode("Drag/Slider Flags") {
                 // Demonstrate using advanced flags for DragXXX and SliderXXX functions. Note that the flags are the same!
-                checkboxFlags("ImGuiSliderFlags_AlwaysClamp", ::flags, SliderFlag.AlwaysClamp.i)
+                checkboxFlags("ImGuiSliderFlags_AlwaysClamp", ::flags, SliderFlag.AlwaysClamp)
                 sameLine(); helpMarker("Always clamp value to min/max bounds (if any) when input manually with CTRL+Click.")
-                checkboxFlags("ImGuiSliderFlags_Logarithmic", ::flags, SliderFlag.Logarithmic.i)
+                checkboxFlags("ImGuiSliderFlags_Logarithmic", ::flags, SliderFlag.Logarithmic)
                 sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
-                checkboxFlags("ImGuiSliderFlags_NoRoundToFormat", ::flags, SliderFlag.NoRoundToFormat.i)
+                checkboxFlags("ImGuiSliderFlags_NoRoundToFormat", ::flags, SliderFlag.NoRoundToFormat)
                 sameLine(); helpMarker("Disable rounding underlying value to match precision of the format string (e.g. %.3f values are rounded to those 3 digits).")
-                checkboxFlags("ImGuiSliderFlags_NoInput", ::flags, SliderFlag.NoInput.i)
+                checkboxFlags("ImGuiSliderFlags_NoInput", ::flags, SliderFlag.NoInput)
                 sameLine(); helpMarker("Disable CTRL+Click or Enter key allowing to input text directly into the widget.")
 
                 // Drags
@@ -1472,7 +1471,7 @@ object ShowDemoWindowWidgets {
         var endI = 1000
         operator fun invoke() {
             treeNode("Range Widgets") {
-                dragFloatRange2("range float", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%", SliderFlag.AlwaysClamp.i)
+                dragFloatRange2("range float", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%", SliderFlag.AlwaysClamp)
                 dragIntRange2("range int", ::beginI, ::endI, 5f, 0, 1000, "Min: %d units", "Max: %d units")
                 dragIntRange2("range int (no bounds)", ::beginI, ::endI, 5f, 0, 0, "Min: %d units", "Max: %d units")
             }
@@ -1588,9 +1587,9 @@ object ShowDemoWindowWidgets {
                 dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, ::s64_zero.takeIf { dragClamp }, ::s64_fifty.takeIf { dragClamp })
                 dragScalar("drag u64", DataType.Ulong, ::u64_v, dragSpeed, ::u64_zero.takeIf { dragClamp }, ::u64_fifty.takeIf { dragClamp })
                 dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, ::f32_zero, ::f32_one, "%f")
-                dragScalar("drag float log", DataType.Float, ::f32_v, 0.005f, ::f32_zero, ::f32_one, "%f", SliderFlag.Logarithmic.i)
+                dragScalar("drag float log", DataType.Float, ::f32_v, 0.005f, ::f32_zero, ::f32_one, "%f", SliderFlag.Logarithmic)
                 dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, ::f64_zero, null, "%.10f grams")
-                dragScalar("drag double log", DataType.Double, ::f64_v, 0.0005f, ::f64_zero, ::f64_one, "0 < %.10f < 1", SliderFlag.Logarithmic.i)
+                dragScalar("drag double log", DataType.Double, ::f64_v, 0.0005f, ::f64_zero, ::f64_one, "0 < %.10f < 1", SliderFlag.Logarithmic)
 
                 text("Sliders")
                 sliderScalar("slider s8 full", DataType.Byte, ::s8_v, ::s8_min, ::s8_max, "%d")
@@ -1611,10 +1610,10 @@ object ShowDemoWindowWidgets {
                 sliderScalar("slider u64 high", DataType.Ulong, ::u64_v, ::u64_hi_a, ::u64_hi_b, "%d ms")
                 sliderScalar("slider u64 full", DataType.Ulong, ::u64_v, ::u64_min, ::u64_max, "%d ms")
                 sliderScalar("slider float low", DataType.Float, ::f32_v, ::f32_zero, ::f32_one)
-                sliderScalar("slider float low log", DataType.Float, ::f32_v, ::f32_zero, ::f32_one, "%.10f", SliderFlag.Logarithmic.i)
+                sliderScalar("slider float low log", DataType.Float, ::f32_v, ::f32_zero, ::f32_one, "%.10f", SliderFlag.Logarithmic)
                 sliderScalar("slider float high", DataType.Float, ::f32_v, ::f32_lo_a, ::f32_hi_a, "%e")
                 sliderScalar("slider double low", DataType.Double, ::f64_v, ::f64_zero, ::f64_one, "%.10f grams")
-                sliderScalar("slider double low log", DataType.Double, ::f64_v, ::f64_zero, ::f64_one, "%.10f", SliderFlag.Logarithmic.i)
+                sliderScalar("slider double low log", DataType.Double, ::f64_v, ::f64_zero, ::f64_one, "%.10f", SliderFlag.Logarithmic)
                 sliderScalar("slider double high", DataType.Double, ::f64_v, ::f64_lo_a, ::f64_hi_a, "%e grams")
 
                 text("Sliders (reverse)")
@@ -1780,7 +1779,7 @@ object ShowDemoWindowWidgets {
                         button(name, Vec2(60))
 
                         // Our buttons are both drag sources and drag targets here!
-                        if (beginDragDropSource(DragDropFlag.None)) {
+                        if (beginDragDropSource()) {
                             // Set payload to carry the index of our item (could be anything)
                             setDragDropPayload("DND_DEMO_CELL", n)
 
@@ -1913,7 +1912,7 @@ object ShowDemoWindowWidgets {
                     endDisabled()
 
                 val buf = ByteArray(1)
-                inputText("unused", buf, Itf.ReadOnly.i)
+                inputText("unused", buf, Itf.ReadOnly)
                 sameLine()
                 helpMarker("This widget is only here to be able to tab-out of the widgets above and see e.g. Deactivated() status.")
             }

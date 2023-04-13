@@ -85,7 +85,7 @@ object StyleEditor {
 
     var outputDest = 0
     var outputOnlyModified = true
-    var alphaFlags: ColorEditFlags = 0
+    var alphaFlags: ColorEditFlags = emptyFlags
     val filter = TextFilter()
     var windowScale = 1f
 
@@ -135,7 +135,7 @@ object StyleEditor {
 
         separator()
 
-        if (beginTabBar("##tabs", TabBarFlag.None.i)) {
+        if (beginTabBar("##tabs")) {
 
             if (beginTabItem("Sizes")) {
                 text("Main")
@@ -168,7 +168,7 @@ object StyleEditor {
                 run {
                     _i32 = style.windowMenuButtonPosition.i + 1
                     if (combo("WindowMenuButtonPosition", ::_i32,
-                              "None${NUL}Left${NUL}Right${NUL}")
+                            "None${NUL}Left${NUL}Right${NUL}")
                     ) style.windowMenuButtonPosition = Dir.values().first { it.i == _i32 - 1 }
                 }
                 run {
@@ -211,18 +211,21 @@ object StyleEditor {
 
                 filter.draw("Filter colors", fontSize * 16)
 
-                radioButton("Opaque", alphaFlags == Cef.None.i) { alphaFlags = Cef.None.i }; sameLine()
-                radioButton("Alpha", alphaFlags == Cef.AlphaPreview.i) { alphaFlags = Cef.AlphaPreview.i }; sameLine()
-                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf.i) {
-                    alphaFlags = Cef.AlphaPreviewHalf.i
+                radioButton("Opaque", alphaFlags.isEmpty) { alphaFlags = emptyFlags }; sameLine()
+                radioButton("Alpha", alphaFlags == Cef.AlphaPreview) { alphaFlags = Cef.AlphaPreview }; sameLine()
+                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf) {
+                    alphaFlags = Cef.AlphaPreviewHalf
                 }; sameLine()
                 helpMarker("""
                     In the color list:
                     Left-click on color square to open color picker,
-                    Right-click to open edit options menu.""".trimIndent())
+                    Right-click to open edit options menu.""".trimIndent()
+                )
 
-                child("#colors", Vec2(), true,
-                      Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
+                child(
+                    "#colors", Vec2(), true,
+                    Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened
+                ) {
                     withItemWidth(-160) {
                         for (i in 0 until Col.COUNT) {
                             val name = Col.values()[i].name
@@ -259,11 +262,12 @@ object StyleEditor {
                 helpMarker("""
                     Those are old settings provided for convenience.
                     However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.
-                    Using those settings here will give you poor quality results.""".trimIndent())
+                    Using those settings here will give you poor quality results.""".trimIndent()
+                )
                 pushItemWidth(fontSize * 8)
-                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp.i)) // Scale only this window
+                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp)) // Scale only this window
                     setWindowFontScale(windowScale)
-                dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp.i) // Scale everything
+                dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.AlwaysClamp) // Scale everything
                 popItemWidth()
 
                 endTabItem()
@@ -284,7 +288,7 @@ object StyleEditor {
                 if (style.curveTessellationTol < 10f) style.curveTessellationTol = 0.1f
 
                 // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
-                dragFloat("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 5f, "%.2f", SliderFlag.AlwaysClamp.i)
+                dragFloat("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 5f, "%.2f", SliderFlag.AlwaysClamp)
                 if (ImGui.isItemActive) {
                     setNextWindowPos(ImGui.cursorScreenPos)
                     tooltip {
@@ -339,8 +343,8 @@ object StyleEditor {
     fun debugNodeFont(font: Font) {
         val name = font.configData.getOrNull(0)?.name ?: ""
         val fontDetailsOpened = treeNode(font,
-                                         "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)",
-                                         font.fontSize)
+            "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)",
+            font.fontSize)
         sameLine(); smallButton("Set as default") { io.fontDefault = font }
         if (!fontDetailsOpened)
             return
@@ -397,11 +401,11 @@ object StyleEditor {
                     val drawList = windowDrawList
                     for (n in 0 until 256) {
                         val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize + cellSpacing),
-                                          basePos.y + (n / 16) * (cellSize + cellSpacing))
+                            basePos.y + (n / 16) * (cellSize + cellSpacing))
                         val cellP2 = Vec2(cellP1.x + cellSize, cellP1.y + cellSize)
                         val glyph = font.findGlyphNoFallback((base + n).c)
                         drawList.addRect(cellP1, cellP2, COL32(255, 255, 255,
-                                                               if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
+                            if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
                         // available here and thus cannot easily generate a zero-terminated UTF-8 encoded string.
                         if (glyph != null) {
                             font.renderChar(drawList, cellSize, cellP1, Col.Text.u32, (base + n).c)

@@ -11,6 +11,7 @@ import imgui.ImGui.setNavWindow
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.ScrollFlag
+import imgui.or
 import imgui.static.navUpdateAnyRequestFlag
 
 
@@ -35,7 +36,7 @@ interface focusActivation {
 
         // Scroll could be done in NavInitRequestApplyResult() via an opt-in flag (we however don't want regular init requests to scroll)
         if (!isItemVisible)
-            scrollToRectEx(window, g.lastItemData.rect, ScrollFlag.None.i)
+            scrollToRectEx(window, g.lastItemData.rect)
     }
 
     /** focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget.

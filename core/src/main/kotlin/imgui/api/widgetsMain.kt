@@ -1,8 +1,8 @@
 package imgui.api
 
-import glm_.*
+import glm_.glm
+import glm_.max
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.arrowButtonEx
 import imgui.ImGui.buttonBehavior
@@ -12,14 +12,10 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
-import imgui.ImGui.getColorU32
-import imgui.ImGui.imageButtonEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popID
-import imgui.ImGui.pushID
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
@@ -34,7 +30,10 @@ import imgui.internal.floor
 import imgui.internal.lerp
 import imgui.internal.round
 import imgui.internal.saturate
-import imgui.internal.sections.*
+import imgui.internal.sections.ButtonFlags
+import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.ItemStatusFlag
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -61,14 +60,14 @@ val S32_MAX: Int = Integer.MAX_VALUE
 interface widgetsMain {
 
     /** button  */
-    fun button(label: String, sizeArg: Vec2 = Vec2()): Boolean = buttonEx(label, sizeArg, Bf.None.i)
+    fun button(label: String, sizeArg: Vec2 = Vec2()): Boolean = buttonEx(label, sizeArg, emptyFlags)
 
     /** button with FramePadding = (0,0) to easily embed within text
      *  Small buttons fits within text without additional vertical spacing.     */
     fun smallButton(label: String): Boolean {
         val backupPaddingY = style.framePadding.y
         style.framePadding.y = 0f
-        val pressed = buttonEx(label, Vec2(), Bf.AlignTextBaseLine.i)
+        val pressed = buttonEx(label, Vec2(), Bf.AlignTextBaseLine)
         style.framePadding.y = backupPaddingY
         return pressed
     }
@@ -78,7 +77,7 @@ interface widgetsMain {
      *  Tip: use pushId()/popId() to push indices or pointers in the ID stack.
      *  Then you can keep 'strid' empty or the same for all your buttons (instead of creating a string based on a
      *  non-string id)  */
-    fun invisibleButton(strId: String, sizeArg: Vec2, flags: ButtonFlags = Bf.None.i): Boolean {
+    fun invisibleButton(strId: String, sizeArg: Vec2, flags: ButtonFlags = emptyFlags): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -96,7 +95,7 @@ interface widgetsMain {
         return pressed
     }
 
-    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), Bf.None.i)
+    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), emptyFlags)
 
     fun checkbox(label: String, v: BooleanArray) = checkbox(label, v, 0)
     fun checkbox(label: String, v: BooleanArray, i: Int): Boolean {
@@ -120,7 +119,7 @@ interface widgetsMain {
         val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id)) {
-            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None)
+            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else emptyFlags)
             return false
         }
 
@@ -152,14 +151,18 @@ interface widgetsMain {
         if (labelSize.x > 0f)
             renderText(renderTextPos, label)
 
-        val flags = ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None
+        val flags = ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else emptyFlags
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or flags)
 
         return pressed
     }
 
-    fun checkboxFlags(label: String, flags: IntArray, flagsValue: Int): Boolean {
-        _b = (flags[0] and flagsValue) == flagsValue // ~allOn
+    // We use JvmName to ensure that the function can be seen in Java as checkboxFlags
+    // Suppressing the warning since we're in an interface.
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("checkboxFlags")
+    fun <F : Flag<F>> checkboxFlags(label: String, flags: FlagArray<F>, flagsValue: Flag<F>): Boolean {
+        _b = flagsValue in flags[0] // ~allOn
         val anyOn = flags[0] has flagsValue
         val pressed = when {
             !_b && anyOn -> {
@@ -180,9 +183,9 @@ interface widgetsMain {
         return pressed
     }
 
-    fun checkboxFlags(label: String, flagsPtr: KMutableProperty0<Int>, flagsValue: Int): Boolean {
+    fun <F : Flag<F>> checkboxFlags(label: String, flagsPtr: KMutableProperty0<Flag<F>>, flagsValue: Flag<F>): Boolean {
         var flags by flagsPtr
-        val v = booleanArrayOf((flags and flagsValue) == flagsValue)
+        val v = booleanArrayOf(flagsValue in flags)
         val pressed = checkbox(label, v)
         if (pressed)
             flags = when {

@@ -1,5 +1,6 @@
 package imgui.font
 
+import com.livefront.sealedenum.GenSealedEnum
 import gli_.has
 import glm_.*
 import glm_.vec2.Vec2
@@ -20,6 +21,7 @@ import unsigned.toUInt
 import java.nio.ByteBuffer
 import kotlin.math.sqrt
 
+typealias FontAtlasFlags = Flag<FontAtlas.Flag>
 /** Load and rasterize multiple TTF/OTF fonts into a same texture. The font atlas will build a single texture holding:
  *      - One or more fonts.
  *      - Custom graphics data needed to render the shapes needed by Dear ImGui.
@@ -369,26 +371,24 @@ class FontAtlas {
     //-------------------------------------------
 
     /** Flags: for ImFontAtlas build */
-    enum class Flag {
-        None,
-
+    sealed class Flag : FlagBase<Flag>() {
         /** Don't round the height to next power of two */
-        NoPowerOfTwoHeight,
+        object NoPowerOfTwoHeight : Flag()
 
         /** Don't build software mouse cursors into the atlas (save a little texture memory) */
-        NoMouseCursors,
+        object NoMouseCursors : Flag()
 
         /** Don't build thick line textures into the atlas (save a little texture memory, allow support for point/nearest filtering). The AntiAliasedLinesUseTex features uses them, otherwise they will be rendered using polygons (more expensive for CPU/GPU). */
-        NoBakedLines;
+        object NoBakedLines : Flag()
 
-        val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+        override val i: Int = 1 shl ordinal
+
+        @GenSealedEnum
+        companion object
     }
 
-    infix fun Int.has(flag: Flag) = and(flag.i) != 0
-    infix fun Int.hasnt(flag: Flag) = and(flag.i) == 0
-
     /** Build flags (see ImFontAtlasFlags_) */
-    var flags = Flag.None.i
+    var flags: FontAtlasFlags = emptyFlags
 
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
@@ -831,7 +831,7 @@ class FontAtlas {
                 val q = AlignedQuad()
                 getPackedQuad(srcTmp.packedChars, texSize.x, texSize.y, glyphIdx, q = q)
                 dstFont.addGlyph(cfg, codepoint, q.x0 + fontOff.x, q.y0 + fontOff.y,
-                                 q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
+                    q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
             }
         }
 //        bufPackedchars.free()
@@ -930,7 +930,7 @@ class FontAtlas {
             val uv1 = Vec2()
             calcCustomRectUV(r, uv0, uv1)
             font.addGlyph(null, r.glyphID, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
-                          uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
+                uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
         }
         // Build all fonts lookup tables
         fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }
@@ -1028,7 +1028,7 @@ class FontAtlas {
 
         fun buildRenderLinesTexData(atlas: FontAtlas) {
 
-            if (atlas.flags has Flag.NoBakedLines.i)
+            if (atlas.flags has Flag.NoBakedLines)
                 return
 
             // This generates a triangular shape in the texture, with the various line widths stacked on top of each other to allow interpolation between them

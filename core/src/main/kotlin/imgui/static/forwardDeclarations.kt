@@ -1,6 +1,5 @@
 package imgui.static
 
-import gli_.has
 import glm_.i
 import glm_.max
 import glm_.min
@@ -139,7 +138,7 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
         findWindowSettings(id)?.let { settings ->
             //  Retrieve settings from .ini file
             settingsOffset = g.settingsWindows.indexOf(settings)
-            setConditionAllowFlags(Cond.FirstUseEver.i, false)
+            setConditionAllowFlags(Cond.FirstUseEver, false)
             applySettings(settings)
         }
     }

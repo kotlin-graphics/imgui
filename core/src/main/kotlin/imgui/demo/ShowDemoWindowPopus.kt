@@ -1,6 +1,5 @@
 package imgui.demo
 
-import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -34,17 +33,15 @@ import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.demo.showExampleApp.MenuFile
 import imgui.dsl.button
 import imgui.dsl.menu
+import imgui.dsl.menuBar
 import imgui.dsl.popup
 import imgui.dsl.popupContextItem
 import imgui.dsl.popupModal
 import imgui.dsl.treeNode
-import imgui.dsl.withID
-import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleVar
-import imgui.demo.showExampleApp.MenuFile
-import imgui.dsl.menuBar
 import imgui.WindowFlag as Wf
 
 object ShowDemoWindowPopups {
@@ -137,7 +134,7 @@ object ShowDemoWindowPopups {
 
                 // Call the more complete ShowExampleMenuFile which we use in various places of this demo
                 if (button("With a menu.."))
-                    openPopup("my_file_popup", Wf.MenuBar.i)
+                    openPopup("my_file_popup")
                 popup("my_file_popup") {
                     menuBar {
                         menu("File") {
@@ -210,7 +207,7 @@ object ShowDemoWindowPopups {
                     // Here we make it that right-clicking this other text element opens the same popup as above.
                     // The popup itself will be submitted by the code above.
                     text("(2) Or right-click this text")
-                    openPopupOnItemClick("my popup", PopupFlag.MouseButtonRight.i)
+                    openPopupOnItemClick("my popup", PopupFlag.MouseButtonRight)
 
                     // Back to square one: manually open the same popup.
                     if (button("(3) Or click this button"))
@@ -253,7 +250,7 @@ object ShowDemoWindowPopups {
                 val center = mainViewport.center
                 setNextWindowPos(center, Cond.Appearing, Vec2(0.5f))
 
-                popupModal("Delete?", null, Wf.AlwaysAutoResize.i) {
+                popupModal("Delete?", null, Wf.AlwaysAutoResize) {
 
                     text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n")
                     separator()
@@ -261,7 +258,9 @@ object ShowDemoWindowPopups {
                     //static int unused_i = 0;
                     //ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
 
-                    withStyleVar(StyleVar.FramePadding, Vec2()) { checkbox("Don't ask me next time", ::dontAskMeNextTime) }
+                    withStyleVar(StyleVar.FramePadding, Vec2()) {
+                        checkbox("Don't ask me next time", ::dontAskMeNextTime)
+                    }
 
                     button("OK", Vec2(120, 0)) { closeCurrentPopup() }
                     setItemDefaultFocus()
@@ -270,7 +269,7 @@ object ShowDemoWindowPopups {
                 }
 
                 button("Stacked modals..") { openPopup("Stacked 1") }
-                popupModal("Stacked 1", null, Wf.MenuBar.i) {
+                popupModal("Stacked 1", null, Wf.MenuBar) {
 
                     if (beginMenuBar()) {
                         if (beginMenu("File")) {

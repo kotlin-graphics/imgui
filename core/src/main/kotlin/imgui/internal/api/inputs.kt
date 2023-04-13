@@ -5,16 +5,13 @@ import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.convertSingleModFlagToKey
 import imgui.ImGui.getPressedAmount
 import imgui.ImGui.io
 import imgui.ImGui.isDown
-import imgui.ImGui.isPressed
 import imgui.ImGui.navMoveRequestCancel
 import imgui.api.g
 import imgui.classes.KeyData
 import imgui.internal.classes.*
-import imgui.internal.isPowerOfTwo
 import imgui.internal.sections.*
 
 /** Inputs
@@ -64,14 +61,9 @@ internal interface inputs {
 
     /** ~GetKeyData */
     val Key.data: KeyData
-        get() {
-            var key = this
+        get() =
             // Special storage location for mods
-            if (i has Key.Mod_Mask_)
-                key = key.convertSingleModFlagToKey()
-
-            return g.io.keysData[key.index]
-        }
+            g.io.keysData[convertSingleModFlagToKey().index]
 
     // ImGuiMod_Shortcut is translated to either Ctrl or Super.
     fun getKeyChordName(keyChord_: KeyChord): String {
@@ -80,19 +72,13 @@ internal interface inputs {
         out += if (keyChord has Key.Mod_Shift) "Shift+" else ""
         out += if (keyChord has Key.Mod_Alt) "Alt+" else ""
         out += if (keyChord has Key.Mod_Super) (if (g.io.configMacOSXBehaviors) "Cmd+" else "Super+") else ""
-        return out + (Key of (keyChord wo Key.Mod_Mask_)).name
+        return out + (Key of (keyChord wo Key.Mod_Mask)).name
     }
 
 
     fun mouseButtonToKey(button: Int): Key {
         assert(button in 0 until MouseButton.COUNT)
-        return Key of (Key.MouseLeft.i + button)
-    }
-
-    /** ~MouseButtonToKey */
-    fun MouseButton.toKey(): Key {
-        val res = Key.values().first { it.i == Key.MouseLeft.i + i }
-        return res
+        return (MouseButton of button).key
     }
 
     /** Return if a mouse click/drag went past the given threshold. Valid to call during the MouseReleased frame.
@@ -114,7 +100,7 @@ internal interface inputs {
 
     fun getNavTweakPressedAmount(axis: Axis): Float {
 
-        val (repeatDelay, repeatRate) = getTypematicRepeatRate(InputFlag.RepeatRateNavTweak.i)
+        val (repeatDelay, repeatRate) = getTypematicRepeatRate(InputFlag.RepeatRateNavTweak)
 
         val keyLess: Key
         val keyMore: Key
@@ -144,10 +130,13 @@ internal interface inputs {
     }
 
     /** @return repeatDelay, repeatRate */
-    fun getTypematicRepeatRate(flags: InputFlags): Pair<Float, Float> = when (flags and InputFlag.RepeatRateMask_) {
-        InputFlag.RepeatRateNavMove.i -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.80f
-        InputFlag.RepeatRateNavTweak.i -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.30f
-        else -> g.io.keyRepeatDelay * 1.00f to g.io.keyRepeatRate * 1.00f
+    fun getTypematicRepeatRate(flags: InputFlags): Pair<Float, Float> {
+        val flag = flags and InputFlag.RepeatRateMask
+        return when {
+            flag == InputFlag.RepeatRateNavMove -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.80f
+            flag == InputFlag.RepeatRateNavTweak -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.30f
+            else -> g.io.keyRepeatDelay * 1.00f to g.io.keyRepeatRate * 1.00f
+        }
     }
 
     /** FIXME: It might be undesirable that this will likely disable KeyOwner-aware shortcuts systems. Consider a more fine-tuned version for the two users of this function. */
@@ -195,10 +184,10 @@ internal interface inputs {
     // - SetKeyOwner(..., None)              : clears owner
     // - SetKeyOwner(..., Any, !Lock)        : illegal (assert)
     // - SetKeyOwner(..., Any or None, Lock) : set lock
-    fun Key.setOwner(ownerId: ID, flags: InputFlags = 0) {
+    fun Key.setOwner(ownerId: ID, flags: InputFlags = emptyFlags) {
 
         assert(isNamedOrMod && (ownerId != KeyOwner_Any || flags has (InputFlag.LockThisFrame or InputFlag.LockUntilRelease))) { "Can only use _Any with _LockXXX flags(to eat a key away without an ID to retrieve it)" }
-        assert((flags wo InputFlag.SupportedBySetKeyOwner) == 0) { "Passing flags not supported by this function !" }
+        assert((flags wo InputFlag.SupportedBySetKeyOwner).isEmpty) { "Passing flags not supported by this function !" }
 
         val ownerData = ownerData
         ownerData.ownerCurr = ownerId; ownerData.ownerNext = ownerId
@@ -215,16 +204,16 @@ internal interface inputs {
     // Extensive uses of that (e.g. many calls for a single item) may want to manually perform the tests once and then call SetKeyOwner() multiple times.
     // More advanced usage scenarios may want to call SetKeyOwner() manually based on different condition.
     // Worth noting is that only one item can be hovered and only one item can be active, therefore this usage pattern doesn't need to bother with routing and priority.
-    fun Key.setItemKeyOwner(flags_: InputFlags = 0) { // Set key owner to last item if it is hovered or active. Equivalent to 'if (IsItemHovered() || IsItemActive()) { SetKeyOwner(key, GetItemID());'.
+    fun Key.setItemKeyOwner(flags_: InputFlags = emptyFlags) { // Set key owner to last item if it is hovered or active. Equivalent to 'if (IsItemHovered() || IsItemActive()) { SetKeyOwner(key, GetItemID());'.
         var flags = flags_
         val id = g.lastItemData.id
         if (id == 0 || (g.hoveredId != id && g.activeId != id))
             return
-        if (flags hasnt InputFlag.CondMask_)
-            flags /= InputFlag.CondDefault_
+        if (flags hasnt InputFlag.CondMask)
+            flags /= InputFlag.CondDefault
         if ((g.hoveredId == id && flags has InputFlag.CondHovered) || (g.activeId == id && flags has InputFlag.CondActive)) {
-            assert((flags wo InputFlag.SupportedBySetItemKeyOwner) == 0) { "Passing flags not supported by this function !" }
-            setOwner(id, flags wo InputFlag.CondMask_)
+            assert((flags wo InputFlag.SupportedBySetItemKeyOwner).isEmpty) { "Passing flags not supported by this function !" }
+            setOwner(id, flags wo InputFlag.CondMask)
         }
     }
 
@@ -262,7 +251,7 @@ internal interface inputs {
     val Key.ownerData: KeyOwnerData
         get() {
             var key = this
-            if (key has Key.Mod_Mask_)
+            if (key has Key.Mod_Mask)
                 key = key.convertSingleModFlagToKey()
             return g.keysOwnerData[key.ordinal]
         }
@@ -284,14 +273,14 @@ internal interface inputs {
 
     // Important: unless legacy IsKeyPressed(ImGuiKey, bool repeat=true) which DEFAULT to repeat, this requires EXPLICIT repeat.
     /** ~IsKeyPressed */
-    fun Key.isPressed(ownerId: ID, flags: InputFlags = 0): Boolean { // Important: when transitioning from old to new IsKeyPressed(): old API has "bool repeat = true", so would default to repeat. New API requiress explicit ImGuiInputFlags_Repeat.
+    fun Key.isPressed(ownerId: ID, flags: InputFlags = emptyFlags): Boolean { // Important: when transitioning from old to new IsKeyPressed(): old API has "bool repeat = true", so would default to repeat. New API requiress explicit ImGuiInputFlags_Repeat.
         val keyData = data
         if (!keyData.down) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitates eating mechanism (until we finish work on key ownership)
             return false
         val t = keyData.downDuration
         if (t < 0f)
             return false
-        assert((flags wo InputFlag.SupportedByIsKeyPressed) == 0) { "Passing flags not supported by this function !" }
+        assert((flags wo InputFlag.SupportedByIsKeyPressed).isEmpty) { "Passing flags not supported by this function !" }
 
         var pressed = t == 0f
         if (!pressed && flags hasnt InputFlag.Repeat) {
@@ -314,11 +303,11 @@ internal interface inputs {
     /** ~IsMouseDown */
     infix fun MouseButton.isDown(ownerId: ID): Boolean {
         //        assert(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
-        return g.io.mouseDown[i] && toKey() testOwner ownerId // Should be same as IsKeyDown(MouseButtonToKey(button), owner_id), but this allows legacy code hijacking the io.Mousedown[] array.
+        return g.io.mouseDown[i] && key testOwner ownerId // Should be same as IsKeyDown(MouseButtonToKey(button), owner_id), but this allows legacy code hijacking the io.Mousedown[] array.
     }
 
     /** ~IsMouseClicked */
-    fun MouseButton.isClicked(ownerId: ID, flags: InputFlags = 0): Boolean {
+    fun MouseButton.isClicked(ownerId: ID, flags: InputFlags = emptyFlags): Boolean {
 
         //        IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
         if (!g.io.mouseDown[i]) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitates eating mechanism (until we finish work on key ownership)
@@ -326,20 +315,20 @@ internal interface inputs {
         val t = g.io.mouseDownDuration[i]
         if (t < 0f)
             return false
-        assert((flags wo InputFlag.SupportedByIsKeyPressed) == 0) { "Passing flags not supported by this function !" }
+        assert((flags wo InputFlag.SupportedByIsKeyPressed).isEmpty) { "Passing flags not supported by this function !" }
 
         val repeat = flags has InputFlag.Repeat
         val pressed = t == 0f || (repeat && t > g.io.keyRepeatDelay && calcTypematicRepeatAmount(t - g.io.deltaTime, t, g.io.keyRepeatDelay, g.io.keyRepeatRate) > 0)
         if (!pressed)
             return false
 
-        return toKey().testOwner(ownerId)
+        return key.testOwner(ownerId)
     }
 
     /** ~IsMouseReleased */
     infix fun MouseButton.isReleased(ownerId: ID): Boolean {
         //        IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
-        return g.io.mouseReleased[i] && toKey() testOwner ownerId // Should be same as IsKeyReleased(MouseButtonToKey(button), owner_id)
+        return g.io.mouseReleased[i] && key testOwner ownerId // Should be same as IsKeyReleased(MouseButtonToKey(button), owner_id)
     }
 
 

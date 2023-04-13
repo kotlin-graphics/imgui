@@ -1,6 +1,8 @@
 package imgui.internal.sections
 
+import com.livefront.sealedenum.GenSealedEnum
 import imgui.Flag
+import imgui.FlagBase
 import imgui.internal.classes.Rect
 import imgui.or
 
@@ -8,102 +10,122 @@ import imgui.or
 // [SECTION] Navigation support
 //-----------------------------------------------------------------------------
 
-typealias ActivateFlags = Int
+typealias ActivateFlags = Flag<ActivateFlag>
 
-enum class ActivateFlag : Flag<ActivateFlag> {
-  None,
+sealed class ActivateFlag : FlagBase<ActivateFlag>() {
 
-  /** Favor activation that requires keyboard text input (e.g. for Slider/Drag). Default if keyboard is available. */
-  PreferInput,
+    /** Favor activation that requires keyboard text input (e.g. for Slider/Drag). Default if keyboard is available. */
+    object PreferInput : ActivateFlag()
 
-  /** Favor activation for tweaking with arrows or gamepad (e.g. for Slider/Drag). Default if keyboard is not available. */
-  PreferTweak,
+    /** Favor activation for tweaking with arrows or gamepad (e.g. for Slider/Drag). Default if keyboard is not available. */
+    object PreferTweak : ActivateFlag()
 
-  /** Request widget to preserve state if it can (e.g. InputText will try to preserve cursor/selection) */
-  TryToPreserveState;
+    /** Request widget to preserve state if it can (e.g. InputText will try to preserve cursor/selection) */
+    object TryToPreserveState : ActivateFlag()
 
-  override val i: ActivateFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    override val i: Int = 1 shl ordinal
+
+    @GenSealedEnum
+    companion object
 }
 
-typealias ScrollFlags = Int
+typealias ScrollFlags = Flag<ScrollFlag>
 
-enum class ScrollFlag(override val i: ScrollFlags) : Flag<ScrollFlag> {
-  None(0),
+sealed class ScrollFlag : FlagBase<ScrollFlag>() {
 
-  /** If item is not visible: scroll as little as possible on X axis to bring item back into view [default for X axis] */
-  KeepVisibleEdgeX(1 shl 0),
+    /** If item is not visible: scroll as little as possible on X axis to bring item back into view [default for X axis] */
+    object KeepVisibleEdgeX : ScrollFlag()
 
-  /** If item is not visible: scroll as little as possible on Y axis to bring item back into view [default for Y axis for windows that are already visible] */
-  KeepVisibleEdgeY(1 shl 1),
+    /** If item is not visible: scroll as little as possible on Y axis to bring item back into view [default for Y axis for windows that are already visible] */
+    object KeepVisibleEdgeY : ScrollFlag()
 
-  /** If item is not visible: scroll to make the item centered on X axis [rarely used] */
-  KeepVisibleCenterX(1 shl 2),
+    /** If item is not visible: scroll to make the item centered on X axis [rarely used] */
+    object KeepVisibleCenterX : ScrollFlag()
 
     /** If item is not visible: scroll to make the item centered on Y axis */
-    KeepVisibleCenterY(1 shl 3),
+    object KeepVisibleCenterY : ScrollFlag()
 
     /** Always center the result item on X axis [rarely used] */
-    AlwaysCenterX(1 shl 4),
+    object AlwaysCenterX : ScrollFlag()
 
     /** Always center the result item on Y axis [default for Y axis for appearing window) */
-    AlwaysCenterY(1 shl 5),
+    object AlwaysCenterY : ScrollFlag()
 
     /** Disable forwarding scrolling to parent window if required to keep item/rect visible (only scroll window the function was applied to). */
-    NoScrollParent(1 shl 6),
-  MaskX_(KeepVisibleEdgeX or KeepVisibleCenterX or AlwaysCenterX),
-  MaskY_(KeepVisibleEdgeY or KeepVisibleCenterY or AlwaysCenterY)
+    object NoScrollParent : ScrollFlag()
+
+    override val i: Int = 1 shl ordinal
+
+    @GenSealedEnum
+    companion object {
+        val MaskX get() = KeepVisibleEdgeX or KeepVisibleCenterX or AlwaysCenterX
+        val MaskY get() = KeepVisibleEdgeY or KeepVisibleCenterY or AlwaysCenterY
+    }
 }
 
 
-typealias NavHighlightFlags = Int
+typealias NavHighlightFlags = Flag<NavHighlightFlag>
 
-enum class NavHighlightFlag : Flag<NavHighlightFlag> {
-  None, TypeDefault, TypeThin,
+sealed class NavHighlightFlag : FlagBase<NavHighlightFlag>() {
+    object TypeDefault : NavHighlightFlag()
+    object TypeThin : NavHighlightFlag()
 
-  /** Draw rectangular highlight if (g.NavId == id) _even_ when using the mouse. */
-  AlwaysDraw,
-  NoRounding;
+    /** Draw rectangular highlight if (g.NavId == id) _even_ when using the mouse. */
+    object AlwaysDraw : NavHighlightFlag()
 
-  override val i: NavHighlightFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    object NoRounding : NavHighlightFlag()
+
+    override val i: Int = 1 shl ordinal
+
+    @GenSealedEnum
+    companion object
 }
 
-typealias NavMoveFlags = Int
+typealias NavMoveFlags = Flag<NavMoveFlag>
 
-enum class NavMoveFlag : Flag<NavMoveFlag> {
-  None,
+sealed class NavMoveFlag : FlagBase<NavMoveFlag>() {
 
-  /** On failed request, restart from opposite side */
-  LoopX,
-  LoopY,
+    /** On failed request, restart from opposite side */
+    object LoopX : NavMoveFlag()
 
-  /** On failed request, request from opposite side one line down (when NavDir==right) or one line up (when NavDir==left) */
-  WrapX,
+    object LoopY : NavMoveFlag()
 
-  /** This is not super useful for provided but completeness */
-    WrapY,
+    /** On failed request, request from opposite side one line down (when NavDir==right) or one line up (when NavDir==left) */
+    object WrapX : NavMoveFlag()
+
+    /** This is not super useful for provided but completeness */
+    object WrapY : NavMoveFlag()
 
     /** Allow scoring and considering the current NavId as a move target candidate.
      *  This is used when the move source is offset (e.g. pressing PageDown actually needs to send a Up move request,
      *  if we are pressing PageDown from the bottom-most item we need to stay in place) */
-    AllowCurrentNavId,
+    object AllowCurrentNavId : NavMoveFlag()
 
     /** Store alternate result in NavMoveResultLocalVisible that only comprise elements that are already fully visible (used by PageUp/PageDown) */
-    AlsoScoreVisibleSet,
+    object AlsoScoreVisibleSet : NavMoveFlag()
 
     /** Force scrolling to min/max (used by Home/End) // FIXME-NAV: Aim to remove or reword, probably unnecessary */
-    ScrollToEdgeY,
-    Forwarded,
+    object ScrollToEdgeY : NavMoveFlag()
+
+    object Forwarded : NavMoveFlag()
 
     /** Dummy scoring for debug purpose, don't apply result */
-    DebugNoResult,
-    FocusApi,
-    /** == Focus + Activate if item is Inputable + DontChangeNavHighlight */
-    Tabbing,
-    Activate,
-    /** Do not alter the visible state of keyboard vs mouse nav highlight */
-    DontSetNavHighlight;
+    object DebugNoResult : NavMoveFlag()
 
-  override val i: NavMoveFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    object FocusApi : NavMoveFlag()
+
+    /** == Focus + Activate if item is Inputable + DontChangeNavHighlight */
+    object Tabbing : NavMoveFlag()
+
+    object Activate : NavMoveFlag()
+
+    /** Do not alter the visible state of keyboard vs mouse nav highlight */
+    object DontSetNavHighlight : NavMoveFlag()
+
+    override val i: Int = 1 shl ordinal
+
+    @GenSealedEnum
+    companion object
 }
 
 enum class NavForward(val i: Int) {

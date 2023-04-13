@@ -1,10 +1,8 @@
 package imgui.demo.showExampleApp
 
-import glm_.vec2.Vec2
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.checkboxFlags
-import imgui.ImGui.io
 import imgui.ImGui.mainViewport
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextWindowPos
@@ -39,12 +37,12 @@ object Fullscreen {
             sameLine()
             helpMarker("Main Area = entire viewport,\nWork Area = entire viewport minus sections used by the main menu bars, task bars etc.\n\nEnable the main-menu bar in Examples menu to see the difference.")
 
-            checkboxFlags("ImGuiWindowFlags_NoBackground", ::flags, Wf.NoBackground.i)
-            checkboxFlags("ImGuiWindowFlags_NoDecoration", ::flags, Wf.NoDecoration.i)
+            checkboxFlags("ImGuiWindowFlags_NoBackground", ::flags, Wf.NoBackground)
+            checkboxFlags("ImGuiWindowFlags_NoDecoration", ::flags, Wf.NoDecoration)
             indent {
-                checkboxFlags("ImGuiWindowFlags_NoTitleBar", ::flags, Wf.NoTitleBar.i)
-                checkboxFlags("ImGuiWindowFlags_NoCollapse", ::flags, Wf.NoCollapse.i)
-                checkboxFlags("ImGuiWindowFlags_NoScrollbar", ::flags, Wf.NoScrollbar.i)
+                checkboxFlags("ImGuiWindowFlags_NoTitleBar", ::flags, Wf.NoTitleBar)
+                checkboxFlags("ImGuiWindowFlags_NoCollapse", ::flags, Wf.NoCollapse)
+                checkboxFlags("ImGuiWindowFlags_NoScrollbar", ::flags, Wf.NoScrollbar)
             }
 
             if (pOpen != null && button("Close this window"))

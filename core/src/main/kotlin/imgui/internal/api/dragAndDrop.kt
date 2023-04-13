@@ -2,11 +2,11 @@ package imgui.internal.api
 
 import glm_.vec2.Vec2
 import imgui.Col
-import imgui.DragDropFlag
 import imgui.ID
 import imgui.ImGui
 import imgui.ImGui.isMouseHoveringRect
 import imgui.api.g
+import imgui.emptyFlags
 import imgui.internal.classes.Rect
 import kool.lib.fill
 import java.nio.ByteBuffer
@@ -39,7 +39,7 @@ internal interface dragAndDrop {
     fun clearDragDrop() = with(g) {
         dragDropActive = false
         dragDropPayload.clear()
-        dragDropAcceptFlags = DragDropFlag.None.i
+        dragDropAcceptFlags = emptyFlags
         dragDropAcceptIdPrev = 0
         dragDropAcceptIdCurr = 0
         dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
@@ -54,5 +54,5 @@ internal interface dragAndDrop {
 
     /** FIXME-DRAGDROP: Settle on a proper default visuals for drop target. */
     fun renderDragDropTargetRect(bb: Rect) =
-        ImGui.windowDrawList.addRect(bb.min - Vec2(3.5f), bb.max + Vec2( 3.5f), Col.DragDropTarget.u32, 0f, 0, 2f)
+        ImGui.windowDrawList.addRect(bb.min - Vec2(3.5f), bb.max + Vec2(3.5f), Col.DragDropTarget.u32, 0f, thickness = 2f)
 }

@@ -17,7 +17,6 @@ import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
-import imgui.TabBarFlag
 import imgui.dsl.button
 import imgui.dsl.child
 import imgui.dsl.group
@@ -39,7 +38,7 @@ object Layout {
         var open by pOpen
 
         setNextWindowSize(Vec2(500, 440), Cond.FirstUseEver)
-        if (begin("Example: Simple layout", pOpen, Wf.MenuBar.i)) {
+        if (begin("Example: Simple layout", pOpen, Wf.MenuBar)) {
             menuBar {
                 menu("File") {
                     menuItem("Close", "Ctrl+W") { open = false }
@@ -62,7 +61,7 @@ object Layout {
                 beginChild("item view", Vec2(0, -frameHeightWithSpacing)) // Leave room for 1 line below us
                 text("MyObject: $selected")
                 separator()
-                if (beginTabBar("##Tabs", TabBarFlag.None.i)) {
+                if (beginTabBar("##Tabs")) {
                     if (beginTabItem("Description")) {
                         textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ")
                         endTabItem()

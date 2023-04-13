@@ -1,13 +1,10 @@
 package imgui.internal.api
 
-import glm_.has
 import glm_.max
 import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.fixColumnSortDirection
 import imgui.ImGui.getMaxColumnWidth
-import imgui.api.g
-import imgui.internal.hashStr
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
 import imgui.ImGui.style
@@ -15,7 +12,9 @@ import imgui.ImGui.tableGetColumnCount
 import imgui.ImGui.tableGetColumnFlags
 import imgui.ImGui.tableGetColumnName
 import imgui.ImGui.updateColumnsWeightFromWidth
+import imgui.api.g
 import imgui.internal.classes.TableColumnIdx
+import imgui.internal.hashStr
 import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf
 
@@ -43,7 +42,7 @@ interface tablesCandidatesForPublicAPI {
             table.contextPopupColumn = columnN
             table.instanceInteracted = table.instanceCurrent
             val contextMenuId = hashStr("##ContextMenu", 0, table.id)
-            openPopupEx(contextMenuId, PopupFlag.None.i)
+            openPopupEx(contextMenuId)
         }
     }
 

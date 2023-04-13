@@ -23,10 +23,10 @@ import kotlin.math.max
 class InputTextCallbackData {
 
     /** One ImGuiInputTextFlags_Callback*    // Read-only */
-    var eventFlag: InputTextFlags = 0
+    var eventFlag: InputTextFlags = emptyFlags
 
     /** What user passed to InputText()      // Read-only */
-    var flags: InputTextFlags = 0
+    var flags: InputTextFlags = emptyFlags
 
     /** What user passed to InputText()      // Read-only */
     var userData: Any? = null
@@ -40,7 +40,7 @@ class InputTextCallbackData {
     var eventChar = NUL
 
     /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
-    var eventKey = Key.Tab
+    var eventKey: Key = Key.Tab
 
     /** Text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
     var buf = ByteArray(0)

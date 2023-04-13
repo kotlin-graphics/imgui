@@ -20,7 +20,7 @@ import kotlin.reflect.KMutableProperty0
 interface tabBarsTabs {
 
     /** create and append into a TabBar */
-    fun beginTabBar(strId: String, flags: TabBarFlags = 0): Boolean {
+    fun beginTabBar(strId: String, flags: TabBarFlags = emptyFlags): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems) return false
@@ -62,18 +62,17 @@ interface tabBarsTabs {
     }
 
     /** create a Tab. Returns true if the Tab is selected. */
-    fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemFlags = 0): Boolean =
-            beginTabItem(label, pOpen mutablePropertyAt index, flags)
+    fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemOnlyFlags = emptyFlags): Boolean =
+        beginTabItem(label, pOpen mutablePropertyAt index, flags)
 
     /** create a Tab. Returns true if the Tab is selected. */
-    fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0): Boolean {
+    fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemOnlyFlags = emptyFlags): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems)
             return false
 
         val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
-        assert(flags hasnt TabItemFlag._Button) { "BeginTabItem() Can't be used with button flags, use TabItemButton() instead!" }
 
         val ret = tabBar.tabItemEx(label, pOpen, flags, null)
         if (ret && flags hasnt TabItemFlag.NoPushId) {
@@ -97,7 +96,7 @@ interface tabBarsTabs {
     }
 
     /** create a Tab behaving like a button. return true when clicked. cannot be selected in the tab bar. */
-    fun tabItemButton(label: String, flags: TabItemFlags = TabItemFlag.None.i): Boolean {
+    fun tabItemButton(label: String, flags: TabItemOnlyFlags = emptyFlags): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems)

@@ -293,7 +293,7 @@ object ShowDemoWindowLayout {
 
                 // Child 1: no border, enable horizontal scrollbar
                 run {
-                    var windowFlags = Wf.HorizontalScrollbar.i
+                    var windowFlags: WindowFlags = Wf.HorizontalScrollbar
                     if (disableMouseWheel)
                         windowFlags = windowFlags or Wf.NoScrollWithMouse
                     child("ChildL", Vec2(contentRegionAvail.x * 0.5f, 260), false, windowFlags) {
@@ -305,7 +305,7 @@ object ShowDemoWindowLayout {
 
                 // Child 2: rounded border
                 run {
-                    var windowFlags = Wf.None.i
+                    var windowFlags: WindowFlags = emptyFlags
                     if (disableMouseWheel)
                         windowFlags = windowFlags or Wf.NoScrollWithMouse
                     if (!disableMenu)
@@ -347,7 +347,7 @@ object ShowDemoWindowLayout {
 
                     ImGui.cursorPosX += offsetX
                     withStyleColor(Col.ChildBg, COL32(255, 0, 0, 100)) {
-                        beginChild("Red", Vec2(200, 100), true, Wf.None.i)
+                        beginChild("Red", Vec2(200, 100), true)
                         for (n in 0..49)
                             text("Some test $n")
                         endChild()
@@ -581,9 +581,9 @@ object ShowDemoWindowLayout {
                         val names = arrayOf("Top", "25%%", "Center", "75%%", "Bottom") // double quote for ::format escaping
                         textUnformatted(names[i])
 
-                        val childFlags = if (enableExtraDecorations) Wf.MenuBar else Wf.None
+                        val childFlags = if (enableExtraDecorations) Wf.MenuBar else emptyFlags
                         val childId = getID(i.L)
-                        val childIsVisible = beginChild(childId, Vec2(childW, 200f), true, childFlags.i)
+                        val childIsVisible = beginChild(childId, Vec2(childW, 200f), true, childFlags)
                         menuBar { textUnformatted("abc") }
                         if (scrollToOff)
                             scrollY = scrollToOffPx
@@ -615,7 +615,7 @@ object ShowDemoWindowLayout {
                 pushID("##HorizontalScrolling")
                 for (i in 0..4) {
                     val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
-                    val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
+                    val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else emptyFlags
                     val childId = getID(i.L)
                     val childIsVisible = beginChild(childId, Vec2(-100f, childHeight), true, childFlags)
                     if (scrollToOff)
@@ -648,7 +648,7 @@ object ShowDemoWindowLayout {
                 pushStyleVar(StyleVar.FrameRounding, 3f)
                 pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
                 val scrollingChildSize = Vec2(0f, ImGui.frameHeightWithSpacing * 7 + 30)
-                beginChild("scrolling", scrollingChildSize, true, Wf.HorizontalScrollbar.i)
+                beginChild("scrolling", scrollingChildSize, true, Wf.HorizontalScrollbar)
                 for (line in 0 until lines) {
                     // Display random stuff. For the sake of this trivial demo we are using basic Button() + SameLine()
                     // If you want to create your own time line for a real application you may be better off manipulating
@@ -697,7 +697,7 @@ object ShowDemoWindowLayout {
                 if (showHorizontalContentsSizeDemoWindow) {
                     if (explicitContentSize)
                         setNextWindowContentSize(Vec2(contentsSizeX, 0f))
-                    begin("Horizontal contents size demo window", ::showHorizontalContentsSizeDemoWindow, if (showHscrollbar) Wf.HorizontalScrollbar.i else Wf.None.i)
+                    begin("Horizontal contents size demo window", ::showHorizontalContentsSizeDemoWindow, if (showHscrollbar) Wf.HorizontalScrollbar else emptyFlags)
                     pushStyleVar(StyleVar.ItemSpacing, Vec2(2, 0))
                     pushStyleVar(StyleVar.FramePadding, Vec2(2, 0))
                     helpMarker("Test of different widgets react and impact the work rectangle growing when horizontal scrolling is enabled.\n\nUse 'Metrics->Tools->Show windows rectangles' to visualize rectangles.")
@@ -736,7 +736,7 @@ object ShowDemoWindowLayout {
                         textWrapped("This text should automatically wrap on the edge of the work rectangle.")
                     if (showColumns) {
                         text("Tables:")
-                        if (beginTable("table", 4, TableFlag.Borders.i)) {
+                        if (beginTable("table", 4, TableFlag.Borders)) {
                             for (n in 0..3) {
                                 tableNextColumn()
                                 text("Width %.2f", ImGui.contentRegionAvail.x)

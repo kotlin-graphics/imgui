@@ -2,7 +2,10 @@ package imgui.static
 
 import gli_.has
 import gli_.hasnt
-import glm_.*
+import glm_.glm
+import glm_.i
+import glm_.max
+import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
@@ -122,7 +125,7 @@ fun navUpdate() {
 
     // Process manual activation request
     g.navActivateId = 0; g.navActivateDownId = 0; g.navActivatePressedId = 0; g.navActivateInputId = 0
-    g.navActivateFlags = ActivateFlag.None.i
+    g.navActivateFlags = emptyFlags
     if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
         val activateDown = (navKeyboardActive && Key.Space.isDown) || (navGamepadActive && Key._NavGamepadActivate.isDown)
         val activatePressed = activateDown && ((navKeyboardActive && Key.Space isPressed false) || (navGamepadActive && Key._NavGamepadActivate isPressed false))
@@ -130,11 +133,11 @@ fun navUpdate() {
         val inputPressed = inputDown && ((navKeyboardActive && Key.Enter isPressed false) || (navGamepadActive && Key._NavGamepadInput isPressed false))
         if (g.activeId == 0 && activatePressed) {
             g.navActivateId = g.navId
-            g.navActivateFlags = ActivateFlag.PreferTweak.i
+            g.navActivateFlags = ActivateFlag.PreferTweak
         }
         if ((g.activeId == 0 || g.activeId == g.navId) && inputPressed) {
             g.navActivateInputId = g.navId
-            g.navActivateFlags = ActivateFlag.PreferInput.i
+            g.navActivateFlags = ActivateFlag.PreferInput
         }
         if ((g.activeId == 0 || g.activeId == g.navId) && activateDown)
             g.navActivateDownId = g.navId
@@ -236,9 +239,9 @@ fun navUpdateWindowing() {
     // Start CTRL+TAB or Square+L/R window selection
     val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
     val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
-    val keyboardNextWindow = allowWindowing && g.configNavWindowingKeyNext != 0 && shortcut(g.configNavWindowingKeyNext, KeyOwner_None, InputFlag.Repeat or InputFlag.RouteAlways)
-    val keyboardPrevWindow = allowWindowing && g.configNavWindowingKeyPrev != 0 && shortcut(g.configNavWindowingKeyPrev, KeyOwner_None, InputFlag.Repeat or InputFlag.RouteAlways)
-    val startWindowingWithGamepad = allowWindowing && navGamepadActive && g.navWindowingTarget == null && Key._NavGamepadMenu.isPressed(0, InputFlag.None.i)
+    val keyboardNextWindow = allowWindowing && g.configNavWindowingKeyNext.isNotEmpty && shortcut(g.configNavWindowingKeyNext, KeyOwner_None, InputFlag.Repeat or InputFlag.RouteAlways)
+    val keyboardPrevWindow = allowWindowing && g.configNavWindowingKeyPrev.isNotEmpty && shortcut(g.configNavWindowingKeyPrev, KeyOwner_None, InputFlag.Repeat or InputFlag.RouteAlways)
+    val startWindowingWithGamepad = allowWindowing && navGamepadActive && g.navWindowingTarget == null && Key._NavGamepadMenu.isPressed(0)
     val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && (keyboardNextWindow || keyboardPrevWindow) // Note: enabled even without NavEnableKeyboard!
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
@@ -280,14 +283,15 @@ fun navUpdateWindowing() {
     g.navWindowingTarget?.let {
         if (g.navInputSource == InputSource.Keyboard) {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
-            val a = if (g.configNavWindowingKeyNext != 0) g.configNavWindowingKeyNext else Key.Mod_Mask_.i
-            val b = if (g.configNavWindowingKeyPrev != 0) g.configNavWindowingKeyPrev else Key.Mod_Mask_.i
-            val sharedMods = a and b and Key.Mod_Mask_
-            assert(sharedMods != 0) { "Next / Prev shortcut currently needs a shared modifier to \"hold\", otherwise Prev actions would keep cycling between two windows." }
-            g.navWindowingHighlightAlpha = g.navWindowingHighlightAlpha max saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f) // 1.0f
+            val a = if (g.configNavWindowingKeyNext.isNotEmpty) g.configNavWindowingKeyNext else Key.Mod_Mask
+            val b = if (g.configNavWindowingKeyPrev.isNotEmpty) g.configNavWindowingKeyPrev else Key.Mod_Mask
+            val sharedMods = a and b and Key.Mod_Mask
+            assert(sharedMods.isNotEmpty) { "Next / Prev shortcut currently needs a shared modifier to \"hold\", otherwise Prev actions would keep cycling between two windows." }
+            g.navWindowingHighlightAlpha =
+                g.navWindowingHighlightAlpha max saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f) // 1.0f
             if (keyboardNextWindow || keyboardPrevWindow)
                 navUpdateWindowingHighlightWindow(if (keyboardNextWindow) -1 else +1)
-            else if ((io.keyMods and sharedMods) != sharedMods)
+            else if (sharedMods !in io.keyMods)
                 applyFocusWindow = g.navWindowingTarget
         }
     }
@@ -479,8 +483,8 @@ fun navUpdateCreateMoveRequest() {
     } else {
         // Initiate directional inputs request
         g.navMoveDir = Dir.None
-        g.navMoveFlags = NavMoveFlag.None.i
-        g.navMoveScrollFlags = ScrollFlag.None.i
+        g.navMoveFlags = emptyFlags
+        g.navMoveScrollFlags = emptyFlags
         if (window != null && g.navWindowingTarget == null && window.flags hasnt Wf.NoNavInputs) {
             val repeatMode = InputFlag.Repeat or InputFlag.RepeatRateNavMove
             if (!isActiveIdUsingNavDir(Dir.Left) && ((navGamepadActive && Key.GamepadDpadLeft.isPressed(KeyOwner_None, repeatMode)) || (navKeyboardActive && Key.LeftArrow.isPressed(KeyOwner_None, repeatMode))))
@@ -574,7 +578,7 @@ fun navUpdateCreateTabbingRequest() {
     if (window == null || g.navWindowingTarget != null || window.flags has Wf.NoNavInputs)
         return
 
-    val tabPressed = Key.Tab.isPressed(KeyOwner_None, InputFlag.Repeat.i) && !g.io.keyCtrl && !g.io.keyAlt
+    val tabPressed = Key.Tab.isPressed(KeyOwner_None, InputFlag.Repeat) && !g.io.keyCtrl && !g.io.keyAlt
     if (!tabPressed)
         return
 
@@ -586,7 +590,7 @@ fun navUpdateCreateTabbingRequest() {
     g.navTabbingDir = if (g.io.keyShift) -1 else if (g.activeId == 0) 0 else +1
     val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
     val clipDir = if (g.navTabbingDir < 0) Dir.Up else Dir.Down
-    navMoveRequestSubmit(Dir.None, clipDir, NavMoveFlag.Tabbing.i, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
+    navMoveRequestSubmit(Dir.None, clipDir, NavMoveFlag.Tabbing, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
     g.navTabbingCounter = -1
 }
 
@@ -602,8 +606,8 @@ fun navUpdatePageUpPageDown(): Float {
 
     val pageUpHeld = Key.PageUp isDown KeyOwner_None
     val pageDownHeld = Key.PageDown isDown KeyOwner_None
-    val homePressed = Key.Home.isPressed(KeyOwner_None, InputFlag.Repeat.i)
-    val endPressed = Key.End.isPressed(KeyOwner_None, InputFlag.Repeat.i)
+    val homePressed = Key.Home.isPressed(KeyOwner_None, InputFlag.Repeat)
+    val endPressed = Key.End.isPressed(KeyOwner_None, InputFlag.Repeat)
     if (pageUpHeld == pageDownHeld && homePressed == endPressed) // Proceed if either (not both) are pressed, otherwise early out
         return 0f
 
@@ -613,8 +617,8 @@ fun navUpdatePageUpPageDown(): Float {
     if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll) {
         // Fallback manual-scroll when window has no navigable item
         when {
-            Key.PageUp.isPressed(KeyOwner_None, InputFlag.Repeat.i) -> window.setScrollY(window.scroll.y - window.innerRect.height)
-            Key.PageDown.isPressed(KeyOwner_None, InputFlag.Repeat.i) -> window.setScrollY(window.scroll.y + window.innerRect.height)
+            Key.PageUp.isPressed(KeyOwner_None, InputFlag.Repeat) -> window.setScrollY(window.scroll.y - window.innerRect.height)
+            Key.PageDown.isPressed(KeyOwner_None, InputFlag.Repeat) -> window.setScrollY(window.scroll.y + window.innerRect.height)
             homePressed -> window setScrollY 0f
             endPressed -> window setScrollY window.scrollMax.y
         }

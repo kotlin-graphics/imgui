@@ -66,7 +66,7 @@ object ShowDemoWindowColumns {
         treeNode("Horizontal Scrolling") {
             setNextWindowContentSize(Vec2(1500f, 0f))
             val childSize = Vec2(0f, fontSize * 20f)
-            child("##ScrollingRegion", childSize, false, WindowFlag.HorizontalScrollbar.i) {
+            child("##ScrollingRegion", childSize, false, WindowFlag.HorizontalScrollbar) {
                 columns(10)
 
                 // Also demonstrate using clipper for large vertical lists
@@ -142,7 +142,7 @@ object ShowDemoWindowColumns {
                 val names = listOf("One", "Two", "Three")
                 val paths = listOf("/path/one", "/path/two", "/path/three")
                 for (i in 0..2) {
-                    selectable("%04d".format(style.locale, i), selected == i, SelectableFlag.SpanAllColumns.i) {
+                    selectable("%04d".format(style.locale, i), selected == i, SelectableFlag.SpanAllColumns) {
                         selected = i
                     }
                     nextColumn()

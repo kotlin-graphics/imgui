@@ -99,7 +99,6 @@ import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
 import imgui.dsl.listBox
 import imgui.dsl.treeNode
-import imgui.hasnt
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import imgui.internal.api.debugTools.Companion.metricsHelpMarker
@@ -255,7 +254,7 @@ interface demoDebugInformations {
 
                     bulletText("Table 0x%08X (${table.columnsCount} columns, in '${table.outerWindow!!.name}')", table.id)
                     if (isItemHovered())
-                        foregroundDrawList.addRect(table.outerRect.min - 1, table.outerRect.max + 1, COL32(255, 255, 0, 255), 0f, 0, 2f)
+                        foregroundDrawList.addRect(table.outerRect.min - 1, table.outerRect.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
                     indent()
                     for (rectN in TRT.values()) {
                         if (rectN >= TRT.ColumnsRect) {
@@ -267,7 +266,7 @@ interface demoDebugInformations {
                                         .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                                 selectable(buf)
                                 if (isItemHovered())
-                                    foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0, 2f)
+                                    foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
                             }
                         } else {
                             val r = Funcs.getTableRect(table, rectN, -1)
@@ -275,7 +274,7 @@ interface demoDebugInformations {
                                 r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                             selectable(buf)
                             if (isItemHovered())
-                                foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0, 2f)
+                                foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
                         }
                     }
                     unindent()
@@ -391,7 +390,7 @@ interface demoDebugInformations {
 
             treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
                 val size = Vec2(-Float.MIN_VALUE, ImGui.textLineHeight * 20)
-                inputTextMultiline("##Ini", g.settingsIniData, size, InputTextFlag.ReadOnly.i)
+                inputTextMultiline("##Ini", g.settingsIniData, size, InputTextFlag.ReadOnly)
             }
         }
 
@@ -470,7 +469,7 @@ interface demoDebugInformations {
                 listBox("##routes", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 8)) {
                     for (key in Key.Named) {
                         val rt = g.keysRoutingTable
-                        var idx = rt.index[key.i]
+                        var idx = rt.index[key]
                         while (idx != -1) {
                             val routingData = rt.entries[idx]
                             val keyChordName = getKeyChordName(key or routingData.mods)
@@ -555,7 +554,7 @@ interface demoDebugInformations {
                         val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], columnN)
                         val col = if (table.hoveredColumnBody == columnN) COL32(255, 255, 128, 255) else COL32(255, 0, 128, 255)
                         val thickness = if (table.hoveredColumnBody == columnN) 3f else 1f
-                        drawList.addRect(r.min, r.max, col, 0f, 0, thickness)
+                        drawList.addRect(r.min, r.max, col, thickness = thickness)
                     }
                 } else {
                     val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], -1)
@@ -585,13 +584,13 @@ interface demoDebugInformations {
 
         alignTextToFramePadding()
         text("Log events:")
-        sameLine(); checkboxFlags("All", g::debugLogFlags, DebugLogFlag.EventMask_.i)
-        sameLine(); checkboxFlags("ActiveId", g::debugLogFlags, DebugLogFlag.EventActiveId.i)
-        sameLine(); checkboxFlags("Focus", g::debugLogFlags, DebugLogFlag.EventFocus.i)
-        sameLine(); checkboxFlags("Popup", g::debugLogFlags, DebugLogFlag.EventPopup.i)
-        sameLine(); checkboxFlags("Nav", g::debugLogFlags, DebugLogFlag.EventNav.i)
-        sameLine(); checkboxFlags("Clipper", g::debugLogFlags, DebugLogFlag.EventClipper.i)
-        sameLine(); checkboxFlags("IO", g::debugLogFlags, DebugLogFlag.EventIO.i)
+        sameLine(); checkboxFlags("All", g::debugLogFlags, DebugLogFlag.EventMask)
+        sameLine(); checkboxFlags("ActiveId", g::debugLogFlags, DebugLogFlag.EventActiveId)
+        sameLine(); checkboxFlags("Focus", g::debugLogFlags, DebugLogFlag.EventFocus)
+        sameLine(); checkboxFlags("Popup", g::debugLogFlags, DebugLogFlag.EventPopup)
+        sameLine(); checkboxFlags("Nav", g::debugLogFlags, DebugLogFlag.EventNav)
+        sameLine(); checkboxFlags("Clipper", g::debugLogFlags, DebugLogFlag.EventClipper)
+        sameLine(); checkboxFlags("IO", g::debugLogFlags, DebugLogFlag.EventIO)
 
         if (smallButton("Clear")) {
             g.debugLogBuf.clear()
@@ -687,12 +686,12 @@ interface demoDebugInformations {
 
         // Display decorated stack
         tool.lastActiveFrame = g.frameCount
-        if (tool.results.isNotEmpty() && beginTable("##table", 3, TableFlag.Borders.i)) {
+        if (tool.results.isNotEmpty() && beginTable("##table", 3, TableFlag.Borders)) {
 
             val idWidth = calcTextSize("0xDDDDDDDD").x
-            tableSetupColumn("Seed", TableColumnFlag.WidthFixed.i, idWidth)
-            tableSetupColumn("PushID", TableColumnFlag.WidthStretch.i)
-            tableSetupColumn("Result", TableColumnFlag.WidthFixed.i, idWidth)
+            tableSetupColumn("Seed", TableColumnFlag.WidthFixed, idWidth)
+            tableSetupColumn("PushID", TableColumnFlag.WidthStretch)
+            tableSetupColumn("Result", TableColumnFlag.WidthFixed, idWidth)
             tableHeadersRow()
             for (n in tool.results.indices) {
                 val info = tool.results[n]
@@ -717,7 +716,7 @@ interface demoDebugInformations {
         var showConfigInfo = false
         operator fun invoke(open: KMutableProperty0<Boolean>) {
 
-            if (!begin("About Dear ImGui", open, Wf.AlwaysAutoResize.i)) {
+            if (!begin("About Dear ImGui", open, Wf.AlwaysAutoResize)) {
                 end()
                 return
             }
@@ -733,7 +732,7 @@ interface demoDebugInformations {
 
                 val copyToClipboard = button("Copy to clipboard")
                 val childSize = Vec2(0f, textLineHeightWithSpacing * 18)
-                beginChildFrame(getID("cfginfos"), childSize, Wf.NoMove.i)
+                beginChildFrame(getID("cfginfos"), childSize, Wf.NoMove)
                 if (copyToClipboard) {
                     logToClipboard()
                     logText("```\n") // Back quotes will make text appears without formatting when pasting on GitHub

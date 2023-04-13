@@ -2,8 +2,8 @@ package imgui.internal.classes
 
 import glm_.vec2.Vec2
 import imgui.ID
-import imgui.TabBarFlag
 import imgui.TabBarFlags
+import imgui.emptyFlags
 
 class TabBarSection {
     /** Number of tabs in this section. */
@@ -21,7 +21,7 @@ class TabBar {
 
     val tabs = ArrayList<TabItem>()
 
-    var flags: TabBarFlags = TabBarFlag.None.i
+    var flags: TabBarFlags = emptyFlags
 
     /** Zero for tab-bars used by docking */
     var id: ID = 0

@@ -1,6 +1,9 @@
 package imgui.internal.sections
 
-import imgui.*
+import imgui.ID
+import imgui.Key
+import imgui.KeyChord
+import imgui.emptyFlags
 
 
 enum class InputSource {
@@ -30,8 +33,10 @@ sealed class InputEvent {
         override val source: InputSource = InputSource.Mouse
     }
 
-    class MouseButton(val button: Int,
-                      val down: Boolean) : InputEvent() {
+    class MouseButton(
+        val button: imgui.MouseButton,
+        val down: Boolean
+    ) : InputEvent() {
         override val source: InputSource = InputSource.Mouse
     }
 
@@ -62,8 +67,9 @@ typealias KeyRoutingIndex = Int
 // Routing table entry (sizeof() == 16 bytes)
 class KeyRoutingData {
     var nextEntryIndex: KeyRoutingIndex = -1
+
     /** Technically we'd only need 4-bits but for simplify we store ImGuiMod_ values which need 16-bits. ImGuiMod_Shortcut is already translated to Ctrl/Super. */
-    var mods = 0
+    var mods: KeyChord = emptyFlags
     var routingNextScore = 255               // Lower is better (0: perfect score)
     var routingCurr: ID = KeyOwner_None
     var routingNext: ID = KeyOwner_None

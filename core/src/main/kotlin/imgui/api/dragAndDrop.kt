@@ -1,7 +1,6 @@
 package imgui.api
 
 import imgui.*
-import imgui.DragDropFlag
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.endTooltip
@@ -16,8 +15,8 @@ import imgui.ImGui.setActiveIdUsingAllKeyboardKeys
 import imgui.classes.Payload
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.internal.*
-import imgui.internal.sections.*
+import imgui.internal.hashStr
+import imgui.internal.sections.ItemStatusFlag
 import imgui.DragDropFlag as Ddf
 
 // Drag and Drop
@@ -26,7 +25,6 @@ import imgui.DragDropFlag as Ddf
 // - If you stop calling BeginDragDropSource() the payload is preserved however it won't have a preview tooltip (we currently display a fallback "..." tooltip, see #1725)
 // - An item can be both drag source and drop target.
 interface dragAndDrop {
-
     /** call after submitting an item which may be dragged. when this return true, you can call SetDragDropPayload() + EndDragDropSource()
      *
      *  When this returns true you need to: a) call SetDragDropPayload() exactly once, b) you may render the payload visual/description, c) call EndDragDropSource()
@@ -36,18 +34,7 @@ interface dragAndDrop {
      *  - We then pull and use the mouse button that was used to activate the item and use it to carry on the drag.
      *  If the item has no identifier:
      *  - Currently always assume left mouse button. */
-    fun beginDragDropSource(flag: Ddf): Boolean = beginDragDropSource(flag.i)
-
-    /** call after submitting an item which may be dragged. when this return true, you can call SetDragDropPayload() + EndDragDropSource()
-     *
-     *  When this returns true you need to: a) call SetDragDropPayload() exactly once, b) you may render the payload visual/description, c) call EndDragDropSource()
-     *  If the item has an identifier:
-     *  - This assume/require the item to be activated (typically via ButtonBehavior).
-     *  - Therefore if you want to use this with a mouse button other than left mouse button, it is up to the item itself to activate with another button.
-     *  - We then pull and use the mouse button that was used to activate the item and use it to carry on the drag.
-     *  If the item has no identifier:
-     *  - Currently always assume left mouse button. */
-    fun beginDragDropSource(flags: DragDropFlags = 0): Boolean {
+    fun beginDragDropSource(flags: DragDropFlags = emptyFlags): Boolean {
 
         var window: Window? = g.currentWindow!!
 
@@ -64,8 +51,8 @@ interface dragAndDrop {
                 // Common path: items with ID
                 if (g.activeId != sourceId)
                     return false
-                if (g.activeIdMouseButton != -1)
-                    mouseButton = MouseButton.of(g.activeIdMouseButton)
+                if (g.activeIdMouseButton != MouseButton.None)
+                    mouseButton = g.activeIdMouseButton
                 if (!g.io.mouseDown[mouseButton.i] || window!!.skipItems)
                     return false
                 g.activeIdAllowOverlap = false
@@ -228,7 +215,7 @@ interface dragAndDrop {
 
     /** Accept contents of a given type. If DragDropFlag.AcceptBeforeDelivery is set you can peek into the payload
      *  before the mouse button is released. */
-    fun acceptDragDropPayload(type: String, flags_: DrawListFlags = 0): Payload? {
+    fun acceptDragDropPayload(type: String, flags_: DragDropFlags = emptyFlags): Payload? {
         var flags = flags_
         val window = g.currentWindow!!
         val payload = g.dragDropPayload
@@ -249,9 +236,9 @@ interface dragAndDrop {
 
         // Render default drop visuals
         payload.preview = wasAcceptedPreviously
-        flags = flags or (g.dragDropSourceFlags and DragDropFlag.AcceptNoDrawDefaultRect) // Source can also inhibit the preview (useful for external sources that live for 1 frame)
+        flags = flags or (g.dragDropSourceFlags and Ddf.AcceptNoDrawDefaultRect) // Source can also inhibit the preview (useful for external sources that live for 1 frame)
         if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview)
-            window.drawList.addRect(r.min - 3.5f, r.max + 3.5f, Col.DragDropTarget.u32, 0f, 0, 2f)
+            window.drawList.addRect(r.min - 3.5f, r.max + 3.5f, Col.DragDropTarget.u32, thickness = 2f)
 
         g.dragDropAcceptFrameCount = g.frameCount
         // For extern drag sources affecting os window focus, it's easier to just test !isMouseDown() instead of isMouseReleased()

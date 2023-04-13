@@ -1,14 +1,10 @@
 package imgui.static
 
-import glm_.has
-import glm_.hasnt
-import glm_.wo
 import imgui.*
 import imgui.ImGui.fixColumnSortDirection
 import imgui.internal.classes.Table
 import imgui.internal.classes.TableColumn
 import imgui.internal.classes.Window
-import imgui.internal.isPowerOfTwo
 
 // Configuration
 
@@ -31,18 +27,19 @@ val TABLE_RESIZE_SEPARATOR_FEEDBACK_TIMER = 0.06f
 /** Adjust flags: default width mode + stretch columns are not allowed when auto extending
  *
  *  ~static void TableSetupColumnFlags(ImGuiTable* table, ImGuiTableColumn* column, ImGuiTableColumnFlags flags_in) */
-fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnFlags) {
+fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnSetupFlags = emptyFlags) {
 
     var flags = flagsIn
 
     // Sizing Policy
-    if (flags hasnt TableColumnFlag.WidthMask_) {
-        flags = flags or when (val tableSizingPolicy = this.flags and TableFlag._SizingMask) {
-            TableFlag.SizingFixedFit.i, TableFlag.SizingFixedSame.i -> TableColumnFlag.WidthFixed
+    if (flags hasnt TableColumnFlag.WidthMask) {
+        val tableSizingPolicy = this.flags and TableFlag._SizingMask
+        flags = flags or when (tableSizingPolicy) {
+            TableFlag.SizingFixedFit, TableFlag.SizingFixedSame -> TableColumnFlag.WidthFixed
             else -> TableColumnFlag.WidthStretch
         }
     } else
-        assert((flags and TableColumnFlag.WidthMask_).isPowerOfTwo) { "Check that only 1 of each set is used." }
+        assert((flags and TableColumnFlag.WidthMask).isPowerOfTwo) { "Check that only 1 of each set is used." }
 
     // Resize
     if (this.flags hasnt TableFlag.Resizable)
@@ -53,7 +50,7 @@ fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnFlags) {
         flags = flags or TableColumnFlag.NoSort
 
     // Indentation
-    if (flags hasnt TableColumnFlag.IndentMask_)
+    if (flags hasnt TableColumnFlag.IndentMask)
         flags = flags or if (columns.indexOf(column) == 0) TableColumnFlag.IndentEnable else TableColumnFlag.IndentDisable
 
     // Alignment
@@ -62,7 +59,7 @@ fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnFlags) {
     //IM_ASSERT(ImIsPowerOfTwo(flags & ImGuiTableColumnFlags_AlignMask_)); // Check that only 1 of each set is used.
 
     // Preserve status flags
-    column.flags = flags or (column.flags and TableColumnFlag.StatusMask_)
+    column.flags = flags or (column.flags and TableColumnFlag.StatusMask)
 
     // Build an ordered list of available sort directions
     column.sortDirectionsAvailCount = 0
@@ -122,7 +119,7 @@ fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
         }
 
     // Adjust flags: enable NoKeepColumnsVisible when using ImGuiTableFlags_SizingFixedSame
-    if (flags and TableFlag._SizingMask == TableFlag.SizingFixedSame.i)
+    if (flags and TableFlag._SizingMask == TableFlag.SizingFixedSame)
         flags = flags or TableFlag.NoKeepColumnsVisible
 
     // Adjust flags: enforce borders when resizable

@@ -6,8 +6,8 @@ import imgui.ImGui.convertShortcutMod
 import imgui.ImGui.convertSingleModFlagToKey
 import imgui.ImGui.getRoutingIdFromOwnerId
 import imgui.ImGui.isPressed
-import imgui.internal.classes.*
-import imgui.internal.isPowerOfTwo
+import imgui.internal.classes.InputFlag
+import imgui.internal.classes.InputFlags
 import imgui.internal.sections.KeyRoutingData
 
 // Inputs Utilities: Shortcut testing (with Routing Resolution)
@@ -36,29 +36,29 @@ interface inputsUtilitiesShortcutRouting {
     // - Route is granted to a single owner. When multiple requests are made we have policies to select the winning route.
     // - Multiple read sites may use the same owner id and will all get the granted route.
     // - For routing: when owner_id is 0 we use the current Focus Scope ID as a default owner in order to identify our location.
-    fun shortcut(keyChord_: KeyChord, ownerId: ID = 0, flags_: InputFlags = 0): Boolean {
+    fun shortcut(keyChord_: KeyChord, ownerId: ID = 0, flags_: InputFlags = emptyFlags): Boolean {
 
         var flags = flags_
         // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter with this, so IsKeyPressed() is fine with he 0/Any.
-        if (flags hasnt InputFlag.RouteMask_)
+        if (flags hasnt InputFlag.RouteMask)
             flags /= InputFlag.RouteFocused
         if (!setShortcutRouting(keyChord_, ownerId, flags))
             return false
 
         val keyChord = if (keyChord_ has Key.Mod_Shortcut) convertShortcutMod(keyChord_) else keyChord_
         // [JVM] don't attempt finding a `Key` with mods, it might not exist and crash, keep it as an `Int`
-        val mods = keyChord and Key.Mod_Mask_
+        val mods = keyChord and Key.Mod_Mask
         if (g.io.keyMods != mods)
             return false
 
         // Special storage location for mods
-        var key = Key of (keyChord wo Key.Mod_Mask_)
+        var key = Key of (keyChord wo Key.Mod_Mask)
         if (key == Key.None)
             key = (Key of mods).convertSingleModFlagToKey()
 
-        if (!key.isPressed(ownerId, flags and (InputFlag.Repeat or InputFlag.RepeatRateMask_)))
+        if (!key.isPressed(ownerId, flags and (InputFlag.Repeat or InputFlag.RepeatRateMask)))
             return false
-        assert((flags wo InputFlag.SupportedByShortcut) == 0) { "Passing flags not supported by this function !" }
+        assert((flags wo InputFlag.SupportedByShortcut).isEmpty) { "Passing flags not supported by this function !" }
 
         return true
     }
@@ -73,10 +73,10 @@ interface inputsUtilitiesShortcutRouting {
     fun setShortcutRouting(keyChord: KeyChord, ownerId: ID, flags_: InputFlags): Boolean {
 
         var flags = flags_
-        if (flags hasnt InputFlag.RouteMask_)
+        if (flags hasnt InputFlag.RouteMask)
             flags /= InputFlag.RouteGlobalHigh // IMPORTANT: This is the default for SetShortcutRouting() but NOT Shortcut()
         else
-            assert((flags and InputFlag.RouteMask_).isPowerOfTwo) { "Check that only 1 routing flag is used" }
+            assert((flags and InputFlag.RouteMask).isPowerOfTwo) { "Check that only 1 routing flag is used" }
 
         if (flags has InputFlag.RouteUnlessBgFocused)
             if (g.navWindow == null)
@@ -119,9 +119,9 @@ interface inputsUtilitiesShortcutRouting {
         //  - Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift);                // Not legal
         val rt = g.keysRoutingTable
         val keyChord = if (keyChord_ has Key.Mod_Shortcut) convertShortcutMod(keyChord_) else keyChord_
-        var key = Key of (keyChord wo Key.Mod_Mask_)
+        var key = Key of (keyChord wo Key.Mod_Mask)
         // [JVM] don't attempt finding a `Key` with mods, it might not exist and crash, keep it as an `Int`
-        val mods = keyChord and Key.Mod_Mask_
+        val mods = keyChord and Key.Mod_Mask
         if (key == Key.None)
             key = key.convertSingleModFlagToKey()
         //        IM_ASSERT(IsNamedKey(key))

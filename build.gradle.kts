@@ -1,11 +1,10 @@
-import magik.github
-
 plugins {
-    kotlin("jvm") version embeddedKotlinVersion
+    kotlin("jvm") version "1.8.20"
     id("org.lwjgl.plugin") version "0.0.30"
     id("elect86.magik") version "0.3.1"
     `maven-publish`
     id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.google.devtools.ksp") version "1.8.20-1.0.10" apply false
 }
 
 //projects.core.dependencyProject.apply {

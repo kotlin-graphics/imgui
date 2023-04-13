@@ -1,14 +1,12 @@
 package imgui.internal.classes
 
-import glm_.*
-import imgui.*
-import imgui.ImGui.fixColumnSortDirection
+import imgui.ID
+import imgui.TableFlags
+import imgui.TableRowFlags
 import imgui.classes.TableColumnSortSpecs
 import imgui.classes.TableSortSpecs
-import imgui.internal.*
-import imgui.TableColumnFlag as Tcf
-import imgui.TableFlag as Tf
-import imgui.TableRowFlag as Trf
+import imgui.emptyFlags
+import imgui.internal.DrawListSplitter
 
 
 /** FIXME-TABLE: more transient data could be stored in a stacked ImGuiTableTempData: e.g. SortSpecs, incoming RowData */
@@ -16,7 +14,7 @@ class Table {
 
     var id: ID = 0
 
-    var flags = Tf.None.i
+    var flags: TableFlags = emptyFlags
 
     /** Single allocation to hold Columns[], DisplayOrderToIndex[] and RowCellData[] */
     //    var rawData: Any? = null
@@ -46,7 +44,7 @@ class Table {
     var requestOutputMaskByIndex = 0L
 
     /** Which data were loaded from the .ini file (e.g. when order is not altered we won't save order) */
-    var settingsLoadedFlags = Tf.None.i
+    var settingsLoadedFlags: TableFlags = emptyFlags
 
     /** Offset in g.SettingsTables */
     var settingsOffset = 0
@@ -78,9 +76,9 @@ class Table {
     var rowIndentOffsetX = 0f
 
     /** Current row flags, see ImGuiTableRowFlags_ */
-    var rowFlags = Trf.None.i
+    var rowFlags: TableRowFlags = emptyFlags
 
-    var lastRowFlags = Trf.None.i
+    var lastRowFlags: TableRowFlags = emptyFlags
 
     /** Counter for alternating background colors (can be fast-forwarded by e.g clipper), not same as CurrentRow because header rows typically don't increase this. */
     var rowBgColorCounter = 0

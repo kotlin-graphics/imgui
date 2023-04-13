@@ -3,6 +3,8 @@ package imgui;
 import glm_.vec2.Vec2;
 import glm_.vec4.Vec4;
 import imgui.font.Font;
+import imgui.internal.sections.ButtonFlag;
+import imgui.internal.sections.OldColumnsFlag;
 
 /**
  * twin brother of dsl, manual overloads
@@ -15,17 +17,18 @@ public class Jdsl {
     // Tables
 
     public static void table(String strId, int columnsCount, Runnable block) {
-        tables(strId, columnsCount, 0, new Vec2(), 0f, block);
+        tables(strId, columnsCount, Flag.empty(), new Vec2(), 0f, block);
     }
 
-    public static void tables(String strId, int columnsCount, int flags, Runnable block) {
+    public static void tables(String strId, int columnsCount, Flag<TableFlag> flags, Runnable block) {
         tables(strId, columnsCount, flags, new Vec2(), 0f, block);
     }
 
-    public static void tables(String strId, int columnsCount, int flags, Vec2 outerSize, Runnable block) {
+    public static void tables(String strId, int columnsCount, Flag<TableFlag> flags, Vec2 outerSize, Runnable block) {
         tables(strId, columnsCount, flags, outerSize, 0f, block);
     }
-    public static void tables(String strId, int columnsCount, int flags, Vec2 outerSize,
+
+    public static void tables(String strId, int columnsCount, Flag<TableFlag> flags, Vec2 outerSize,
                               float innerWidth, Runnable block) {
         if (imgui.beginTable(strId, columnsCount, flags, outerSize, innerWidth)) { // ~open
             block.run();
@@ -36,14 +39,14 @@ public class Jdsl {
     // Windows
 
     public static void window(String name, Runnable block) {
-        window(name, null, 0, block);
+        window(name, null, Flag.empty(), block);
     }
 
     public static void window(String name, MutableProperty0<Boolean> open, Runnable block) {
-        window(name, open, 0, block);
+        window(name, open, Flag.empty(), block);
     }
 
-    public static void window(String name, MutableProperty0<Boolean> open, int windowFlags, Runnable block) {
+    public static void window(String name, MutableProperty0<Boolean> open, Flag<WindowFlag> windowFlags, Runnable block) {
         if (imgui.begin(name, open, windowFlags)) // ~open
             block.run();
         imgui.end();
@@ -52,18 +55,18 @@ public class Jdsl {
     // Child Windows
 
     public static void child(String strId, Runnable block) {
-        child(strId, new Vec2(), false, 0, block);
+        child(strId, new Vec2(), false, Flag.empty(), block);
     }
 
     public static void child(String strId, Vec2 size, Runnable block) {
-        child(strId, size, false, 0, block);
+        child(strId, size, false, Flag.empty(), block);
     }
 
     public static void child(String strId, Vec2 size, boolean border, Runnable block) {
-        child(strId, size, border, 0, block);
+        child(strId, size, border, Flag.empty(), block);
     }
 
-    public static void child(String strId, Vec2 size, boolean border, int windowFlags, Runnable block) {
+    public static void child(String strId, Vec2 size, boolean border, Flag<WindowFlag> windowFlags, Runnable block) {
         if (imgui.beginChild(strId, size, border, windowFlags)) // ~open
             block.run();
         imgui.endChild();
@@ -229,7 +232,7 @@ public class Jdsl {
             block.run();
     }
 
-    public static void invisibleButton(String strId, Vec2 sizeArg, int flags, Runnable block) {
+    public static void invisibleButton(String strId, Vec2 sizeArg, Flag<ButtonFlag> flags, Runnable block) {
         if (imgui.invisibleButton(strId, sizeArg, flags))
             block.run();
     }
@@ -257,8 +260,13 @@ public class Jdsl {
             block.run();
     }
 
-    public static void checkboxFlags(String label, MutableProperty0<Integer> vPtr, int flagsValue, Runnable block) {
+    public static <F extends Flag<F>> void checkboxFlags(String label, MutableProperty0<Flag<F>> vPtr, Flag<F> flagsValue, Runnable block) {
         if (imgui.checkboxFlags(label, vPtr, flagsValue))
+            block.run();
+    }
+
+    public static <F extends Flag<F>> void checkboxFlags(String label, int[] flags, Flag<F> flagsValue, Runnable block) {
+        if (imgui.checkboxFlags(label, flags, flagsValue))
             block.run();
     }
 
@@ -277,10 +285,10 @@ public class Jdsl {
 
 
     public static void useCombo(String label, String previewValue, Runnable block) {
-        useCombo(label, previewValue, 0, block);
+        useCombo(label, previewValue, Flag.empty(), block);
     }
 
-    public static void useCombo(String label, String previewValue, int comboFlags, Runnable block) {
+    public static void useCombo(String label, String previewValue, Flag<ComboFlag> comboFlags, Runnable block) {
         if (imgui.beginCombo(label, previewValue, comboFlags)) {
             block.run();
             imgui.endCombo();
@@ -354,19 +362,19 @@ public class Jdsl {
 //    }
 
     public static void collapsingHeader(String label, Runnable block) {
-        collapsingHeader(label, 0, block);
+        collapsingHeader(label, Flag.empty(), block);
     }
 
-    public static void collapsingHeader(String label, int treeNodeFlags, Runnable block) {
+    public static void collapsingHeader(String label, Flag<TreeNodeFlag> treeNodeFlags, Runnable block) {
         if (imgui.collapsingHeader(label, treeNodeFlags))
             block.run();
     }
 
     public static void collapsingHeader(String label, MutableProperty0<Boolean> open, Runnable block) {
-        collapsingHeader(label, open, 0, block);
+        collapsingHeader(label, open, Flag.empty(), block);
     }
 
-    public static void collapsingHeader(String label, MutableProperty0<Boolean> open, int treeNodeFlags, Runnable block) {
+    public static void collapsingHeader(String label, MutableProperty0<Boolean> open, Flag<TreeNodeFlag> treeNodeFlags, Runnable block) {
         if (imgui.collapsingHeader(label, open, treeNodeFlags))
             block.run();
     }
@@ -375,18 +383,18 @@ public class Jdsl {
     // Widgets: Selectables
 
     public static void selectable(String label, Runnable block) {
-        selectable(label, false, 0, new Vec2(), block);
+        selectable(label, false, Flag.empty(), new Vec2(), block);
     }
 
     public static void selectable(String label, boolean selected, Runnable block) {
-        selectable(label, selected, 0, new Vec2(), block);
+        selectable(label, selected, Flag.empty(), new Vec2(), block);
     }
 
-    public static void selectable(String label, boolean selected, int flags, Runnable block) {
+    public static void selectable(String label, boolean selected, Flag<SelectableFlag> flags, Runnable block) {
         selectable(label, selected, flags, new Vec2(), block);
     }
 
-    public static void selectable(String label, boolean selected, int flags, Vec2 sizeArg, Runnable block) {
+    public static void selectable(String label, boolean selected, Flag<SelectableFlag> flags, Vec2 sizeArg, Runnable block) {
         if (imgui.selectable(label, selected, flags, sizeArg))
             block.run();
     }
@@ -449,10 +457,10 @@ public class Jdsl {
     // Popups, Modals
 
     public static void popup(String strId, Runnable block) {
-        popup(strId, 0, block);
+        popup(strId, Flag.empty(), block);
     }
 
-    public static void popup(String strId, int windowFlags, Runnable block) {
+    public static void popup(String strId, Flag<WindowFlag> windowFlags, Runnable block) {
         if (imgui.beginPopup(strId, windowFlags)) {
             block.run();
             imgui.endPopup();
@@ -460,10 +468,10 @@ public class Jdsl {
     }
 
     public static void popupContextItem(String strId, Runnable block) {
-        popupContextItem(strId, 0, block);
+        popupContextItem(strId, Flag.empty(), block);
     }
 
-    public static void popupContextItem(String strId, int popupFlags, Runnable block) {
+    public static void popupContextItem(String strId, Flag<PopupFlag> popupFlags, Runnable block) {
         if (imgui.beginPopupContextItem(strId, popupFlags)) {
             block.run();
             imgui.endPopup();
@@ -471,10 +479,10 @@ public class Jdsl {
     }
 
     public static void popupContextWindow(String strId, Runnable block) {
-        popupContextWindow(strId, 0, block);
+        popupContextWindow(strId, Flag.empty(), block);
     }
 
-    public static void popupContextWindow(String strId, int popupFlags, Runnable block) {
+    public static void popupContextWindow(String strId, Flag<PopupFlag> popupFlags, Runnable block) {
         if (imgui.beginPopupContextWindow(strId, popupFlags)) {
             block.run();
             imgui.endPopup();
@@ -482,10 +490,10 @@ public class Jdsl {
     }
 
     public static void popupContextVoid(String strId, Runnable block) {
-        popupContextVoid(strId, 0, block);
+        popupContextVoid(strId, Flag.empty(), block);
     }
 
-    public static void popupContextVoid(String strId, int popupFlags, Runnable block) {
+    public static void popupContextVoid(String strId, Flag<PopupFlag> popupFlags, Runnable block) {
         if (imgui.beginPopupContextVoid(strId, popupFlags)) {
             block.run();
             imgui.endPopup();
@@ -493,14 +501,14 @@ public class Jdsl {
     }
 
     public static void popupModal(String name, Runnable block) {
-        popupModal(name, null, 0, block);
+        popupModal(name, null, Flag.empty(), block);
     }
 
     public static void popupModal(String name, MutableProperty0<Boolean> pOpen, Runnable block) {
-        popupModal(name, pOpen, 0, block);
+        popupModal(name, pOpen, Flag.empty(), block);
     }
 
-    public static void popupModal(String name, MutableProperty0<Boolean> pOpen, int windowFlags, Runnable block) {
+    public static void popupModal(String name, MutableProperty0<Boolean> pOpen, Flag<WindowFlag> windowFlags, Runnable block) {
         if (imgui.beginPopupModal(name, pOpen, windowFlags)) {
             block.run();
             imgui.endPopup();
@@ -511,24 +519,24 @@ public class Jdsl {
     // Tab Bars, Tabs
 
     public static void tabBar(String strId, Runnable block) {
-        tabBar(strId, 0, block);
+        tabBar(strId, Flag.empty(), block);
     }
 
-    public static void tabBar(String strId, int tabBarFlags, Runnable block) {
+    public static void tabBar(String strId, Flag<TabBarFlag> tabBarFlags, Runnable block) {
         if (imgui.beginTabBar(strId, tabBarFlags))
             block.run();
         imgui.endTabBar();
     }
 
     public static void tabItem(String label, Runnable block) {
-        tabItem(label, null, 0, block);
+        tabItem(label, null, Flag.empty(), block);
     }
 
     public static void tabItem(String label, MutableProperty0<Boolean> pOpen, Runnable block) {
-        tabItem(label, pOpen, 0, block);
+        tabItem(label, pOpen, Flag.empty(), block);
     }
 
-    public static void tabItem(String label, MutableProperty0<Boolean> pOpen, int tabItemFlags, Runnable block) {
+    public static void tabItem(String label, MutableProperty0<Boolean> pOpen, Flag<TabItemFlag.ItemOnly> tabItemFlags, Runnable block) {
         if (imgui.beginTabItem(label, pOpen, tabItemFlags))
             block.run();
         imgui.endTabItem();
@@ -538,10 +546,10 @@ public class Jdsl {
     // Drag and Drop
 
     public static void dragDropSource(Runnable block) {
-        dragDropSource(0, block);
+        dragDropSource(Flag.empty(), block);
     }
 
-    public static void dragDropSource(int dragDropFlags, Runnable block) {
+    public static void dragDropSource(Flag<DragDropFlag> dragDropFlags, Runnable block) {
         if (imgui.beginDragDropSource(dragDropFlags)) {
             block.run();
             imgui.endDragDropSource();
@@ -568,10 +576,10 @@ public class Jdsl {
     // Miscellaneous Utilities
 
     public static void childFrame(int id, Vec2 size, Runnable block) {
-        childFrame(id, size, 0, block);
+        childFrame(id, size, Flag.empty(), block);
     }
 
-    public static void childFrame(int id, Vec2 size, int windowFlags, Runnable block) {
+    public static void childFrame(int id, Vec2 size, Flag<WindowFlag> windowFlags, Runnable block) {
         imgui.beginChildFrame(id, size, windowFlags);
         block.run();
         imgui.endChildFrame();
@@ -579,7 +587,7 @@ public class Jdsl {
 
     // Columns
 
-    public static void columns(String strId, int columnsCount, int flags, Runnable block) {
+    public static void columns(String strId, int columnsCount, Flag<OldColumnsFlag> flags, Runnable block) {
         imgui.beginColumns(strId, columnsCount, flags);
         try {
             block.run();

@@ -1,6 +1,5 @@
 package imgui.internal.classes
 
-import gli_.hasnt
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2bool
@@ -31,7 +30,7 @@ class Window(var context: Context,
     val id: ID = hashStr(name)
 
     /** See enum ImGuiWindowFlags_ */
-    var flags = Wf.None.i
+    var flags: WindowFlags = emptyFlags
 
     /** Always set in Begin(). Inactive windows may have a NULL value here if their viewport was discarded. */
     var viewport: ViewportP? = null
@@ -176,13 +175,13 @@ class Window(var context: Context,
     var disableInputsFrames = 0
 
     /** store acceptable condition flags for SetNextWindowPos() use. */
-    var setWindowPosAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+    var setWindowPosAllowFlags: CondFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
 
     /** store acceptable condition flags for SetNextWindowSize() use.    */
-    var setWindowSizeAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+    var setWindowSizeAllowFlags: CondFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
 
     /** store acceptable condition flags for SetNextWindowCollapsed() use.   */
-    var setWindowCollapsedAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+    var setWindowCollapsedAllowFlags: CondFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
 
     /** store window position when using a non-zero Pivot (position set needs to be processed when we know the window size) */
     var setWindowPosVal = Vec2(Float.MAX_VALUE)
@@ -400,10 +399,6 @@ class Window(var context: Context,
 
     // sparse static methods
 
-
-    /** ~IsWindowContentHoverable */
-    infix fun isContentHoverable(flag: HoveredFlag): Boolean = isContentHoverable(flag.i)
-
     /** ~IsWindowContentHoverable */
     infix fun isContentHoverable(flags: HoveredFlags): Boolean { // An active popup disable hovering on other windows (apart from its own children)
         // FIXME-OPT: This could be cached/stored within the window.
@@ -424,6 +419,9 @@ class Window(var context: Context,
         }
         return true
     }
+
+    val isContentHoverable: Boolean
+        get() = isContentHoverable(emptyFlags)
 
     /** ~CalcWindowAutoFitSize */
     fun calcAutoFitSize(sizeContents: Vec2): Vec2 {
@@ -476,7 +474,7 @@ class Window(var context: Context,
     }
 
     /** ~SetWindowConditionAllowFlags */
-    fun setConditionAllowFlags(flags: Int, enabled: Boolean) = if (enabled) {
+    fun setConditionAllowFlags(flags: CondFlags, enabled: Boolean) = if (enabled) {
         setWindowPosAllowFlags = setWindowPosAllowFlags or flags
         setWindowSizeAllowFlags = setWindowSizeAllowFlags or flags
         setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags or flags
@@ -518,9 +516,9 @@ class Window(var context: Context,
             newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x
             newSize.y = if (cr.min.y >= 0 && cr.max.y >= 0) glm.clamp(newSize.y, cr.min.y, cr.max.y) else sizeFull.y
             g.nextWindowData.sizeCallback?.invoke(SizeCallbackData(userData = g.nextWindowData.sizeCallbackUserData,
-                                                                   pos = Vec2(this@Window.pos),
-                                                                   currentSize = sizeFull,
-                                                                   desiredSize = newSize))
+                pos = Vec2(this@Window.pos),
+                currentSize = sizeFull,
+                desiredSize = newSize))
             newSize.x = floor(newSize.x)
             newSize.y = floor(newSize.y)
         }

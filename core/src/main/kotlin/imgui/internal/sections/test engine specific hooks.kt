@@ -27,7 +27,7 @@ fun IMGUI_TEST_ENGINE_ITEM_ADD(bb: Rect, id: ID) {
 }
 
 /** Register item label and status flags (optional)} */
-fun IMGUI_TEST_ENGINE_ITEM_INFO(id: ID, label: String, flags: ItemFlags) {
+fun IMGUI_TEST_ENGINE_ITEM_INFO(id: ID, label: String, flags: ItemStatusFlags) {
     if (g.testEngineHookItems)
         testEngineHook_ItemInfo(g, id, label, flags)
 }

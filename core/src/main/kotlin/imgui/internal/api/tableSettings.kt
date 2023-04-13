@@ -94,7 +94,7 @@ interface tableSettings {
         assert(settings.columnsCount == columnsCount && settings.columnsCountMax >= settings.columnsCount)
 
         var saveRefScale = false
-        settings.saveFlags = TableFlag.None.i
+        settings.saveFlags = emptyFlags
         for (n in 0 until columnsCount) {
             val column = columns[n]
             val columnSettings = settings.columnSettings[n]
@@ -133,7 +133,7 @@ interface tableSettings {
         isInitializing = true; isSettingsDirty = true
         isResetAllRequest = false
         isSettingsRequestLoad = false                   // Don't reload from ini
-        settingsLoadedFlags = TableFlag.None.i      // Mark as nothing loaded so our initialized data becomes authoritative
+        settingsLoadedFlags = emptyFlags      // Mark as nothing loaded so our initialized data becomes authoritative
     }
 
     /** Get settings for a given table, NULL if none

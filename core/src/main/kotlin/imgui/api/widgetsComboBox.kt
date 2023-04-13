@@ -28,11 +28,10 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.classes.SizeCallbackData
-import imgui.has
-import imgui.hasnt
 import imgui.internal.classes.Rect
 import imgui.internal.hashStr
-import imgui.internal.sections.*
+import imgui.internal.sections.DrawFlag
+import imgui.internal.sections.NextWindowDataFlag
 import kool.getValue
 import kool.setValue
 import uno.kotlin.NUL
@@ -44,10 +43,9 @@ import imgui.ComboFlag as Cf
 // - The old Combo() api are helpers over BeginCombo()/EndCombo() which are kept available for convenience purpose. This is analogous to how ListBox are created.
 interface widgetsComboBox {
 
-    fun beginCombo(label: String, previewValue_: String?, flags_: ComboFlags = 0): Boolean {
+    fun beginCombo(label: String, previewValue_: String?, flags: ComboFlags = emptyFlags): Boolean {
 
         var previewValue = previewValue_
-        var flags = flags_
 
         val window = currentWindow
 
@@ -57,7 +55,7 @@ interface widgetsComboBox {
             return false
 
         val id = window.getID(label)
-        assert(flags and (Cf.NoArrowButton or Cf.NoPreview) != Cf.NoArrowButton or Cf.NoPreview) { "Can't use both flags together" }
+        assert(Cf.NoArrowButton or Cf.NoPreview !in flags) { "Can't use both flags together" }
 
         val arrowSize = if (flags has Cf.NoArrowButton) 0f else frameHeight
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
@@ -71,9 +69,9 @@ interface widgetsComboBox {
         // Open on click
         val (pressed, hovered, _) = buttonBehavior(bb, id)
         val popupId = hashStr("##ComboPopup", 0, id)
-        var popupOpen = isPopupOpen(popupId, PopupFlag.None.i)
+        var popupOpen = isPopupOpen(popupId)
         if (pressed && !popupOpen) {
-            openPopupEx(popupId, PopupFlag.None.i)
+            openPopupEx(popupId)
             popupOpen = true
         }
 
@@ -82,11 +80,22 @@ interface widgetsComboBox {
         val valueX2 = bb.min.x max (bb.max.x - arrowSize)
         renderNavHighlight(bb, id)
         if (flags hasnt Cf.NoPreview)
-            window.drawList.addRectFilled(bb.min, Vec2(valueX2, bb.max.y), frameCol.u32,
-                                          style.frameRounding, if (flags has Cf.NoArrowButton) DrawFlag.RoundCornersAll.i else DrawFlag.RoundCornersLeft.i)
+            window.drawList.addRectFilled(
+                bb.min,
+                Vec2(valueX2, bb.max.y),
+                frameCol.u32,
+                style.frameRounding,
+                if (flags has Cf.NoArrowButton) DrawFlag.RoundCornersAll else DrawFlag.RoundCornersLeft
+            )
         if (flags hasnt Cf.NoArrowButton) {
             val bgCol = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
-            window.drawList.addRectFilled(Vec2(valueX2, bb.min.y), bb.max, bgCol.u32, style.frameRounding, if (w <= arrowSize) DrawFlag.RoundCornersAll.i else DrawFlag.RoundCornersRight.i)
+            window.drawList.addRectFilled(
+                Vec2(valueX2, bb.min.y),
+                bb.max,
+                bgCol.u32,
+                style.frameRounding,
+                if (w <= arrowSize) DrawFlag.RoundCornersAll else DrawFlag.RoundCornersRight
+            )
             if (valueX2 + arrowSize - style.framePadding.x <= bb.max.x)
                 window.drawList.renderArrow(Vec2(valueX2 + style.framePadding.y, bb.min.y + style.framePadding.y), Col.Text.u32, Dir.Down, 1f)
         }
@@ -156,7 +165,7 @@ interface widgetsComboBox {
         if (popupMaxHeightInItem != -1 && g.nextWindowData.flags hasnt NextWindowDataFlag.HasSizeConstraint)
             setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItem)))
 
-        if (!beginCombo(label, previewValue, Cf.None.i)) return false
+        if (!beginCombo(label, previewValue)) return false
 
         // Display items
         // FIXME-OPT: Use clipper (but we need to disable it on the appearing frame to make sure our call to setItemDefaultFocus() is processed)
@@ -190,7 +199,7 @@ interface widgetsComboBox {
         if (popupMaxHeightInItems != -1 && g.nextWindowData.flags hasnt NextWindowDataFlag.HasSizeConstraint)
             setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItems)))
 
-        if (!beginCombo(label, previewValue, Cf.None.i))
+        if (!beginCombo(label, previewValue))
             return false
 
         // Display items

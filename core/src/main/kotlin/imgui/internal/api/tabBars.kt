@@ -57,14 +57,14 @@ internal interface tabBars {
         }
 
         // Ensure correct ordering when toggling ImGuiTabBarFlags_Reorderable flag, ensure tabs are ordered based on their submission order.
-        if (flags and TabBarFlag.Reorderable != this.flags and TabBarFlag.Reorderable || (tabsAddedNew && flags hasnt TabBarFlag.Reorderable))
+        if ((flags and TabBarFlag.Reorderable) != (this.flags and TabBarFlag.Reorderable) || (tabsAddedNew && flags hasnt TabBarFlag.Reorderable))
             if (tabs.size > 1)
                 tabs.sortBy(TabItem::beginOrder)
         tabsAddedNew = false
 
         // Flags
-        if (flags hasnt TabBarFlag.FittingPolicyMask_)
-            flags /= TabBarFlag.FittingPolicyDefault_
+        if (flags hasnt TabBarFlag.FittingPolicyMask)
+            flags /= TabBarFlag.FittingPolicyDefault
 
         this.flags = flags
         barRect put bb
@@ -140,7 +140,7 @@ internal interface tabBars {
         if (flags hasnt TabBarFlag.Reorderable)
             return
 
-        val isCentralSection = srcTab.flags hasnt TabItemFlag._SectionMask_
+        val isCentralSection = srcTab.flags hasnt TabItemFlag._SectionMask
         val barOffset = barRect.min.x - if (isCentralSection) scrollingTarget else 0f
 
         // Count number of contiguous tabs we are crossing over
@@ -155,7 +155,7 @@ internal interface tabBars {
                 i += dir
                 break
             }
-            if (dstTab.flags and TabItemFlag._SectionMask_ != srcTab.flags and TabItemFlag._SectionMask_) {
+            if ((dstTab.flags and TabItemFlag._SectionMask) != (srcTab.flags and TabItemFlag._SectionMask)) {
                 i += dir
                 break
             }
@@ -192,7 +192,7 @@ internal interface tabBars {
         val tab2 = tabs[tab2Order]
         if (tab2.flags has TabItemFlag.NoReorder)
             return false
-        if (tab1.flags and TabItemFlag._SectionMask_ != tab2.flags and TabItemFlag._SectionMask_)
+        if ((tab1.flags and TabItemFlag._SectionMask) != (tab2.flags and TabItemFlag._SectionMask))
             return false
 
 //        ImGuiTabItem item_tmp = * tab1;
@@ -228,12 +228,12 @@ internal interface tabBars {
         // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         if (pOpen?.get() == false) {
-            ImGui.itemAdd(Rect(), id, null, ItemFlag.NoNav.i)
+            ImGui.itemAdd(Rect(), id, null, ItemFlag.NoNav)
             return false
         }
 
         assert(pOpen == null || flags hasnt TabItemFlag._Button)
-        assert((flags and (TabItemFlag.Leading or TabItemFlag.Trailing)) != (TabItemFlag.Leading or TabItemFlag.Trailing)) { "Can't use both Leading and Trailing" }
+        assert((TabItemFlag.Leading or TabItemFlag.Trailing) !in flags) { "Can't use both Leading and Trailing" }
 
         // Store into ImGuiTabItemFlags_NoCloseButton, also honor ImGuiTabItemFlags_NoCloseButton passed by user (although not documented)
         if (flags has TabItemFlag._NoCloseButton)
@@ -300,7 +300,7 @@ internal interface tabBars {
         // Note that tab_is_new is not necessarily the same as tab_appearing! When a tab bar stops being submitted
         // and then gets submitted again, the tabs will have 'tab_appearing=true' but 'tab_is_new=false'.
         if (tabAppearing && (!tabBarAppearing || tabIsNew)) {
-            ImGui.itemAdd(Rect(), id, null, ItemFlag.NoNav.i)
+            ImGui.itemAdd(Rect(), id, null, ItemFlag.NoNav)
             if (isTabButton)
                 return false
             return tabContentsVisible
@@ -313,7 +313,7 @@ internal interface tabBars {
         val backupMainCursorPos = Vec2(window.dc.cursorPos)
 
         // Layout
-        val isCentralSection = tab.flags hasnt TabItemFlag._SectionMask_
+        val isCentralSection = tab.flags hasnt TabItemFlag._SectionMask
         size.x = tab.width
         val x = if (isCentralSection) floor(tab.offset - scrollingAnim) else tab.offset
         window.dc.cursorPos = barRect.min + Vec2(x, 0f)
@@ -454,7 +454,7 @@ internal interface tabBars {
                 pathArcToFast(Vec2(bb.min.x + rounding + 0.5f, y1 + rounding + 0.5f), rounding, 6, 9)
                 pathArcToFast(Vec2(bb.max.x - rounding - 0.5f, y1 + rounding + 0.5f), rounding, 9, 12)
                 pathLineTo(Vec2(bb.max.x - 0.5f, y2))
-                pathStroke(Col.Border.u32, 0, style.tabBorderSize)
+                pathStroke(Col.Border.u32, thickness = style.tabBorderSize)
             }
         }
     }

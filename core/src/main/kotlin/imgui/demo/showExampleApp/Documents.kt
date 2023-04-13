@@ -135,13 +135,13 @@ object Documents {
 
     // Options
     var optReorderable = true
-    var optFittingFlags: TabBarFlags = TabBarFlag.FittingPolicyDefault_.i
+    var optFittingFlags: TabBarFlags = TabBarFlag.FittingPolicyDefault
 
     val closeQueue = ArrayList<MyDocument>()
 
     operator fun invoke(pOpen: KMutableProperty0<Boolean>?) {
 
-        val windowContentsVisible = begin("Example: Documents", pOpen, WindowFlag.MenuBar.i)
+        val windowContentsVisible = begin("Example: Documents", pOpen, WindowFlag.MenuBar)
         if (!windowContentsVisible) {
             end()
             return
@@ -197,7 +197,7 @@ object Documents {
 
         // Submit Tab Bar and Tabs
         run {
-            val tabBarFlags: TabBarFlags = optFittingFlags or if (optReorderable) TabBarFlag.Reorderable else TabBarFlag.None
+            val tabBarFlags: TabBarFlags = optFittingFlags or if (optReorderable) TabBarFlag.Reorderable else emptyFlags
             if (beginTabBar("##tabs", tabBarFlags)) {
                 if (optReorderable)
                     notifyOfDocumentsClosedElsewhere()
@@ -211,7 +211,7 @@ object Documents {
 
                     if (!doc.open) continue
 
-                    val tabFlags: TabItemFlags = if (doc.dirty) TabItemFlag.UnsavedDocument.i else TabItemFlag.None.i
+                    val tabFlags: TabItemOnlyFlags = if (doc.dirty) TabItemFlag.UnsavedDocument else emptyFlags
                     val visible = beginTabItem(doc.name, doc::open, tabFlags)
 
                     // Cancel attempt to close when unsaved add to save queue so we can display a popup.
@@ -252,7 +252,7 @@ object Documents {
 
                 if (!isPopupOpen("Save?"))
                     openPopup("Save?")
-                if (beginPopupModal("Save?", null, WindowFlag.AlwaysAutoResize.i)) {
+                if (beginPopupModal("Save?", null, WindowFlag.AlwaysAutoResize)) {
                     text("Save change to the following items?")
                     val itemHeight = textLineHeightWithSpacing
                     if (beginChildFrame(getID("frame"), Vec2(-Float.MIN_VALUE, 6.25f * itemHeight))) {

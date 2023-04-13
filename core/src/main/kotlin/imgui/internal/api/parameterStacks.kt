@@ -1,8 +1,9 @@
 package imgui.internal.api
 
-import glm_.wo
 import imgui.api.g
 import imgui.internal.sections.ItemFlags
+import imgui.or
+import imgui.wo
 
 // Parameter stacks (shared)
 internal interface parameterStacks {

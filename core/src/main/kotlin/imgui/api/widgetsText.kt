@@ -3,7 +3,7 @@ package imgui.api
 import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.*
+import imgui.Col
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
@@ -18,10 +18,11 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.style
 import imgui.ImGui.textEx
+import imgui.dsl
+import imgui.get
 import imgui.internal.classes.Rect
-import imgui.internal.sections.TextFlag
-import imgui.internal.formatString
 import imgui.internal.formatStringToTempBuffer
+import imgui.internal.sections.TextFlag
 
 
 /** Widgets: Text */
@@ -39,7 +40,7 @@ interface widgetsText {
         if (window.skipItems) return
 
         val textEnd = formatStringToTempBuffer(fmt, *args)
-        textEx(g.tempBuffer, textEnd, TextFlag.NoWidthForLargeClippedText.i)
+        textEx(g.tempBuffer, textEnd, TextFlag.NoWidthForLargeClippedText)
     }
 
     /** shortcut for

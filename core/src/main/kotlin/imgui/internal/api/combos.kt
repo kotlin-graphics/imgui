@@ -9,10 +9,11 @@ import imgui.ImGui.popupAllowedExtentRect
 import imgui.ImGui.pushClipRect
 import imgui.api.g
 import imgui.api.widgetsComboBox
-import imgui.hasnt
 import imgui.internal.classes.Rect
-import imgui.internal.isPowerOfTwo
-import imgui.internal.sections.*
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.LayoutType
+import imgui.internal.sections.NextWindowDataFlag
+import imgui.internal.sections.PopupPositionPolicy
 
 
 // Combos
@@ -22,7 +23,7 @@ internal interface combos {
 
         var flags = flags_
 
-        if (!ImGui.isPopupOpen(popupId, PopupFlag.None.i)) {
+        if (!ImGui.isPopupOpen(popupId)) {
             g.nextWindowData.clearFlags()
             return false
         }
@@ -32,9 +33,9 @@ internal interface combos {
         if (g.nextWindowData.flags has NextWindowDataFlag.HasSizeConstraint)
             g.nextWindowData.sizeConstraintRect.min.x = g.nextWindowData.sizeConstraintRect.min.x max w
         else {
-            if (flags hasnt ComboFlag.HeightMask_)
+            if (flags hasnt ComboFlag.HeightMask)
                 flags = flags or ComboFlag.HeightRegular
-            assert((flags and ComboFlag.HeightMask_).isPowerOfTwo) { "Only one" }
+            assert((flags and ComboFlag.HeightMask).isPowerOfTwo) { "Only one" }
             val popupMaxHeightInItems = when {
                 flags has ComboFlag.HeightRegular -> 8
                 flags has ComboFlag.HeightSmall -> 4

@@ -1,10 +1,11 @@
+
 import magik.createGithubPublication
 import magik.github
-import org.lwjgl.lwjgl
-import org.lwjgl.Lwjgl.Module.jemalloc
-import org.lwjgl.Lwjgl.Module.stb
 import org.gradle.nativeplatform.platform.internal.Architectures
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import org.lwjgl.Lwjgl.Module.jemalloc
+import org.lwjgl.Lwjgl.Module.stb
+import org.lwjgl.lwjgl
 
 plugins {
     id("org.lwjgl.plugin")
@@ -12,6 +13,7 @@ plugins {
     `maven-publish`
     kotlin("jvm")
     id("com.github.johnrengelman.shadow")
+    id("com.google.devtools.ksp")
 }
 
 group = rootProject.group
@@ -30,6 +32,10 @@ dependencies {
     implementation("kotlin.graphics:kool:0.9.68")
     //    implementation(unsigned, kool, glm, gli/*, uno.core*/)
     lwjgl { implementation(jemalloc, stb) }
+
+    // Temporarily use a commit-hash for the version until the "is checks for equality" change is released
+    implementation("com.github.livefront.sealed-enum:runtime:f690fca874")
+    ksp("com.github.livefront.sealed-enum:ksp:f690fca874")
 
     val brotliVersion = "1.11.0"
     val operatingSystem: OperatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
@@ -72,7 +78,7 @@ kotlin.jvmToolchain {
 tasks {
     withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().all {
         kotlinOptions {
-            freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
+            freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn", "-Xallow-kotlin-package")
         }
     }
     withType<Test>().configureEach { useJUnitPlatform() }

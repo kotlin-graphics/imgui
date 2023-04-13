@@ -4,7 +4,6 @@ import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ColorEditFlag as Cef
 import imgui.ImGui.beginPopup
 import imgui.ImGui.beginTooltipEx
 import imgui.ImGui.button
@@ -32,6 +31,7 @@ import imgui.ImGui.textEx
 import imgui.api.g
 import imgui.internal.F32_TO_INT8_SAT
 import imgui.internal.sections.TooltipFlag
+import imgui.ColorEditFlag as Cef
 
 /** Color */
 internal interface color {
@@ -39,7 +39,7 @@ internal interface color {
     /** Note: only access 3 floats if ColorEditFlag.NoAlpha flag is set.   */
     fun colorTooltip(text: String, col: FloatArray, flags: ColorEditFlags) {
 
-        beginTooltipEx(TooltipFlag.OverridePreviousTooltip.i, WindowFlag.None.i)
+        beginTooltipEx(TooltipFlag.OverridePreviousTooltip)
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
         if (textEnd > 0) {
             textEx(text, textEnd)
@@ -135,7 +135,8 @@ internal interface color {
                 if (pickerType == 0) pickerFlags = pickerFlags or Cef.PickerHueBar
                 if (pickerType == 1) pickerFlags = pickerFlags or Cef.PickerHueWheel
                 val backupPos = Vec2(cursorScreenPos)
-                if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
+                // By default, Selectable() is closing popup
+                if (selectable("##selectable", false, sizeArg = pickerSize))
                     g.colorEditOptions = (g.colorEditOptions wo Cef._PickerMask) or (pickerFlags and Cef._PickerMask)
                 cursorScreenPos = backupPos
                 val previewingRefCol = Vec4()
@@ -148,8 +149,8 @@ internal interface color {
         }
         if (allowOptAlphaBar) {
             if (allowOptPicker) separator()
-            val pI = intArrayOf(g.colorEditOptions)
-            checkboxFlags("Alpha Bar", pI, Cef.AlphaBar.i)
+            val pI = flagArrayOf(g.colorEditOptions)
+            checkboxFlags("Alpha Bar", pI, Cef.AlphaBar)
             g.colorEditOptions = pI[0]
         }
         endPopup()

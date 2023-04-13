@@ -1,8 +1,6 @@
 package imgui.internal.api
 
-import gli_.has
 import glm_.vec2.Vec2
-import glm_.wo
 import imgui.*
 import imgui.ImGui.markIniSettingsDirty
 import imgui.api.g
@@ -13,8 +11,6 @@ import imgui.internal.floor
 import imgui.internal.hashStr
 import imgui.WindowFlag as Wf
 
-
-@Suppress("UNCHECKED_CAST")
 
 internal interface windows {
 
@@ -144,7 +140,7 @@ internal interface windows {
 
         //        JVM, useless
         //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
-        setWindowSizeAllowFlags = setWindowSizeAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
+        setWindowSizeAllowFlags = setWindowSizeAllowFlags wo (Cond.Once or Cond.FirstUseEver or Cond.Appearing)
 
         // Set
         val oldSize = Vec2(sizeFull)
@@ -165,7 +161,7 @@ internal interface windows {
     /** ~SetWindowCollapsed(ImGuiWindow* window, bool collapsed, ImGuiCond cond) */
     fun Window.setCollapsed(collapsed: Boolean, cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.None && setWindowCollapsedAllowFlags hasnt cond) return
-        setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv() // Set
+        setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags wo (Cond.Once or Cond.FirstUseEver or Cond.Appearing) // Set
         this.collapsed = collapsed
     }
 
