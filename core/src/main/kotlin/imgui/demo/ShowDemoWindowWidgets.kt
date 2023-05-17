@@ -726,9 +726,9 @@ object ShowDemoWindowWidgets {
                 checkboxFlags("ComboFlag.PopupAlignLeft", ::flags, ComboFlag.PopupAlignLeft)
                 sameLine(); helpMarker("Only makes a difference if the popup is larger than the combo")
                 if (checkboxFlags("ComboFlag.NoArrowButton", ::flags, ComboFlag.NoArrowButton))
-                    flags = flags wo ComboFlag.NoPreview     // Clear the other flag, as we cannot combine both
+                    flags -= ComboFlag.NoPreview     // Clear the other flag, as we cannot combine both
                 if (checkboxFlags("ComboFlag.NoPreview", ::flags, ComboFlag.NoPreview))
-                    flags = flags wo ComboFlag.NoArrowButton // Clear the other flag, as we cannot combine both
+                    flags -= ComboFlag.NoArrowButton // Clear the other flag, as we cannot combine both
 
                 // Using the generic BeginCombo() API, you have full control over how to display the combo contents.
                 // (your selection data could be an index, a pointer to the object, an id for the object, a flag intrusively
@@ -1363,15 +1363,15 @@ object ShowDemoWindowWidgets {
                         "if you don't specify a display mode.\n\nYou can change the defaults using SetColorEditOptions().")
                 sameLine(); helpMarker("When not specified explicitly (Auto/Current mode), user can right-click the picker to change mode.")
                 var flags = miscFlags
-                if (!alpha) flags = flags or Cef.NoAlpha // This is by default if you call ColorPicker3() instead of ColorPicker4()
-                if (alphaBar) flags = flags or Cef.AlphaBar
-                if (!sidePreview) flags = flags or Cef.NoSidePreview
-                if (pickerMode == 1) flags = flags or Cef.PickerHueBar
-                if (pickerMode == 2) flags = flags or Cef.PickerHueWheel
-                if (displayMode == 1) flags = flags or Cef.NoInputs     // Disable all RGB/HSV/Hex displays
-                if (displayMode == 2) flags = flags or Cef.DisplayRGB   // Override display mode
-                if (displayMode == 3) flags = flags or Cef.DisplayHSV
-                if (displayMode == 4) flags = flags or Cef.DisplayHEX
+                if (!alpha) flags /= Cef.NoAlpha // This is by default if you call ColorPicker3() instead of ColorPicker4()
+                if (alphaBar) flags /= Cef.AlphaBar
+                if (!sidePreview) flags /= Cef.NoSidePreview
+                if (pickerMode == 1) flags /= Cef.PickerHueBar
+                if (pickerMode == 2) flags /= Cef.PickerHueWheel
+                if (displayMode == 1) flags /= Cef.NoInputs     // Disable all RGB/HSV/Hex displays
+                if (displayMode == 2) flags /= Cef.DisplayRGB   // Override display mode
+                if (displayMode == 3) flags /= Cef.DisplayHSV
+                if (displayMode == 4) flags /= Cef.DisplayHEX
                 colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
 
                 text("Set defaults in code:")

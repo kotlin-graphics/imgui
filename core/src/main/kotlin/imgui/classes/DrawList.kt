@@ -935,7 +935,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         check(flags hasnt DrawFlag.Closed) { "Misuse of legacy hardcoded ImDrawCornerFlags values!" }
 
         if (flags hasnt DrawFlag.RoundCornersMask)
-            flags = flags or DrawFlag.RoundCornersAll
+            flags /= DrawFlag.RoundCornersAll
 
         return flags
     }

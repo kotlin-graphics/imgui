@@ -147,10 +147,10 @@ interface widgetsColorEditorPicker {
      *  type, etc. User will be able to change many settings, unless you pass the _NoOptions flag to your calls.    */
     fun setColorEditOptions(flags_: ColorEditFlags) {
         var flags = flags_
-        if (flags hasnt Cef._DisplayMask) flags = flags or (Cef.DefaultOptions and Cef._DisplayMask)
-        if (flags hasnt Cef._DataTypeMask) flags = flags or (Cef.DefaultOptions and Cef._DataTypeMask)
-        if (flags hasnt Cef._PickerMask) flags = flags or (Cef.DefaultOptions and Cef._PickerMask)
-        if (flags hasnt Cef._InputMask) flags = flags or (Cef.DefaultOptions and Cef._InputMask)
+        if (flags hasnt Cef._DisplayMask) flags /= Cef.DefaultOptions and Cef._DisplayMask
+        if (flags hasnt Cef._DataTypeMask) flags /= Cef.DefaultOptions and Cef._DataTypeMask
+        if (flags hasnt Cef._PickerMask) flags /= Cef.DefaultOptions and Cef._PickerMask
+        if (flags hasnt Cef._InputMask) flags /= Cef.DefaultOptions and Cef._InputMask
         assert((flags and Cef._DisplayMask).isPowerOfTwo) { "Check only 1 option is selected" }
         assert((flags and Cef._DataTypeMask).isPowerOfTwo) { "Check only 1 option is selected" }
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check only 1 option is selected" }
@@ -238,11 +238,11 @@ inline fun colorEdit4(label: String, x: Float, y: Float, z: Float, w: Float, fla
     if (flags hasnt Cef.NoOptions) colorEditOptionsPopup(x, y, z, w, flags)
 
     // Read stored options
-    if (flags hasnt Cef._DisplayMask) flags = flags or (g.colorEditOptions and Cef._DisplayMask)
-    if (flags hasnt Cef._DataTypeMask) flags = flags or (g.colorEditOptions and Cef._DataTypeMask)
-    if (flags hasnt Cef._PickerMask) flags = flags or (g.colorEditOptions and Cef._PickerMask)
-    if (flags hasnt Cef._InputMask) flags = flags or (g.colorEditOptions and Cef._InputMask)
-    flags = flags or (g.colorEditOptions wo (Cef._DisplayMask or Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask))
+    if (flags hasnt Cef._DisplayMask) flags /= g.colorEditOptions and Cef._DisplayMask
+    if (flags hasnt Cef._DataTypeMask) flags /= g.colorEditOptions and Cef._DataTypeMask
+    if (flags hasnt Cef._PickerMask) flags /= g.colorEditOptions and Cef._PickerMask
+    if (flags hasnt Cef._InputMask) flags /= g.colorEditOptions and Cef._InputMask
+    flags /= g.colorEditOptions wo (Cef._DisplayMask or Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask)
     assert((flags and Cef._DisplayMask).isPowerOfTwo) { "Check that only 1 is selected" }
     assert((flags and Cef._InputMask).isPowerOfTwo) { "Check that only 1 is selected" }
 
@@ -427,17 +427,17 @@ fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = emptyFlags, 
     beginGroup()
 
     var flags = flags_
-    if (flags hasnt Cef.NoSidePreview) flags = flags or Cef.NoSmallPreview
+    if (flags hasnt Cef.NoSidePreview) flags /= Cef.NoSmallPreview
 
     // Context menu: display and store options.
     if (flags hasnt Cef.NoOptions) colorPickerOptionsPopup(col, flags)
 
     // Read stored options
-    if (flags hasnt Cef._PickerMask) flags = flags or ((if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef.DefaultOptions) and Cef._PickerMask)
-    if (flags hasnt Cef._InputMask) flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef.DefaultOptions) and Cef._InputMask)
+    if (flags hasnt Cef._PickerMask) flags /= (if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef.DefaultOptions) and Cef._PickerMask
+    if (flags hasnt Cef._InputMask) flags /= (if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef.DefaultOptions) and Cef._InputMask
     assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check that only 1 is selected" }
     assert((flags and Cef._InputMask).isPowerOfTwo)  // Check that only 1 is selected
-    if (flags hasnt Cef.NoOptions) flags = flags or (g.colorEditOptions and Cef.AlphaBar)
+    if (flags hasnt Cef.NoOptions) flags /= g.colorEditOptions and Cef.AlphaBar
 
     // Setup
     val components = if (flags has Cef.NoAlpha) 3 else 4
@@ -759,7 +759,7 @@ fun colorButton(descId: String, x: Float, y: Float, z: Float, w: Float, flags_: 
     val (pressed, hovered, _) = buttonBehavior(bb, id)
 
     var flags = flags_
-    if (flags has Cef.NoAlpha) flags = flags wo (Cef.AlphaPreview or Cef.AlphaPreviewHalf)
+    if (flags has Cef.NoAlpha) flags -= Cef.AlphaPreview or Cef.AlphaPreviewHalf
 
     val colRgb = Vec4(x, y, z, w)
     if (flags has Cef.InputHSV) colorConvertHSVtoRGB(colRgb)

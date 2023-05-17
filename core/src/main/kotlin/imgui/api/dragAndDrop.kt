@@ -236,7 +236,7 @@ interface dragAndDrop {
 
         // Render default drop visuals
         payload.preview = wasAcceptedPreviously
-        flags = flags or (g.dragDropSourceFlags and Ddf.AcceptNoDrawDefaultRect) // Source can also inhibit the preview (useful for external sources that live for 1 frame)
+        flags /= g.dragDropSourceFlags and Ddf.AcceptNoDrawDefaultRect // Source can also inhibit the preview (useful for external sources that live for 1 frame)
         if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview)
             window.drawList.addRect(r.min - 3.5f, r.max + 3.5f, Col.DragDropTarget.u32, thickness = 2f)
 

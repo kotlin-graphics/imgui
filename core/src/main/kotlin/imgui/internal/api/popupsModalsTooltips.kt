@@ -42,7 +42,7 @@ internal interface popupsModalsTooltips {
 
         val parentWindow = g.currentWindow!!
         var flags = flags_ or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf._ChildWindow
-        flags = flags or (parentWindow.flags and Wf.NoMove)  // Inherit the NoMove flag
+        flags /= parentWindow.flags and Wf.NoMove  // Inherit the NoMove flag
 
         // Size
         val contentAvail = contentRegionAvail

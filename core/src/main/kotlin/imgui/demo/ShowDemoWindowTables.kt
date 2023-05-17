@@ -144,9 +144,9 @@ object ShowDemoWindowTables {
         checkboxFlags("_DefaultHide", flagsRef, Tcf.DefaultHide)
         checkboxFlags("_DefaultSort", flagsRef, Tcf.DefaultSort)
         if (checkboxFlags("_WidthStretch", flagsRef, Tcf.WidthStretch))
-            flags = flags wo (Tcf.WidthMask xor Tcf.WidthStretch)
+            flags -= Tcf.WidthMask xor Tcf.WidthStretch
         if (checkboxFlags("_WidthFixed", flagsRef, Tcf.WidthFixed))
-            flags = flags wo (Tcf.WidthMask xor Tcf.WidthFixed)
+            flags -= Tcf.WidthMask xor Tcf.WidthFixed
         checkboxFlags("_NoResize", flagsRef, Tcf.NoResize)
         checkboxFlags("_NoReorder", flagsRef, Tcf.NoReorder)
         checkboxFlags("_NoHide", flagsRef, Tcf.NoHide)

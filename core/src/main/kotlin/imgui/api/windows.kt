@@ -91,7 +91,7 @@ interface windows {
 
         // Automatically disable manual moving/resizing when NoInputs is set
         if (Wf.NoInputs in flags)
-            flags = flags or Wf.NoMove or Wf.NoResize
+            flags /= Wf.NoMove or Wf.NoResize
 
         if (flags has Wf._NavFlattened)
             assert(flags has Wf._ChildWindow)
@@ -742,7 +742,7 @@ interface windows {
                 // Disable inputs for requested number of frames
                 if (disableInputsFrames > 0) {
                     disableInputsFrames--
-                    flags = flags or Wf.NoInputs
+                    flags /= Wf.NoInputs
                 }
 
                 // Update the SkipItems flag, used to early out of all items functions (no layout required)

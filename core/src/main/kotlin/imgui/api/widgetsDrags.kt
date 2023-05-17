@@ -57,89 +57,73 @@ interface widgetsDrags {
     // [JVM] TODO inline? -> class
 
     /** If v_min >= v_max we have no bound */
-    fun drag(
-            label: String,
-            v: FloatArray,
-            ptr: Int,
-            vSpeed: Float = 1f,
-            vMin: Float = 0f,
-            vMax: Float = 0f,
-            format: String = "%.3f",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = drag(label, v mutablePropertyAt ptr, vSpeed, vMin, vMax, format, flags)
+    fun drag(label: String,
+             v: FloatArray,
+             ptr: Int,
+             vSpeed: Float = 1f,
+             vMin: Float = 0f,
+             vMax: Float = 0f,
+             format: String = "%.3f",
+             flags: SliderFlags = emptyFlags): Boolean = drag(label, v mutablePropertyAt ptr, vSpeed, vMin, vMax, format, flags)
 
-    fun drag2(
-            label: String,
-            v: FloatArray,
-            vSpeed: Float = 1f,
-            vMin: Float = 0f,
-            vMax: Float = 0f,
-            format: String = "%.3f",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 2, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag2(label: String,
+              v: FloatArray,
+              vSpeed: Float = 1f,
+              vMin: Float = 0f,
+              vMax: Float = 0f,
+              format: String = "%.3f",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 2, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag2(
-            label: String,
-            v: Vec2,
-            vSpeed: Float = 1f,
-            vMin: Float = 0f,
-            vMax: Float = 0f,
-            format: String = "%.3f",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 2, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag2(label: String,
+              v: Vec2,
+              vSpeed: Float = 1f,
+              vMin: Float = 0f,
+              vMax: Float = 0f,
+              format: String = "%.3f",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 2, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag3(
-            label: String,
-            v: FloatArray,
-            vSpeed: Float = 1f,
-            vMin: Float = 0f,
-            vMax: Float = 0f,
-            format: String = "%.3f",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 3, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag3(label: String,
+              v: FloatArray,
+              vSpeed: Float = 1f,
+              vMin: Float = 0f,
+              vMax: Float = 0f,
+              format: String = "%.3f",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 3, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag3(
-            label: String,
-            v: Vec3,
-            vSpeed: Float = 1f,
-            vMin: Float = 0f,
-            vMax: Float = 0f,
-            format: String = "%.3f",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 3, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag3(label: String,
+              v: Vec3,
+              vSpeed: Float = 1f,
+              vMin: Float = 0f,
+              vMax: Float = 0f,
+              format: String = "%.3f",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 3, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag4(
-            label: String,
-            v: FloatArray,
-            vSpeed: Float = 1f,
-            vMin: Float = 0f,
-            vMax: Float = 0f,
-            format: String = "%.3f",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 4, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag4(label: String,
+              v: FloatArray,
+              vSpeed: Float = 1f,
+              vMin: Float = 0f,
+              vMax: Float = 0f,
+              format: String = "%.3f",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 4, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag4(
-            label: String,
-            v: Vec4,
-            vSpeed: Float = 1f,
-            vMin: Float = 0f,
-            vMax: Float = 0f,
-            format: String = "%.3f",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 4, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag4(label: String,
+              v: Vec4,
+              vSpeed: Float = 1f,
+              vMin: Float = 0f,
+              vMax: Float = 0f,
+              format: String = "%.3f",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 4, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
     /** NB: You likely want to specify the ImGuiSliderFlags_AlwaysClamp when using this. */
-    fun dragRange(
-            label: String,
-            vCurrentMinPtr: KMutableProperty0<Float>,
-            vCurrentMaxPtr: KMutableProperty0<Float>,
-            vSpeed: Float = 1f,
-            vMin: Float = 0f,
-            vMax: Float = 0f,
-            format: String = "%.3f",
-            formatMax: String = format,
-            flags: SliderFlags = emptyFlags
-    ): Boolean {
+    fun dragRange(label: String,
+                  vCurrentMinPtr: KMutableProperty0<Float>,
+                  vCurrentMaxPtr: KMutableProperty0<Float>,
+                  vSpeed: Float = 1f,
+                  vMin: Float = 0f,
+                  vMax: Float = 0f,
+                  format: String = "%.3f",
+                  formatMax: String = format,
+                  flags: SliderFlags = emptyFlags): Boolean {
 
         val vCurrentMin by vCurrentMinPtr
         val vCurrentMax by vCurrentMaxPtr
@@ -175,89 +159,73 @@ interface widgetsDrags {
     /** If v_min >= v_max we have no bound
      *
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
-    fun drag(
-            label: String,
-            v: IntArray,
-            ptr: Int,
-            vSpeed: Float = 1f,
-            vMin: Int = 0,
-            vMax: Int = 0,
-            format: String? = "%d",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = drag(label, v mutablePropertyAt ptr, vSpeed, vMin, vMax, format, flags)
+    fun drag(label: String,
+             v: IntArray,
+             ptr: Int,
+             vSpeed: Float = 1f,
+             vMin: Int = 0,
+             vMax: Int = 0,
+             format: String? = "%d",
+             flags: SliderFlags = emptyFlags): Boolean = drag(label, v mutablePropertyAt ptr, vSpeed, vMin, vMax, format, flags)
 
-    fun drag2(
-            label: String,
-            v: IntArray,
-            vSpeed: Float = 1f,
-            vMin: Int = 0,
-            vMax: Int = 0,
-            format: String = "%d",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 2, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag2(label: String,
+              v: IntArray,
+              vSpeed: Float = 1f,
+              vMin: Int = 0,
+              vMax: Int = 0,
+              format: String = "%d",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 2, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag2(
-            label: String,
-            v: Vec2i,
-            vSpeed: Float = 1f,
-            vMin: Int = 0,
-            vMax: Int = 0,
-            format: String = "%d",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 2, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag2(label: String,
+              v: Vec2i,
+              vSpeed: Float = 1f,
+              vMin: Int = 0,
+              vMax: Int = 0,
+              format: String = "%d",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 2, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag3(
-            label: String,
-            v: IntArray,
-            vSpeed: Float = 1f,
-            vMin: Int = 0,
-            vMax: Int = 0,
-            format: String = "%d",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 3, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag3(label: String,
+              v: IntArray,
+              vSpeed: Float = 1f,
+              vMin: Int = 0,
+              vMax: Int = 0,
+              format: String = "%d",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 3, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag3(
-            label: String,
-            v: Vec3i,
-            vSpeed: Float = 1f,
-            vMin: Int = 0,
-            vMax: Int = 0,
-            format: String = "%d",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 3, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag3(label: String,
+              v: Vec3i,
+              vSpeed: Float = 1f,
+              vMin: Int = 0,
+              vMax: Int = 0,
+              format: String = "%d",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 3, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag4(
-            label: String,
-            v: IntArray,
-            vSpeed: Float = 1f,
-            vMin: Int = 0,
-            vMax: Int = 0,
-            format: String = "%d",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 4, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag4(label: String,
+              v: IntArray,
+              vSpeed: Float = 1f,
+              vMin: Int = 0,
+              vMax: Int = 0,
+              format: String = "%d",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 4, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun drag4(
-            label: String,
-            v: Vec4i,
-            vSpeed: Float = 1f,
-            vMin: Int = 0,
-            vMax: Int = 0,
-            format: String = "%d",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = dragN(label, 4, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun drag4(label: String,
+              v: Vec4i,
+              vSpeed: Float = 1f,
+              vMin: Int = 0,
+              vMax: Int = 0,
+              format: String = "%d",
+              flags: SliderFlags = emptyFlags): Boolean = dragN(label, 4, vSpeed, vMin, vMax, format, flags, v::mutablePropertyAt)
 
     /** NB: You likely want to specify the ImGuiSliderFlags_AlwaysClamp when using this. */
-    fun dragRange(
-            label: String,
-            vCurrentMinPtr: KMutableProperty0<Int>,
-            vCurrentMaxPtr: KMutableProperty0<Int>,
-            vSpeed: Float = 1f,
-            vMin: Int = 0,
-            vMax: Int = 0,
-            format: String = "%d",
-            formatMax: String = format,
-            flags: SliderFlags = emptyFlags
-    ): Boolean {
+    fun dragRange(label: String,
+                  vCurrentMinPtr: KMutableProperty0<Int>,
+                  vCurrentMaxPtr: KMutableProperty0<Int>,
+                  vSpeed: Float = 1f,
+                  vMin: Int = 0,
+                  vMax: Int = 0,
+                  format: String = "%d",
+                  formatMax: String = format,
+                  flags: SliderFlags = emptyFlags): Boolean {
 
         val vCurrentMin by vCurrentMinPtr
         val vCurrentMax by vCurrentMaxPtr
@@ -296,27 +264,23 @@ interface widgetsDrags {
      *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
      *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
      *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
-    fun drag(
-            label: String,
-            pData: FloatArray,
-            vSpeed: Float = 1f,
-            min: Float = 0f,
-            max: Float = 0f,
-            format: String = "%.3f",
-            flags: SliderFlags = emptyFlags
-    ): Boolean = drag(label, pData, 0, vSpeed, min, max, format, flags)
+    fun drag(label: String,
+             pData: FloatArray,
+             vSpeed: Float = 1f,
+             min: Float = 0f,
+             max: Float = 0f,
+             format: String = "%.3f",
+             flags: SliderFlags = emptyFlags): Boolean = drag(label, pData, 0, vSpeed, min, max, format, flags)
 
     /** ote: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget, p_min and p_max are optional.
      *  Read code of e.g. DragFloat(), DragInt() etc. or examples in 'Demo->Widgets->Data Types' to understand how to use this function directly. */
-    fun <N> NumberOps<N>.drag(
-            label: String,
-            pData: KMutableProperty0<N>,
-            vSpeed: Float = 1f,
-            min: N? = null,
-            max: N? = null,
-            format_: String? = null,
-            flags: SliderFlags = emptyFlags
-    ): Boolean where N : Number, N : Comparable<N> {
+    fun <N> NumberOps<N>.drag(label: String,
+                              pData: KMutableProperty0<N>,
+                              vSpeed: Float = 1f,
+                              min: N? = null,
+                              max: N? = null,
+                              format_: String? = null,
+                              flags: SliderFlags = emptyFlags): Boolean where N : Number, N : Comparable<N> {
 
         val window = ImGui.currentWindow
         if (window.skipItems) return false
@@ -416,34 +380,29 @@ inline fun <reified N> drag(
         min: N? = null,
         max: N? = null,
         format_: String? = null,
-        flags: SliderFlags = emptyFlags,
-): Boolean where N : Number, N : Comparable<N> = numberOps<N>().drag(label, pData, vSpeed, min, max, format_, flags).also { if (Any() is N) println() }
+        flags: SliderFlags = emptyFlags)
+        : Boolean where N : Number, N : Comparable<N> = numberOps<N>().drag(label, pData, vSpeed, min, max, format_, flags).also { if (Any() is N) println() }
 
 /** Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget,
  *  p_min and p_max are optional.
  *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand
  *  how to use this function directly. */
-inline fun <reified N> dragN(
-        label: String,
-        components: Int,
-        vSpeed: Float = 1f,
-        min: N? = null,
-        max: N? = null,
-        format: String? = null,
-        flags: SliderFlags = emptyFlags,
-        properties: (Int) -> KMutableProperty0<N>
-): Boolean where N : Number, N : Comparable<N> =
-        numberOps<N>().dragN(label, components, vSpeed, min, max, format, flags, properties)
+inline fun <reified N> dragN(label: String,
+                             components: Int,
+                             vSpeed: Float = 1f,
+                             min: N? = null,
+                             max: N? = null,
+                             format: String? = null,
+                             flags: SliderFlags = emptyFlags,
+                             properties: (Int) -> KMutableProperty0<N>)
+: Boolean where N : Number, N : Comparable<N> = numberOps<N>().dragN(label, components, vSpeed, min, max, format, flags, properties)
 
-inline fun <N> NumberOps<N>.dragN(
-        label: String,
-        components: Int,
-        vSpeed: Float = 1f,
-        min: N? = null,
-        max: N? = null,
-        format: String? = null,
-        flags: SliderFlags = emptyFlags,
-        properties: (Int) -> KMutableProperty0<N>
-): Boolean where N : Number, N : Comparable<N> = widgetN(label, components) { i ->
-    drag("", properties(i), vSpeed, min, max, format, flags)
-}
+inline fun <N> NumberOps<N>.dragN(label: String,
+                                  components: Int,
+                                  vSpeed: Float = 1f,
+                                  min: N? = null,
+                                  max: N? = null,
+                                  format: String? = null,
+                                  flags: SliderFlags = emptyFlags,
+                                  properties: (Int) -> KMutableProperty0<N>)
+: Boolean where N : Number, N : Comparable<N> = widgetN(label, components) { i -> drag("", properties(i), vSpeed, min, max, format, flags) }

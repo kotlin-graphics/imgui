@@ -201,7 +201,7 @@ internal interface widgets {
         if (!itemAdd(bb, id)) return false
 
         if (g.lastItemData.inFlags has ItemFlag.ButtonRepeat)
-            flags = flags or ButtonFlag.Repeat
+            flags /= ButtonFlag.Repeat
 
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 

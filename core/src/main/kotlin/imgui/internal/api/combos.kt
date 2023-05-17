@@ -34,7 +34,7 @@ internal interface combos {
             g.nextWindowData.sizeConstraintRect.min.x = g.nextWindowData.sizeConstraintRect.min.x max w
         else {
             if (flags hasnt ComboFlag.HeightMask)
-                flags = flags or ComboFlag.HeightRegular
+                flags /= ComboFlag.HeightRegular
             assert((flags and ComboFlag.HeightMask).isPowerOfTwo) { "Only one" }
             val popupMaxHeightInItems = when {
                 flags has ComboFlag.HeightRegular -> 8

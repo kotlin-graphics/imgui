@@ -841,13 +841,13 @@ interface tablesInternal {
                 hoveredColumnBody = columnsCount
         }
         if (!hasResizable && flags has Tf.Resizable)
-            flags = flags wo Tf.Resizable
+            flags -= Tf.Resizable
 
         // [Part 8] Lock actual OuterRect/WorkRect right-most position.
         // This is done late to handle the case of fixed-columns tables not claiming more widths that they need.
         // Because of this we are careful with uses of WorkRect and InnerClipRect before this point.
         if (rightMostStretchedColumn != -1)
-            flags = flags wo Tf.NoHostExtendX
+            flags -= Tf.NoHostExtendX
         if (flags has Tf.NoHostExtendX) {
             outerRect.max.x = unusedX1
             workRect.max.x = unusedX1

@@ -102,13 +102,13 @@ interface main {
         g.drawListSharedData.setCircleTessellationMaxError_(style.circleTessellationMaxError)
         var flags: DrawListFlags = emptyFlags
         if (style.antiAliasedLines)
-            flags = flags or Dlf.AntiAliasedLines
+            flags /= Dlf.AntiAliasedLines
         if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines)
-            flags = flags or Dlf.AntiAliasedLinesUseTex
+            flags /= Dlf.AntiAliasedLinesUseTex
         if (style.antiAliasedFill)
-            flags = flags or Dlf.AntiAliasedFill
+            flags /= Dlf.AntiAliasedFill
         if (io.backendFlags has BackendFlag.RendererHasVtxOffset)
-            flags = flags or Dlf.AllowVtxOffset
+            flags /= Dlf.AllowVtxOffset
         g.drawListSharedData.initialFlags = flags
 
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.

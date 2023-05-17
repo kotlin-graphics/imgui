@@ -239,7 +239,7 @@ internal interface tabBars {
         if (flags has TabItemFlag._NoCloseButton)
             pOpen = null
         else if (pOpen == null)
-            flags = flags or TabItemFlag._NoCloseButton
+            flags /= TabItemFlag._NoCloseButton
 
         // Acquire tab data
         var tabIsNew = false

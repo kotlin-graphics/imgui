@@ -34,7 +34,7 @@ fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnSetupFlags =
     // Sizing Policy
     if (flags hasnt TableColumnFlag.WidthMask) {
         val tableSizingPolicy = this.flags and TableFlag._SizingMask
-        flags = flags or when (tableSizingPolicy) {
+        flags /= when (tableSizingPolicy) {
             TableFlag.SizingFixedFit, TableFlag.SizingFixedSame -> TableColumnFlag.WidthFixed
             else -> TableColumnFlag.WidthStretch
         }
@@ -43,15 +43,15 @@ fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnSetupFlags =
 
     // Resize
     if (this.flags hasnt TableFlag.Resizable)
-        flags = flags or TableColumnFlag.NoResize
+        flags /= TableColumnFlag.NoResize
 
     // Sorting
     if (flags has TableColumnFlag.NoSortAscending && flags has TableColumnFlag.NoSortDescending)
-        flags = flags or TableColumnFlag.NoSort
+        flags /= TableColumnFlag.NoSort
 
     // Indentation
     if (flags hasnt TableColumnFlag.IndentMask)
-        flags = flags or if (columns.indexOf(column) == 0) TableColumnFlag.IndentEnable else TableColumnFlag.IndentDisable
+        flags /= if (columns.indexOf(column) == 0) TableColumnFlag.IndentEnable else TableColumnFlag.IndentDisable
 
     // Alignment
     //if ((flags & ImGuiTableColumnFlags_AlignMask_) == 0)
@@ -113,34 +113,34 @@ fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
 
     // Adjust flags: set default sizing policy
     if (flags hasnt TableFlag._SizingMask)
-        flags = flags or when {
+        flags /= when {
             flags has TableFlag.ScrollX || outerWindow.flags has WindowFlag.AlwaysAutoResize -> TableFlag.SizingFixedFit
             else -> TableFlag.SizingStretchSame
         }
 
     // Adjust flags: enable NoKeepColumnsVisible when using ImGuiTableFlags_SizingFixedSame
     if (flags and TableFlag._SizingMask == TableFlag.SizingFixedSame)
-        flags = flags or TableFlag.NoKeepColumnsVisible
+        flags /= TableFlag.NoKeepColumnsVisible
 
     // Adjust flags: enforce borders when resizable
     if (flags has TableFlag.Resizable)
-        flags = flags or TableFlag.BordersInnerV
+        flags /= TableFlag.BordersInnerV
 
     // Adjust flags: disable NoHostExtendX/NoHostExtendY if we have any scrolling going on
     if (flags has TableFlag.NoHostExtendY && flags has (TableFlag.ScrollX or TableFlag.ScrollY))
-        flags = flags wo (TableFlag.NoHostExtendX or TableFlag.NoHostExtendY)
+        flags -= TableFlag.NoHostExtendX or TableFlag.NoHostExtendY
 
     // Adjust flags: NoBordersInBodyUntilResize takes priority over NoBordersInBody
     if (flags has TableFlag.NoBordersInBodyUntilResize)
-        flags = flags wo TableFlag.NoBordersInBody
+        flags -= TableFlag.NoBordersInBody
 
     // Adjust flags: disable saved settings if there's nothing to save
     if (flags hasnt (TableFlag.Resizable or TableFlag.Hideable or TableFlag.Reorderable or TableFlag.Sortable))
-        flags = flags or TableFlag.NoSavedSettings
+        flags /= TableFlag.NoSavedSettings
 
     // Inherit _NoSavedSettings from top-level window (child windows always have _NoSavedSettings set)
     if (outerWindow.rootWindow!!.flags has WindowFlag.NoSavedSettings)
-        flags = flags or TableFlag.NoSavedSettings
+        flags /= TableFlag.NoSavedSettings
 
     return flags
 }
