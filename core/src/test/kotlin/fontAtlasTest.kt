@@ -5,7 +5,7 @@ import com.aayushatharva.brotli4j.decoder.DecoderJNI
 import glm_.i
 import imgui.font.FontAtlas
 import imgui.font.decode
-import kool.lib.indices
+import kool.indices
 import java.math.BigInteger
 import kotlin.test.Test
 
