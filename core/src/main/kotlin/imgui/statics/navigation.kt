@@ -1,4 +1,4 @@
-package imgui.static
+package imgui.statics
 
 import gli_.has
 import gli_.hasnt

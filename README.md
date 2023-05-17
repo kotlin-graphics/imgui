@@ -213,7 +213,7 @@ import org.gradle.internal.os.OperatingSystem
 
 repositories {
     ...
-    maven { url 'https://jitpack.io' }
+    maven("https://raw.githubusercontent.com/kotlin-graphics/mary/master")
 }
 
 dependencies {
@@ -229,11 +229,11 @@ dependencies {
     Any number of renderers can be added to the project like this however, you could all all of them with the array ["gl", "glfw", "core", "vk", "jogl", "openjfx"] 
     This example gets the OpenGL needed modules.
      */
-    ["gl", "glfw", "core"].each {
-        implementation "com.github.kotlin-graphics.imgui:$it:-SNAPSHOT"
-    }
+    implementation("kotlin.graphics:imgui-core:1.79+05")
+    implementation("kotlin.graphics:imgui-gl:1.79+05")
+    implementation("kotlin.graphics:imgui-glfw:1.79+05")
 	
-    switch ( OperatingSystem.current() ) {
+    /*switch ( OperatingSystem.current() ) {
         case OperatingSystem.WINDOWS:
             ext.lwjglNatives = "natives-windows"
             break
@@ -250,7 +250,7 @@ dependencies {
         if (it.moduleVersion.id.group == "org.lwjgl") {
             runtime "org.lwjgl:${it.moduleVersion.id.name}:${it.moduleVersion.id.version}:${lwjglNatives}"
         }
-    }
+    }*/
 }
 ```
 

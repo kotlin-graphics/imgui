@@ -24,10 +24,10 @@ import imgui.internal.classes.Rect
 import imgui.internal.floor
 import imgui.internal.lengthSqr
 import imgui.internal.sections.*
-import imgui.static.createNewWindow
-import imgui.static.setCurrentWindow
-import imgui.static.updateWindowManualResize
-import imgui.static.viewportRect
+import imgui.statics.createNewWindow
+import imgui.statics.setCurrentWindow
+import imgui.statics.updateWindowManualResize
+import imgui.statics.viewportRect
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
