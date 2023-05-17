@@ -7,7 +7,7 @@ import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollX
 import imgui.ImGui.setScrollY
 import imgui.ImGui.style
-import imgui.lerp
+import imgui.internal.lerp
 
 // Windows Scrolling
 // - Any change of Scroll will be applied at the beginning of next frame in the first call to Begin().

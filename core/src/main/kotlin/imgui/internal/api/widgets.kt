@@ -30,6 +30,7 @@ import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
 import kotlin.math.max
+import kotlin.math.min
 
 /** Widgets */
 internal interface widgets {

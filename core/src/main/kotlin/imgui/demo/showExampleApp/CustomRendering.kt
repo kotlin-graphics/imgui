@@ -11,7 +11,6 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorEdit4
 import imgui.ImGui.cursorScreenPos
-import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endTabBar
@@ -27,13 +26,14 @@ import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
-import imgui.ImGui.sliderInt
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowSize
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.drag
+import imgui.api.slider
 import imgui.dsl.menuItem
 import imgui.internal.sections.ButtonFlag
 import imgui.internal.sections.DrawFlag
@@ -103,15 +103,15 @@ object CustomRendering {
 
                 // Draw a bunch of primitives
                 text("All primitives")
-                dragFloat("Size", ::sz, 0.2f, 2f, 100f, "%.0f")
-                dragFloat("Thickness", ::thickness, 0.05f, 1f, 8f, "%.02f")
-                sliderInt("N-gon sides", ::ngonSides, 3, 12)
+                drag("Size", ::sz, 0.2f, 2f, 100f, "%.0f")
+                drag("Thickness", ::thickness, 0.05f, 1f, 8f, "%.02f")
+                slider("N-gon sides", ::ngonSides, 3, 12)
                 checkbox("##circlesegmentoverride", ::circleSegmentsOverride)
                 sameLine(0f, style.itemInnerSpacing.x)
-                circleSegmentsOverride = sliderInt("Circle segments override", ::circleSegmentsOverrideV, 3, 40) or circleSegmentsOverride
+                circleSegmentsOverride = slider("Circle segments override", ::circleSegmentsOverrideV, 3, 40) or circleSegmentsOverride
                 checkbox("##curvessegmentoverride", ::curveSegmentsOverride)
                 sameLine(0f, style.itemInnerSpacing.x)
-                curveSegmentsOverride = sliderInt("Curves segments override", ::curveSegmentsOverrideV, 3, 40) or curveSegmentsOverride
+                curveSegmentsOverride = slider("Curves segments override", ::curveSegmentsOverrideV, 3, 40) or curveSegmentsOverride
                 colorEdit4("Color", colf)
 
                 val p = cursorScreenPos

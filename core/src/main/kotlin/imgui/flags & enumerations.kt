@@ -5,6 +5,7 @@ import glm_.vec4.Vec4
 import imgui.DragDropFlag.*
 import imgui.ImGui.getColorU32
 import imgui.internal.isPowerOfTwo
+import unsigned.*
 import kotlin.internal.NoInfer
 
 
@@ -1035,11 +1036,38 @@ enum class DataType(val imguiName: String) {
 
     _String("[internal] String"), _Pointer("[internal] Pointer"), _ID("[internal] ID");
 
+    val isUnsigned: Boolean
+        get() = when (this) {
+            Ubyte, Ushort, Uint, Ulong -> true
+            else -> false
+        }
+
     @JvmField
     val i = ordinal
 
     companion object {
         val imguiValues = values().dropLast(4)
+    }
+}
+
+// Float is the most common data type in imgui, followed by Int, and so we have them at the start
+// so that the compiler's dead code elimination gets rid of the rest of the branches.
+// In reality, the JVM will optimize the comparisons since they're constant checks,
+// So there should be no performance difference in tight loops.
+// Also, a minifier like proguard deals with this very easily.
+inline fun <reified D> dataTypeOf(): DataType where D : Number, D : Comparable<D> {
+    return when(D::class) {
+        Float::class -> DataType.Float
+        Int::class -> DataType.Int
+        Byte::class -> DataType.Byte
+        Short::class -> DataType.Short
+        Long::class -> DataType.Long
+        Double::class -> DataType.Double
+        Ubyte::class -> DataType.Ubyte
+        Ushort::class -> DataType.Ushort
+        Uint::class -> DataType.Uint
+        Ulong::class -> DataType.Ulong
+        else -> throw Error("Unsupported data type ${D::class}")
     }
 }
 

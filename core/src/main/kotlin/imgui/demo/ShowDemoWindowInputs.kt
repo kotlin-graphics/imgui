@@ -2,6 +2,7 @@ package imgui.demo
 
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginDisabled
@@ -29,11 +30,11 @@ import imgui.ImGui.setNextFrameWantCaptureKeyboard
 import imgui.ImGui.setNextFrameWantCaptureMouse
 import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.setNextItemWidth
-import imgui.ImGui.sliderFloat3
-import imgui.ImGui.sliderInt
+import imgui.ImGui.slider3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.slider
 import imgui.dsl.collapsingHeader
 import imgui.dsl.treeNode
 
@@ -108,9 +109,9 @@ object ShowDemoWindowInputs {
                                 "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.")
                     val captureOverrideDesc = listOf("None", "Set to false", "Set to true")
                     setNextItemWidth(ImGui.fontSize * 15)
-                    sliderInt("SetNextFrameWantCaptureMouse() on hover", ::captureOverrideMouse, -1, +1, captureOverrideDesc[captureOverrideMouse + 1], SliderFlag.AlwaysClamp)
+                    slider("SetNextFrameWantCaptureMouse() on hover", ::captureOverrideMouse, -1, +1, captureOverrideDesc[captureOverrideMouse + 1], SliderFlag.AlwaysClamp)
                     setNextItemWidth(ImGui.fontSize * 15)
-                    sliderInt("SetNextFrameWantCaptureKeyboard() on hover", ::captureOverrideKeyboard, -1, +1, captureOverrideDesc[captureOverrideKeyboard + 1], SliderFlag.AlwaysClamp)
+                    slider("SetNextFrameWantCaptureKeyboard() on hover", ::captureOverrideKeyboard, -1, +1, captureOverrideDesc[captureOverrideKeyboard + 1], SliderFlag.AlwaysClamp)
 
                     colorButton("##panel", Vec4(0.7f, 0.1f, 0.7f, 1f), ColorEditFlag.NoTooltip or ColorEditFlag.NoDragDrop, Vec2(128f, 96f)) // Dummy item
                     if (ImGui.isItemHovered() && captureOverrideMouse != -1)
@@ -196,7 +197,7 @@ object ShowDemoWindowInputs {
 
     object `Focus from code` {
         var buf = "click on a button to set focus".toByteArray(128)
-        val f3 = FloatArray(3)
+        val f3 = Vec3()
         operator fun invoke() {
             //            IMGUI_DEMO_MARKER("Inputs & Focus/Focus from code");
             treeNode("Focus from code") {
@@ -228,7 +229,7 @@ object ShowDemoWindowInputs {
                 if (button("Focus on Y")) focusAhead = 1; sameLine()
                 if (button("Focus on Z")) focusAhead = 2
                 if (focusAhead != -1) setKeyboardFocusHere(focusAhead)
-                sliderFloat3("Float3", f3, 0f, 1f)
+                slider3("Float3", f3, 0f, 1f)
 
                 textWrapped("NB: Cursor & selection are preserved when refocusing last used item in code.")
             }

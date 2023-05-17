@@ -26,9 +26,7 @@ import imgui.ImGui.combo
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.cursorStartPos
-import imgui.ImGui.dragFloat
-import imgui.ImGui.dragInt
-import imgui.ImGui.dragVec2
+import imgui.ImGui.drag2
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
@@ -73,8 +71,6 @@ import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHereX
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.setTooltip
-import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderInt
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
@@ -90,6 +86,8 @@ import imgui.ImGui.windowContentRegionMax
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.drag
+import imgui.api.slider
 import imgui.classes.Color
 import imgui.demo.showExampleApp.MenuFile
 import imgui.dsl.child
@@ -343,7 +341,7 @@ object ShowDemoWindowLayout {
                 //   the POV of the parent window). See 'Demo->Querying Status (Active/Focused/Hovered etc.)' for details.
                 run {
                     setNextItemWidth(fontSize * 8)
-                    dragInt("Offset X", ::offsetX, 1f, -1000, 1000)
+                    drag("Offset X", ::offsetX, 1f, -1000, 1000)
 
                     ImGui.cursorPosX += offsetX
                     withStyleColor(Col.ChildBg, COL32(255, 0, 0, 100)) {
@@ -380,40 +378,40 @@ object ShowDemoWindowLayout {
                 text("SetNextItemWidth/PushItemWidth(100)")
                 sameLine(); helpMarker("Fixed width.")
                 pushItemWidth(100)
-                dragFloat("float##1b", ::f)
+                drag("float##1b", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##1b", ::f)
+                        drag("float (indented)##1b", ::f)
                     }
                 popItemWidth()
 
                 text("SetNextItemWidth/PushItemWidth(-100)")
                 sameLine(); helpMarker("Align to right edge minus 100")
                 pushItemWidth(-100)
-                dragFloat("float##2a", ::f)
+                drag("float##2a", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##2b", ::f)
+                        drag("float (indented)##2b", ::f)
                     }
                 popItemWidth()
 
                 text("SetNextItemWidth/PushItemWidth(GetContentRegionAvail().x * 0.5f)")
                 sameLine(); helpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
                 pushItemWidth(contentRegionAvail.x * 0.5f)
-                dragFloat("float##3a", ::f)
+                drag("float##3a", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##3b", ::f)
+                        drag("float (indented)##3b", ::f)
                     }
                 popItemWidth()
 
                 text("SetNextItemWidth/PushItemWidth(-GetContentRegionAvail().x * 0.5f)")
                 sameLine(); helpMarker("Align to right edge minus half")
                 pushItemWidth(-ImGui.contentRegionAvail.x * 0.5f)
-                dragFloat("float##4a", ::f)
+                drag("float##4a", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##4b", ::f)
+                        drag("float (indented)##4b", ::f)
                     }
                 popItemWidth()
 
@@ -423,10 +421,10 @@ object ShowDemoWindowLayout {
                 sameLine(); helpMarker("Align to right edge")
                 pushItemWidth(-Float.MIN_VALUE)
 
-                dragFloat("##float5a", ::f)
+                drag("##float5a", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##5b", ::f)
+                        drag("float (indented)##5b", ::f)
                     }
                 popItemWidth()
             }
@@ -488,9 +486,9 @@ object ShowDemoWindowLayout {
                 val items = arrayOf("AAAA", "BBBB", "CCCC", "DDDD")
                 withItemWidth(80f) {
                     combo("Combo", ::item, items); sameLine()
-                    sliderFloat("X", ::f0, 0f, 5f); sameLine()
-                    sliderFloat("Y", ::f1, 0f, 5f); sameLine()
-                    sliderFloat("Z", ::f2, 0f, 5f)
+                    slider("X", ::f0, 0f, 5f); sameLine()
+                    slider("Y", ::f1, 0f, 5f); sameLine()
+                    slider("Z", ::f2, 0f, 5f)
                 }
 
                 withItemWidth(80f) {
@@ -498,9 +496,7 @@ object ShowDemoWindowLayout {
                     for (i in 0..3) {
                         if (i > 0) sameLine()
                         withID(i) {
-                            withInt(selection, i) {
-                                listBox("", it, items)
-                            }
+                            listBox("", selection mutablePropertyAt i, items)
                         }
                         //if (IsItemHovered()) SetTooltip("ListBox %d hovered", i);
                     }
@@ -559,13 +555,13 @@ object ShowDemoWindowLayout {
 
                 checkbox("Track", ::enableTrack)
                 pushItemWidth(100)
-                sameLine(140); enableTrack = dragInt("##item", ::trackItem, 0.25f, 0, 99, "Item = %d") or enableTrack
+                sameLine(140); enableTrack = drag("##item", ::trackItem, 0.25f, 0, 99, "Item = %d") or enableTrack
 
                 var scrollToOff = button("Scroll Offset")
-                sameLine(140); scrollToOff = dragFloat("##off", ::scrollToOffPx, 1f, 0f, Float.MAX_VALUE, "+%.0f px") or scrollToOff
+                sameLine(140); scrollToOff = drag("##off", ::scrollToOffPx, 1f, 0f, Float.MAX_VALUE, "+%.0f px") or scrollToOff
 
                 var scrollToPos = button("Scroll To Pos")
-                sameLine(140); scrollToPos = dragFloat("##pos", ::scrollToPosPx, 1f, -10f, Float.MAX_VALUE, "X/Y = %.0f px") or scrollToPos
+                sameLine(140); scrollToPos = drag("##pos", ::scrollToPosPx, 1f, -10f, Float.MAX_VALUE, "X/Y = %.0f px") or scrollToPos
 
                 popItemWidth()
                 if (scrollToOff || scrollToPos)
@@ -642,9 +638,9 @@ object ShowDemoWindowLayout {
                 // Miscellaneous Horizontal Scrolling Demo
 
                 helpMarker(
-                    "Horizontal scrolling for a window is enabled via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\n" +
-                            "You may want to also explicitly specify content width by using SetNextWindowContentWidth() before Begin().")
-                sliderInt("Lines", ::lines, 1, 15)
+                        "Horizontal scrolling for a window is enabled via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\n" +
+                                "You may want to also explicitly specify content width by using SetNextWindowContentWidth() before Begin().")
+                slider("Lines", ::lines, 1, 15)
                 pushStyleVar(StyleVar.FrameRounding, 3f)
                 pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
                 val scrollingChildSize = Vec2(0f, ImGui.frameHeightWithSpacing * 7 + 30)
@@ -713,7 +709,7 @@ object ShowDemoWindowLayout {
                     if (explicitContentSize) {
                         sameLine()
                         setNextItemWidth(100f)
-                        dragFloat("##csx", ::contentsSizeX)
+                        drag("##csx", ::contentsSizeX)
                         val p = cursorScreenPos
                         windowDrawList.addRectFilled(p, Vec2(p.x + 10, p.y + 10), COL32_WHITE)
                         windowDrawList.addRectFilled(Vec2(p.x + contentsSizeX - 10, p.y), Vec2(p.x + contentsSizeX, p.y + 10), COL32_WHITE)
@@ -777,7 +773,7 @@ object ShowDemoWindowLayout {
         val offset = Vec2(30)
         operator fun invoke() {
             treeNode("Clipping") {
-                dragVec2("size", size, 0.5f, 1f, 200f, "%.0f")
+                drag2("size", size, 0.5f, 1f, 200f, "%.0f")
                 textWrapped("(Click and drag to scroll)")
 
                 helpMarker(

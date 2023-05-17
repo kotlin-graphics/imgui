@@ -11,7 +11,6 @@ import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorButton
 import imgui.ImGui.combo
-import imgui.ImGui.dragInt
 import imgui.ImGui.end
 import imgui.ImGui.io
 import imgui.ImGui.popStyleVar
@@ -21,6 +20,7 @@ import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setWindowSize
 import imgui.ImGui.text
+import imgui.api.drag
 import imgui.classes.SizeCallbackData
 import kotlin.reflect.KMutableProperty0
 
@@ -110,7 +110,7 @@ object ConstrainedResize {
                 setNextItemWidth(ImGui.fontSize * 20)
                 combo("Constraint", ::type, testDesc)
                 setNextItemWidth(ImGui.fontSize * 20)
-                dragInt("Lines", ::displayLines, 0.2f, 1, 100)
+                drag("Lines", ::displayLines, 0.2f, 1, 100)
                 checkbox("Auto-resize", ::autoResize)
                 checkbox("Window padding", ::windowPadding)
                 for (i in 0 until displayLines)

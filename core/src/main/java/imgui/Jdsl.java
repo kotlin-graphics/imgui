@@ -42,11 +42,11 @@ public class Jdsl {
         window(name, null, Flag.empty(), block);
     }
 
-    public static void window(String name, MutableProperty0<Boolean> open, Runnable block) {
+    public static void window(String name, MutableReference<Boolean> open, Runnable block) {
         window(name, open, Flag.empty(), block);
     }
 
-    public static void window(String name, MutableProperty0<Boolean> open, Flag<WindowFlag> windowFlags, Runnable block) {
+    public static void window(String name, MutableReference<Boolean> open, Flag<WindowFlag> windowFlags, Runnable block) {
         if (imgui.begin(name, open, windowFlags)) // ~open
             block.run();
         imgui.end();
@@ -255,12 +255,12 @@ public class Jdsl {
             block.run();
     }
 
-    public static void checkbox(String label, MutableProperty0<Boolean> vPtr, Runnable block) {
+    public static void checkbox(String label, MutableReference<Boolean> vPtr, Runnable block) {
         if (imgui.checkbox(label, vPtr))
             block.run();
     }
 
-    public static <F extends Flag<F>> void checkboxFlags(String label, MutableProperty0<Flag<F>> vPtr, Flag<F> flagsValue, Runnable block) {
+    public static <F extends Flag<F>> void checkboxFlags(String label, MutableReference<Flag<F>> vPtr, Flag<F> flagsValue, Runnable block) {
         if (imgui.checkboxFlags(label, vPtr, flagsValue))
             block.run();
     }
@@ -275,7 +275,7 @@ public class Jdsl {
             block.run();
     }
 
-    public static void radioButton(String label, MutableProperty0<Integer> v, int vButton, Runnable block) {
+    public static void radioButton(String label, MutableReference<Integer> v, int vButton, Runnable block) {
         if (imgui.radioButton(label, v, vButton))
             block.run();
     }
@@ -295,11 +295,11 @@ public class Jdsl {
         }
     }
 
-    public static void combo(String label, MutableProperty0<Integer> currentItem, String itemsSeparatedByZeros, Runnable block) {
+    public static void combo(String label, MutableReference<Integer> currentItem, String itemsSeparatedByZeros, Runnable block) {
         combo(label, currentItem, itemsSeparatedByZeros, -1, block);
     }
 
-    public static void combo(String label, MutableProperty0<Integer> currentItem, String itemsSeparatedByZeros, int heightInItems, Runnable block) {
+    public static void combo(String label, MutableReference<Integer> currentItem, String itemsSeparatedByZeros, int heightInItems, Runnable block) {
         if (imgui.combo(label, currentItem, itemsSeparatedByZeros, heightInItems))
             block.run();
     }
@@ -370,11 +370,11 @@ public class Jdsl {
             block.run();
     }
 
-    public static void collapsingHeader(String label, MutableProperty0<Boolean> open, Runnable block) {
+    public static void collapsingHeader(String label, MutableReference<Boolean> open, Runnable block) {
         collapsingHeader(label, open, Flag.empty(), block);
     }
 
-    public static void collapsingHeader(String label, MutableProperty0<Boolean> open, Flag<TreeNodeFlag> treeNodeFlags, Runnable block) {
+    public static void collapsingHeader(String label, MutableReference<Boolean> open, Flag<TreeNodeFlag> treeNodeFlags, Runnable block) {
         if (imgui.collapsingHeader(label, open, treeNodeFlags))
             block.run();
     }
@@ -504,11 +504,11 @@ public class Jdsl {
         popupModal(name, null, Flag.empty(), block);
     }
 
-    public static void popupModal(String name, MutableProperty0<Boolean> pOpen, Runnable block) {
+    public static void popupModal(String name, MutableReference<Boolean> pOpen, Runnable block) {
         popupModal(name, pOpen, Flag.empty(), block);
     }
 
-    public static void popupModal(String name, MutableProperty0<Boolean> pOpen, Flag<WindowFlag> windowFlags, Runnable block) {
+    public static void popupModal(String name, MutableReference<Boolean> pOpen, Flag<WindowFlag> windowFlags, Runnable block) {
         if (imgui.beginPopupModal(name, pOpen, windowFlags)) {
             block.run();
             imgui.endPopup();
@@ -532,11 +532,11 @@ public class Jdsl {
         tabItem(label, null, Flag.empty(), block);
     }
 
-    public static void tabItem(String label, MutableProperty0<Boolean> pOpen, Runnable block) {
+    public static void tabItem(String label, MutableReference<Boolean> pOpen, Runnable block) {
         tabItem(label, pOpen, Flag.empty(), block);
     }
 
-    public static void tabItem(String label, MutableProperty0<Boolean> pOpen, Flag<TabItemFlag.ItemOnly> tabItemFlags, Runnable block) {
+    public static void tabItem(String label, MutableReference<Boolean> pOpen, Flag<TabItemFlag.ItemOnly> tabItemFlags, Runnable block) {
         if (imgui.beginTabItem(label, pOpen, tabItemFlags))
             block.run();
         imgui.endTabItem();

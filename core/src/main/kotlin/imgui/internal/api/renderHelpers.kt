@@ -20,6 +20,7 @@ import imgui.internal.classes.Rect
 import imgui.internal.sections.*
 import unsigned.toUInt
 import kotlin.math.max
+import kotlin.math.min
 
 /** Render helpers
  *  AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
@@ -366,7 +367,7 @@ internal interface renderHelpers {
     @Deprecated("placeholder: pos gets modified!")
     fun DrawList.renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
 
-        val thickness = imgui.max(sz_ / 5f, 1f)
+        val thickness = max(sz_ / 5f, 1f)
         val sz = sz_ - thickness * 0.5f
         pos += thickness * 0.25f
 

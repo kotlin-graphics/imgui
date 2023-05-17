@@ -6,6 +6,7 @@ import gln.checkError
 import gln.glViewport
 import imgui.DEBUG
 import imgui.ImGui
+import imgui.api.slider
 import imgui.classes.Context
 import imgui.impl.gl.ImplGL3
 import imgui.impl.glfw.ImplGlfw
@@ -17,7 +18,6 @@ import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
 import uno.glfw.windowHint.Profile.core
-import java.awt.Color
 
 //import org.lwjgl.util.remotery.Remotery
 //import org.lwjgl.util.remotery.RemoteryGL
@@ -177,7 +177,7 @@ private class ImGuiOpenGL3 {
                 checkbox("Demo Window", ::showDemoWindow)             // Edit bools storing our window open/close state
                 checkbox("Another Window", ::showAnotherWindow)
 
-                sliderFloat("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
+                slider("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
                 colorEdit3("clear color", clearColor)           // Edit 3 floats representing a color
 
                 if (button("Button"))                           // Buttons return true when clicked (most widgets return true when edited/activated)

@@ -23,6 +23,8 @@ import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.NavLayer
 import imgui.static.*
 import kool.BYTES
+import kotlin.math.max
+import kotlin.math.min
 import imgui.TableFlag as Tf
 import imgui.TableRowFlag as Trf
 import imgui.WindowFlag as Wf

@@ -105,12 +105,10 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
 
         // Turn a-z into A-Z
         if (flags has InputTextFlag.CharsUppercase && c in 'a'..'z')
-            c = c + ('A' - 'a')
+            c += ('A' - 'a')
 
         if (flags has InputTextFlag.CharsNoBlank && c.isBlankW)
             return false
-
-        char.set(c)
     }
 
     // Custom callback filter
@@ -190,16 +188,6 @@ fun inputTextCalcTextSizeW(ctx: Context, text: CharArray, textBegin: Int, textEn
     remaining?.set(s)
 
     return textSize
-}
-
-fun inputScalarDefaultCharsFilter(dataType: DataType, format: String): InputTextFlag.Single {
-    if (dataType == DataType.Float || dataType == DataType.Double)
-        return InputTextFlag.CharsScientific
-    val formatLastChar = if (format.isNotEmpty()) format.last() else NUL
-    return when (formatLastChar) {
-        'x', 'X' -> InputTextFlag.CharsHexadecimal
-        else -> InputTextFlag.CharsDecimal
-    }
 }
 
 // Find the shortest single replacement we can make to get the new text from the old text.

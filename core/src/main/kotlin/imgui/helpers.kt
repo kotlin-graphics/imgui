@@ -3,6 +3,7 @@ package imgui
 //import com.sun.jdi.VirtualMachine
 import glm_.L
 import glm_.b
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.classes.InputTextCallbackData
 import imgui.classes.SizeCallbackData
@@ -164,12 +165,15 @@ val Int.vec4: Vec4
 
 /** ~ColorConvertFloat4ToU32 */
 val Vec4.u32: Int
-    get() {
-        var out = F32_TO_INT8_SAT(x) shl COL32_R_SHIFT
-        out = out or (F32_TO_INT8_SAT(y) shl COL32_G_SHIFT)
-        out = out or (F32_TO_INT8_SAT(z) shl COL32_B_SHIFT)
-        return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
-    }
+    get() = floatsToU32(x, y, z, w)
+
+/** ~ColorConvertFloat4ToU32 */
+fun floatsToU32(x: Float, y: Float, z: Float, w: Float = 0f): Int {
+    var out = F32_TO_INT8_SAT(x) shl COL32_R_SHIFT
+    out = out or (F32_TO_INT8_SAT(y) shl COL32_G_SHIFT)
+    out = out or (F32_TO_INT8_SAT(z) shl COL32_B_SHIFT)
+    return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
+}
 
 var imeInProgress = false
 //    var imeLastKey = 0
@@ -237,3 +241,37 @@ operator fun <T> KMutableProperty0<T>.invoke(t: T): KMutableProperty0<T> {
 }
 
 val ByteArray.cStr get() = String(this, 0, strlen())
+
+typealias Vec3Setter = (x: Float, y: Float, z: Float) -> Unit
+typealias Vec4Setter = (x: Float, y: Float, z: Float, w: Float) -> Unit
+
+inline infix fun Vec3.into(setter: Vec3Setter) = setter(x, y, z)
+inline infix fun Vec4.into(setter: Vec3Setter) = setter(x, y, z)
+inline infix fun Vec4.into(setter: Vec4Setter) = setter(x, y, z, w)
+inline fun Vec4.into(setter: Vec4Setter, w: Float) = setter(x, y, z, w)
+
+fun Vec4.put(x: Float, y: Float, z: Float) {
+    put(x, y, z, w)
+}
+
+fun Vec3.put(x: Float, y: Float, z: Float, w: Float) {
+    put(x, y, z)
+}
+
+fun FloatArray.put(x: Float, y: Float, z: Float) {
+    this[0] = x
+    this[1] = y
+    this[2] = z
+}
+
+fun FloatArray.put(x: Float, y: Float, z: Float, w: Float) {
+    this[0] = x
+    this[1] = y
+    this[2] = z
+    this[3] = w
+}
+
+fun FloatArray.put(vararg f: Float) {
+    f.copyInto(this)
+
+}

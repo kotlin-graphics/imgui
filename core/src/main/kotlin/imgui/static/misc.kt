@@ -26,6 +26,8 @@ import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 
 

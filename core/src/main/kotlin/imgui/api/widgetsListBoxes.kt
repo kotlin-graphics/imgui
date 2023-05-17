@@ -28,8 +28,8 @@ import imgui.classes.ListClipper
 import imgui.has
 import imgui.internal.classes.Rect
 import imgui.internal.floor
-import imgui.withBool
-import imgui.withInt
+import imgui.mutablePropertyAt
+import imgui.mutableReference
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -90,7 +90,7 @@ interface widgetsListBoxes {
     }
 
     fun listBox(label: String, currentItemPtr: IntArray, items: Array<String>, heightInItems: Int = -1): Boolean =
-            withInt(currentItemPtr) { listBox(label, it, items, heightInItems) }
+            listBox(label, currentItemPtr mutablePropertyAt 0, items, heightInItems)
 
     /** This is merely a helper around BeginListBox(), EndListBox().
      *  Considering using those directly to submit custom data or store selection differently. */
@@ -113,19 +113,18 @@ interface widgetsListBoxes {
         val clipper = ListClipper()
         clipper.begin(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
-            for (i in clipper.display)
-                withBool { itemSelected ->
-                    val itemText = items.getOrElse(i) { "*Unknown item*" }
-
-                    pushID(i)
-                    itemSelected.set(i == currentItem)
-                    if (selectable(itemText, itemSelected)) {
-                        currentItem = i
-                        valueChanged = true
-                    }
-                    if (itemSelected()) setItemDefaultFocus()
-                    popID()
+            for (i in clipper.display) {
+                val itemText = items.getOrElse(i) { "*Unknown item*" }
+                pushID(i)
+                val itemSelectedRef = (i == currentItem).mutableReference
+                val itemSelected by itemSelectedRef
+                if (selectable(itemText, itemSelectedRef)) {
+                    currentItem = i
+                    valueChanged = true
                 }
+                if (itemSelected) setItemDefaultFocus()
+                popID()
+            }
         endListBox()
 
         if (valueChanged)
