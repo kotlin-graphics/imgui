@@ -4,12 +4,13 @@ import glm_.asHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
+import imgui.L
 import imgui.TextureID
 import imgui.classes.DrawList
 import imgui.logger
 import imgui.resize
 import kool.*
-import kool.lib.indices
+import kool.indices
 import java.util.Stack
 import java.util.logging.Level
 
@@ -184,7 +185,7 @@ class DrawListSplitter {
             it._cmdBuffer.clear()
             it._idxBuffer.free()
             if (!destroy)
-                it._idxBuffer = IntBuffer(0).also { i -> logger.log(Level.INFO, "idxBuffer adr = ${i.adr.asHexString}") }
+                it._idxBuffer = IntBuffer(0).also { i -> logger.log(Level.INFO, "idxBuffer adr = ${i.adr.L.asHexString}") }
         }
         _current = 0
         _count = 1

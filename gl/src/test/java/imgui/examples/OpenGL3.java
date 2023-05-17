@@ -3,6 +3,7 @@ package imgui.examples;
 import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
+import gln.cap.Caps;
 import imgui.Cond;
 import imgui.Flag;
 import imgui.ImGui;
@@ -14,8 +15,11 @@ import imgui.impl.glfw.ImplGlfw;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Platform;
+import uno.gl.GlWindow;
 import uno.glfw.GlfwWindow;
+import uno.glfw.Hints;
 import uno.glfw.VSync;
 
 import static gln.GlnKt.glClearColor;
@@ -23,16 +27,14 @@ import static gln.GlnKt.glViewport;
 import static imgui.ImguiKt.DEBUG;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
-import static uno.glfw.windowHint.Profile.core;
 
 public class OpenGL3 {
 
     // The window handle
-    private GlfwWindow window;
+    private GlWindow window;
     private Context ctx;
 
     private uno.glfw.glfw glfw = uno.glfw.glfw.INSTANCE;
-    private uno.glfw.windowHint windowHint = uno.glfw.windowHint.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
 
@@ -56,33 +58,35 @@ public class OpenGL3 {
         // Setup window
         GLFW.glfwSetErrorCallback((error, description) -> System.out.println("Glfw Error " + error + ": " + description));
         glfw.init();
-        windowHint.setDebug(DEBUG);
+        Hints.Context hintCtx = glfw.getHints().getContext();
+        hintCtx.setDebug(DEBUG);
 
         // Decide GL+GLSL versions
         if (Platform.get() == Platform.MACOSX) { // GL 3.2 + GLSL 150
             ImplGL3.Companion.getData().setGlslVersion(150);
-            windowHint.getContext().setVersion("3.2");
-            windowHint.setProfile(core);     // 3.2+ only
-            windowHint.setForwardComp(true); // Required on Mac
+            hintCtx.setVersion("3.2");
+            hintCtx.setProfile(Hints.Context.Profile.Core);     // 3.2+ only
+            hintCtx.setForwardComp(true); // Required on Mac
 
         } else {   // GL 3.0 + GLSL 130
 
             ImplGL3.Companion.getData().setGlslVersion(130);
-            windowHint.getContext().setVersion("3.0");
+            hintCtx.setVersion("3.0");
             //profile = core      // 3.2+ only
             //forwardComp = true  // 3.0+ only
         }
 
         // Create window with graphics context
-        window = new GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example", null, new Vec2i(30), true);
-        window.makeContextCurrent();
+        GlfwWindow glfwWindow = GlfwWindow.create(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example", MemoryUtil.NULL, null, new Vec2i(30));
+        window = new GlWindow(glfwWindow, Caps.Profile.COMPATIBILITY, true);
+        window.makeCurrent(true);
         glfw.setSwapInterval(VSync.ON);   // Enable vsync
 
         // Initialize OpenGL loader
         GL.createCapabilities();
 
         // Setup Dear ImGui context
-        ctx = new Context();
+        ctx = new Context(null);
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
 

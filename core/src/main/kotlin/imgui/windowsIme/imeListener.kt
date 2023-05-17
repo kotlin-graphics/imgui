@@ -4,7 +4,7 @@ import glm_.asHexString
 import glm_.bool
 import glm_.i
 import imgui.DEBUG
-import imgui.api.g
+import imgui.L
 import imgui.imeInProgress
 import kool.adr
 import org.lwjgl.system.MemoryUtil.NULL
@@ -13,7 +13,7 @@ import org.lwjgl.system.windows.RECT
 import org.lwjgl.system.windows.User32.*
 import org.lwjgl.system.windows.WindowProc
 import uno.glfw.GlfwWindow
-import uno.glfw.HWND
+import uno.kotlin.HWND
 
 //import vkk.adr
 
@@ -32,7 +32,7 @@ object imeListener : WindowProc() {
         if (Platform.get() == Platform.WINDOWS) {
             hwnd = window.hwnd
             glfwProc = GetWindowLongPtr(hwnd.L, GWL_WNDPROC)
-            SetWindowLongPtr(hwnd.L, GWL_WNDPROC, adr) // TODO adr
+            SetWindowLongPtr(hwnd.L, GWL_WNDPROC, adr.L)
         }
     }
 
@@ -71,7 +71,8 @@ object imeListener : WindowProc() {
                 else -> "new character> ${w.i}".also { latestChange = w.i }
             }
             if (DEBUG) println("Ime composition/keyLast = latestChange: 0x${w.asHexString}, how: $how")
-            window.charCB!!(w.i)
+            TODO()
+//            window.charCB!!(w.i)
             NULL
         }
         WM_IME_SETCONTEXT -> {

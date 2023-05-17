@@ -15,6 +15,7 @@ import imgui.impl.glfw.ImplGlfw
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryStack
+import uno.gl.GlWindow
 import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
@@ -26,7 +27,7 @@ fun main() {
 
 private class ImGuiOpenGL2 {
 
-    val window: GlfwWindow
+    val window: GlWindow
     val ctx: Context
 
     var f = 0f
@@ -46,14 +47,15 @@ private class ImGuiOpenGL2 {
 
         // Setup window
         glfw {
-            errorCallback = { error, description -> println("Glfw Error $error: $description") }
+            errorCB = { error, description -> println("Glfw Error $error: $description") }
             init()
-            windowHint { debug = DEBUG }
+            hints.context.debug = DEBUG
         }
 
         // Create window with graphics context
-        window = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
-        window.makeContextCurrent()
+        val glfwWindow = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
+        window = GlWindow(glfwWindow)
+        window.makeCurrent()
         glfw.swapInterval = VSync.ON   // Enable vsync
 
         // Initialize OpenGL loader

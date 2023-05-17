@@ -14,10 +14,11 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.Platform
+import uno.gl.GlWindow
 import uno.glfw.GlfwWindow
+import uno.glfw.Hints
 import uno.glfw.VSync
 import uno.glfw.glfw
-import uno.glfw.windowHint.Profile.core
 
 //import org.lwjgl.util.remotery.Remotery
 //import org.lwjgl.util.remotery.RemoteryGL
@@ -28,7 +29,7 @@ fun main() {
 
 private class ImGuiOpenGL3 {
 
-    val window: GlfwWindow
+    val window: GlWindow
     val ctx: Context
 
 
@@ -61,9 +62,9 @@ private class ImGuiOpenGL3 {
 
         // Setup window
         glfw {
-            errorCallback = { error, description -> println("Glfw Error $error: $description") }
+            errorCB = { error, description -> println("Glfw Error $error: $description") }
             init()
-            windowHint {
+            hints.context {
                 debug = DEBUG
 
                 // Decide GL+GLSL versions
@@ -71,13 +72,13 @@ private class ImGuiOpenGL3 {
                     // TODO Opengl_es2? GL ES 2.0 + GLSL 100
                     Platform.MACOSX -> {    // GL 3.2 + GLSL 150
                         ImplGL3.data.glslVersion = 150
-                        context.version = "3.2"
-                        profile = core      // 3.2+ only
+                        version = "3.2"
+                        profile = Hints.Context.Profile.Core      // 3.2+ only
                         forwardComp = true  // Required on Mac
                     }
                     else -> {   // GL 3.0 + GLSL 130
 //                        ImplGL3.data.glslVersion = 130
-                        context.version = "3.0"
+                        version = "3.0"
                         //profile = core      // 3.2+ only
                         //forwardComp = true  // 3.0+ only
                     }
@@ -86,8 +87,9 @@ private class ImGuiOpenGL3 {
         }
 
         // Create window with graphics context
-        window = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
-        window.makeContextCurrent()
+        val glfwWindow = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
+        window = GlWindow(glfwWindow)
+        window.makeCurrent()
         glfw.swapInterval = VSync.ON   // Enable vsync
 
         // Initialize OpenGL loader

@@ -1,6 +1,6 @@
 package imgui.demo.showExampleApp
 
-import gli_.hasnt
+import glm_.hasnt
 import glm_.c
 import glm_.f
 import glm_.i

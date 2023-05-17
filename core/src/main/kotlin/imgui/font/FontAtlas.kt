@@ -1,7 +1,7 @@
 package imgui.font
 
 import com.livefront.sealedenum.GenSealedEnum
-import gli_.has
+import glm_.has
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -10,10 +10,9 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.style
 import imgui.internal.*
-import imgui.stb.stbClear
 import imgui.stb_.*
 import kool.*
-import kool.lib.isNotEmpty
+import kool.isNotEmpty
 import uno.convert.decode85
 import uno.kotlin.plusAssign
 import uno.stb.stb
@@ -178,7 +177,6 @@ class FontAtlas {
         clearInputData()
         clearTexData()
         clearFonts()
-        stbClear()
         texPixelsAlpha8?.free()
     }
 
@@ -961,7 +959,7 @@ class FontAtlas {
         assert(y >= 0 && y + h <= texHeight)
         var pStr = 0 //pStr_
         fun inStr(i: Int) = str[pStr + i]
-        var outPixel = IntPtr(texPixelsRGBA32!!.adr + x + (y * texWidth))
+        var outPixel = Ptr<Int>(texPixelsRGBA32!!.adr.L + x + (y * texWidth))
         var offY = 0
         while (offY < h) {
             for (offX in 0 until w)
@@ -1044,7 +1042,7 @@ class FontAtlas {
                 // Write each slice
                 assert(padLeft + lineWidth + padRight == r.width && y < r.height) { "Make sure we're inside the texture bounds before we start writing pixels" }
                 atlas.texPixelsAlpha8?.let {
-                    val writePtr = BytePtr(it.adr + r.x + ((r.y + y) * atlas.texWidth))
+                    val writePtr = Ptr<Byte>(it.adr.L + r.x + ((r.y + y) * atlas.texWidth))
                     for (i in 0 until padLeft)
                         writePtr[i] = 0x00
 
@@ -1054,7 +1052,7 @@ class FontAtlas {
                     for (i in 0 until padRight)
                         writePtr[padLeft + lineWidth + i] = 0x00
                 } ?: run {
-                    val writePtr = IntPtr(atlas.texPixelsRGBA32!!.adr + r.x + (r.y + y) * atlas.texWidth)
+                    val writePtr = Ptr<Int>(atlas.texPixelsRGBA32!!.adr.L + r.x + (r.y + y) * atlas.texWidth)
                     for (i in 0 until padLeft)
                         writePtr[i] = COL32(255, 255, 255, 0)
 

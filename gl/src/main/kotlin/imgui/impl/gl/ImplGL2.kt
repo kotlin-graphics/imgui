@@ -8,19 +8,20 @@ import glm_.vec4.Vec4b
 import gln.*
 import gln.glf.semantic
 import gln.texture.glBindTexture
-import imgui.*
+import imgui.DEBUG
+import imgui.ImGui
 import imgui.ImGui.io
+import imgui.L
 import imgui.impl.glfw.ImplGlfw
 import imgui.internal.DrawData
-import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import kool.*
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11.GL_MODULATE
 import org.lwjgl.opengl.GL11.GL_TEXTURE_ENV
 import org.lwjgl.opengl.GL11.GL_TEXTURE_ENV_MODE
-import org.lwjgl.opengl.GL11.GL_MODULATE
-import org.lwjgl.opengl.GL11.glTexEnvi
 import org.lwjgl.opengl.GL11.glGetTexEnvi
+import org.lwjgl.opengl.GL11.glTexEnvi
 import org.lwjgl.opengl.GL13C.GL_TEXTURE_2D
 import org.lwjgl.opengl.GL14C.GL_FUNC_ADD
 import org.lwjgl.opengl.GL14C.glBlendEquation
@@ -125,11 +126,11 @@ class ImplGL2 : GLInterface {
         for (cmdList in drawData.cmdLists) {
 
             // Upload vertex/index buffers
-            GL11.glVertexPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + 0)
-            GL11.glTexCoordPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + Vec2.size)
-            GL11.glColorPointer(Vec4b.length, GL_UNSIGNED_BYTE, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + Vec2.size * 2)
+            GL11.glVertexPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr.L + 0)
+            GL11.glTexCoordPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr.L + Vec2.size)
+            GL11.glColorPointer(Vec4b.length, GL_UNSIGNED_BYTE, DrawVert.SIZE, cmdList.vtxBuffer.data.adr.L + Vec2.size * 2)
 
-            var idxBufferOffset = cmdList.idxBuffer.adr
+            val idxBufferOffset = cmdList.idxBuffer.adr.L
 
             for (cmd in cmdList.cmdBuffer) {
 

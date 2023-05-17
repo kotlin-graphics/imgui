@@ -1,6 +1,6 @@
 package imgui.api
 
-import gli_.has
+import glm_.has
 import glm_.max
 import glm_.vec2.Vec2
 import imgui.*

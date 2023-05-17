@@ -1,6 +1,6 @@
 package imgui.classes
 
-import gli_.hasnt
+import glm_.hasnt
 import glm_.*
 import glm_.func.common.abs
 import glm_.func.common.max
@@ -1480,7 +1480,7 @@ value class DrawVert_Buffer(val data: ByteBuffer) {
     inline val sizeByte: Int
         get() = data.rem
 
-    inline val adr: Ptr
+    inline val adr: ULong
         get() = data.adr
 
     fun hasRemaining(): Boolean = rem > 0
@@ -1506,7 +1506,7 @@ value class DrawVert_Buffer(val data: ByteBuffer) {
             return this
         val newData = ByteBuffer(newCapacity * DrawVert.SIZE)
         if (lim > 0)
-            MemoryUtil.memCopy(data.adr, newData.adr, data.lim.L)
+            MemoryUtil.memCopy(data.adr.L, newData.adr.L, data.lim.L)
         data.free()
         return DrawVert_Buffer(newData)
     }

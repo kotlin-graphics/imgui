@@ -1,6 +1,6 @@
 package imgui.demo
 
-import gli_.has
+import glm_.has
 import glm_.*
 import glm_.func.sin
 import glm_.vec2.Vec2

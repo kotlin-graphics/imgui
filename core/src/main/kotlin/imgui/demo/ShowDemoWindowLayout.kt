@@ -1,6 +1,6 @@
 package imgui.demo
 
-import gli_.has
+import glm_.has
 import glm_.L
 import glm_.f
 import glm_.i

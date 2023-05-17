@@ -82,7 +82,7 @@ package imgui.stb_
 
    github:vassvik  --  bug report*/
 
-import gli_.has
+import glm_.has
 import glm_.b
 import glm_.bool
 import glm_.c

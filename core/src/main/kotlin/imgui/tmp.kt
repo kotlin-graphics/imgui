@@ -1,6 +1,6 @@
 package imgui
 
-import gli_.has
+import glm_.has
 import glm_.L
 import glm_.f
 import glm_.vec2.Vec2t
@@ -198,3 +198,6 @@ val <V> V.mutableReference: MutableReference<V>
     get() = MutableReference(this)
 
 val KMutableProperty0<Float>.L get() = mutableProperty({ get().L }, { set(it.f) })
+
+val ULong.L: Long
+    get() = toLong()

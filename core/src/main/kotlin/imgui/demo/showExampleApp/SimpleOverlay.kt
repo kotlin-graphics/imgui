@@ -1,6 +1,6 @@
 package imgui.demo.showExampleApp
 
-import gli_.has
+import glm_.has
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.io

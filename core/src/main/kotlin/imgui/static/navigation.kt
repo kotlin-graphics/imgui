@@ -1,7 +1,7 @@
 package imgui.static
 
-import gli_.has
-import gli_.hasnt
+import glm_.has
+import glm_.hasnt
 import glm_.glm
 import glm_.i
 import glm_.max

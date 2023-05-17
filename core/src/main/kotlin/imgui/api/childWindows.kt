@@ -1,7 +1,7 @@
 package imgui.api
 
-import gli_.has
 import glm_.glm
+import glm_.has
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.beginChildEx

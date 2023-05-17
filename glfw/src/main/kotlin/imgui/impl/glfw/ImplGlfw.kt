@@ -61,7 +61,7 @@ class ImplGlfw @JvmOverloads constructor(
             backendPlatformUserData = null
             setClipboardTextFn = { _, text -> glfwSetClipboardString(clipboardUserData as Long, text) }
             getClipboardTextFn = { glfwGetClipboardString(clipboardUserData as Long) }
-            clipboardUserData = window.handle.value
+            clipboardUserData = window.handle
 
             // Set platform dependent data in viewport
             if (Platform.get() == Platform.WINDOWS)
@@ -124,12 +124,12 @@ class ImplGlfw @JvmOverloads constructor(
         //        else
         //            vrCursorPos?.let(io.mousePos::put) // window is usually unfocused in vr
 
-        if (glfwGetInputMode(data.window.handle.value, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+        if (glfwGetInputMode(data.window.handle, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
             io.addMousePosEvent(-Float.MAX_VALUE, -Float.MAX_VALUE)
             return
         }
 
-        val isAppFocused = data.window.isFocused
+        val isAppFocused = data.window.focused
         if (isAppFocused) {
             // (Optional) Set OS mouse position from Dear ImGui if requested (rarely used, only when ImGuiConfigFlags_NavEnableSetMousePos is enabled by user)
             if (io.wantSetMousePos)
@@ -146,19 +146,19 @@ class ImplGlfw @JvmOverloads constructor(
 
     private fun updateMouseCursor() {
 
-        if (io.configFlags has ConfigFlag.NoMouseCursorChange || window.cursorMode == CursorMode.disabled)
+        if (io.configFlags has ConfigFlag.NoMouseCursorChange || window.cursorMode == CursorMode.Disabled)
             return
 
         val imguiCursor = mouseCursor
         if (imguiCursor == MouseCursor.None || io.mouseDrawCursor)
         // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
-            window.cursorMode = CursorMode.hidden
+            window.cursorMode = CursorMode.Hidden
         else {
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
             window.cursor = GlfwCursor(data.mouseCursors[imguiCursor.i].takeIf { it != NULL }
                                                ?: data.mouseCursors[MouseCursor.Arrow.i])
-            window.cursorMode = CursorMode.normal
+            window.cursorMode = CursorMode.Normal
         }
     }
 
@@ -239,7 +239,7 @@ class ImplGlfw @JvmOverloads constructor(
         //        IM_ASSERT(bd->InstalledCallbacks == false && "Callbacks already installed!");
         //        IM_ASSERT(bd->Window == window);
 
-        window.windowFocusCB = windowFocusCallback
+        window.focusCB = windowFocusCallback
         window.cursorEnterCB = cursorEnterCallback
         window.cursorPosCB = cursorPosCallback
         window.mouseButtonCB = mouseButtonCallback
@@ -294,7 +294,7 @@ class ImplGlfw @JvmOverloads constructor(
         fun newFrame() = instance.newFrame()
         fun shutdown() = instance.shutdown()
 
-        val mouseButtonCallback: MouseButtonCB = { button: Int, action: Int, mods: Int ->
+        val mouseButtonCallback: MouseButtonCB = { _, button: Int, action: Int, mods: Int ->
 
             //            ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
             //            if (bd->PrevUserCallbackMousebutton != NULL && window == bd->Window)
@@ -309,41 +309,41 @@ class ImplGlfw @JvmOverloads constructor(
         // See https://github.com/ocornut/imgui/issues/6034 and https://github.com/glfw/glfw/issues/1630
 
         fun updateKeyModifiers() {
-            val wnd = data.window.handle.value
+            val wnd = data.window.handle
             io.addKeyEvent(Key.Mod_Ctrl, (glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS))
             io.addKeyEvent(Key.Mod_Shift, (glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS))
             io.addKeyEvent(Key.Mod_Alt, (glfwGetKey(wnd, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS))
             io.addKeyEvent(Key.Mod_Super, (glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS))
         }
 
-        val scrollCallback: ScrollCB = { offset: Vec2d ->
+        val scrollCallback: ScrollCB = { _, offset: Vec2d ->
             io.addMouseWheelEvent(offset.x.f, offset.y.f)
         }
 
-        val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, mods: Int ->
+        val keyCallback: KeyCB = { _, keycode: uno.glfw.Key, scancode: Int, action: InputAction, mods: Int ->
 
             //            if (bd->PrevUserCallbackKey != NULL && window == bd->Window)
             //            bd->PrevUserCallbackKey(window, keycode, scancode, action, mods);
 
-            if (action == GLFW_PRESS || action == GLFW_RELEASE) {
+            if (action == InputAction.Press || action == InputAction.Release) {
 
                 updateKeyModifiers()
 
                 val imguiKey = keycode.imguiKey
-                io.addKeyEvent(imguiKey, action == GLFW_PRESS)
-                io.setKeyEventNativeData(imguiKey, keycode, scancode) // To support legacy indexing (<1.87 user code)
+                io.addKeyEvent(imguiKey, action == InputAction.Press)
+                io.setKeyEventNativeData(imguiKey, keycode.i, scancode) // To support legacy indexing (<1.87 user code)
             }
         }
 
-        val charCallback: CharCB = { c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
+        val charCallback: CharCB = { _, c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
 
         // Workaround: X11 seems to send spurious Leave/Enter events which would make us lose our position,
         // so we back it up and restore on Leave/Enter (see https://github.com/ocornut/imgui/issues/4984)
-        val cursorEnterCallback: CursorEnterCB = { entered ->
+        val cursorEnterCallback: CursorEnterCB = { _, entered ->
             //            if (bd->PrevUserCallbackCursorEnter != NULL && window == bd->Window)
             //            bd->PrevUserCallbackCursorEnter(window, entered);
 
-            if (glfwGetInputMode(data.window.handle.value, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
+            if (glfwGetInputMode(data.window.handle, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
                 if (entered) {
                     data.mouseWindow = data.window
                     io.addMousePosEvent(data.lastValidMousePos.x, data.lastValidMousePos.y)
@@ -354,21 +354,21 @@ class ImplGlfw @JvmOverloads constructor(
                 }
         }
 
-        val windowFocusCallback: WindowFocusCB = { focused ->
+        val windowFocusCallback: WindowFocusCB = { _, focused ->
             //            if (bd->PrevUserCallbackWindowFocus != NULL && window == bd->Window)
             //            bd->PrevUserCallbackWindowFocus(window, focused);
 
             io.addFocusEvent(focused)
         }
 
-        val cursorPosCallback: CursorPosCB = { pos ->
+        val cursorPosCallback: CursorPosCB = { _, pos ->
             //            ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
             //            if (bd->PrevUserCallbackCursorPos != NULL && window == bd->Window)
             //            bd->PrevUserCallbackCursorPos(window, x, y);
 
-            if (glfwGetInputMode(data.window.handle.value, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
+            if (glfwGetInputMode(data.window.handle, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
 
-                io.addMousePosEvent(pos.x, pos.y)
+                io.addMousePosEvent(pos.x.f, pos.y.f)
                 data.lastValidMousePos put pos
             }
         }
@@ -398,113 +398,113 @@ class ImplGlfw @JvmOverloads constructor(
             //            GLFWcharfun             PrevUserCallbackChar;
         }
 
-        val Int.imguiKey: Key
+        val uno.glfw.Key.imguiKey: Key
             get() = when (this) {
-                GLFW_KEY_TAB -> Key.Tab
-                GLFW_KEY_LEFT -> Key.LeftArrow
-                GLFW_KEY_RIGHT -> Key.RightArrow
-                GLFW_KEY_UP -> Key.UpArrow
-                GLFW_KEY_DOWN -> Key.DownArrow
-                GLFW_KEY_PAGE_UP -> Key.PageUp
-                GLFW_KEY_PAGE_DOWN -> Key.PageDown
-                GLFW_KEY_HOME -> Key.Home
-                GLFW_KEY_END -> Key.End
-                GLFW_KEY_INSERT -> Key.Insert
-                GLFW_KEY_DELETE -> Key.Delete
-                GLFW_KEY_BACKSPACE -> Key.Backspace
-                GLFW_KEY_SPACE -> Key.Space
-                GLFW_KEY_ENTER -> Key.Enter
-                GLFW_KEY_ESCAPE -> Key.Escape
-                GLFW_KEY_APOSTROPHE -> Key.Apostrophe
-                GLFW_KEY_COMMA -> Key.Comma
-                GLFW_KEY_MINUS -> Key.Minus
-                GLFW_KEY_PERIOD -> Key.Period
-                GLFW_KEY_SLASH -> Key.Slash
-                GLFW_KEY_SEMICOLON -> Key.Semicolon
-                GLFW_KEY_EQUAL -> Key.Equal
-                GLFW_KEY_LEFT_BRACKET -> Key.LeftBracket
-                GLFW_KEY_BACKSLASH -> Key.Backslash
-                GLFW_KEY_RIGHT_BRACKET -> Key.RightBracket
-                GLFW_KEY_GRAVE_ACCENT -> Key.GraveAccent
-                GLFW_KEY_CAPS_LOCK -> Key.CapsLock
-                GLFW_KEY_SCROLL_LOCK -> Key.ScrollLock
-                GLFW_KEY_NUM_LOCK -> Key.NumLock
-                GLFW_KEY_PRINT_SCREEN -> Key.PrintScreen
-                GLFW_KEY_PAUSE -> Key.Pause
-                GLFW_KEY_KP_0 -> Key.Keypad0
-                GLFW_KEY_KP_1 -> Key.Keypad1
-                GLFW_KEY_KP_2 -> Key.Keypad2
-                GLFW_KEY_KP_3 -> Key.Keypad3
-                GLFW_KEY_KP_4 -> Key.Keypad4
-                GLFW_KEY_KP_5 -> Key.Keypad5
-                GLFW_KEY_KP_6 -> Key.Keypad6
-                GLFW_KEY_KP_7 -> Key.Keypad7
-                GLFW_KEY_KP_8 -> Key.Keypad8
-                GLFW_KEY_KP_9 -> Key.Keypad9
-                GLFW_KEY_KP_DECIMAL -> Key.KeypadDecimal
-                GLFW_KEY_KP_DIVIDE -> Key.KeypadDivide
-                GLFW_KEY_KP_MULTIPLY -> Key.KeypadMultiply
-                GLFW_KEY_KP_SUBTRACT -> Key.KeypadSubtract
-                GLFW_KEY_KP_ADD -> Key.KeypadAdd
-                GLFW_KEY_KP_ENTER -> Key.KeypadEnter
-                GLFW_KEY_KP_EQUAL -> Key.KeypadEqual
-                GLFW_KEY_LEFT_SHIFT -> Key.LeftShift
-                GLFW_KEY_LEFT_CONTROL -> Key.LeftCtrl
-                GLFW_KEY_LEFT_ALT -> Key.LeftAlt
-                GLFW_KEY_LEFT_SUPER -> Key.LeftSuper
-                GLFW_KEY_RIGHT_SHIFT -> Key.RightShift
-                GLFW_KEY_RIGHT_CONTROL -> Key.RightCtrl
-                GLFW_KEY_RIGHT_ALT -> Key.RightAlt
-                GLFW_KEY_RIGHT_SUPER -> Key.RightSuper
-                GLFW_KEY_MENU -> Key.Menu
-                GLFW_KEY_0 -> Key.`0`
-                GLFW_KEY_1 -> Key.`1`
-                GLFW_KEY_2 -> Key.`2`
-                GLFW_KEY_3 -> Key.`3`
-                GLFW_KEY_4 -> Key.`4`
-                GLFW_KEY_5 -> Key.`5`
-                GLFW_KEY_6 -> Key.`6`
-                GLFW_KEY_7 -> Key.`7`
-                GLFW_KEY_8 -> Key.`8`
-                GLFW_KEY_9 -> Key.`9`
-                GLFW_KEY_A -> Key.A
-                GLFW_KEY_B -> Key.B
-                GLFW_KEY_C -> Key.C
-                GLFW_KEY_D -> Key.D
-                GLFW_KEY_E -> Key.E
-                GLFW_KEY_F -> Key.F
-                GLFW_KEY_G -> Key.G
-                GLFW_KEY_H -> Key.H
-                GLFW_KEY_I -> Key.I
-                GLFW_KEY_J -> Key.J
-                GLFW_KEY_K -> Key.K
-                GLFW_KEY_L -> Key.L
-                GLFW_KEY_M -> Key.M
-                GLFW_KEY_N -> Key.N
-                GLFW_KEY_O -> Key.O
-                GLFW_KEY_P -> Key.P
-                GLFW_KEY_Q -> Key.Q
-                GLFW_KEY_R -> Key.R
-                GLFW_KEY_S -> Key.S
-                GLFW_KEY_T -> Key.T
-                GLFW_KEY_U -> Key.U
-                GLFW_KEY_V -> Key.V
-                GLFW_KEY_W -> Key.W
-                GLFW_KEY_X -> Key.X
-                GLFW_KEY_Y -> Key.Y
-                GLFW_KEY_Z -> Key.Z
-                GLFW_KEY_F1 -> Key.F1
-                GLFW_KEY_F2 -> Key.F2
-                GLFW_KEY_F3 -> Key.F3
-                GLFW_KEY_F4 -> Key.F4
-                GLFW_KEY_F5 -> Key.F5
-                GLFW_KEY_F6 -> Key.F6
-                GLFW_KEY_F7 -> Key.F7
-                GLFW_KEY_F8 -> Key.F8
-                GLFW_KEY_F9 -> Key.F9
-                GLFW_KEY_F10 -> Key.F10
-                GLFW_KEY_F11 -> Key.F11
-                GLFW_KEY_F12 -> Key.F12
+                uno.glfw.Key.TAB -> Key.Tab
+                uno.glfw.Key.LEFT -> Key.LeftArrow
+                uno.glfw.Key.RIGHT -> Key.RightArrow
+                uno.glfw.Key.UP -> Key.UpArrow
+                uno.glfw.Key.DOWN -> Key.DownArrow
+                uno.glfw.Key.PAGE_UP -> Key.PageUp
+                uno.glfw.Key.PAGE_DOWN -> Key.PageDown
+                uno.glfw.Key.HOME -> Key.Home
+                uno.glfw.Key.END -> Key.End
+                uno.glfw.Key.INSERT -> Key.Insert
+                uno.glfw.Key.DELETE -> Key.Delete
+                uno.glfw.Key.BACKSPACE -> Key.Backspace
+                uno.glfw.Key.SPACE -> Key.Space
+                uno.glfw.Key.ENTER -> Key.Enter
+                uno.glfw.Key.ESCAPE -> Key.Escape
+                uno.glfw.Key.APOSTROPHE -> Key.Apostrophe
+                uno.glfw.Key.COMMA -> Key.Comma
+                uno.glfw.Key.MINUS -> Key.Minus
+                uno.glfw.Key.PERIOD -> Key.Period
+                uno.glfw.Key.SLASH -> Key.Slash
+                uno.glfw.Key.SEMICOLON -> Key.Semicolon
+                uno.glfw.Key.EQUAL -> Key.Equal
+                uno.glfw.Key.LEFT_BRACKET -> Key.LeftBracket
+                uno.glfw.Key.BACKSLASH -> Key.Backslash
+                uno.glfw.Key.RIGHT_BRACKET -> Key.RightBracket
+                uno.glfw.Key.GRAVE_ACCENT -> Key.GraveAccent
+                uno.glfw.Key.CAPS_LOCK -> Key.CapsLock
+                uno.glfw.Key.SCROLL_LOCK -> Key.ScrollLock
+                uno.glfw.Key.NUM_LOCK -> Key.NumLock
+                uno.glfw.Key.PRINT_SCREEN -> Key.PrintScreen
+                uno.glfw.Key.PAUSE -> Key.Pause
+                uno.glfw.Key.KP_0 -> Key.Keypad0
+                uno.glfw.Key.KP_1 -> Key.Keypad1
+                uno.glfw.Key.KP_2 -> Key.Keypad2
+                uno.glfw.Key.KP_3 -> Key.Keypad3
+                uno.glfw.Key.KP_4 -> Key.Keypad4
+                uno.glfw.Key.KP_5 -> Key.Keypad5
+                uno.glfw.Key.KP_6 -> Key.Keypad6
+                uno.glfw.Key.KP_7 -> Key.Keypad7
+                uno.glfw.Key.KP_8 -> Key.Keypad8
+                uno.glfw.Key.KP_9 -> Key.Keypad9
+                uno.glfw.Key.KP_DECIMAL -> Key.KeypadDecimal
+                uno.glfw.Key.KP_DIVIDE -> Key.KeypadDivide
+                uno.glfw.Key.KP_MULTIPLY -> Key.KeypadMultiply
+                uno.glfw.Key.KP_SUBTRACT -> Key.KeypadSubtract
+                uno.glfw.Key.KP_ADD -> Key.KeypadAdd
+                uno.glfw.Key.KP_ENTER -> Key.KeypadEnter
+                uno.glfw.Key.KP_EQUAL -> Key.KeypadEqual
+                uno.glfw.Key.LEFT_SHIFT -> Key.LeftShift
+                uno.glfw.Key.LEFT_CONTROL -> Key.LeftCtrl
+                uno.glfw.Key.LEFT_ALT -> Key.LeftAlt
+                uno.glfw.Key.LEFT_SUPER -> Key.LeftSuper
+                uno.glfw.Key.RIGHT_SHIFT -> Key.RightShift
+                uno.glfw.Key.RIGHT_CONTROL -> Key.RightCtrl
+                uno.glfw.Key.RIGHT_ALT -> Key.RightAlt
+                uno.glfw.Key.RIGHT_SUPER -> Key.RightSuper
+                uno.glfw.Key.MENU -> Key.Menu
+                uno.glfw.Key.`0` -> Key.`0`
+                uno.glfw.Key.`1` -> Key.`1`
+                uno.glfw.Key.`2` -> Key.`2`
+                uno.glfw.Key.`3` -> Key.`3`
+                uno.glfw.Key.`4` -> Key.`4`
+                uno.glfw.Key.`5` -> Key.`5`
+                uno.glfw.Key.`6` -> Key.`6`
+                uno.glfw.Key.`7` -> Key.`7`
+                uno.glfw.Key.`8` -> Key.`8`
+                uno.glfw.Key.`9` -> Key.`9`
+                uno.glfw.Key.A -> Key.A
+                uno.glfw.Key.B -> Key.B
+                uno.glfw.Key.C -> Key.C
+                uno.glfw.Key.D -> Key.D
+                uno.glfw.Key.E -> Key.E
+                uno.glfw.Key.F -> Key.F
+                uno.glfw.Key.G -> Key.G
+                uno.glfw.Key.H -> Key.H
+                uno.glfw.Key.I -> Key.I
+                uno.glfw.Key.J -> Key.J
+                uno.glfw.Key.K -> Key.K
+                uno.glfw.Key.L -> Key.L
+                uno.glfw.Key.M -> Key.M
+                uno.glfw.Key.N -> Key.N
+                uno.glfw.Key.O -> Key.O
+                uno.glfw.Key.P -> Key.P
+                uno.glfw.Key.Q -> Key.Q
+                uno.glfw.Key.R -> Key.R
+                uno.glfw.Key.S -> Key.S
+                uno.glfw.Key.T -> Key.T
+                uno.glfw.Key.U -> Key.U
+                uno.glfw.Key.V -> Key.V
+                uno.glfw.Key.W -> Key.W
+                uno.glfw.Key.X -> Key.X
+                uno.glfw.Key.Y -> Key.Y
+                uno.glfw.Key.Z -> Key.Z
+                uno.glfw.Key.F1 -> Key.F1
+                uno.glfw.Key.F2 -> Key.F2
+                uno.glfw.Key.F3 -> Key.F3
+                uno.glfw.Key.F4 -> Key.F4
+                uno.glfw.Key.F5 -> Key.F5
+                uno.glfw.Key.F6 -> Key.F6
+                uno.glfw.Key.F7 -> Key.F7
+                uno.glfw.Key.F8 -> Key.F8
+                uno.glfw.Key.F9 -> Key.F9
+                uno.glfw.Key.F10 -> Key.F10
+                uno.glfw.Key.F11 -> Key.F11
+                uno.glfw.Key.F12 -> Key.F12
                 else -> Key.None
             }
     }

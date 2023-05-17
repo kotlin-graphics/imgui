@@ -1,6 +1,6 @@
 package imgui.stb
 
-import gli_.has
+import glm_.has
 import glm_.c
 import glm_.i
 import glm_.wo

@@ -18,6 +18,7 @@ import gln.vertexArray.glVertexAttribPointer
 import imgui.BackendFlag
 import imgui.DEBUG
 import imgui.ImGui.io
+import imgui.L
 import imgui.internal.DrawData
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
@@ -206,11 +207,11 @@ class ImplGL3 : GLInterface {
                     data.indexBufferSize = idxBufferSize
                     nglBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexBufferSize, NULL, GL_STREAM_DRAW); glCall("glBufferData")
                 }
-                nglBufferSubData(GL_ARRAY_BUFFER, 0, vtxBufferSize, cmdList.vtxBuffer.adr); glCall("glBufferSubData")
-                nglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBufferSize, cmdList.idxBuffer.adr); glCall("glBufferSubData")
+                nglBufferSubData(GL_ARRAY_BUFFER, 0, vtxBufferSize, cmdList.vtxBuffer.adr.L); glCall("glBufferSubData")
+                nglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBufferSize, cmdList.idxBuffer.adr.L); glCall("glBufferSubData")
             } else {
-                nglBufferData(GL_ARRAY_BUFFER, cmdList.vtxBuffer.data.lim.L, cmdList.vtxBuffer.data.adr, GL_STREAM_DRAW); glCall("glBufferData")
-                nglBufferData(GL_ELEMENT_ARRAY_BUFFER, cmdList.idxBuffer.lim * DrawIdx.BYTES.L, cmdList.idxBuffer.adr, GL_STREAM_DRAW); glCall("glBufferData")
+                nglBufferData(GL_ARRAY_BUFFER, cmdList.vtxBuffer.data.lim.L, cmdList.vtxBuffer.data.adr.L, GL_STREAM_DRAW); glCall("glBufferData")
+                nglBufferData(GL_ELEMENT_ARRAY_BUFFER, cmdList.idxBuffer.lim * DrawIdx.BYTES.L, cmdList.idxBuffer.adr.L, GL_STREAM_DRAW); glCall("glBufferData")
             }
 
             for (cmd in cmdList.cmdBuffer) {

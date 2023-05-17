@@ -73,7 +73,7 @@ import imgui.internal.*
 import imgui.internal.classes.*
 import imgui.internal.sections.*
 import imgui.stb.te
-import kool.lib.isNotEmpty
+import kool.isNotEmpty
 import kool.rem
 import uno.kotlin.plusAssign
 import kotlin.math.sqrt

@@ -8,7 +8,7 @@ import org.lwjgl.system.*
 import org.lwjgl.system.MemoryUtil.memGetLong
 import org.lwjgl.system.MemoryUtil.memPutLong
 import org.lwjgl.system.windows.WindowsLibrary
-import uno.glfw.HWND
+import uno.kotlin.HWND
 import java.nio.ByteBuffer
 
 

@@ -131,7 +131,7 @@ infix fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
     val backupLim = lim
     lim = 0
     if (cap > 0)
-        MemoryUtil.memCopy(adr, newData.adr, remByte.L)
+        MemoryUtil.memCopy(adr.L, newData.adr.L, remByte.L)
     newData.lim = backupLim
     free()
     return newData

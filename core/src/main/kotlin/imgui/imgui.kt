@@ -5,8 +5,6 @@ import imgui.api.*
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
 import imgui.internal.api.*
-import kool.Stack
-
 
 // Version
 const val IMGUI_BUILD = 0
@@ -206,7 +204,5 @@ object ImGui :
 
 @JvmField
 var DEBUG = true
-
-internal typealias stak = Stack
 
 fun IM_DEBUG_BREAK() {}
