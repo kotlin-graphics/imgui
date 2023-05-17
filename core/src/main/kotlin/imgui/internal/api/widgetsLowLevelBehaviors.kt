@@ -1,23 +1,26 @@
 package imgui.internal.api
 
-import gli_.has
-import gli_.hasnt
-import glm_.*
+import glm_.has
 import glm_.func.common.max
+import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
+import imgui.ImGui.data
+import imgui.ImGui.dragBehavior
 import imgui.ImGui.dragBehaviorT
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusWindow
 import imgui.ImGui.hoveredId
 import imgui.ImGui.indent
 import imgui.ImGui.io
+import imgui.ImGui.isClicked
+import imgui.ImGui.isDown
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isReleased
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
@@ -25,6 +28,9 @@ import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.navMoveRequestCancel
+import imgui.ImGui.pushOverrideID
+import imgui.ImGui.renderArrow
+import imgui.ImGui.renderBullet
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
@@ -32,37 +38,30 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
 import imgui.ImGui.setItemAllowOverlap
+import imgui.ImGui.setOwner
+import imgui.ImGui.sliderBehavior
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
+import imgui.ImGui.testOwner
 import imgui.api.g
+import imgui.internal.classes.InputFlag
 import imgui.internal.classes.Rect
 import imgui.internal.floor
 import imgui.internal.sections.*
+import imgui.static.DRAGDROP_HOLD_TO_OPEN_TIMER
 import kool.getValue
 import kool.setValue
-import unsigned.Ubyte
-import unsigned.Uint
-import unsigned.Ulong
-import unsigned.Ushort
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 import imgui.internal.sections.ButtonFlag as Bf
 
-@Suppress("UNCHECKED_CAST")
+//@Suppress("UNCHECKED_CAST")
 
 // Widgets
 
-/** Time for drag-hold to activate items accepting the ImGuiButtonFlags_PressedOnDragDropHold button behavior. */
-val DRAGDROP_HOLD_TO_OPEN_TIMER = 0.7f
-/** Multiplier for the default value of io.MouseDragThreshold to make DragFloat/DragInt react faster to mouse drags. */
-val DRAG_MOUSE_THRESHOLD_FACTOR = 0.5f
-
 /** Widgets low-level behaviors */
 internal interface widgetsLowLevelBehaviors {
-
-    /** @return []pressed, hovered, held] */
-    fun buttonBehavior(bb: Rect, id: ID, flag: Bf) = buttonBehavior(bb, id, flag.i)
 
     /** @return []pressed, hovered, held]
      *
@@ -121,30 +120,26 @@ internal interface widgetsLowLevelBehaviors {
      *  -------------------------------------------------------------------------------------------------------------------------------------------------
      *
      *  @return [pressed, hovered, held] */
-    fun buttonBehavior(bb: Rect, id: ID, flags_: ButtonFlags = 0): BooleanArray {
+    fun buttonBehavior(bb: Rect, id: ID, flags_: ButtonFlags = emptyFlags): BooleanArray {
 
         val window = currentWindow
         var flags = flags_
 
-        if (flags has Bf.Disabled) {
-            if (g.activeId == id) clearActiveID()
-            return BooleanArray(3)
-        }
-
         // Default only reacts to left mouse button
-        if (flags hasnt Bf.MouseButtonMask_)
-            flags = flags or Bf.MouseButtonDefault_
+        if (flags hasnt Bf.MouseButtonMask)
+            flags /= Bf.MouseButtonDefault
 
         // Default behavior requires click + release inside bounding box
-        if (flags hasnt Bf.PressedOnMask_)
-            flags = flags or Bf.PressedOnDefault_
+        if (flags hasnt Bf.PressedOnMask)
+            flags /= Bf.PressedOnDefault
 
         val backupHoveredWindow = g.hoveredWindow
-        val flattenHoveredChildren = flags has Bf.FlattenChildren && g.hoveredRootWindow === window
+        val hoveredWindow = g.hoveredWindow
+        val flattenHoveredChildren = flags has Bf.FlattenChildren && hoveredWindow != null && hoveredWindow.rootWindow === window
         if (flattenHoveredChildren)
             g.hoveredWindow = window
 
-        if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && window.dc.lastItemId != id)
+        if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && g.lastItemData.id != id)
             IMGUI_TEST_ENGINE_ITEM_ADD(bb, id)
 
         var pressed = false
@@ -159,7 +154,7 @@ internal interface widgetsLowLevelBehaviors {
             if (isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)) {
                 hovered = true
                 hoveredId = id
-                if (calcTypematicRepeatAmount(g.hoveredIdTimer + 0.0001f - io.deltaTime, g.hoveredIdTimer + 0.0001f - io.deltaTime, DRAGDROP_HOLD_TO_OPEN_TIMER, 0f) != 0) {
+                if (g.hoveredIdTimer - io.deltaTime <= DRAGDROP_HOLD_TO_OPEN_TIMER && g.hoveredIdTimer >= DRAGDROP_HOLD_TO_OPEN_TIMER) {
                     pressed = true
                     g.dragDropHoldJustPressedId = id
                     focusWindow(window)
@@ -169,31 +164,36 @@ internal interface widgetsLowLevelBehaviors {
         if (flattenHoveredChildren)
             g.hoveredWindow = backupHoveredWindow
 
-        /*  AllowOverlap mode (rarely used) requires previous frame hoveredId to be null or to match. This allows using
-            patterns where a later submitted widget overlaps a previous one.         */
+        // AllowOverlap mode (rarely used) requires previous frame HoveredId to be null or to match. This allows using patterns where a later submitted widget overlaps a previous one.
         if (hovered && flags has Bf.AllowItemOverlap && g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)
             hovered = false
 
         // Mouse handling
+        val testOwnerId = if (flags has Bf.NoTestKeyOwner) KeyOwner_Any else id
         if (hovered) {
 
-            if (flags hasnt Bf.NoKeyModifiers || (!io.keyCtrl && !io.keyShift && !io.keyAlt)) {
-
-                // Poll buttons
-                val mouseButtonClicked = when {
-                    flags has Bf.MouseButtonLeft && io.mouseClicked[0] -> 0
-                    flags has Bf.MouseButtonRight && io.mouseClicked[1] -> 1
-                    flags has Bf.MouseButtonMiddle && io.mouseClicked[2] -> 2
-                    else -> -1
+            // Poll mouse buttons
+            // - 'mouse_button_clicked' is generally carried into ActiveIdMouseButton when setting ActiveId.
+            // - Technically we only need some values in one code path, but since this is gated by hovered test this is fine.
+            var mouseButtonClicked = MouseButton.None
+            var mouseButtonReleased = MouseButton.None
+            for (buttonIndex in 0..2) {
+                val button = MouseButton of buttonIndex
+                if (flags has button.buttonFlags) { // Handle ImGuiButtonFlags_MouseButtonRight and ImGuiButtonFlags_MouseButtonMiddle here.
+                    if (button.isClicked(testOwnerId) && mouseButtonClicked == MouseButton.None)
+                        mouseButtonClicked = button
+                    if (button.isReleased(testOwnerId) && mouseButtonClicked == MouseButton.None)
+                        mouseButtonReleased = button
                 }
-                val mouseButtonReleased = when {
-                    flags has Bf.MouseButtonLeft && io.mouseReleased[0] -> 0
-                    flags has Bf.MouseButtonRight && io.mouseReleased[1] -> 1
-                    flags has Bf.MouseButtonMiddle && io.mouseReleased[2] -> 2
-                    else -> -1
-                }
+            }
 
-                if (mouseButtonClicked != -1 && g.activeId != id) {
+            // Process initial action
+            if (flags hasnt Bf.NoKeyModifiers || (!g.io.keyCtrl && !g.io.keyShift && !g.io.keyAlt)) {
+
+                if (mouseButtonClicked != MouseButton.None && g.activeId != id) {
+
+                    if (flags hasnt Bf.NoSetKeyOwner)
+                        mouseButtonClicked.key.setOwner(id)
                     if (flags has (Bf.PressedOnClickRelease or Bf.PressedOnClickReleaseAnywhere)) {
                         setActiveID(id, window)
                         g.activeIdMouseButton = mouseButtonClicked
@@ -201,29 +201,34 @@ internal interface widgetsLowLevelBehaviors {
                             setFocusID(id, window)
                         focusWindow(window)
                     }
-                    if (flags has Bf.PressedOnClick || (flags has Bf.PressedOnDoubleClick && io.mouseDoubleClicked[mouseButtonClicked])) {
+                    if (flags has Bf.PressedOnClick || (flags has Bf.PressedOnDoubleClick && io.mouseClickedCount[mouseButtonClicked.i] == 2)) {
                         pressed = true
                         if (flags has Bf.NoHoldingActiveId)
                             clearActiveID()
                         else
                             setActiveID(id, window) // Hold on ID
+                        if (flags hasnt Bf.NoNavFocus)
+                            setFocusID(id, window)
                         g.activeIdMouseButton = mouseButtonClicked
                         focusWindow(window)
                     }
                 }
-                if (flags has Bf.PressedOnRelease && mouseButtonReleased != -1) {
-                    // Repeat mode trumps on release behavior
-                    val hasRepeatedAtLeastOnce = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased] >= io.keyRepeatDelay
-                    if (!hasRepeatedAtLeastOnce)
-                        pressed = true
-                    clearActiveID()
-                }
+                if (flags has Bf.PressedOnRelease)
+                    if (mouseButtonReleased != MouseButton.None) {
+                        val hasRepeatedAtLeastOnce =
+                            flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased.i] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
+                        if (!hasRepeatedAtLeastOnce)
+                            pressed = true
+                        if (flags hasnt Bf.NoNavFocus)
+                            setFocusID(id, window)
+                        clearActiveID()
+                    }
 
                 /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
                 if (g.activeId == id && flags has Bf.Repeat)
-                    if (io.mouseDownDuration[g.activeIdMouseButton] > 0f && isMouseClicked(MouseButton of g.activeIdMouseButton, true))
+                    if (io.mouseDownDuration[g.activeIdMouseButton.i] > 0f && g.activeIdMouseButton.isClicked(testOwnerId, InputFlag.Repeat))
                         pressed = true
             }
 
@@ -231,21 +236,27 @@ internal interface widgetsLowLevelBehaviors {
                 g.navDisableHighlight = true
         }
 
-        /*  Gamepad/Keyboard navigation
-            We report navigated item as hovered but we don't set g.HoveredId to not interfere with mouse.         */
+        // Gamepad/Keyboard navigation
+        // We report navigated item as hovered but we don't set g.HoveredId to not interfere with mouse.
         if (g.navId == id && !g.navDisableHighlight && g.navDisableMouseHover && (g.activeId == 0 || g.activeId == id || g.activeId == window.moveId))
             if (flags hasnt Bf.NoHoveredOnFocus)
                 hovered = true
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id
-            val navActivatedByInputs = NavInput.Activate.isTest(if (flags has Bf.Repeat) InputReadMode.Repeat else InputReadMode.Pressed)
-            if (navActivatedByCode || navActivatedByInputs)
-                pressed = true
-            if (navActivatedByCode || navActivatedByInputs || g.activeId == id) {
+            var navActivatedByInputs = g.navActivatePressedId == id
+            if (!navActivatedByInputs && flags has Bf.Repeat) {
+                // Avoid pressing both keys from triggering double amount of repeat events
+                val key1 = Key.Space.data
+                val key2 = Key._NavGamepadActivate.data
+                val t1 = key1.downDuration max key2.downDuration
+                navActivatedByInputs = calcTypematicRepeatAmount(t1 - g.io.deltaTime, t1, g.io.keyRepeatDelay, g.io.keyRepeatRate) > 0
+            }
+            if (navActivatedByCode || navActivatedByInputs) {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
-                g.navActivateId = id // This is so SetActiveId assign a Nav source
+                pressed = true
                 setActiveID(id, window)
-                if ((navActivatedByCode || navActivatedByInputs) && flags hasnt Bf.NoNavFocus)
+                g.activeIdSource = InputSource.Nav
+                if (flags hasnt Bf.NoNavFocus)
                     setFocusID(id, window)
             }
         }
@@ -258,245 +269,86 @@ internal interface widgetsLowLevelBehaviors {
                     g.activeIdClickOffset = io.mousePos - bb.min
 
                 val mouseButton = g.activeIdMouseButton
-                assert(mouseButton >= 0 && mouseButton < MouseButton.COUNT)
-                if (io.mouseDown[mouseButton])
+                if (mouseButton isDown testOwnerId)
                     held = true
                 else {
                     val releaseIn = hovered && flags has Bf.PressedOnClickRelease
                     val releaseAnywhere = flags has Bf.PressedOnClickReleaseAnywhere
                     if ((releaseIn || releaseAnywhere) && !g.dragDropActive) {
                         // Report as pressed when releasing the mouse (this is the most common path)
-                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && io.mouseDownWasDoubleClick[mouseButton]
-                        val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton] >= io.keyRepeatDelay // Repeat mode trumps <on release>
-                        if (!isDoubleClickRelease && !isRepeatingAlready)
-                            pressed = true
+                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && g.io.mouseReleased[mouseButton.i] && io.mouseClickedLastCount[mouseButton.i] == 2
+                        val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton.i] >= io.keyRepeatDelay // Repeat mode trumps <on release>
+                        val isButtonAvailOrOwned = mouseButton.key testOwner testOwnerId
+                        if (!isDoubleClickRelease && !isRepeatingAlready && isButtonAvailOrOwned) pressed = true
                     }
                     clearActiveID()
                 }
-                if (flags hasnt Bf.NoNavFocus)
-                    g.navDisableHighlight = true
+                if (flags hasnt Bf.NoNavFocus) g.navDisableHighlight = true
             } else if (g.activeIdSource == InputSource.Nav)
             // When activated using Nav, we hold on the ActiveID until activation button is released
-                if (g.navActivateDownId != id)
-                    clearActiveID()
-            if (pressed)
-                g.activeIdHasBeenPressedBefore = true
+                if (g.navActivateDownId != id) clearActiveID()
+            if (pressed) g.activeIdHasBeenPressedBefore = true
         }
         return booleanArrayOf(pressed, hovered, held)
     }
 
-    fun dragBehavior(id: ID, dataType: DataType, pV: FloatArray, ptr: Int, vSpeed: Float, pMin: Float?, pMax: Float?,
-                     format: String, flags: SliderFlags): Boolean =
-            withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, flags) }
+    fun dragBehavior(id: ID, pV: FloatArray, ptr: Int, vSpeed: Float, min: Float?, max: Float?, format: String, flags: SliderFlags): Boolean = dragBehavior(id, pV mutablePropertyAt ptr, vSpeed, min, max, format, flags)
 
-    fun <N> dragBehavior(id: ID, dataType: DataType, pV: KMutableProperty0<N>, vSpeed: Float, pMin: Number?,
-                         pMax: Number?, format: String, flags: SliderFlags): Boolean
-            where N : Number, N : Comparable<N> {
-
-        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) { """
-            Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
-            Invalid ImGuiSliderFlags flags! Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
-        }
-
+    fun <N> NumberOps<N>.dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> {
         if (g.activeId == id)
-            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
-                clearActiveID()
-            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                clearActiveID()
+        // Those are the things we can do easily outside the DragBehaviorT<> template, saves code generation.
+            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0]) clearActiveID()
+            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated) clearActiveID()
 
-        if (g.activeId != id)
-            return false
-        if (g.currentWindow!!.dc.itemFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
-            return false
+        if (g.activeId != id) return false
+        if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly) return false
 
-        var v by pV
-
-        return when (v) {
-            is Byte -> {
-                _i = v.i
-                val min = pMin ?: Byte.MIN_VALUE
-                val max = pMax ?: Byte.MAX_VALUE
-                dragBehaviorT(DataType.Int, ::_i, vSpeed, min.i, max.i, format, flags).also {
-                    if (it)
-                        v = _i.b as N
-                }
-            }
-            is Ubyte -> {
-                _ui.v = v.i
-                val min = pMin ?: Ubyte.MIN_VALUE
-                val max = pMax ?: Ubyte.MAX_VALUE
-                dragBehaviorT(DataType.Uint, ::_ui, vSpeed, min.ui, max.ui, format, flags).also {
-                    if (it)
-                        (v as Ubyte).v = _ui.b
-                }
-            }
-            is Short -> {
-                _i = v.i
-                val min = pMin ?: Short.MIN_VALUE
-                val max = pMax ?: Short.MAX_VALUE
-                dragBehaviorT(DataType.Int, ::_i, vSpeed, min.i, max.i, format, flags).also {
-                    if (it)
-                        v = _i.s as N
-                }
-            }
-            is Ushort -> {
-                _ui.v = v.i
-                val min = pMin ?: Ushort.MIN_VALUE
-                val max = pMax ?: Ushort.MAX_VALUE
-                dragBehaviorT(DataType.Uint, ::_ui, vSpeed, min.ui, max.ui, format, flags).also {
-                    if (it)
-                        (v as Ushort).v = _ui.s
-                }
-            }
-            is Int -> {
-                val min = pMin ?: Int.MIN_VALUE
-                val max = pMax ?: Int.MAX_VALUE
-                dragBehaviorT(DataType.Int, pV as KMutableProperty0<Int>, vSpeed, min.i, max.i, format, flags)
-            }
-            is Uint -> {
-                val min = pMin ?: Uint.MIN_VALUE
-                val max = pMax ?: Uint.MAX_VALUE
-                dragBehaviorT(DataType.Uint, pV as KMutableProperty0<Uint>, vSpeed, min.ui, max.ui, format, flags)
-            }
-            is Long -> {
-                val min = pMin ?: Long.MIN_VALUE
-                val max = pMax ?: Long.MAX_VALUE
-                dragBehaviorT(DataType.Long, pV as KMutableProperty0<Long>, vSpeed, min.L, max.L, format, flags)
-            }
-            is Ulong -> {
-                val min = pMin ?: Ulong.MIN_VALUE
-                val max = pMax ?: Ulong.MAX_VALUE
-                dragBehaviorT(DataType.Ulong, pV as KMutableProperty0<Ulong>, vSpeed, min.ul, max.ul, format, flags)
-            }
-            is Float -> {
-                val min = pMin ?: Float.MIN_VALUE
-                val max = pMax ?: Float.MAX_VALUE
-                dragBehaviorT(DataType.Float, pV as KMutableProperty0<Float>, vSpeed, min.f, max.f, format, flags)
-            }
-            is Double -> {
-                val min = pMin ?: Double.MIN_VALUE
-                val max = pMax ?: Double.MAX_VALUE
-                dragBehaviorT(DataType.Double, pV as KMutableProperty0<Double>, vSpeed, min.d, max.d, format, flags)
-            }
-            else -> error("Invalid") // ~IM_ASSERT(0); return false;
-        }
+        return fpOps.dragBehaviorT(pV, vSpeed, min ?: this.min, max ?: this.max, format, flags)
     }
 
     /** For 32-bits and larger types, slider bounds are limited to half the natural type range.
      *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
      *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
-    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String,
-                       flags: SliderFlags, outGrabBb: Rect): Boolean =
-            sliderBehavior(bb, id, pV, 0, pMin, pMax, format, flags, outGrabBb)
+    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean = sliderBehavior(bb, id, pV, 0, pMin, pMax, format, flags, outGrabBb)
 
-    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, ptr: Int, pMin: Float, pMax: Float,
-                       format: String, flags: SliderFlags, outGrabBb: Rect): Boolean =
-            withFloat(pV, ptr) {
-                sliderBehavior(bb, id, DataType.Float, it, pMin, pMax, format, flags, outGrabBb)
-            }
+    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, ptr: Int, min: Float, max: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean = sliderBehavior(bb, id, pV mutablePropertyAt ptr, min, max, format, flags, outGrabBb)
 
-//    fun <N> sliderBehavior(bb: Rect, id: ID,
-//                           v: KMutableProperty0<N>,
-//                           vMin: Float, vMax: Float,
-//                           format: String, power: Float,
-//                           flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
-//            sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
+    //    fun <N> sliderBehavior(bb: Rect, id: ID,
+    //                           v: KMutableProperty0<N>,
+    //                           vMin: Float, vMax: Float,
+    //                           format: String, power: Float,
+    //                           flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
+    //            sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
+    fun <N> NumberOps<N>.sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = fpOps.sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
 
-    fun <N> sliderBehavior(bb: Rect, id: ID, dataType: DataType, pV: KMutableProperty0<N>, pMin: N, pMax: N,
-                           format: String, flags: SliderFlags, outGrabBb: Rect): Boolean
-            where N : Number, N : Comparable<N> {
+    fun <N, FP> NumberFpOps<N, FP>.sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> {
+        // Those are the things we can do easily outside sliderBehaviorT
+        if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly) return false
 
-        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) {"""
-            Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
-            Invalid ImGuiSliderFlags flag!  Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
-        }
-
-        if (g.currentWindow!!.dc.itemFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
-            return false
-
-        var v by pV
-
-        return when (dataType) {
-            DataType.Byte -> {
-                _i = v.i
-                sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, flags, outGrabBb).also {
-                    if (it)
-                        v = _i.b as N
-                }
-            }
-            DataType.Ubyte -> {
-                _ui.v = v.i
-                sliderBehaviorT(bb, id, dataType, ::_ui, pMin.ui, pMax.ui, format, flags, outGrabBb).also {
-                    if (it)
-                        (v as Ubyte).v = _ui.b
-                }
-            }
-            DataType.Short -> {
-                _i = v.i
-                sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, flags, outGrabBb).also {
-                    if (it)
-                        v = _i.s as N
-                }
-            }
-            DataType.Ushort -> {
-                _ui.v = v.i
-                sliderBehaviorT(bb, id, dataType, ::_ui, pMin.ui, pMax.ui, format, flags, outGrabBb).also {
-                    if (it)
-                        (v as Ushort).v = _ui.s
-                }
-            }
-            DataType.Int -> {
-                assert(pMin as Int >= Int.MIN_VALUE / 2 && pMax as Int <= Int.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Int>, pMin, pMax as Int, format, flags, outGrabBb)
-            }
-            DataType.Uint -> {
-                assert(pMax as Uint <= Uint.MAX / 2)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Uint>, pMin as Uint, pMax as Uint, format, flags, outGrabBb)
-            }
-            DataType.Long -> {
-                assert(pMin as Long >= Long.MIN_VALUE / 2 && pMax as Long <= Long.MAX_VALUE / 2)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Long>, pMin as Long, pMax as Long, format, flags, outGrabBb)
-            }
-            DataType.Ulong -> {
-                assert(pMax as Ulong <= Ulong.MAX / 2)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Ulong>, pMin as Ulong, pMax as Ulong, format, flags, outGrabBb)
-            }
-            DataType.Float -> {
-                assert(pMin as Float >= -Float.MAX_VALUE / 2f && pMax as Float <= Float.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Float>, pMin as Float, pMax as Float, format, flags, outGrabBb)
-            }
-            DataType.Double -> {
-                assert(pMin as Double >= -Double.MAX_VALUE / 2f && pMax as Double <= Double.MAX_VALUE / 2f)
-                sliderBehaviorT(bb, id, dataType, pV as KMutableProperty0<Double>, pMin as Double, pMax as Double, format, flags, outGrabBb)
-            }
-            else -> throw Error()
-        }
+        // We allow the full range for bytes and shorts
+        assert(isSmallerThanInt || min >= this.min / 2.coerced && max <= this.max / 2.coerced)
+        return sliderBehaviorT(bb, id, pV, min, max, format, flags, outGrabBb)
     }
 
     /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
-    fun splitterBehavior(bb: Rect, id: ID, axis: Axis,
-                         size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
-                         minSize1: Float, minSize2: Float,
-                         hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f): Boolean {
+    fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>, minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f, bgCol: Int = 0): Boolean {
 
         var size1 by size1ptr
         var size2 by size2ptr
         val window = g.currentWindow!!
 
-        val itemFlagsBackup = window.dc.itemFlags
-
-        window.dc.itemFlags = window.dc.itemFlags or (ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus)
-
-        val itemAdd = itemAdd(bb, id)
-        window.dc.itemFlags = itemFlagsBackup
-        if (!itemAdd) return false
+        if (!itemAdd(bb, id, null, ItemFlag.NoNav))
+            return false
 
         val bbInteract = Rect(bb)
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
         val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
-        if (g.activeId != id) setItemAllowOverlap()
+        if (hovered)
+            g.lastItemData.statusFlags /= ItemStatusFlag.HoveredRect // for IsItemHovered(), because bb_interact is larger than bb
+        if (g.activeId != id)
+            setItemAllowOverlap()
 
-        if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
+        if (held || (hovered && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
             mouseCursor = if (axis == Axis.Y) MouseCursor.ResizeNS else MouseCursor.ResizeEW
 
         val bbRender = Rect(bb)
@@ -519,8 +371,8 @@ internal interface widgetsLowLevelBehaviors {
                     assert(size1 + mouseDelta >= minSize1)
                 else if (mouseDelta > 0f)
                     assert(size2 - mouseDelta >= minSize2)
-                size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
-                size2 = size2 - mouseDelta
+                size1 += mouseDelta
+                size2 -= mouseDelta
                 bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
                 markItemEdited(id)
             }
@@ -529,23 +381,23 @@ internal interface widgetsLowLevelBehaviors {
             markItemEdited(id)
         }
 
-        // Render
-        val col = when {
-            held -> Col.SeparatorActive
-            hovered && g.hoveredIdTimer >= hoverVisibilityDelay -> Col.SeparatorHovered
-            else -> Col.Separator
-        }
+        // Render at new position
+        if (bgCol has COL32_A_MASK)
+            window.drawList.addRectFilled(bbRender.min, bbRender.max, bgCol, 0f)
+        val col = if (held) Col.SeparatorActive else if (hovered && g.hoveredIdTimer >= hoverVisibilityDelay) Col.SeparatorHovered else Col.Separator
         window.drawList.addRectFilled(bbRender.min, bbRender.max, col.u32, 0f)
 
         return held
     }
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String): Boolean = treeNodeBehavior(id, flags, label.toByteArray())
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = emptyFlags, label: String): Boolean =
+        treeNodeBehavior(id, flags, label.toByteArray())
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: ByteArray, labelEnd_: Int = -1): Boolean {
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = emptyFlags, label: ByteArray, labelEnd_: Int = -1): Boolean {
 
         val window = currentWindow
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         val displayFrame = flags has Tnf.Framed
         val padding = when {
@@ -559,10 +411,10 @@ internal interface widgetsLowLevelBehaviors {
         // We vertically grow up to current line height up the typical widget height.
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
         val frameBb = Rect(
-                x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
-                y1 = window.dc.cursorPos.y,
-                x2 = window.workRect.max.x,
-                y2 = window.dc.cursorPos.y + frameHeight)
+            x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
+            y1 = window.dc.cursorPos.y,
+            x2 = window.workRect.max.x,
+            y2 = window.dc.cursorPos.y + frameHeight)
         if (displayFrame) {
             // Framed header expand a little outside the default padding, to the edge of InnerClipRect
             // (FIXME: May remove this at some point and make InnerClipRect align with WindowPadding.x instead of WindowPadding.x*0.5f)
@@ -585,24 +437,24 @@ internal interface widgetsLowLevelBehaviors {
         // For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
         // This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero.
         val isLeaf = flags has Tnf.Leaf
-        var isOpen = treeNodeBehaviorIsOpen(id, flags)
+        var isOpen = treeNodeUpdateNextOpen(id, flags)
         if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
             window.dc.treeJumpToParentOnPopMask = window.dc.treeJumpToParentOnPopMask or (1 shl window.dc.treeDepth)
 
         val itemAdd = itemAdd(interactBb, id)
-        window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HasDisplayRect
-        window.dc.lastItemDisplayRect put frameBb
+        g.lastItemData.statusFlags /= ItemStatusFlag.HasDisplayRect
+        g.lastItemData.displayRect put frameBb
 
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushOverrideID(id)
-            val f = if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
-            val f2 = if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
-            IMGUI_TEST_ENGINE_ITEM_INFO(window.dc.lastItemId, label.cStr, window.dc.itemFlags or f or f2)
+            val f = if (isLeaf) emptyFlags else ItemStatusFlag.Openable
+            val f2 = if (isOpen) ItemStatusFlag.Opened else emptyFlags
+            IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label.cStr, g.lastItemData.statusFlags or f or f2)
             return isOpen
         }
 
-        var buttonFlags = Bf.None.i
+        var buttonFlags: ButtonFlags = emptyFlags
         if (flags has Tnf.AllowItemOverlap)
             buttonFlags = buttonFlags or Bf.AllowItemOverlap
         if (!isLeaf)
@@ -627,9 +479,9 @@ internal interface widgetsLowLevelBehaviors {
         // It is rather standard that arrow click react on Down rather than Up.
         // We set ImGuiButtonFlags_PressedOnClickRelease on OpenOnDoubleClick because we want the item to be active on the initial MouseDown in order for drag and drop to work.
         buttonFlags = buttonFlags or when {
-            isMouseXOverArrow -> Bf.PressedOnClick.i
+            isMouseXOverArrow -> Bf.PressedOnClick
             flags has Tnf.OpenOnDoubleClick -> Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
-            else -> Bf.PressedOnClickRelease.i
+            else -> Bf.PressedOnClickRelease
         }
 
 
@@ -644,7 +496,7 @@ internal interface widgetsLowLevelBehaviors {
                     toggled = true
                 if (flags has Tnf.OpenOnArrow)
                     toggled = (isMouseXOverArrow && !g.navDisableMouseHover) || toggled // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
-                if (flags has Tnf.OpenOnDoubleClick && io.mouseDoubleClicked[0])
+                if (flags has Tnf.OpenOnDoubleClick && io.mouseClickedCount[0] == 2)
                     toggled = true
             } else if (pressed && g.dragDropHoldJustPressedId == id) {
                 assert(buttonFlags has Bf.PressedOnDragDropHold)
@@ -652,19 +504,19 @@ internal interface widgetsLowLevelBehaviors {
                     toggled = true
             }
 
-            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Left && isOpen) {
+            if (g.navId == id && g.navMoveDir == Dir.Left && isOpen) {
                 toggled = true
                 navMoveRequestCancel()
             }
             // If there's something upcoming on the line we may want to give it the priority?
-            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Right && !isOpen) {
+            if (g.navId == id && g.navMoveDir == Dir.Right && !isOpen) {
                 toggled = true
                 navMoveRequestCancel()
             }
             if (toggled) {
                 isOpen = !isOpen
                 window.dc.stateStorage[id] = isOpen
-                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledOpen
+                g.lastItemData.statusFlags /= ItemStatusFlag.ToggledOpen
             }
         }
         if (flags has Tnf.AllowItemOverlap)
@@ -672,11 +524,11 @@ internal interface widgetsLowLevelBehaviors {
 
         // In this branch, TreeNodeBehavior() cannot toggle the selection so this will never trigger.
         if (selected != wasSelected)
-            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
+            g.lastItemData.statusFlags /= ItemStatusFlag.ToggledSelection
 
         // Render
         val textCol = Col.Text.u32
-        val navHighlightFlags: NavHighlightFlags = NavHighlightFlag.TypeThin.i
+        val navHighlightFlags: NavHighlightFlags = NavHighlightFlag.TypeThin
         if (displayFrame) {
             // Framed type
             val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
@@ -703,8 +555,8 @@ internal interface widgetsLowLevelBehaviors {
             if (hovered || selected) {
                 val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
                 renderFrame(frameBb.min, frameBb.max, bgCol.u32, false)
-                renderNavHighlight(frameBb, id, navHighlightFlags)
             }
+            renderNavHighlight(frameBb, id, navHighlightFlags)
             if (flags has Tnf.Bullet)
                 window.drawList.renderBullet(Vec2(textPos.x - textOffsetX * 0.5f, textPos.y + g.fontSize * 0.5f), textCol)
             else if (!isLeaf)
@@ -716,14 +568,26 @@ internal interface widgetsLowLevelBehaviors {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushOverrideID(id)
-        val f = if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
-        val f2 = if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label.cStr, window.dc.itemFlags or f or f2)
+        val f = if (isLeaf) emptyFlags else ItemStatusFlag.Openable
+        val f2 = if (isOpen) ItemStatusFlag.Opened else emptyFlags
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label.cStr, g.lastItemData.statusFlags or f or f2)
         return isOpen
     }
 
-    /** Consume previous SetNextItemOpen() data, if any. May return true when logging */
-    fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = Tnf.None.i): Boolean {
+    fun treePushOverrideID(id: ID) {
+        val window = g.currentWindow!!
+        indent()
+        window.dc.treeDepth++
+        pushOverrideID(id)
+    }
+
+    fun treeNodeSetOpen(id: ID, open: Boolean) {
+        val storage = g.currentWindow!!.dc.stateStorage
+        storage[id] = open
+    }
+
+    /** Return open state. Consume previous SetNextItemOpen() data, if any. May return true when logging. */
+    fun treeNodeUpdateNextOpen(id: ID, flags: TreeNodeFlags): Boolean {
 
         if (flags has Tnf.Leaf) return true
 
@@ -735,27 +599,27 @@ internal interface widgetsLowLevelBehaviors {
         if (g.nextItemData.flags has NextItemDataFlag.HasOpen) {
             if (g.nextItemData.openCond == Cond.Always) {
                 isOpen = g.nextItemData.openVal
-                storage[id] = isOpen
-            } else
-            /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
-                are not saved persistently.                 */
-                isOpen = storage.getOrPut(id) { g.nextItemData.openVal }
-        } else
-            isOpen = storage[id] ?: flags has Tnf.DefaultOpen
+                treeNodeSetOpen(id, isOpen)
+            } else {
+                // We treat ImGuiCond_Once and ImGuiCond_FirstUseEver the same because tree node state are not saved persistently.
+                val storedValue = storage.getOrElse(id) { -1 }
+                if (storedValue == -1) {
+                    isOpen = g.nextItemData.openVal
+                    storage[id] = isOpen
+                    treeNodeSetOpen(id, isOpen)
+                } else isOpen = storedValue != 0
+            }
+        } else isOpen = storage[id] ?: (flags has Tnf.DefaultOpen)
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).
             NB- If we are above max depth we still allow manually opened nodes to be logged.    */
-        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && (window.dc.treeDepth - g.logDepthRef) < g.logDepthToExpand)
-            isOpen = true
+        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && (window.dc.treeDepth - g.logDepthRef) < g.logDepthToExpand) isOpen = true
 
         return isOpen
     }
-
-    fun treePushOverrideID(id: ID) {
-        val window = g.currentWindow!!
-        indent()
-        window.dc.treeDepth++
-        window.idStack.push(id)
-    }
 }
+
+inline fun <reified N> dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> = numberFpOps<N, Nothing>().dragBehavior(id, pV, vSpeed, min, max, format, flags)
+
+inline fun <reified N> sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = numberFpOps<N, Nothing>().sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)

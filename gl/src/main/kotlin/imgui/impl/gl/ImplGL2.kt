@@ -1,24 +1,27 @@
 package imgui.impl.gl
 
 import glm_.d
+import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4b
 import gln.*
 import gln.glf.semantic
 import gln.texture.glBindTexture
-import imgui.*
+import imgui.DEBUG
+import imgui.ImGui
 import imgui.ImGui.io
+import imgui.L
+import imgui.impl.glfw.ImplGlfw
 import imgui.internal.DrawData
-import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import kool.*
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11.GL_MODULATE
 import org.lwjgl.opengl.GL11.GL_TEXTURE_ENV
 import org.lwjgl.opengl.GL11.GL_TEXTURE_ENV_MODE
-import org.lwjgl.opengl.GL11.GL_MODULATE
-import org.lwjgl.opengl.GL11.glTexEnvi
 import org.lwjgl.opengl.GL11.glGetTexEnvi
+import org.lwjgl.opengl.GL11.glTexEnvi
 import org.lwjgl.opengl.GL13C.GL_TEXTURE_2D
 import org.lwjgl.opengl.GL14C.GL_FUNC_ADD
 import org.lwjgl.opengl.GL14C.glBlendEquation
@@ -26,14 +29,23 @@ import org.lwjgl.opengl.GL20C.*
 
 class ImplGL2 : GLInterface {
 
-    init { // Setup backend capabilities flags
+    /** ~ImGui_ImplOpenGL2_Init */
+    init {
+        assert(io.backendRendererUserData == null) { "Already initialized a renderer backend!" }
+
+        // Setup backend capabilities flags
         io.backendRendererName = "imgui_impl_opengl2"
     }
 
-    override fun shutdown() = destroyDeviceObjects()
+    override fun shutdown() {
+        destroyDeviceObjects()
+        io.backendRendererName = null
+        io.backendRendererUserData = null
+    }
 
     override fun newFrame() {
-        if (fontTexture[0] == 0)
+        assert(ImplGlfw.Companion.data != null) { "Did you call ImGui_ImplGlfw_InitForXXX()?" }
+        if (data.fontTexture[0] == 0)
             createDeviceObjects()
     }
 
@@ -43,6 +55,7 @@ class ImplGL2 : GLInterface {
         glEnable(GL_BLEND)
         glBlendEquation(GL_FUNC_ADD)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        //glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // In order to composite our output buffer we need to preserve alpha
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
         glDisable(GL_STENCIL_TEST)
@@ -113,11 +126,11 @@ class ImplGL2 : GLInterface {
         for (cmdList in drawData.cmdLists) {
 
             // Upload vertex/index buffers
-            GL11.glVertexPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + 0)
-            GL11.glTexCoordPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + Vec2.size)
-            GL11.glColorPointer(Vec4b.length, GL_UNSIGNED_BYTE, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + Vec2.size * 2)
+            GL11.glVertexPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr.L + 0)
+            GL11.glTexCoordPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr.L + Vec2.size)
+            GL11.glColorPointer(Vec4b.length, GL_UNSIGNED_BYTE, DrawVert.SIZE, cmdList.vtxBuffer.data.adr.L + Vec2.size * 2)
 
-            var idxBufferOffset = cmdList.idxBuffer.adr
+            val idxBufferOffset = cmdList.idxBuffer.adr.L
 
             for (cmd in cmdList.cmdBuffer) {
 
@@ -131,21 +144,18 @@ class ImplGL2 : GLInterface {
                         userCB(cmdList, cmd)
                 } else {
                     // Project scissor/clipping rectangles into framebuffer space
-                    val clipRectX = (cmd.clipRect.x - clipOff.x) * clipScale.x
-                    val clipRectY = (cmd.clipRect.y - clipOff.y) * clipScale.y
-                    val clipRectZ = (cmd.clipRect.z - clipOff.x) * clipScale.x
-                    val clipRectW = (cmd.clipRect.w - clipOff.y) * clipScale.y
+                    val clipMin = Vec2((cmd.clipRect.x - clipOff.x) * clipScale.x, (cmd.clipRect.y - clipOff.y) * clipScale.y)
+                    val clipMax = Vec2((cmd.clipRect.z - clipOff.x) * clipScale.x, (cmd.clipRect.w - clipOff.y) * clipScale.y)
+                    if (clipMax.x <= clipMin.x || clipMax.y <= clipMin.y)
+                        continue
 
-                    if (clipRectX < fbWidth && clipRectY < fbHeight && clipRectZ >= 0f && clipRectW >= 0f) {
-                        // Apply scissor/clipping rectangle
-                        glScissor(clipRectX.i, (fbHeight - clipRectW).i, (clipRectZ - clipRectX).i, (clipRectW - clipRectY).i)
+                    // Apply scissor/clipping rectangle (Y is inverted in OpenGL)
+                    glScissor(clipMin.x.i, (fbHeight.f - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i)
 
-                        // Bind texture, Draw
-                        glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                        glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
-                    }
+                    // Bind texture, Draw
+                    glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
+                    glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset + cmd.idxOffset)
                 }
-                idxBufferOffset += cmd.elemCount * DrawIdx.BYTES
             }
         }
 
@@ -178,17 +188,18 @@ class ImplGL2 : GLInterface {
         val (pixels, size) = ImGui.io.fonts.getTexDataAsRGBA32()
 
         // Upload texture to graphics system
+        // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
 
-        glGenTextures(fontTexture)
-        glBindTexture(GL_TEXTURE_2D, fontTexture)
+        glGenTextures(data.fontTexture)
+        glBindTexture(GL_TEXTURE_2D, data.fontTexture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
 
         // Store our identifier
-        ImGui.io.fonts.texID = fontTexture[0]
+        ImGui.io.fonts.texID = data.fontTexture[0]
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
@@ -200,12 +211,18 @@ class ImplGL2 : GLInterface {
     }
 
     override fun destroyFontsTexture() {
-        if (fontTexture[0] != 0) {
-            glDeleteTextures(fontTexture)
+        if (data.fontTexture[0] != 0) {
+            glDeleteTextures(data.fontTexture)
             ImGui.io.fonts.texID = 0
-            fontTexture[0] = 0
+            data.fontTexture[0] = 0
         }
     }
 
     override fun destroyDeviceObjects() = destroyFontsTexture()
+
+    companion object {
+        object data {
+            val fontTexture = IntBuffer(1)
+        }
+    }
 }

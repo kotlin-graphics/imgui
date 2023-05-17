@@ -1,13 +1,16 @@
 package imgui.classes
 
-import gli_.hasnt
+import glm_.hasnt
 import glm_.*
+import glm_.func.common.abs
 import glm_.func.common.max
+import glm_.func.cos
+import glm_.func.sin
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.drawData
-import imgui.ImGui.io
+import imgui.ImGui.shadeVertsLinearUV
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.font.Font
@@ -20,6 +23,8 @@ import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
 import java.util.Stack
+import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.sqrt
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
@@ -30,9 +35,8 @@ import kotlin.math.sqrt
  *  Each dear imgui window contains its own ImDrawList. You can use ImGui::GetWindowDrawList() to
  *  access the current window draw list and draw custom primitives.
  *  You can interleave normal ImGui:: calls and adding primitives to the current draw list.
- *  All positions are generally in pixel coordinates (top-left at (0,0), bottom-right at io.DisplaySize),
- *  but you are totally free to apply whatever transformation matrix to want to the data
- *  (if you apply such transformation you'll want to apply it to ClipRect as well)
+ *  In single viewport mode, top-left is == GetMainViewport()->Pos (generally 0,0), bottom-right is == GetMainViewport()->Pos+Size (generally io.DisplaySize).
+ *  You are totally free to apply whatever transformation matrix to want to the data (depending on the use of the transformation you may want to apply it to ClipRect as well!)
  *  Important: Primitives are always added to the list and not culled (culling is done at render time and
  *  at a higher-level by ImGui::functions), if you use this API a lot consider coarse culling your drawn objects.
  *
@@ -54,7 +58,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     var vtxBuffer = DrawVert_Buffer(0)
 
     /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
-    var flags: DrawListFlags = DrawListFlag.None.i
+    var flags: DrawListFlags = emptyFlags
 
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -96,7 +100,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
     fun pushClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false) =
-            pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
+        pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
 
     fun pushClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false) {
 
@@ -120,7 +124,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** [JVM] */
     inline fun withClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false, block: DrawList.() -> Unit) =
-            withClipRect(rect.min, rect.max, intersectWithCurrentClipRect, block)
+        withClipRect(rect.min, rect.max, intersectWithCurrentClipRect, block)
 
     /** [JVM] */
     inline fun withClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false, block: DrawList.() -> Unit) {
@@ -135,13 +139,13 @@ class DrawList(sharedData: DrawListSharedData?) {
         _onChangedClipRect()
     }
 
-    fun pushTextureId(textureId: TextureID) {
+    infix fun pushTextureID(textureId: TextureID) {
         _textureIdStack += textureId
         _cmdHeader.textureId = textureId
         _onChangedTextureID()
     }
 
-    fun popTextureId() {
+    fun popTextureID() {
         _textureIdStack.pop()
         _cmdHeader.textureId = _textureIdStack.lastOrNull() ?: 0
         _onChangedTextureID()
@@ -150,11 +154,12 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     // -----------------------------------------------------------------------------------------------------------------
     // Primitives
+    // - Filled shapes must always use clockwise winding order. The anti-aliasing fringe depends on it. Counter-clockwise shapes will have "inward" anti-aliasing.
     // - For rectangular primitives, "p_min" and "p_max" represent the upper-left and lower-right corners.
     // - For circle primitives, use "num_segments == 0" to automatically calculate tessellation (preferred).
     //   In older versions (until Dear ImGui 1.77) the AddCircle functions defaulted to num_segments == 12.
     //   In future versions we will use textures to provide cheaper and higher-quality circles.
-    //   Use AddNgon() and AddNgonFilled() functions if you need to guaranteed a specific number of sides.
+    //   Use AddNgon() and AddNgonFilled() functions if you need to guarantee a specific number of sides.
     // -----------------------------------------------------------------------------------------------------------------
 
     /** JVM it's safe to pass directly Vec2 istances, they wont be modified */
@@ -162,33 +167,33 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (col hasnt COL32_A_MASK) return
         pathLineTo(p1 + Vec2(0.5f))
         pathLineTo(p2 + Vec2(0.5f))
-        pathStroke(col, false, thickness)
+        pathStroke(col, thickness = thickness)
     }
 
     /** Note we don't render 1 pixels sized rectangles properly.
      * @param pMin: upper-left
      * @param pMax: lower-right
      * (== upper-left + size)   */
-    fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i, thickness: Float = 1f) {
+    fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = emptyFlags, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
-        if (flags has DrawListFlag.AntiAliasedLines)
-            pathRect(pMin + 0.5f, pMax - 0.5f, rounding, roundingCorners)
+        if (this.flags has DrawListFlag.AntiAliasedLines)
+            pathRect(pMin + 0.5f, pMax - 0.5f, rounding, flags)
         else    // Better looking lower-right corner and rounded non-AA shapes.
-            pathRect(pMin + 0.5f, pMax - 0.49f, rounding, roundingCorners)
-        pathStroke(col, true, thickness)
+            pathRect(pMin + 0.5f, pMax - 0.49f, rounding, flags)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     /** @param pMin: upper-left
      *  @param pMax: lower-right
      *  (== upper-left + size) */
-    fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i) {
+    fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = emptyFlags) {
         if (col hasnt COL32_A_MASK) return
-        if (rounding > 0f) {
-            pathRect(pMin, pMax, rounding, roundingCorners)
-            pathFillConvex(col)
-        } else {
+        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask) == DrawFlag.RoundCornersNone) {
             primReserve(6, 4)
-            primRect(pMin, pMax, col)
+            primRect(Vec2(pMin), pMax, col) // [JVM] `pMin` safety first
+        } else {
+            pathRect(pMin, pMax, rounding, flags)
+            pathFillConvex(col)
         }
     }
 
@@ -220,7 +225,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathLineTo(p2)
         pathLineTo(p3)
         pathLineTo(p4)
-        pathStroke(col, true, thickness)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     fun addQuadFilled(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int) {
@@ -241,7 +246,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathLineTo(p1)
         pathLineTo(p2)
         pathLineTo(p3)
-        pathStroke(col, true, thickness)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     fun addTriangleFilled(p1: Vec2, p2: Vec2, p3: Vec2, col: Int) {
@@ -256,53 +261,43 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun addCircle(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0, thickness: Float = 1f) {
 
-        if (col hasnt COL32_A_MASK || radius <= 0f) return
+        var numSegments = numSegments_
+        if (col hasnt COL32_A_MASK || radius < 0.5f)
+            return
 
-        // Obtain segment count
-        val numSegments = when {
-            numSegments_ <= 0 -> {
-                // Automatic segment count
-                val radiusIdx = radius.i
-                _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
-                    DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
-                }
-            }
-            else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
-                clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+        if (numSegments <= 0) {
+            // Use arc with automatic segment count
+            _pathArcToFastEx(center, radius - 0.5f, 0, DRAWLIST_ARCFAST_SAMPLE_MAX, 0)
+            _path.removeLast()
+        } else {
+            // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
+            numSegments = clamp(numSegments, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+            // Because we are filling a closed shape we remove 1 from the count of segments/points
+            val aMax = (glm.πf * 2f) * (numSegments - 1f) / numSegments
+            pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
         }
 
-        // Because we are filling a closed shape we remove 1 from the count of segments/points
-        val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        if (numSegments == 12)
-            pathArcToFast(center, radius - 0.5f, 0, 12 - 1)
-        else
-            pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
-        pathStroke(col, true, thickness)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0) {
 
-        if (col hasnt COL32_A_MASK || radius <= 0f) return
+        var numSegments = numSegments_
+        if (col hasnt COL32_A_MASK || radius < 0.5f)
+            return
 
-        // Obtain segment count
-        val numSegments = when {
-            numSegments_ <= 0 -> {
-                // Automatic segment count
-                val radiusIdx = radius.i
-                _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
-                    DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
-                }
-            }
-            else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
-                clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+        if (numSegments <= 0) {
+            // Use arc with automatic segment count
+            _pathArcToFastEx(center, radius, 0, DRAWLIST_ARCFAST_SAMPLE_MAX, 0)
+            _path.removeLast()
+        } else {
+            // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
+            numSegments = clamp(numSegments, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+            // Because we are filling a closed shape we remove 1 from the count of segments/points
+            val aMax = (glm.πf * 2f) * (numSegments - 1f) / numSegments
+            pathArcTo(center, radius, 0f, aMax, numSegments - 1)
         }
 
-        // Because we are filling a closed shape we remove 1 from the count of segments/points
-        val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        if (numSegments == 12)
-            pathArcToFast(center, radius, 0, 12 - 1)
-        else
-            pathArcTo(center, radius, 0f, aMax, numSegments - 1)
         pathFillConvex(col)
     }
 
@@ -314,7 +309,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = (glm.πf * 2f) * (numSegments.f - 1f) / numSegments.f
         pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
-        pathStroke(col, true, thickness)
+        pathStroke(col, DrawFlag.Closed, thickness)
     }
 
     /** Guaranteed to honor 'num_segments' */
@@ -362,18 +357,20 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** TODO: Thickness anti-aliased lines cap are missing their AA fringe.
      *  We avoid using the ImVec2 math operators here to reduce cost to a minimum for debug/non-inlined builds. */
-    fun addPolyline(points: List<Vec2>, col: Int, closed: Boolean, thickness_: Float) {
+    fun addPolyline(points: List<Vec2>, col: Int, flags: DrawFlags, thickness_: Float) {
 
         var thickness = thickness_
 
-        if (points.size < 2) return
+        val pointsCount = points.size
+        if (pointsCount < 2)
+            return
 
+        val closed = flags has DrawFlag.Closed
         val opaqueUv = Vec2(_data.texUvWhitePixel)
-
-        val count = if (closed) points.size else points.lastIndex // The number of line segments we need to draw
+        val count = if (closed) pointsCount else points.lastIndex // The number of line segments we need to draw
         val thickLine = thickness > _fringeScale
 
-        if (flags has DrawListFlag.AntiAliasedLines) {
+        if (this.flags has DrawListFlag.AntiAliasedLines) {
             // Anti-aliased stroke
             val AA_SIZE = _fringeScale
             val colTrans = col wo COL32_A_MASK
@@ -387,15 +384,12 @@ class DrawList(sharedData: DrawListSharedData?) {
             // - For now, only draw integer-width lines using textures to avoid issues with the way scaling occurs,
             //      could be improved.
             // - If AA_SIZE is not 1.0f we cannot use the texture path.
-            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex &&
-                    integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f  && AA_SIZE == 1f
+            val useTexture = this.flags has DrawListFlag.AntiAliasedLinesUseTex && integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f && AA_SIZE == 1f
 
-            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i) {
-                "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off"
-            }
+            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines) { "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off" }
 
             val idxCount = if (useTexture) count * 6 else (count * if (thickLine) 18 else 12)
-            val vtxCount = if (useTexture) points.size * 2 else (points.size * if (thickLine) 4 else 3)
+            val vtxCount = if (useTexture) pointsCount * 2 else (pointsCount * if (thickLine) 4 else 3)
             primReserve(idxCount, vtxCount)
             vtxBuffer.pos = _vtxWritePtr
             idxBuffer.pos = _idxWritePtr
@@ -403,26 +397,21 @@ class DrawList(sharedData: DrawListSharedData?) {
             // Temporary buffer
             // The first <points_count> items are normals at each line point, then after that there are either 2 or 4
             // temp points for each line point
-            val temp = Array(points.size * if (useTexture || !thickLine) 3 else 5) { Vec2() }
-            val tempPointsIdx = points.size
+            _data.tempBuffer.reserveDiscard(pointsCount * if (useTexture || !thickLine) 3 else 5)
+            val temp = _data.tempBuffer
+            val tempPointsIdx = pointsCount
 
             // Calculate normals (tangents) for each line segment
             for (i1 in 0 until count) {
-                val i2 = if (i1 + 1 == points.size) 0 else i1 + 1
+                val i2 = if (i1 + 1 == pointsCount) 0 else i1 + 1
                 var dx = points[i2].x - points[i1].x
                 var dy = points[i2].y - points[i1].y
-                //IM_NORMALIZE2F_OVER_ZERO(dx, dy);
-                val d2 = dx * dx + dy * dy
-                if (d2 > 0f) {
-                    val invLen = 1f / sqrt(d2)
-                    dx *= invLen
-                    dy *= invLen
-                }
+                NORMALIZE2F_OVER_ZERO(dx, dy) { x, y -> dx = x; dy = y }
                 temp[i1].x = dy
                 temp[i1].y = -dx
             }
             if (!closed)
-                temp[points.size - 1] = temp[points.size - 2]
+                temp[pointsCount - 1] = temp[pointsCount - 2]
 
             // If we are drawing a one-pixel-wide line without a texture, or a textured line of any width,
             // we only need 2 or 3 vertices per point
@@ -444,8 +433,8 @@ class DrawList(sharedData: DrawListSharedData?) {
                 if (!closed) {
                     temp[tempPointsIdx + 0] = points[0] + temp[0] * halfDrawSize
                     temp[tempPointsIdx + 1] = points[0] - temp[0] * halfDrawSize
-                    temp[tempPointsIdx + (points.size - 1) * 2 + 0] = points[points.size - 1] + temp[points.size - 1] * halfDrawSize
-                    temp[tempPointsIdx + (points.size - 1) * 2 + 1] = points[points.size - 1] - temp[points.size - 1] * halfDrawSize
+                    temp[tempPointsIdx + (pointsCount - 1) * 2 + 0] = points[pointsCount - 1] + temp[pointsCount - 1] * halfDrawSize
+                    temp[tempPointsIdx + (pointsCount - 1) * 2 + 1] = points[pointsCount - 1] - temp[pointsCount - 1] * halfDrawSize
                 }
 
                 // Generate the indices to form a number of triangles for each line segment, and the vertices for the
@@ -455,21 +444,13 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
                 var idx1 = _vtxCurrentIdx // Vertex index for start of line segment
                 for (i1 in 0 until count) { // i1 is the first point of the line segment
-                    val i2 = if (i1 + 1 == points.size) 0 else i1 + 1 // i2 is the second point of the line segment
-                    val idx2 = if (i1 + 1 == points.size) _vtxCurrentIdx else (idx1 + if (useTexture) 2 else 3) // Vertex index for end of segment
+                    val i2 = if (i1 + 1 == pointsCount) 0 else i1 + 1 // i2 is the second point of the line segment
+                    val idx2 = if (i1 + 1 == pointsCount) _vtxCurrentIdx else (idx1 + if (useTexture) 2 else 3) // Vertex index for end of segment
 
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
-//                    IM_FIXNORMAL2F(dm_x, dm_y)
-                    run {
-                        var d2 = dmX * dmX + dmY * dmY
-                        if (d2 < 0.5f)
-                            d2 = 0.5f
-                        val invLensq = 1f / d2
-                        dmX *= invLensq
-                        dmY *= invLensq
-                    }
+                    FIXNORMAL2F(dmX, dmY) { x, y -> dmX = x; dmY = y }
                     dmX *= halfDrawSize // dm_x, dm_y are offset to the outer edge of the AA area
                     dmY *= halfDrawSize
 
@@ -510,14 +491,14 @@ class DrawList(sharedData: DrawListSharedData?) {
                     val texUV0 = Vec2(texUVs.x, texUVs.y)
                     val texUV1 = Vec2(texUVs.z, texUVs.w)
 
-                    for (i in 0 until points.size) {
+                    for (i in 0 until pointsCount) {
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += texUV0; vtxBuffer += col // Left-side outer edge
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += texUV1; vtxBuffer += col // Right-side outer edge
                         _vtxWritePtr += 2
                     }
                 } else
                 // If we're not using a texture, we need the center vertex as well
-                    for (i in 0 until points.size) {
+                    for (i in 0 until pointsCount) {
                         vtxBuffer += points[i]; vtxBuffer += opaqueUv; vtxBuffer += col // Center of line
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += opaqueUv; vtxBuffer += colTrans // Left-side outer edge
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += opaqueUv; vtxBuffer += colTrans // Right-side outer edge
@@ -549,21 +530,13 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
                 var idx1 = _vtxCurrentIdx // Vertex index for start of line segment
                 for (i1 in 0 until count) { // i1 is the first point of the line segment
-                    val i2 = if ((i1 + 1) == points.size) 0 else (i1 + 1) // i2 is the second point of the line segment
-                    val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else (idx1 + 4) // Vertex index for end of segment
+                    val i2 = if ((i1 + 1) == pointsCount) 0 else (i1 + 1) // i2 is the second point of the line segment
+                    val idx2 = if ((i1 + 1) == pointsCount) _vtxCurrentIdx else (idx1 + 4) // Vertex index for end of segment
 
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
-//                    IM_FIXNORMAL2F(dm_x, dm_y)
-                    run {
-                        var d2 = dmX * dmX + dmY * dmY
-                        if (d2 < 0.5f)
-                            d2 = 0.5f
-                        val invLensq = 1f / d2
-                        dmX *= invLensq
-                        dmY *= invLensq
-                    }
+                    FIXNORMAL2F(dmX, dmY) { x, y -> dmX = x; dmY = y }
                     val dmOutX = dmX * (halfInnerThickness + AA_SIZE)
                     val dmOutY = dmY * (halfInnerThickness + AA_SIZE)
                     val dmInX = dmX * halfInnerThickness
@@ -593,7 +566,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 }
 
                 // Add vertices
-                for (i in 0 until points.size) {
+                for (i in 0 until pointsCount) {
                     vtxBuffer += temp[tempPointsIdx + i * 4 + 0]; vtxBuffer += opaqueUv; vtxBuffer += colTrans
                     vtxBuffer += temp[tempPointsIdx + i * 4 + 1]; vtxBuffer += opaqueUv; vtxBuffer += col
                     vtxBuffer += temp[tempPointsIdx + i * 4 + 2]; vtxBuffer += opaqueUv; vtxBuffer += col
@@ -611,19 +584,13 @@ class DrawList(sharedData: DrawListSharedData?) {
             idxBuffer.pos = _idxWritePtr
 
             for (i1 in 0 until count) {
-                val i2 = if ((i1 + 1) == points.size) 0 else i1 + 1
+                val i2 = if ((i1 + 1) == pointsCount) 0 else i1 + 1
                 val p1 = points[i1]
                 val p2 = points[i2]
 
                 var dX = p2.x - p1.x
                 var dY = p2.y - p1.y
-//                IM_NORMALIZE2F_OVER_ZERO(dX, dY)
-                val d2 = dX * dX + dY * dY
-                if (d2 > 0f) {
-                    val invLen = 1f / sqrt(d2)
-                    dX *= invLen
-                    dY *= invLen
-                }
+                NORMALIZE2F_OVER_ZERO(dX, dY) { x, y -> dX = x; dY = y }
                 dX *= thickness * 0.5f
                 dY *= thickness * 0.5f
 
@@ -643,12 +610,12 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.pos = 0
     }
 
-    /** We intentionally avoid using ImVec2 and its math operators here to reduce cost to a minimum for debug/non-inlined builds.
-     *
-     *  Note: Anti-aliased filling requires points to be in clockwise order. */
+    /** - We intentionally avoid using ImVec2 and its math operators here to reduce cost to a minimum for debug/non-inlined builds.
+     *  - Filled shapes must always use clockwise winding order. The anti-aliasing fringe depends on it. Counter-clockwise shapes will have "inward" anti-aliasing. */
     fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int) {
 
-        if (points.size < 3)
+        val pointsCount = points.size
+        if (pointsCount < 3)
             return
 
         val uv = Vec2(_data.texUvWhitePixel)
@@ -657,8 +624,8 @@ class DrawList(sharedData: DrawListSharedData?) {
             // Anti-aliased Fill
             val AA_SIZE = _fringeScale
             val colTrans = col wo COL32_A_MASK
-            val idxCount = (points.size - 2) * 3 + points.size * 6
-            val vtxCount = points.size * 2
+            val idxCount = (pointsCount - 2) * 3 + pointsCount * 6
+            val vtxCount = pointsCount * 2
             primReserve(idxCount, vtxCount)
             vtxBuffer.pos = _vtxWritePtr
             idxBuffer.pos = _idxWritePtr
@@ -666,27 +633,22 @@ class DrawList(sharedData: DrawListSharedData?) {
             // Add indexes for fill
             val vtxInnerIdx = _vtxCurrentIdx
             val vtxOuterIdx = _vtxCurrentIdx + 1
-            for (i in 2 until points.size) {
+            for (i in 2 until pointsCount) {
                 idxBuffer += vtxInnerIdx; idxBuffer += vtxInnerIdx + ((i - 1) shl 1); idxBuffer += vtxInnerIdx + (i shl 1)
                 _idxWritePtr += 3
             }
 
             // Compute normals
-            val tempNormals = Array(points.size) { Vec2() }
+            _data.tempBuffer.reserveDiscard(pointsCount)
+            val tempNormals = _data.tempBuffer
             var i0 = points.lastIndex
             var i1 = 0
-            while (i1 < points.size) {
+            while (i1 < pointsCount) {
                 val p0 = points[i0]
                 val p1 = points[i1]
                 var dX = p1.x - p0.x
                 var dY = p1.y - p0.y
-//                IM_NORMALIZE2F_OVER_ZERO(dx, dy)
-                val d2 = dX * dX + dY * dY
-                if (d2 > 0f) {
-                    val invLen = 1f / sqrt(d2)
-                    dX *= invLen
-                    dY *= invLen
-                }
+                NORMALIZE2F_OVER_ZERO(dX, dY) { x, y -> dX = x; dY = y }
                 tempNormals[i0].x = dY
                 tempNormals[i0].y = -dX
                 i0 = i1++
@@ -694,21 +656,13 @@ class DrawList(sharedData: DrawListSharedData?) {
 
             i0 = points.lastIndex
             i1 = 0
-            while (i1 < points.size) {
+            while (i1 < pointsCount) {
                 // Average normals
                 val n0 = tempNormals[i0]
                 val n1 = tempNormals[i1]
                 var dmX = (n0.x + n1.x) * 0.5f
                 var dmY = (n0.y + n1.y) * 0.5f
-//                    IM_FIXNORMAL2F(dm_x, dm_y)
-                run {
-                    var d2 = dmX * dmX + dmY * dmY
-                    if (d2 < 0.5f)
-                        d2 = 0.5f
-                    val invLensq = 1f / d2
-                    dmX *= invLensq
-                    dmY *= invLensq
-                }
+                FIXNORMAL2F(dmX, dmY) { x, y -> dmX = x; dmY = y }
                 dmX *= AA_SIZE * 0.5f
                 dmY *= AA_SIZE * 0.5f
 
@@ -727,8 +681,8 @@ class DrawList(sharedData: DrawListSharedData?) {
             _vtxCurrentIdx += vtxCount
         } else {
             // Non Anti-aliased Fill
-            val idxCount = (points.size - 2) * 3
-            val vtxCount = points.size
+            val idxCount = (pointsCount - 2) * 3
+            val vtxCount = pointsCount
             primReserve(idxCount, vtxCount)
             vtxBuffer.pos = _vtxWritePtr
             idxBuffer.pos = _idxWritePtr
@@ -736,7 +690,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 vtxBuffer += points[i]; vtxBuffer += uv; vtxBuffer += col
                 _vtxWritePtr++
             }
-            for (i in 2 until points.size) {
+            for (i in 2 until pointsCount) {
                 idxBuffer += _vtxCurrentIdx; idxBuffer += _vtxCurrentIdx + i - 1; idxBuffer[_idxWritePtr + 2] = _vtxCurrentIdx + i
                 _idxWritePtr += 3
             }
@@ -754,7 +708,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         pathLineTo(p1)
         pathBezierCubicCurveTo(p2, p3, p4, numSegments)
-        pathStroke(col, false, thickness)
+        pathStroke(col, thickness = thickness)
     }
 
     /** Quad Bezier (3 control points)
@@ -766,7 +720,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         pathLineTo(p1)
         pathBezierQuadraticCurveTo(p2, p3, numSegments)
-        pathStroke(col, false, thickness)
+        pathStroke(col, thickness = thickness)
     }
 
 
@@ -778,65 +732,65 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
 
     fun addImage(
-            userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
-            uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE,
+        userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
+        uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE,
     ) {
 
         if (col hasnt COL32_A_MASK) return
 
         val pushTextureId = userTextureId != _cmdHeader.textureId
-        if (pushTextureId) pushTextureId(userTextureId)
+        if (pushTextureId) pushTextureID(userTextureId)
 
         primReserve(6, 4)
         primRectUV(pMin, pMax, uvMin, uvMax, col)
 
-        if (pushTextureId) popTextureId()
+        if (pushTextureId) popTextureID()
     }
 
     fun addImageQuad(
-            userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
-            uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
-            uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE,
+        userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
+        uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
+        uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE,
     ) {
 
         if (col hasnt COL32_A_MASK) return
 
         val pushTextureId = userTextureId != _cmdHeader.textureId
         if (pushTextureId)
-            pushTextureId(userTextureId)
+            pushTextureID(userTextureId)
 
         primReserve(6, 4)
         primQuadUV(p1, p2, p3, p4, uv1, uv2, uv3, uv4, col)
 
         if (pushTextureId)
-            popTextureId()
+            popTextureID()
     }
 
-    fun addImageRounded(
-            userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float,
-            roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i,
-    ) {
-        if (col hasnt COL32_A_MASK) return
+    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float, flags_: DrawFlags = emptyFlags) {
+        if (col hasnt COL32_A_MASK)
+            return
 
-        if (rounding <= 0f || roundingCorners hasnt DrawCornerFlag.All) {
+        val flags = fixRectCornerFlags(flags_)
+        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask) == DrawFlag.RoundCornersNone) {
             addImage(userTextureId, pMin, pMax, uvMin, uvMax, col)
             return
         }
 
-        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
-        if (pushTextureId) pushTextureId(userTextureId)
+        val pushTextureId = userTextureId != _cmdHeader.textureId
+        if (pushTextureId) pushTextureID(userTextureId)
 
         val vertStartIdx = vtxBuffer.size
-        pathRect(pMin, pMax, rounding, roundingCorners)
+        pathRect(pMin, pMax, rounding, flags)
         pathFillConvex(col)
         val vertEndIdx = vtxBuffer.size
         shadeVertsLinearUV(vertStartIdx, vertEndIdx, pMin, pMax, uvMin, uvMax, true)
 
-        if (pushTextureId) popTextureId()
+        if (pushTextureId) popTextureID()
     }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Stateful path API, add points then finish with PathFillConvex() or PathStroke()
+    // - Filled shapes must always use clockwise winding order. The anti-aliasing fringe depends on it. Counter-clockwise shapes will have "inward" anti-aliasing.
     // -----------------------------------------------------------------------------------------------------------------
 
     fun pathClear() = _path.clear()
@@ -847,46 +801,68 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (_path.isEmpty() || _path.last() != pos) _path += pos
     }
 
-    /** Note: Anti-aliased filling requires points to be in clockwise order. */
     fun pathFillConvex(col: Int) = addConvexPolyFilled(_path, col).also { pathClear() }
 
     /** rounding_corners_flags: 4 bits corresponding to which corner to round   */
-    fun pathStroke(col: Int, closed: Boolean, thickness: Float = 1.0f) = addPolyline(_path, col, closed, thickness).also { pathClear() }
+    fun pathStroke(col: Int, flags: DrawFlags = emptyFlags, thickness: Float = 1.0f) =
+        addPolyline(_path, col, flags, thickness).also { pathClear() }
 
-    fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
-        if (radius == 0f) {
+    /** @param center must be a new instance */
+    fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 0) {
+        if (radius < 0.5f) {
             _path += center
             return
         }
-        // Note that we are adding a point at both a_min and a_max.
-        // If you are trying to draw a full closed circle you don't want the overlapping points!
-        for (i in 0..numSegments) {
-            val a = aMin + (i.f / numSegments) * (aMax - aMin)
-            _path += Vec2(center.x + glm.cos(a) * radius, center.y + glm.sin(a) * radius)
+
+        if (numSegments > 0) {
+            _pathArcToN(center, radius, aMin, aMax, numSegments)
+            return
+        }
+
+        // Automatic segment count
+        if (radius <= _data.arcFastRadiusCutoff) {
+            val aIsReverse = aMax < aMin
+
+            // We are going to use precomputed values for mid samples.
+            // Determine first and last sample in lookup table that belong to the arc.
+            val aMinSampleF = DRAWLIST_ARCFAST_SAMPLE_MAX * aMin / (glm.πf * 2f)
+            val aMaxSampleF = DRAWLIST_ARCFAST_SAMPLE_MAX * aMax / (glm.πf * 2f)
+
+            val aMinSample = if (aIsReverse) floorSigned(aMinSampleF).i else ceil(aMinSampleF).i
+            val aMaxSample = if (aIsReverse) ceil(aMaxSampleF).i else floorSigned(aMaxSampleF).i
+            val aMidSamples = if (aIsReverse) max(aMinSample - aMaxSample, 0) else max(aMaxSample - aMinSample, 0)
+
+            val aMinSegmentAngle = aMinSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
+            val aMaxSegmentAngle = aMaxSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
+            val aEmitStart = (aMinSegmentAngle - aMin).abs >= 1e-5f
+            val aEmitEnd = (aMax - aMaxSegmentAngle).abs >= 1e-5f
+
+            //            _path.reserve(_Path.Size + (a_mid_samples + 1 + (a_emit_start ? 1 : 0)+(a_emit_end ? 1 : 0)))
+            if (aEmitStart)
+                _path += Vec2(center.x + aMin.cos * radius, center.y + aMin.sin * radius)
+            if (aMidSamples >= 0)
+                _pathArcToFastEx(center, radius, aMinSample, aMaxSample, 0)
+            if (aEmitEnd)
+                _path += Vec2(center.x + aMax.cos * radius, center.y + aMax.sin * radius)
+        } else {
+            val arcLength = (aMax - aMin).abs
+            val circleSegmentCount = _calcCircleAutoSegmentCount(radius)
+            val arcSegmentCount = ceil(circleSegmentCount * arcLength / (glm.πf * 2f)).i max (2f * glm.πf / arcLength).i
+            _pathArcToN(center, radius, aMin, aMax, arcSegmentCount)
         }
     }
 
-    /** Use precomputed angles for a 12 steps circle    */
-    fun pathArcToFast(center: Vec2, radius: Float, aMinOf12_: Int, aMaxOf12_: Int) {
-
-        var aMinOf12 = aMinOf12_
-        var aMaxOf12 = aMaxOf12_
-        if (radius == 0f || aMinOf12 > aMaxOf12) {
+    /** Use precomputed angles for a 12 steps circle
+     *
+     *  0: East, 3: South, 6: West, 9: North, 12: East
+     *
+     *  @param center must be a new instance */
+    fun pathArcToFast(center: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
+        if (radius < 0.5f) {
             _path += center
             return
         }
-
-        // For legacy reason the PathArcToFast() always takes angles where 2*PI is represented by 12,
-        // but it is possible to set IM_DRAWLIST_ARCFAST_TESSELATION_MULTIPLIER to a higher value. This should compile to a no-op otherwise.
-        if (DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER != 1) {
-            aMinOf12 *= DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER
-            aMaxOf12 *= DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER
-        }
-
-        for (a in aMinOf12..aMaxOf12) {
-            val c = _data.arcFastVtx[a % _data.arcFastVtx.size]
-            _path += Vec2(center.x + c.x * radius, center.y + c.y * radius)
-        }
+        _pathArcToFastEx(center, radius, aMinOf12 * DRAWLIST_ARCFAST_SAMPLE_MAX / 12, aMaxOf12 * DRAWLIST_ARCFAST_SAMPLE_MAX / 12, 0)
     }
 
     /** Cubic bezier
@@ -895,9 +871,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathBezierCubicCurveTo(p2: Vec2, p3: Vec2, p4: Vec2, numSegments: Int = 0) {
 
         val p1 = _path.last()
-        if (numSegments == 0)
+        if (numSegments == 0) {
+            assert(_data.curveTessellationTol > 0f)
             pathBezierCubicCurveToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, style.curveTessellationTol, 0) // Auto-tessellated
-        else {
+        } else {
             val tStep = 1f / numSegments
             for (iStep in 1..numSegments)
                 _path += bezierCubicCalc(p1, p2, p3, p4, tStep * iStep)
@@ -906,13 +883,13 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** Closely mimics ImBezierCubicClosestPointCasteljau() in imgui.cpp */
     private fun pathBezierCubicCurveToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
-                                        x3: Float, y3: Float, x4: Float, y4: Float, tessTol: Float, level: Int) {
+                                                x3: Float, y3: Float, x4: Float, y4: Float, tessTol: Float, level: Int) {
         val dx = x4 - x1
         val dy = y4 - y1
         var d2 = (x2 - x4) * dy - (y2 - y4) * dx
         var d3 = (x3 - x4) * dy - (y3 - y4) * dx
-        d2 = if(d2 >= 0) d2 else -d2
-        d3 = if(d3 >= 0) d3 else -d3
+        d2 = if (d2 >= 0) d2 else -d2
+        d3 = if (d3 >= 0) d3 else -d3
         if ((d2 + d3) * (d2 + d3) < tessTol * (dx * dx + dy * dy))
             path += Vec2(x4, y4)
         else if (level < 10) {
@@ -938,13 +915,29 @@ class DrawList(sharedData: DrawListSharedData?) {
      *  Quad Bezier (3 control points) */
     fun pathBezierQuadraticCurveTo(p2: Vec2, p3: Vec2, numSegments: Int) {
         val p1 = _path.last()
-        if (numSegments == 0)
-            pathBezierQuadraticCurveToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, _data.curveTessellationTol, 0)// Auto-tessellated
-        else {
+        if (numSegments == 0) {
+            assert(_data.curveTessellationTol > 0f)
+            pathBezierQuadraticCurveToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, _data.curveTessellationTol, 0) // Auto-tessellated
+        } else {
             val tStep = 1f / numSegments
             for (iStep in 1..numSegments)
                 _path + bezierQuadraticCalc(p1, p2, p3, tStep * iStep)
         }
+    }
+
+    // Assert and return same value
+    fun fixRectCornerFlags(flags_: DrawFlags): DrawFlags {
+        var flags = flags_
+        // If this triggers, please update your code replacing hardcoded values with new ImDrawFlags_RoundCorners* values.
+        // Note that ImDrawFlags_Closed (== 0x01) is an invalid flag for AddRect(), AddRectFilled(), PathRect() etc...
+        // [JVM]: Since we're using type-safe flags, this shouldn't be an issue. THe only DrawFlag that could've
+        // triggered the previous type-unsafe version of this is Df.Closed, and so we handle it here.
+        check(flags hasnt DrawFlag.Closed) { "Misuse of legacy hardcoded ImDrawCornerFlags values!" }
+
+        if (flags hasnt DrawFlag.RoundCornersMask)
+            flags = flags or DrawFlag.RoundCornersAll
+
+        return flags
     }
 
     private fun pathBezierQuadraticCurveToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
@@ -953,7 +946,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val dy = y3 - y1
         val det = (x2 - x3) * dy - (y2 - y3) * dx
         if (det * det * 4f < tessTol * (dx * dx + dy * dy))
-                path += Vec2(x3, y3)
+            path += Vec2(x3, y3)
         else if (level < 10) {
             val x12 = (x1 + x2) * 0.5f
             val y12 = (y1 + y2) * 0.5f
@@ -966,23 +959,23 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i) {
+    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, flags_: DrawFlags = emptyFlags) {
+        val flags = fixRectCornerFlags(flags_)
+        var cond = (DrawFlag.RoundCornersTop in flags) or (DrawFlag.RoundCornersBottom in flags)
+        var rounding = rounding_ min ((b.x - a.x).abs * (if (cond) 0.5f else 1f) - 1f)
+        cond = (DrawFlag.RoundCornersLeft in flags) or (DrawFlag.RoundCornersRight in flags)
+        rounding = rounding min ((b.y - a.y).abs * (if (cond) 0.5f else 1f) - 1f)
 
-        var cond = ((roundingCorners and DrawCornerFlag.Top) == DrawCornerFlag.Top.i) || ((roundingCorners and DrawCornerFlag.Bot) == DrawCornerFlag.Bot.i) // TODO consider simplyfing
-        var rounding = glm.min(rounding_, glm.abs(b.x - a.x) * (if (cond) 0.5f else 1f) - 1f)
-        cond = ((roundingCorners and DrawCornerFlag.Left) == DrawCornerFlag.Left.i) || ((roundingCorners and DrawCornerFlag.Right) == DrawCornerFlag.Right.i)
-        rounding = glm.min(rounding, glm.abs(b.y - a.y) * (if (cond) 0.5f else 1f) - 1f)
-
-        if (rounding <= 0f || roundingCorners == 0) {
+        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask) == DrawFlag.RoundCornersNone) {
             pathLineTo(a)
             pathLineTo(Vec2(b.x, a.y))
             pathLineTo(b)
             pathLineTo(Vec2(a.x, b.y))
         } else {
-            val roundingTL = if (roundingCorners has DrawCornerFlag.TopLeft) rounding else 0f
-            val roundingTR = if (roundingCorners has DrawCornerFlag.TopRight) rounding else 0f
-            val roundingBR = if (roundingCorners has DrawCornerFlag.BotRight) rounding else 0f
-            val roundingBL = if (roundingCorners has DrawCornerFlag.BotLeft) rounding else 0f
+            val roundingTL = if (flags has DrawFlag.RoundCornersTopLeft) rounding else 0f
+            val roundingTR = if (flags has DrawFlag.RoundCornersTopRight) rounding else 0f
+            val roundingBR = if (flags has DrawFlag.RoundCornersBottomRight) rounding else 0f
+            val roundingBL = if (flags has DrawFlag.RoundCornersBottomLeft) rounding else 0f
             pathArcToFast(Vec2(a.x + roundingTL, a.y + roundingTL), roundingTL, 6, 9)
             pathArcToFast(Vec2(b.x - roundingTR, a.y + roundingTR), roundingTR, 9, 12)
             pathArcToFast(Vec2(b.x - roundingBR, b.y - roundingBR), roundingBR, 0, 3)
@@ -996,6 +989,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Your rendering function must check for 'UserCallback' in ImDrawCmd and call the function instead of rendering
     triangles.  */
     fun addCallback(callback: DrawCallback, callbackData: Any? = null) {
+        check(cmdBuffer.isNotEmpty())
         var currCmd = cmdBuffer.last()
         assert(currCmd.userCallback == null)
         if (currCmd.elemCount != 0) {
@@ -1126,28 +1120,6 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.pos = 0
     }
 
-// On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superfluous function calls to optimize debug/non-inlined builds.
-// Those macros expects l-values.
-//    fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float) {
-//        val d2 = vX * vX + vY * vY
-//        if (d2 > 0.0f) {
-//            val invLen = 1f / sqrt(d2)
-//            vX *= invLen
-//            vY *= invLen
-//        }
-//    }
-//
-//    fun NORMALIZE2F_OVER_EPSILON_CLAMP(vX: Float, vY: Float, eps: Float, invLenMax: Float) {
-//        val d2 = vX * vX + vY * vY
-//        if (d2 > eps) {
-//            var invLen = 1f / sqrt(d2)
-//            if (invLen > invLenMax)
-//                invLen = invLenMax
-//            vX *= invLen
-//            vY *= invLen
-//        }
-//    }
-
     fun primQuadUV(a: Vec2, b: Vec2, c: Vec2, d: Vec2, uvA: Vec2, uvB: Vec2, uvC: Vec2, uvD: Vec2, col: Int) {
 
         vtxBuffer.pos = _vtxWritePtr
@@ -1195,11 +1167,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun _resetForNewFrame() {
 
         // Verify that the ImDrawCmd fields we want to memcmp() are contiguous in memory.
-        // (those should be IM_STATIC_ASSERT() in theory but with our pre C++11 setup the whole check doesn't compile with GCC)
-//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, ClipRect) == 0);
-//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, TextureId) == sizeof(ImVec4));
-//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, VtxOffset) == sizeof(ImVec4) + sizeof(ImTextureID))
-
+        // IM_STATIC_ASSERT(IM_OFFSETOF(ImDrawCmd, ClipRect) == 0);
+        // IM_STATIC_ASSERT(IM_OFFSETOF(ImDrawCmd, TextureId) == sizeof(ImVec4));
+        // IM_STATIC_ASSERT(IM_OFFSETOF(ImDrawCmd, VtxOffset) == sizeof(ImVec4) + sizeof(ImTextureID));
         cmdBuffer.clear()
         // we dont assign because it wont create a new instance for sure
         idxBuffer = idxBuffer.resize(0)
@@ -1227,7 +1197,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             idxBuffer = idxBuffer.resize(0)
             vtxBuffer = vtxBuffer.resize(0)
         }
-        flags = DrawListFlag.None.i
+        flags = emptyFlags
         _vtxCurrentIdx = 0
         _vtxWritePtr = 0
         _idxWritePtr = 0
@@ -1236,19 +1206,31 @@ class DrawList(sharedData: DrawListSharedData?) {
         _path.clear()
         _splitter.clearFreeMemory()
         // TODO check
-//        resetForNewFrame()
-//        _splitter.clearFreeMemory(destroy)
+        //        resetForNewFrame()
+        //        _splitter.clearFreeMemory(destroy)
     }
 
     /** Pop trailing draw command (used before merging or presenting to user)
      *  Note that this leaves the ImDrawList in a state unfit for further commands,
      *  as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL */
     fun _popUnusedDrawCmd() {
-        if (cmdBuffer.isEmpty())
-            return
-        val currCmd = cmdBuffer.last()
-        if (currCmd.elemCount == 0 && currCmd.userCallback == null)
+        while (cmdBuffer.isNotEmpty()) {
+            val currCmd = cmdBuffer.last()
+            if (currCmd.elemCount != 0 || currCmd.userCallback != null)
+                return // break;
             cmdBuffer.pop()
+        }
+    }
+
+    /** Try to merge two last draw commands */
+    fun _tryMergeDrawCmds() {
+        check(cmdBuffer.isNotEmpty())
+        val currCmd = cmdBuffer.last()
+        val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
+        if (currCmd headerCompare prevCmd && prevCmd areSequentialIdxOffset currCmd && currCmd.userCallback == null && prevCmd.userCallback == null) {
+            prevCmd.elemCount += currCmd.elemCount
+            cmdBuffer.pop()
+        }
     }
 
     /** Our scheme may appears a bit unusual, basically we want the most-common calls AddLine AddRect etc. to not have
@@ -1256,6 +1238,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     The cost of figuring out if a new command has to be added or if we can merge is paid in those Update**
     functions only. */
     fun _onChangedClipRect() {
+        check(cmdBuffer.isNotEmpty())
         // If current command is used with different settings we need to add a new command
         val currCmd = cmdBuffer.last()
         if (currCmd.elemCount != 0 && currCmd.clipRect != _cmdHeader.clipRect) {
@@ -1266,7 +1249,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // Try to merge with previous command if it matches, else use current command
         cmdBuffer.getOrNull(cmdBuffer.lastIndex - 1)?.let { prevCmd ->
-            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
+            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && prevCmd areSequentialIdxOffset currCmd && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
                 cmdBuffer.pop()
                 return
             }
@@ -1276,8 +1259,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun _onChangedTextureID() {
-
         // If current command is used with different settings we need to add a new command
+        check(cmdBuffer.isNotEmpty())
         val currCmd = cmdBuffer.last()
         if (currCmd.elemCount != 0 && currCmd.textureId != _cmdHeader.textureId) {
             addDrawCmd()
@@ -1286,7 +1269,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         assert(currCmd.userCallback == null)
 
         cmdBuffer.getOrNull(cmdBuffer.lastIndex - 1)?.let { prevCmd ->
-            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
+            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd areSequentialIdxOffset currCmd && prevCmd.userCallback == null) {
                 cmdBuffer.pop()
                 return
             }
@@ -1298,8 +1281,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun _onChangedVtxOffset() {
         // We don't need to compare curr_cmd->VtxOffset != _CmdHeader.VtxOffset because we know it'll be different at the time we call this.
         _vtxCurrentIdx = 0
+        check(cmdBuffer.isNotEmpty())
         val currCmd = cmdBuffer.last()
-//        assert(currCmd.vtxOffset != _cmdHeader.vtxOffset) // See #3349
+        //        assert(currCmd.vtxOffset != _cmdHeader.vtxOffset) // See #3349
         if (currCmd.elemCount != 0) {
             addDrawCmd()
             return
@@ -1308,268 +1292,156 @@ class DrawList(sharedData: DrawListSharedData?) {
         currCmd.vtxOffset = _cmdHeader.vtxOffset
     }
 
-
-    //-------------------------------------------------------------------------
-    // [SECTION] FORWARD DECLARATIONS
-    //-------------------------------------------------------------------------
-
-    /** AddDrawListToDrawData */
-    infix fun addTo(outList: ArrayList<DrawList>) {
-
-        // Remove trailing command if unused.
-        // Technically we could return directly instead of popping, but this make things looks neat in Metrics/Debugger window as well.
-        _popUnusedDrawCmd()
-        if (cmdBuffer.empty()) return
-
-        /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.
-            May trigger for you if you are using PrimXXX functions incorrectly.   */
-        assert(vtxBuffer.rem == 0 || _vtxWritePtr == vtxBuffer.rem)
-        assert(idxBuffer.rem == 0 || _idxWritePtr == idxBuffer.rem)
-        if (flags hasnt DrawListFlag.AllowVtxOffset)
-            assert(_vtxCurrentIdx == vtxBuffer.rem)
-
-        // JVM ImGui, this doesnt apply, we use Ints by default
-        /*  Check that drawList doesn't use more vertices than indexable
-            (default DrawIdx = unsigned short = 2 bytes = 64K vertices per DrawList = per window)
-            If this assert triggers because you are drawing lots of stuff manually:
-            - First, make sure you are coarse clipping yourself and not trying to draw many things outside visible bounds.
-              Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics/Debugger window to inspect draw list contents.
-            - If you want large meshes with more than 64K vertices, you can either:
-              (A) Handle the ImDrawCmd::VtxOffset value in your renderer backend, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
-                  Most example backends already support this from 1.71. Pre-1.71 backends won't.
-                  Some graphics API such as GL ES 1/2 don't have a way to offset the starting vertex so it is not supported for them.
-              (B) Or handle 32-bits indices in your renderer backend, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
-                  Most example backends already support this. For example, the OpenGL example code detect index size at compile-time:
-                    glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
-                  Your own engine or render API may use different parameters or function calls to specify index sizes.
-                  2 and 4 bytes indices are generally supported by most graphics API.
-            - If for some reason neither of those solutions works for you, a workaround is to call BeginChild()/EndChild() before reaching
-              the 64K limit to split your draw commands in multiple draw lists.         */
-        outList += this
-        io.metricsRenderVertices += vtxBuffer.rem
-        io.metricsRenderIndices += idxBuffer.rem
-    }
-
-    // Internal Api, Render helpers
-
-    /** Render an arrow aimed to be aligned with text (p_min is a position in the same space text would be positioned). To e.g. denote expanded/collapsed state  */
-    fun renderArrow(pos: Vec2, col: Int, dir: Dir, scale: Float = 1f) {
-
-        val h = _data.fontSize * 1f
-        var r = h * 0.4f * scale
-        val center = pos + Vec2(h * 0.5f, h * 0.5f * scale)
-
-        val a: Vec2
-        val b: Vec2
-        val c: Vec2
-        when (dir) {
-            Dir.Up, Dir.Down -> {
-                if (dir == Dir.Up) r = -r
-                a = Vec2(+0.000f, +0.75f) * r
-                b = Vec2(-0.866f, -0.75f) * r
-                c = Vec2(+0.866f, -0.75f) * r
-            }
-            Dir.Left, Dir.Right -> {
-                if (dir == Dir.Left) r = -r
-                a = Vec2(+0.75f, +0.000f) * r
-                b = Vec2(-0.75f, +0.866f) * r
-                c = Vec2(-0.75f, -0.866f) * r
-            }
-            else -> throw Error()
+    fun _calcCircleAutoSegmentCount(radius: Float): Int =
+        // Automatic segment count
+        when (val radiusIdx = (radius + 0.999999f).i) { // ceil to never reduce accuracy
+            in _data.circleSegmentCounts.indices -> _data.circleSegmentCounts[radiusIdx] // Use cached value
+            else -> DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
         }
 
-        addTriangleFilled(center + a, center + b, center + c, col)
-    }
-
-    fun renderBullet(pos: Vec2, col: Int) = addCircleFilled(pos, _data.fontSize * 0.2f, col, 8)
-
-    @Deprecated("placeholder: pos gets modified!")
-    fun renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
-
-        val thickness = max(sz_ / 5f, 1f)
-        val sz = sz_ - thickness * 0.5f
-        pos += thickness * 0.25f
-
-        val third = sz / 3f
-        val bx = pos.x + third
-        val by = pos.y + sz - third * 0.5f
-        pathLineTo(Vec2(bx - third, by - third))
-        pathLineTo(Vec2(bx, by))
-        pathLineTo(Vec2(bx + third * 2f, by - third * 2f))
-        pathStroke(col, false, thickness)
-    }
-
-    fun renderMouseCursor(
-            pos: Vec2, scale: Float, mouseCursor: MouseCursor,
-            colFill: Int, colBorder: Int, colShadow: Int,
-    ) {
-        if (mouseCursor == MouseCursor.None)
-            return
-
-        val fontAtlas = _data.font!!.containerAtlas
-        val offset = Vec2()
-        val size = Vec2()
-        val uv = Array(4) { Vec2() }
-        if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
-            pos -= offset
-            val texId: TextureID = fontAtlas.texID
-            pushTextureId(texId)
-            addImage(texId, pos + Vec2(1, 0) * scale, pos + Vec2(1, 0) * scale + size * scale, uv[2], uv[3], colShadow)
-            addImage(texId, pos + Vec2(2, 0) * scale, pos + Vec2(2, 0) * scale + size * scale, uv[2], uv[3], colShadow)
-            addImage(texId, pos, pos + size * scale, uv[2], uv[3], colBorder)
-            addImage(texId, pos, pos + size * scale, uv[0], uv[1], colFill)
-            popTextureId()
-        }
-    }
-
-    /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
-    fun renderArrowPointingAt(pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) =
-            when (direction) {
-                Dir.Left -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
-                Dir.Right -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
-                Dir.Up -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
-                Dir.Down -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
-                else -> Unit
-            }
-
-    /** FIXME: Cleanup and move code to ImDrawList. */
-    fun renderRectFilledRangeH(rect: Rect, col: Int, xStartNorm_: Float, xEndNorm_: Float, rounding_: Float) {
-        var xStartNorm = xStartNorm_
-        var xEndNorm = xEndNorm_
-        if (xEndNorm == xStartNorm) return
-        if (xStartNorm > xEndNorm) {
-            val tmp = xStartNorm
-            xStartNorm = xEndNorm
-            xEndNorm = tmp
-        }
-        val p0 = Vec2(lerp(rect.min.x, rect.max.x, xStartNorm), rect.min.y)
-        val p1 = Vec2(lerp(rect.min.x, rect.max.x, xEndNorm), rect.max.y)
-        if (rounding_ == 0f) {
-            addRectFilled(p0, p1, col, 0f)
+    /** @center must be a new instance */
+    fun _pathArcToFastEx(center: Vec2, radius: Float, aMinSample_: Int, aMaxSample_: Int, aStep_: Int) {
+        if (radius < 0.5f) {
+            _path += center
             return
         }
-        val rounding = glm.clamp(glm.min((rect.max.x - rect.min.x) * 0.5f, (rect.max.y - rect.min.y) * 0.5f) - 1f, 0f, rounding_)
-        val invRounding = 1f / rounding
-        val arc0B = acos01(1f - (p0.x - rect.min.x) * invRounding)
-        val arc0E = acos01(1f - (p1.x - rect.min.x) * invRounding)
-        val halfPI = glm.HPIf // We will == compare to this because we know this is the exact value ImAcos01 can return.
-        val x0 = glm.max(p0.x, rect.min.x + rounding)
-        if (arc0B == arc0E) {
-            pathLineTo(Vec2(x0, p1.y))
-            pathLineTo(Vec2(x0, p0.y))
-        } else if (arc0B == 0f && arc0E == halfPI) {
-            pathArcToFast(Vec2(x0, p1.y - rounding), rounding, 3, 6) // BL
-            pathArcToFast(Vec2(x0, p0.y + rounding), rounding, 6, 9) // TR
+        var aMaxSample = aMaxSample_
+        var aMinSample = aMinSample_
+
+        // Calculate arc auto segment step size
+        var aStep = when {
+            aStep_ <= 0 -> DRAWLIST_ARCFAST_SAMPLE_MAX / _calcCircleAutoSegmentCount(radius)
+            else -> aStep_
+        }
+
+        // Make sure we never do steps larger than one quarter of the circle
+        aStep = clamp(aStep, 1, DRAWLIST_ARCFAST_TABLE_SIZE / 4)
+
+        val sampleRange = (aMaxSample - aMinSample).abs
+        val aNextStep = aStep
+        var samples = sampleRange + 1
+        var extraMaxSample = false
+        if (aStep > 1) {
+            samples = sampleRange / aStep + 1
+            val overstep = sampleRange % aStep
+            if (overstep > 0) {
+                extraMaxSample = true
+                samples++
+
+                // When we have overstep to avoid awkwardly looking one long line and one tiny one at the end,
+                // distribute first step range evenly between them by reducing first step size.
+                if (sampleRange > 0)
+                    aStep -= (aStep - overstep) / 2
+            }
+        }
+        //        _path.resize(_Path.Size + samples);
+        //        val out_ptr = _Path.Data + (_Path.Size - samples);
+
+        var sampleIndex = aMinSample
+        if (sampleIndex < 0 || sampleIndex >= DRAWLIST_ARCFAST_SAMPLE_MAX) {
+            sampleIndex = sampleIndex % DRAWLIST_ARCFAST_SAMPLE_MAX
+            if (sampleIndex < 0)
+                sampleIndex += DRAWLIST_ARCFAST_SAMPLE_MAX
+        }
+
+        if (aMaxSample >= aMinSample) {
+            var a = aMinSample
+            while (a <= aMaxSample) {
+                // a_step is clamped to IM_DRAWLIST_ARCFAST_SAMPLE_MAX, so we have guaranteed that it will not wrap over range twice or more
+                if (sampleIndex >= DRAWLIST_ARCFAST_SAMPLE_MAX)
+                    sampleIndex -= DRAWLIST_ARCFAST_SAMPLE_MAX
+
+                val s = _data.arcFastVtx[sampleIndex]
+                _path += Vec2(center.x + s.x * radius,
+                    center.y + s.y * radius)
+
+                a += aStep; sampleIndex += aStep; aStep = aNextStep
+            }
         } else {
-            pathArcTo(Vec2(x0, p1.y - rounding), rounding, glm.PIf - arc0E, glm.PIf - arc0B, 3) // BL
-            pathArcTo(Vec2(x0, p0.y + rounding), rounding, glm.PIf + arc0B, glm.PIf + arc0E, 3) // TR
-        }
-        if (p1.x > rect.min.x + rounding) {
-            val arc1B = acos01(1f - (rect.max.x - p1.x) * invRounding)
-            val arc1E = acos01(1f - (rect.max.x - p0.x) * invRounding)
-            val x1 = glm.min(p1.x, rect.max.x - rounding)
-            if (arc1B == arc1E) {
-                pathLineTo(Vec2(x1, p0.y))
-                pathLineTo(Vec2(x1, p1.y))
-            } else if (arc1B == 0f && arc1E == halfPI) {
-                pathArcToFast(Vec2(x1, p0.y + rounding), rounding, 9, 12) // TR
-                pathArcToFast(Vec2(x1, p1.y - rounding), rounding, 0, 3)  // BR
-            } else {
-                pathArcTo(Vec2(x1, p0.y + rounding), rounding, -arc1E, -arc1B, 3) // TR
-                pathArcTo(Vec2(x1, p1.y - rounding), rounding, +arc1B, +arc1E, 3) // BR
+            var a = aMinSample
+            while (a >= aMaxSample) {
+                // a_step is clamped to IM_DRAWLIST_ARCFAST_SAMPLE_MAX, so we have guaranteed that it will not wrap over range twice or more
+                if (sampleIndex < 0)
+                    sampleIndex += DRAWLIST_ARCFAST_SAMPLE_MAX
+
+                val s = _data.arcFastVtx[sampleIndex]
+                _path += Vec2(center.x + s.x * radius,
+                    center.y + s.y * radius)
+
+                a -= aStep; sampleIndex -= aStep; aStep = aNextStep
             }
         }
-        pathFillConvex(col)
-    }
 
-    fun renderRectFilledWithHole(drawList: DrawList, outer: Rect, inner: Rect, col: Int, rounding: Float) {
-        val fillL = inner.min.x > outer.min.x
-        val fillR = inner.max.x < outer.max.x
-        val fillU = inner.min.y > outer.min.y
-        val fillD = inner.max.y < outer.max.y
-        if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding, (if(fillU) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if(fillD) DrawCornerFlag.None else DrawCornerFlag.BotLeft)
-        if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding, (if(fillU) DrawCornerFlag.None else DrawCornerFlag.TopRight) or if(fillD) DrawCornerFlag.None else DrawCornerFlag.BotRight)
-        if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding, (if(fillL) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if(fillR) DrawCornerFlag.None else DrawCornerFlag.TopRight)
-        if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding, (if(fillL) DrawCornerFlag.None else DrawCornerFlag.BotLeft) or if(fillR) DrawCornerFlag.None else DrawCornerFlag.BotRight)
-        if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawCornerFlag.TopLeft.i)
-        if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawCornerFlag.TopRight.i)
-        if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawCornerFlag.BotLeft.i)
-        if (fillR && fillD) drawList.addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawCornerFlag.BotRight.i)
-    }
+        if (extraMaxSample) {
+            var normalizedMaxSample = aMaxSample % DRAWLIST_ARCFAST_SAMPLE_MAX
+            if (normalizedMaxSample < 0)
+                normalizedMaxSample += DRAWLIST_ARCFAST_SAMPLE_MAX
 
-    // Internal API, Shade functions
-    //-----------------------------------------------------------------------------
-    // Shade functions (write over already created vertices)
-    //-----------------------------------------------------------------------------
-
-    /** Generic linear color gradient, write to RGB fields, leave A untouched.  */
-    fun shadeVertsLinearColorGradientKeepAlpha(
-            vertStart: Int, vertEnd: Int, gradientP0: Vec2,
-            gradientP1: Vec2, col0: Int, col1: Int,
-    ) {
-        val gradientExtent = gradientP1 - gradientP0
-        val gradientInvLength2 = 1f / gradientExtent.lengthSqr
-        val col0R = (col0 ushr COL32_R_SHIFT) and 0xFF
-        val col0G = (col0 ushr COL32_G_SHIFT) and 0xFF
-        val col0B = (col0 ushr COL32_B_SHIFT) and 0xFF
-        val colDeltaR = ((col1 ushr COL32_R_SHIFT) and 0xFF) - col0R
-        val colDeltaG = ((col1 ushr COL32_G_SHIFT) and 0xFF) - col0G
-        val colDeltaB = ((col1 ushr COL32_B_SHIFT) and 0xFF) - col0B
-        for (i in vertStart until vertEnd) {
-            var offset = i * DrawVert.SIZE
-            val pos = Vec2(vtxBuffer.data, offset)
-            val d = pos - gradientP0 dot gradientExtent
-            val t = glm.clamp(d * gradientInvLength2, 0f, 1f)
-            val r = (col0R + colDeltaR * t).i
-            val g = (col0G + colDeltaG * t).i
-            val b = (col0B + colDeltaB * t).i
-            offset += Vec2.size * 2
-            val col = vtxBuffer.data.getInt(offset)
-            val newCol = (r shl COL32_R_SHIFT) or (g shl COL32_G_SHIFT) or (b shl COL32_B_SHIFT) or (col and COL32_A_MASK)
-            vtxBuffer.data.putInt(offset, newCol)
+            val s = _data.arcFastVtx[normalizedMaxSample]
+            _path += Vec2(center.x + s.x * radius,
+                center.y + s.y * radius)
         }
+
+        //        IM_ASSERT_PARANOID(_Path.Data + _Path.Size == out_ptr)
     }
 
-    /** Distribute UV over (a, b) rectangle */
-    fun shadeVertsLinearUV(vertStart: Int, vertEnd: Int, a: Vec2, b: Vec2, uvA: Vec2, uvB: Vec2, clamp: Boolean) {
-        val size = b - a
-        val uvSize = uvB - uvA
-        val scale = Vec2(
-                if (size.x != 0f) uvSize.x / size.x else 0f,
-                if (size.y != 0f) uvSize.y / size.y else 0f)
-        if (clamp) {
-            val min = uvA min uvB
-            val max = uvA max uvB
-            for (i in vertStart until vertEnd) {
-                val vertexPos = Vec2(vtxBuffer.data, i * DrawVert.SIZE)
-                val vertexUV = glm.clamp(uvA + (vertexPos - a) * scale, min, max)
-                vertexUV.to(vtxBuffer.data, i * DrawVert.SIZE + Vec2.size)
-            }
-        } else
-            for (i in vertStart until vertEnd) {
-                val vertexPos = Vec2(vtxBuffer.data, i * DrawVert.SIZE)
-                val vertexUV = uvA + (vertexPos - a) * scale
-                vertexUV.to(vtxBuffer.data, i * DrawVert.SIZE + Vec2.size)
-            }
+    /** @param center must be new instance */
+    fun _pathArcToN(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int) {
+        if (radius < 0.5f) {
+            _path += center
+            return
+        }
+
+        // Note that we are adding a point at both a_min and a_max.
+        // If you are trying to draw a full closed circle you don't want the overlapping points!
+        for (i in 0..numSegments) {
+            val a = aMin + (i.f / numSegments) * (aMax - aMin)
+            _path += Vec2(center.x + glm.cos(a) * radius, center.y + glm.sin(a) * radius)
+        }
     }
 
     companion object {
-        private fun acos01(x: Float) = when {
-            x <= 0f -> glm.PIf * 0.5f
-            x >= 1f -> 0f
-            else -> glm.acos(x)
-            //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
+
+        // On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superfluous function calls to optimize debug/non-inlined builds.
+        // - Those macros expects l-values and need to be used as their own statement.
+        // - Those macros are intentionally not surrounded by the 'do {} while (0)' idiom because even that translates to runtime with debug compilers.
+        inline fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float, res: (x: Float, y: Float) -> Unit) {
+            var x = vX
+            var y = vY
+            val d2 = x * x + y * y
+            if (d2 > 0f) {
+                val invLen = 1 / sqrt(d2)
+                x *= invLen
+                y *= invLen
+            }
+            res(x, y)
+        }
+
+        const val FIXNORMAL2F_MAX_INVLEN2 = 100f // 500.0f (see #4053, #3366)
+        inline fun FIXNORMAL2F(vX: Float, vY: Float, res: (x: Float, y: Float) -> Unit) {
+            var x = vX
+            var y = vY
+            val d2 = x * x + y * y
+            if (d2 > 0.000001f) {
+                var invLen2 = 1f / d2
+                if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
+                    invLen2 = FIXNORMAL2F_MAX_INVLEN2
+                x *= invLen2
+                y *= invLen2
+            }
+            res(x, y)
         }
     }
 }
 
 private fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
-inline class DrawVert_Buffer(val data: ByteBuffer) {
+@JvmInline
+value class DrawVert_Buffer(val data: ByteBuffer) {
 
     operator fun get(index: Int) = DrawVert(
-            Vec2(data, index * DrawVert.SIZE),
-            Vec2(data, index * DrawVert.SIZE + DrawVert.OFS_UV),
-            data.getInt(index * DrawVert.SIZE + DrawVert.OFS_COL))
+        Vec2(data, index * DrawVert.SIZE),
+        Vec2(data, index * DrawVert.SIZE + DrawVert.OFS_UV),
+        data.getInt(index * DrawVert.SIZE + DrawVert.OFS_COL))
 
     operator fun plusAssign(v: Vec2) {
         data.putFloat(v.x)
@@ -1608,7 +1480,7 @@ inline class DrawVert_Buffer(val data: ByteBuffer) {
     inline val sizeByte: Int
         get() = data.rem
 
-    inline val adr: Ptr
+    inline val adr: ULong
         get() = data.adr
 
     fun hasRemaining(): Boolean = rem > 0
@@ -1634,7 +1506,7 @@ inline class DrawVert_Buffer(val data: ByteBuffer) {
             return this
         val newData = ByteBuffer(newCapacity * DrawVert.SIZE)
         if (lim > 0)
-            MemoryUtil.memCopy(data.adr, newData.adr, data.lim.L)
+            MemoryUtil.memCopy(data.adr.L, newData.adr.L, data.lim.L)
         data.free()
         return DrawVert_Buffer(newData)
     }

@@ -1,7 +1,6 @@
 package imgui.internal
 
 import glm_.*
-import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -12,11 +11,14 @@ import kool.rem
 import uno.kotlin.NUL
 import unsigned.toBigInt
 import unsigned.toUInt
+import unsigned.ushr
 import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
+import java.util.regex.Pattern
 import kotlin.math.abs
+import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 
 
@@ -45,22 +47,18 @@ fun round(f: Float): Float = (f + 0.5f).i.f
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: Hashing
 // -----------------------------------------------------------------------------------------------------------------
-fun fileLoadToMemory(filename: String): CharArray? =
-        ClassLoader.getSystemResourceAsStream(filename)?.use { s ->
-            val bytes = s.readBytes()
-            CharArray(bytes.size) { bytes[it].c }
-        }
+fun fileLoadToMemory(filename: String): ByteArray? = ClassLoader.getSystemResourceAsStream(filename)?.use { it.readBytes() }
 
 /** [JVM] */
-fun hash(data: Int, seed: Int = 0): ID {
-    val buffer = ByteBuffer.allocate(Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
+fun hashData(data: Int, seed: Int = 0): ID {
+    val buffer = ByteBuffer.allocate(Int.BYTES).order(ByteOrder.nativeOrder()) // as C
     buffer.putInt(0, data)
-    return hash(buffer, seed)
+    return hashData(buffer, seed)
 }
 
 /** [JVM] */
-fun hash(data: IntArray, seed: Int = 0): ID {
-    val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
+fun hashData(data: IntArray, seed: Int = 0): ID {
+    val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.nativeOrder()) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
     val bytes = ByteArray(buffer.rem) { buffer[it] }
     return hashStr(String(bytes, StandardCharsets.ISO_8859_1), bytes.size, seed)
@@ -88,10 +86,12 @@ val GCrc32LookupTable = longArrayOf(
         0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6, 0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF, 0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D)
         .map { it.i }.toIntArray()
 
+fun hashData(data: String, seed: Int = 0): ID = hashData(data.toByteArray(), seed)
+
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
  *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
-fun hash(data: ByteArray, seed: Int = 0): ID {
+fun hashData(data: ByteArray, seed: Int = 0): ID {
     var crc = seed.inv()
     val crc32Lut = GCrc32LookupTable
     var b = 0
@@ -104,7 +104,7 @@ fun hash(data: ByteArray, seed: Int = 0): ID {
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
  *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
-fun hash(data: ByteBuffer, seed: Int = 0): ID {
+fun hashData(data: ByteBuffer, seed: Int = 0): ID {
     var crc = seed.inv()
     val crc32Lut = GCrc32LookupTable
     var dataSize = data.rem
@@ -119,9 +119,9 @@ fun hashStr(data: String, dataSize_: Int = 0, seed_: Int = 0): ID {
     convert to "Extended ASCII" Windows-1252 (CP1252) https://en.wikipedia.org/wiki/Windows-1252
     this caused crashes with `-` which in CP1252 is 150, while on UTF16 is 8211
      */
-//    val data = data_.toByteArray(Charset.forName("Cp1252"))
+    //    val data = data_.toByteArray(Charset.forName("Cp1252"))
 
-    val ast = '#'//.b
+    val ast = '#' //.b
     val seed = seed_.inv()
     var crc = seed
     var src = 0
@@ -140,10 +140,10 @@ fun hashStr(data: String, dataSize_: Int = 0, seed_: Int = 0): ID {
             val c = data[src++]
             if (c == ast && data.getOrNull(src) == ast && data.getOrNull(src + 1) == ast)
                 crc = seed
-//            val b = crc ushr 8
-//            val d = crc and 0xFF
-//            val e = d xor c.b.toUnsignedInt
-//            crc = b xor crc32Lut[e]
+            //            val b = crc ushr 8
+            //            val d = crc and 0xFF
+            //            val e = d xor c.b.toUnsignedInt
+            //            crc = b xor crc32Lut[e]
             crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c.b.toUInt()] // unsigned -> avoid negative values being passed as indices
         }
     return crc.inv()
@@ -177,7 +177,7 @@ val Int.upperPowerOfTwo: Int
 
 
 // -----------------------------------------------------------------------------------------------------------------
-// Helpers: String, Formatting
+// Helpers: String
 // [SECTION] MISC HELPERS/UTILITIES (String, Format, Hash functions)
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -202,7 +202,12 @@ val CharArray.strlenW: Int
         while (this[n] != NUL) n++
         return n
     }
-//IMGUI_API const char*   ImStreolRange(const char* str, const char* str_end);                // End end-of-line
+
+// End end-of-line
+fun String.eolRange(strStart: Int, strEnd: Int): Int {
+    val p = indexOf('\n', strStart)
+    return if (p != -1) p else strEnd
+}
 //IMGUI_API const ImWchar*ImStrbolW(const ImWchar* buf_mid_line, const ImWchar* buf_begin);   // Find beginning-of-line
 //IMGUI_API const char*   ImStristr(const char* haystack, const char* haystack_end, const char* needle, const char* needle_end);
 /** Trim str by offsetting contents when there's leading data + writing a \0 at the trailing position.
@@ -222,18 +227,7 @@ fun trimBlanks(buf: CharArray): CharArray {
 }
 
 //IMGUI_API const char*   ImStrSkipBlank(const char* str);
-//IMGUI_API int           ImFormatString(char* buf, size_t buf_size, const char* fmt, ...) IM_FMTARGS(3);
-
-fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
-    val bytes = fmt.format(g.style.locale, *args).toByteArray()
-    bytes.copyInto(buf) // TODO IndexOutOfBoundsException?
-    return bytes.size.also { w -> buf[w] = 0 }
-}
-
-//IMGUI_API const char*   ImParseFormatFindStart(const char* format);
-//IMGUI_API const char*   ImParseFormatFindEnd(const char* format);
-//IMGUI_API const char*   ImParseFormatTrimDecorations(const char* format, char* buf, size_t buf_size);
-//IMGUI_API int           ImParseFormatPrecision(const char* format, int default_value);
+//char      ImToUpper(char c)               { return (c >= 'a' && c <= 'z') ? c &= ~32 : c; }
 fun charIsBlankA(c: Int): Boolean = c == ' '.i || c == '\t'.i
 
 val Char.isBlankA: Boolean
@@ -246,28 +240,154 @@ val Char.isBlankW: Boolean
 
 
 // -----------------------------------------------------------------------------------------------------------------
+// Helpers: Formatting
+// -----------------------------------------------------------------------------------------------------------------
+
+fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
+    val bytes = fmt.format(*args).toByteArray()
+    bytes.copyInto(buf) // TODO IndexOutOfBoundsException?
+    return bytes.size.also { w -> buf[w] = 0 }
+}
+
+/** out buffer is `g.tempBuffer`
+ *  @return  buffer length */
+fun formatStringToTempBuffer(fmt: String, vararg args: Any): Int = formatString(g.tempBuffer, fmt, *args)
+
+//fun formatStringToTempBufferV(buf: ByteArray, fmt: String, vararg args: Any = emptyArray()) IM_FMTLIST(3);
+
+val formatArgPattern: Pattern
+    get() = Pattern.compile("%(\\d+\\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])")
+
+fun parseFormatFindStart(fmt: String): Int {
+    val matcher = formatArgPattern.matcher(fmt)
+    var i = 0
+    while (matcher.find(i)) {
+        if (fmt[matcher.end() - 1] != '%')
+            return matcher.start()
+        i = matcher.end()
+    }
+    return 0
+}
+
+/** We don't use strchr() because our strings are usually very short and often start with '%' */
+fun parseFormatFindStart2(fmt_: String): Int {
+    var fmt = StringPointer(fmt_)
+    var c = fmt[0]
+    while (c != NUL) {
+        if (c == '%' && fmt[1] != '%')
+            return fmt()
+        else if (c == '%')
+            fmt++
+        fmt++
+        c = fmt[0]
+    }
+    return fmt()
+}
+
+fun parseFormatFindEnd(fmt: String, i_: Int = 0): Int {
+    val matcher = formatArgPattern.matcher(fmt)
+    var i = 0
+    while (matcher.find(i)) {
+        if (fmt[matcher.end() - 1] != '%')
+            return matcher.end()
+        i = matcher.end()
+    }
+    return 0
+}
+
+/** Extract the format out of a format string with leading or trailing decorations
+ *  fmt = "blah blah"  -> return fmt
+ *  fmt = "%.3f"       -> return fmt
+ *  fmt = "hello %.3f" -> return fmt + 6
+ *  fmt = "%.3f hello" -> return buf written with "%.3f" */
+fun parseFormatTrimDecorations(fmt: String): String {
+    val fmtStart = parseFormatFindStart(fmt)
+    if (fmt[fmtStart] != '%')
+        return fmt
+    val fmtEnd = fmtStart + parseFormatFindEnd(fmt.substring(fmtStart))
+    return fmt.substring(fmtStart, fmtEnd)
+}
+
+// Sanitize format
+// - Zero terminate so extra characters after format (e.g. "%f123") don't confuse atof/atoi
+// - stb_sprintf.h supports several new modifiers which format numbers in a way that also makes them incompatible atof/atoi.
+fun parseFormatSanitizeForPrinting(fmt: String): String = fmt.filter { it != '\'' && it != '$' && it != '_' } // Custom flags provided by stb_sprintf.h. POSIX 2008 also supports '.
+
+fun parseFormatSanitizeForScanning(fmt: String): String {
+    val fmtEnd = parseFormatFindEnd(fmt)
+    //    IM_UNUSED(fmt_out_size)
+    //    IM_ASSERT((size_t)(fmtEnd - fmt_in + 1) < fmt_out_size) // Format is too long, let us know if this happens to you!
+    var hasType = false
+    val out = StringBuilder()
+    for (c in fmt) {
+        if (!hasType && (c in '0'..'9' || c == '.'))
+            continue
+        hasType = hasType || c in 'a'..'z' || c in 'A'..'Z' // Stop skipping digits
+        if (c != '\'' && c != '$' && c != '_') // Custom flags provided by stb_sprintf.h. POSIX 2008 also supports '.
+            out += c
+    }
+    return out.toString()
+}
+
+/** Parse display precision back from the display format string
+ *  FIXME: This is still used by some navigation code path to infer a minimum tweak step, but we should aim to rework widgets so it isn't needed. */
+fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
+    var i = parseFormatFindStart(fmt)
+    if (fmt[i] != '%')
+        return defaultPrecision
+    i++
+    while (fmt[i] in '0'..'9')
+        i++
+    var precision = Int.MAX_VALUE
+    if (fmt[i] == '.') {
+        val s = fmt.substring(i).filter { it.isDigit() }
+        if (s.isNotEmpty()) {
+            precision = s.parseInt()
+            if (precision < 0 || precision > 99)
+                precision = defaultPrecision
+        }
+    }
+    if (fmt[i].lowercaseChar() == 'e')    // Maximum precision with scientific notation
+        precision = -1
+    if (fmt[i].lowercaseChar() == 'g' && precision == Int.MAX_VALUE)
+        precision = -1
+    return when (precision) {
+        Int.MAX_VALUE -> defaultPrecision
+        else -> precision
+    }
+}
+
+
+// -----------------------------------------------------------------------------------------------------------------
 // Helpers: UTF-8 <> wchar
 // [SECTION] MISC HELPERS/UTILITIES (ImText* functions)
 // -----------------------------------------------------------------------------------------------------------------
 
+/* return out_buf */
+fun textCharToUtf8(outBuf: ByteArray, c: Int): ByteArray {
+    val count = textCharToUtf8Inline(outBuf, 5, c)
+    outBuf[count] = 0
+    return outBuf
+}
+
 /** return output UTF-8 bytes count */
-fun textStrToUtf8(buf: ByteArray, text: CharArray): Int {
+fun textStrToUtf8(outBuf: ByteArray, text: CharArray): Int {
     var b = 0
     var t = 0
-    while (b < buf.size && t < text.size && text[t] != NUL) {
+    while (b < outBuf.size && t < text.size && text[t] != NUL) {
         val c = text[t++].i
         if (c < 0x80)
-            buf[b++] = c.b
+            outBuf[b++] = c.b
         else
-            b += textCharToUtf8(buf, b, c)
+            b += textCharToUtf8Inline(outBuf, b, c)
     }
-    if (b < buf.size) buf[b] = 0
+    if (b < outBuf.size) outBuf[b] = 0
     return b
 }
 
 /** Based on stb_to_utf8() from github.com/nothings/stb/
  *  ~ImTextCharToUtf8   */
-fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
+fun textCharToUtf8Inline(buf: ByteArray, b: Int, c: Int): Int {
     if (c < 0x80) {
         buf[b + 0] = c.b
         return 1
@@ -361,22 +481,22 @@ private val shifte = intArrayOf(0, 6, 4, 2, 0)
  *  @return [JVM] [char: Int, bytes: Int]
  *
  *  ~ImTextCharFromUtf8 */
-fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
+fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = -1): Pair<Int, Int> {
 
     var end = textEnd
 
-    val len = lengths[text[begin].i ushr 3]
+    val len = lengths[(text[begin] ushr 3).i]
     var wanted = len + (len == 0).i
 
     if (textEnd == -1)
-        end = len + if (len == 0) 1 else 0 // Max length, nulls will be taken into account.
+        end = begin + wanted // Max length, nulls will be taken into account.
 
     // Copy at most 'len' bytes, stop copying at 0 or past in_text_end.
     val s = ByteArray(4)
     s[0] = if (begin + 0 < end) text[begin + 0] else 0
-    s[1] = if (s[0] != 0.b && begin + 1 < end) text[begin + 1] else 0
-    s[2] = if (s[1] != 0.b && begin + 2 < end) text[begin + 2] else 0
-    s[3] = if (s[2] != 0.b && begin + 3 < end) text[begin + 3] else 0
+    s[1] = if (begin + 1 < end) text[begin + 1] else 0
+    s[2] = if (begin + 2 < end) text[begin + 2] else 0
+    s[3] = if (begin + 3 < end) text[begin + 3] else 0
 
     // Assume a four-byte character and load four bytes. Unused bits are shifted out.
     var outChar = (s[0].i and masks[len]) shl 18
@@ -407,19 +527,20 @@ fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = text.strlen
 }
 
 /** return input UTF-8 bytes count */
-fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, textRemaining: Vec1i? = null): Int {
-    var b = 0
-    var t = 0
-    while (b < buf.lastIndex && t < textEnd && text[t] != 0.b) {
-        val (c, bytes) = textCharFromUtf8(text, t, textEnd)
-        t += bytes
-        if (c == 0)
+fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = -1, textRemaining: KMutableProperty0<Int>? = null): Int {
+    var pBuf = 0
+    var pText = 0
+    while (pBuf < buf.size && (textEnd == -1 || pText < textEnd) && pText < text.size && text[pText] != 0.b) {
+        val (code, bytes) = textCharFromUtf8(text, pText, textEnd)
+        pText += bytes
+        if (code == 0)
             break
-        buf[b++] = c.c
+        buf[pBuf++] = code.c
     }
-    if (b < buf.size) buf[b] = NUL
-    textRemaining?.put(t)
-    return b
+    if (pBuf < buf.size)
+        buf[pBuf] = NUL
+    textRemaining?.set(pText)
+    return pBuf
 }
 
 /** ~ImTextStrFromUtf8 */
@@ -548,13 +669,18 @@ fun subClampOverflow(a: BigInteger, b: BigInteger, mn: BigInteger, mx: BigIntege
 // -----------------------------------------------------------------------------------------------------------------
 
 fun floor(a: Float): Float = a.i.f
+
+// Decent replacement for floorf()
+fun floorSigned(f: Float) = (if (f >= 0 || f.i.f == f) f.i else f.i - 1).f
 fun floor(a: Vec2): Vec2 = Vec2(floor(a.x), floor(a.y))
+fun floorSigned(v: Vec2) = Vec2(floorSigned(v.x), floorSigned(v.y))
 fun lerp(a: Float, b: Float, t: Float): Float = a + (b - a) * t
 fun lerp(a: Double, b: Double, t: Float): Double = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float): Int = (a + (b - a) * t).i
 fun lerp(a: Long, b: Long, t: Float): Long = (a + (b - a) * t).L
 fun modPositive(a: Int, b: Int): Int = (a + b) % b
 
+// - Misc maths helpers
 // TODO -> glm
 fun Vec2.lerp(b: Vec2, t: Float): Vec2 = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
 fun Vec2.lerp(b: Vec2, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
@@ -575,6 +701,10 @@ fun linearSweep(current: Float, target: Float, speed: Float) = when {
     current > target -> glm.max(current - speed, target)
     else -> current
 }
+
+val Float.isAboveGuaranteedIntegerPrecision get() = f <= -16777216 || f >= 16777216
+
+fun exponentialMovingAverage(avg: Float, sample: Float, n: Int): Float = avg - avg / n + sample / n
 
 //-----------------------------------------------------------------------------
 // [SECTION] MISC HELPERS/UTILITIES (Geometry functions)
@@ -712,7 +842,11 @@ fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
     }
 }
 
-fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
+fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray = FloatArray(3).apply {
+    triangleBarycentricCoords(a, b, c, p, ::put)
+}
+
+fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2, setter: Vec3Setter) {
     val v0 = b - a
     val v1 = c - a
     val v2 = p - a
@@ -720,17 +854,17 @@ fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
     val outV = (v2.x * v1.y - v1.x * v2.y) / denom
     val outW = (v0.x * v2.y - v2.x * v0.y) / denom
     val outU = 1f - outV - outW
-    return floatArrayOf(outU, outV, outW)
+    setter(outU, outV, outW)
 }
 
-fun triangleArea(a: Vec2, b: Vec2, c: Vec2): Float =
-        abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y))) * 0.5f
+fun triangleArea(a: Vec2, b: Vec2, c: Vec2): Float = abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y))) * 0.5f
 
 fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
     abs(dx) > abs(dy) -> when {
         dx > 0f -> Dir.Right
         else -> Dir.Left
     }
+
     else -> when {
         dy > 0f -> Dir.Down
         else -> Dir.Up
@@ -739,11 +873,15 @@ fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
 
 
 // Helper: ImBitArray class (wrapper over ImBitArray functions)
-// Store 1-bit per value. NOT CLEARED by constructor.
+// Store 1-bit per value.
 //template<int BITCOUNT>
 class BitArray(val bitCount: Int) {
 
     val storage = IntArray((bitCount + 31) ushr 5)
+
+    init {
+        clearAllBits()
+    }
 
     fun clearAllBits() = storage.fill(0)
     fun setAllBits() = storage.fill(255)
@@ -776,4 +914,6 @@ class BitArray(val bitCount: Int) {
             n = (n + 32) wo 31
         }
     }
+
+    operator fun get(n: Int): Boolean = testBit(n)
 }

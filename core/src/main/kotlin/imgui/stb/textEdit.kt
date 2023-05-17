@@ -1,6 +1,6 @@
 package imgui.stb
 
-import gli_.has
+import glm_.has
 import glm_.c
 import glm_.i
 import glm_.wo
@@ -832,9 +832,11 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
             stb.hasPreferredX = false
             return true
         }
-        // remove the undo since we didn't actually insert the characters
-        if (stb.undoState.undoPoint != 0)
-            --stb.undoState.undoPoint
+        // [DEAR IMGUI]
+        //// remove the undo since we didn't actually insert the characters
+        //if (state->undostate.undo_point)
+        //   --state->undostate.undo_point;
+        // note: paste failure will leave deleted selection, may be restored with an undo (see https://github.com/nothings/stb/issues/734 for details)
         return false
     }
 

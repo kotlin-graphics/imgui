@@ -20,6 +20,9 @@ class Style {
     /**  Global alpha applies to everything in Dear ImGui.    */
     var alpha = 1f
 
+    /** Additional alpha multiplier applied by BeginDisabled(). Multiply over current value of Alpha. */
+    var disabledAlpha = 0.6f
+
     /** Padding within a window. */
     var windowPadding = Vec2(8)
 
@@ -29,8 +32,8 @@ class Style {
     /** Thickness of border around windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly).  */
     var windowBorderSize = 1f
 
-    /** Minimum window size. This is a global setting. If you want to constraint individual windows, use SetNextWindowSizeConstraints(). */
-    var windowMinSize = Vec2i(32)
+    /** Minimum window size. This is a global setting. If you want to constrain individual windows, use SetNextWindowSizeConstraints(). */
+    var windowMinSize = Vec2(32)
 
     /** Alignment for title bar text    */
     var windowTitleAlign = Vec2(0f, 0.5f)
@@ -86,7 +89,7 @@ class Style {
     var scrollbarRounding = 9f
 
     /** Minimum width/height of a grab box for slider/scrollbar */
-    var grabMinSize = 10f
+    var grabMinSize = 12f
 
     /** Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs. */
     var grabRounding = 0f
@@ -100,7 +103,7 @@ class Style {
     /** Thickness of border around tabs. */
     var tabBorderSize = 0f
 
-    /** Minimum width for close button to appears on an unselected tab when hovered. Set to 0.0f to always show when hovering, set to FLT_MAX to never show close button unless selected. */
+    /** Minimum width for close button to appear on an unselected tab when hovered. Set to 0.0f to always show when hovering, set to FLT_MAX to never show close button unless selected. */
     var tabMinWidthForCloseButton = 0f
 
     /** Side of the color button in the ColorEdit4 widget (left/right). Defaults to ImGuiDir_Right. */
@@ -129,7 +132,7 @@ class Style {
     var antiAliasedLines = true
 
     /** Enable anti-aliased lines/borders using textures where possible. Require backend to render with
-     *  bilinear filtering. Latched at the beginning of the frame (copied to ImDrawList). */
+     *  bilinear filtering (NOT point/nearest filtering). Latched at the beginning of the frame (copied to ImDrawList). */
     var antiAliasedLinesUseTex = true
 
     /**  Enable anti-aliased on filled shapes (rounded rectangles, circles, etc.).. Disable if you are really tight
@@ -142,7 +145,7 @@ class Style {
 
     /** Maximum error (in pixels) allowed when using AddCircle()/AddCircleFilled() or drawing rounded corner rectangles
      *  with no explicit segment count specified. Decrease for higher quality but more geometry. */
-    var circleSegmentMaxError = 1.6f
+    var circleTessellationMaxError = 0.30f
 
     val colors = ArrayList<Vec4>()
 
@@ -150,6 +153,20 @@ class Style {
     var locale: Locale = Locale.US
 //    var locale: Locale = Locale("no", "NO")
 //    val locale = Locale.getDefault()
+
+    // [JVM]
+    fun copy() = Style().also {
+        it.alpha = alpha; it.disabledAlpha = disabledAlpha; it.windowPadding = windowPadding; it.windowRounding = windowRounding; it.windowBorderSize = windowBorderSize
+        it.windowMinSize = windowMinSize; it.windowTitleAlign = windowTitleAlign; it.windowMenuButtonPosition = windowMenuButtonPosition; it.childRounding = childRounding
+        it.childBorderSize = childBorderSize; it.popupRounding = popupRounding; it.popupBorderSize = popupBorderSize; it.framePadding = framePadding; it.frameRounding = frameRounding
+        it.frameBorderSize = frameBorderSize; it.itemSpacing = itemSpacing; it.itemInnerSpacing = itemInnerSpacing; it.cellPadding put cellPadding
+        it.touchExtraPadding = touchExtraPadding; it.indentSpacing = indentSpacing; it.columnsMinSpacing = columnsMinSpacing; it.scrollbarSize = scrollbarSize;
+        it.scrollbarRounding = scrollbarRounding; it.grabMinSize = grabMinSize; it.grabRounding = grabRounding; it.logSliderDeadzone = logSliderDeadzone; it.tabRounding = tabRounding
+        it.tabBorderSize = tabBorderSize; it.tabMinWidthForCloseButton = tabMinWidthForCloseButton; it.colorButtonPosition = colorButtonPosition; it.buttonTextAlign = buttonTextAlign
+        it.selectableTextAlign = selectableTextAlign; it.displayWindowPadding = displayWindowPadding; it.displaySafeAreaPadding = displaySafeAreaPadding
+        it.mouseCursorScale = mouseCursorScale; it.antiAliasedLines = antiAliasedLines; it.antiAliasedLinesUseTex = antiAliasedLinesUseTex; it.antiAliasedFill = antiAliasedFill
+        it.curveTessellationTol = curveTessellationTol; it.circleTessellationMaxError = circleTessellationMaxError; it.colors += colors; it.locale = locale
+    }
 
     init {
         styleColorsClassic(this)
@@ -196,7 +213,7 @@ class Style {
         antiAliasedLinesUseTex = style.antiAliasedLinesUseTex
         antiAliasedFill = style.antiAliasedFill
         curveTessellationTol = style.curveTessellationTol
-        circleSegmentMaxError = style.circleSegmentMaxError
+        circleTessellationMaxError = style.circleTessellationMaxError
         style.colors.forEach { colors += Vec4(it) }
 //        locale = style.locale
     }

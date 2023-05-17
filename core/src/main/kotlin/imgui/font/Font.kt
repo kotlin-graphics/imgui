@@ -61,16 +61,14 @@ class Font {
     /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
     var configDataCount = 0                     // 2     // in  // ~ 1
 
-    /** Replacement character if a glyph isn't found. Only set via SetFallbackChar()    */
-    var fallbackChar = '?'                      // 2     // in  // = '?'
-        /** ~SetFallbackChar */
-        set(value) {
-            field = value
-            buildLookupTable()
-        }
+    /** Character used if a glyph isn't found. */
+    var fallbackChar = '\uffff'                      // out // = FFFD/'?'
 
-    /** Override a codepoint used for ellipsis rendering. */
-    var ellipsisChar = '\uffff'                 // out //
+    /** Character used for ellipsis rendering. */
+    var ellipsisChar = '\uffff'                 // out // = '...'
+
+    /** Character used for ellipsis rendering (if a single '...' character isn't found) */
+    var dotChar = '\uffff'            // 2     // out
 
     var dirtyLookupTables = true                // 1     // out //
 
@@ -123,16 +121,9 @@ class Font {
 
             if (wordWrapEnabled) {
 
-                /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
-                    and not intrusive for what's essentially an uncommon feature.   */
-                if (wordWrapEol == -1) {
+                // Calculate how far we can render. Requires two passes on the string data but keeps the code simple and not intrusive for what's essentially an uncommon feature.
+                if (wordWrapEol == -1)
                     wordWrapEol = calcWordWrapPositionA(scale, text, s, textEnd, wrapWidth - lineWidth)
-                    /*  Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height
-                        discontinuity.                     */
-                    if (wordWrapEol == s)
-                    // +1 may not be a character start point in UTF-8 but it's ok because we use s >= wordWrapEol below
-                        wordWrapEol++
-                }
 
                 if (s >= wordWrapEol) {
                     if (textSize.x < lineWidth)
@@ -140,13 +131,7 @@ class Font {
                     textSize.y += lineHeight
                     lineWidth = 0f
                     wordWrapEol = -1
-
-                    // Wrapping skips upcoming blanks
-                    while (s < textEnd) {
-                        val c = text[s].toUInt()
-                        if (charIsBlankA(c)) s++ else if (c == '\n'.i) {
-                            s++; break; } else break
-                    }
+                    s = calcWordWrapNextLineStartA(text, s, textEnd) // Wrapping skips upcoming blanks
                     continue
                 }
             }
@@ -192,24 +177,32 @@ class Font {
         return textSize
     }
 
+    /** Wrapping skips upcoming blanks */
+    fun calcWordWrapNextLineStartA(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.size): Int {
+        var p = textBegin
+        while (p < textEnd && charIsBlankA(text[p].i))
+            p++
+        if (Char(text[p].i) == '\n')
+            p++
+        return p
+    }
+
+    // Simple word-wrapping for English, not full-featured. Please submit failing cases!
+    // This will return the next location to wrap from. If no wrapping if necessary, this will fast-forward to e.g. text_end.
+    // FIXME: Much possible improvements (don't cut things like "word !", "word!!!" but cut within "word,,,,", more sensible support for punctuations, support for Unicode punctuations, etc.)
     fun calcWordWrapPositionA(scale: Float, text: ByteArray, textBegin: Int, textEnd: Int, wrapWidth_: Float): Int {
 
-        /*  Simple word-wrapping for English, not full-featured. Please submit failing cases!
-            FIXME: Much possible improvements (don't cut things like "word !", "word!!!" but cut within "word,,,,",
-            more sensible support for punctuations, support for Unicode punctuations, etc.)
+        // For references, possible wrap point marked with ^
+        //  "aaa bbb, ccc,ddd. eee   fff. ggg!"
+        //      ^    ^    ^   ^   ^__    ^    ^
 
-            For references, possible wrap point marked with ^
-            "aaa bbb, ccc,ddd. eee   fff. ggg!"
-                ^    ^    ^   ^   ^__    ^    ^
+        // List of hardcoded separators: .,;!?'"
 
-            List of hardcoded separators: .,;!?'"
+        // Skip extra blanks after a line returns (that includes not counting them in width computation)
+        // e.g. "Hello    world" --> "Hello" "World"
 
-            Skip extra blanks after a line returns (that includes not counting them in width computation)
-            e.g. "Hello    world" --> "Hello" "World"
-
-            Cut words that cannot possibly fit within one line.
-            e.g.: "The tropical fish" with ~5 characters worth of width --> "The tr" "opical" "fish"    */
-
+        // Cut words that cannot possibly fit within one line.
+        // e.g.: "The tropical fish" with ~5 characters worth of width --> "The tr" "opical" "fish"
         var lineWidth = 0f
         var wordWidth = 0f
         var blankWidth = 0f
@@ -276,11 +269,18 @@ class Font {
                     s = if (prevWordEnd != -1) prevWordEnd else wordEnd
                 break
             }
+
             s = nextS
         }
+
+        // Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height discontinuity.
+        // +1 may not be a character start point in UTF-8 but it's ok because caller loops use (text >= word_wrap_eol).
+        if (s == textBegin && textBegin < textEnd)
+            return s + 1
         return s
     }
 
+    /** Note: as with every ImDrawList drawing function, this expects that the font atlas texture is bound. */
     fun renderChar(drawList: DrawList, size: Float, pos: Vec2, col_: Int, c: Char) {
         var col = col_
         val glyph = findGlyph(c)
@@ -296,6 +296,8 @@ class Font {
     }
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
+
+    /** Note: as with every ImDrawList drawing function, this expects that the font atlas texture is bound. */
     fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: ByteArray,
                    textBegin: Int, textEnd_: Int = text.strlen(textBegin), // ImGui:: functions generally already provides a valid text_end, so this is merely to handle direct calls.
                    wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
@@ -306,17 +308,26 @@ class Font {
         var (x, y) = pos(floor(pos.x), floor(pos.y))
         if (y > clipRect.w) return
 
+        val startX = x
         val scale = size / fontSize
         val lineHeight = fontSize * scale
         val wordWrapEnabled = wrapWidth > 0f
-        var wordWrapEol = 0
 
         // Fast-forward to first visible line
         var s = textBegin
-        if (y + lineHeight < clipRect.y && !wordWrapEnabled)
+        if (y + lineHeight < clipRect.y)
             while (y + lineHeight < clipRect.y && s < textEnd) {
-                s = text.memchr(s, '\n')
-                s = if (s == -1) s + 1 else textEnd
+                val lineEnd = text.memchr(s, '\n')
+                val lineNext = if(lineEnd != -1) lineEnd + 1 else textEnd
+                if (wordWrapEnabled) {
+                    // FIXME-OPT: This is not optimal as do first do a search for \n before calling CalcWordWrapPositionA().
+                    // If the specs for CalcWordWrapPositionA() were reworked to optionally return on \n we could combine both.
+                    // However it is still better than nothing performing the fast-forward!
+                    s = calcWordWrapPositionA(scale, text, s, lineNext, wrapWidth)
+                    s = calcWordWrapNextLineStartA(text, s, textEnd)
+                }
+                else
+                    s = lineNext
                 y += lineHeight
             }
 
@@ -350,34 +361,22 @@ class Font {
         var idxWrite = drawList._idxWritePtr
         var vtxCurrentIdx = drawList._vtxCurrentIdx
 
-        var colUntinted = col or COL32_A_MASK.inv()
+        val colUntinted = col or COL32_A_MASK.inv()
+        var wordWrapEol = 0
 
         while (s < textEnd) {
 
             if (wordWrapEnabled) {
 
-                /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
-                    and not intrusive for what's essentially an uncommon feature.                 */
-                if (wordWrapEol == 0) {
-                    wordWrapEol = calcWordWrapPositionA(scale, text, s, textEnd, wrapWidth - (x - pos.x))
-                    /*  Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height
-                        discontinuity.                     */
-                    if (wordWrapEol == s)
-                    //  +1 may not be a character start point in UTF-8 but it's ok because we use s >= wordWrapEol below
-                        wordWrapEol++
-                }
+                // Calculate how far we can render. Requires two passes on the string data but keeps the code simple and not intrusive for what's essentially an uncommon feature.
+                if (wordWrapEol == 0)
+                    wordWrapEol = calcWordWrapPositionA(scale, text, s, textEnd, wrapWidth - (x - startX))
 
                 if (s >= wordWrapEol) {
-                    x = pos.x
+                    x = startX
                     y += lineHeight
                     wordWrapEol = 0
-
-                    // Wrapping skips upcoming blanks
-                    while (s < textEnd) {
-                        val c = text[s].toUInt()
-                        if (charIsBlankA(c)) s++; else if (c == '\n'.i) {
-                            s++; break; } else break
-                    }
+                    s = calcWordWrapNextLineStartA(text, s, textEnd) // Wrapping skips upcoming blanks
                     continue
                 }
             }
@@ -395,7 +394,7 @@ class Font {
 
             if (c < 32) {
                 if (c == '\n'.i) {
-                    x = pos.x
+                    x = startX
                     y += lineHeight
                     if (y > clipRect.w)
                         break // break out of main loop
@@ -445,7 +444,7 @@ class Font {
                     }
 
                     // Support for untinted glyphs
-                    val glyphCol = if(glyph.colored) colUntinted else col
+                    val glyphCol = if (glyph.colored) colUntinted else col
 
                     // We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a debug builds. Inlined here:
                     drawList.apply {
@@ -482,7 +481,8 @@ class Font {
 
     // [Internal] Don't use!
 
-    val TABSIZE = 4
+    /** Until we move this to runtime and/or add proper tab support, at least allow users to compile-time override */
+    var TABSIZE = 4
 
     fun buildLookupTable() {
 
@@ -521,9 +521,29 @@ class Font {
         setGlyphVisible(' ', false)
         setGlyphVisible('\t', false)
 
-        // Setup fall-backs
+        // Ellipsis character is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
+        // However some old fonts may contain ellipsis at U+0085. Here we auto-detect most suitable ellipsis character.
+        // FIXME: Note that 0x2026 is rarely included in our font ranges. Because of this we are more likely to use three individual dots.
+        val ellipsisChars = listOf('\u2026', '\u0085')
+        val dotsChars = listOf('.', '\uFF0E')
+        if (ellipsisChar == '\uFFFF')
+            ellipsisChar = findFirstExistingGlyph(ellipsisChars)
+        if (dotChar == '\uFFFF')
+            dotChar = findFirstExistingGlyph(dotsChars)
+
+        // Setup fallback character
+        val fallbackChars = listOf(UNICODE_CODEPOINT_INVALID.toChar(), '?', ' ') // TODO JVM check `UNICODE_CODEPOINT_INVALID.toChar`
         fallbackGlyph = findGlyphNoFallback(fallbackChar)
-        fallbackAdvanceX = fallbackGlyph?.advanceX ?: 0f
+        if (fallbackGlyph == null) {
+            fallbackChar = findFirstExistingGlyph(fallbackChars)
+            fallbackGlyph = findGlyphNoFallback(fallbackChar)
+            if (fallbackGlyph == null) {
+                fallbackGlyph = glyphs.last()
+                fallbackChar = fallbackGlyph!!.codepoint
+            }
+        }
+
+        fallbackAdvanceX = fallbackGlyph!!.advanceX
         for (i in 0 until maxCodepoint + 1)
             if (indexAdvanceX[i] < 0f)
                 indexAdvanceX[i] = fallbackAdvanceX
@@ -574,7 +594,7 @@ class Font {
             val advanceXOriginal = advanceX
             advanceX = clamp(advanceX, cfg.glyphMinAdvanceX, cfg.glyphMaxAdvanceX)
             if (advanceX != advanceXOriginal) {
-                val charOffX = if(cfg.pixelSnapH) floor((advanceX - advanceXOriginal) * 0.5f) else (advanceX - advanceXOriginal) * 0.5f
+                val charOffX = if (cfg.pixelSnapH) floor((advanceX - advanceXOriginal) * 0.5f) else (advanceX - advanceXOriginal) * 0.5f
                 x0 += charOffX
                 x1 += charOffX
             }
@@ -658,10 +678,14 @@ class Font {
         g.drawListSharedData.fontSize = g.fontSize
     }
 
+
+    // [JVM] cant be static because we need the Font class instance to call `findGlyphNoFallback`
+    fun findFirstExistingGlyph(candidateChars: List<Char>) = candidateChars.find { findGlyphNoFallback(it) != null } ?: '\uFFFF'
+
     companion object {
 
         internal fun Char.remapCodepointIfProblematic(): Int {
-            val i = toInt()
+            val i = code
             return when (Platform.get()) {
                 /*  https://en.wikipedia.org/wiki/Windows-1252#Character_set
                  *  manually remap the difference from  ISO-8859-1 */

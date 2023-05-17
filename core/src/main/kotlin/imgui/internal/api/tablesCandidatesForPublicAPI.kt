@@ -1,18 +1,20 @@
 package imgui.internal.api
 
-import glm_.has
 import glm_.max
 import imgui.*
 import imgui.ImGui.calcTextSize
-import imgui.api.g
-import imgui.internal.hashStr
+import imgui.ImGui.fixColumnSortDirection
+import imgui.ImGui.getMaxColumnWidth
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
 import imgui.ImGui.style
 import imgui.ImGui.tableGetColumnCount
 import imgui.ImGui.tableGetColumnFlags
 import imgui.ImGui.tableGetColumnName
+import imgui.ImGui.updateColumnsWeightFromWidth
+import imgui.api.g
 import imgui.internal.classes.TableColumnIdx
+import imgui.internal.hashStr
 import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf
 
@@ -40,27 +42,12 @@ interface tablesCandidatesForPublicAPI {
             table.contextPopupColumn = columnN
             table.instanceInteracted = table.instanceCurrent
             val contextMenuId = hashStr("##ContextMenu", 0, table.id)
-            openPopupEx(contextMenuId, PopupFlag.None.i)
+            openPopupEx(contextMenuId)
         }
     }
 
-    /** For the getter you can use (TableGetColumnFlags() & ImGuiTableColumnFlags_IsEnabled) */
-    fun tableSetColumnEnabled(columnN_: Int, enabled: Boolean) {
-        var columnN = columnN_
-        val table = g.currentTable
-        assert(table != null)
-        if (table == null)
-            return
-        if (columnN < 0)
-            columnN = table.currentColumn
-        assert(columnN >= 0 && columnN < table.columnsCount)
-        val column = table.columns[columnN]
-        column.isEnabledNextFrame = enabled
-    }
-
-
     /** 'width' = inner column width, without padding */
-    fun tableSetColumnWidth(columnN: Int, width: Float)     {
+    fun tableSetColumnWidth(columnN: Int, width: Float) {
         val table = g.currentTable
         check(table != null && !table.isLayoutLocked)
         assert(columnN >= 0 && columnN < table.columnsCount)
@@ -76,7 +63,7 @@ interface tablesCandidatesForPublicAPI {
         if (column0.widthGiven == column0Width || column0.widthRequest == column0Width)
             return
 
-        //IMGUI_DEBUG_LOG("TableSetColumnWidth(%d, %.1f->%.1f)\n", column_0_idx, column_0->WidthGiven, column_0_width);
+        //IMGUI_DEBUG_PRINT("TableSetColumnWidth(%d, %.1f->%.1f)\n", column_0_idx, column_0->WidthGiven, column_0_width);
         var column1 = table.columns.getOrNull(column0.nextEnabledColumn)
 
         // In this surprisingly not simple because of how we support mixing Fixed and multiple Stretch columns.
@@ -158,7 +145,7 @@ interface tablesCandidatesForPublicAPI {
         if (column.sortDirection == SortDirection.None)
             column.sortOrder = -1
         else if (column.sortOrder == -1 || !appendToSortSpecs)
-            column.sortOrder = if(appendToSortSpecs) sortOrderMax + 1 else 0
+            column.sortOrder = if (appendToSortSpecs) sortOrderMax + 1 else 0
 
         for (otherColumnN in 0 until table.columnsCount) {
             val otherColumn = table.columns[otherColumnN]
@@ -182,9 +169,11 @@ interface tablesCandidatesForPublicAPI {
         // In your custom header row you may omit this all together and just call TableNextRow() without a height...
         var rowHeight = ImGui.textLineHeight
         val columnsCount = tableGetColumnCount()
-        for (columnN in 0 until columnsCount)
-        if (tableGetColumnFlags(columnN) has Tcf.IsEnabled)
-            rowHeight = rowHeight max calcTextSize(tableGetColumnName(columnN)!!).y
+        for (columnN in 0 until columnsCount) {
+            val flags = tableGetColumnFlags(columnN)
+            if (flags has Tcf.IsEnabled && flags hasnt Tcf.NoHeaderLabel)
+                rowHeight = rowHeight max calcTextSize(tableGetColumnName(columnN)!!).y
+        }
         rowHeight += style.cellPadding.y * 2f
         return rowHeight
     }

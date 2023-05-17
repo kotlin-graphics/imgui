@@ -3,6 +3,7 @@ package imgui
 //import com.sun.jdi.VirtualMachine
 import glm_.L
 import glm_.b
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.classes.InputTextCallbackData
 import imgui.classes.SizeCallbackData
@@ -25,11 +26,16 @@ internal var ptrId: Array<Int> = Array(512) { it }
 operator fun StringBuilder.plusAssign(string: String) {
     append(string)
 }
+operator fun StringBuilder.plusAssign(char: Char) {
+    append(char)
+}
 
-/** Unique ID used by widgets (typically hashed from a stack of string) */
+/** A unique ID used by widgets (typically the result of hashing a stack of string) */
 typealias ID = Int
 
-/** User data to identify a texture */
+/** ImTexture: user data for renderer backend to identify a texture [Compile-time configurable type]
+ *  - To use something else than an opaque void* pointer: override with e.g. '#define ImTextureID MyTextureType*' in your imconfig.h file.
+ *  - This can be whatever to you want it to be! read the FAQ about ImTextureID for details. */
 typealias TextureID = Int
 
 /** Return false = pass
@@ -125,7 +131,7 @@ infix fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
     val backupLim = lim
     lim = 0
     if (cap > 0)
-        MemoryUtil.memCopy(adr, newData.adr, remByte.L)
+        MemoryUtil.memCopy(adr.L, newData.adr.L, remByte.L)
     newData.lim = backupLim
     free()
     return newData
@@ -146,6 +152,7 @@ val CharArray.strlen: Int
         return i
     }
 
+/** ~ColorConvertU32ToFloat4 */
 val Int.vec4: Vec4
     get() {
         val s = 1f / 255f
@@ -156,13 +163,17 @@ val Int.vec4: Vec4
                 ((this ushr COL32_A_SHIFT) and 0xFF) * s)
     }
 
+/** ~ColorConvertFloat4ToU32 */
 val Vec4.u32: Int
-    get() {
-        var out = F32_TO_INT8_SAT(x) shl COL32_R_SHIFT
-        out = out or (F32_TO_INT8_SAT(y) shl COL32_G_SHIFT)
-        out = out or (F32_TO_INT8_SAT(z) shl COL32_B_SHIFT)
-        return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
-    }
+    get() = floatsToU32(x, y, z, w)
+
+/** ~ColorConvertFloat4ToU32 */
+fun floatsToU32(x: Float, y: Float, z: Float, w: Float = 0f): Int {
+    var out = F32_TO_INT8_SAT(x) shl COL32_R_SHIFT
+    out = out or (F32_TO_INT8_SAT(y) shl COL32_G_SHIFT)
+    out = out or (F32_TO_INT8_SAT(z) shl COL32_B_SHIFT)
+    return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
+}
 
 var imeInProgress = false
 //    var imeLastKey = 0
@@ -179,6 +190,13 @@ fun ByteArray.strlen(begin: Int = 0): Int {
     var len = 0
     for (i in begin until size)
         if (get(i) == 0.b) break
+        else len++
+    return len
+}
+fun List<Char>.strlen(begin: Int = 0): Int {
+    var len = 0
+    for (i in begin until size)
+        if (get(i) == NUL) break
         else len++
     return len
 }
@@ -206,6 +224,16 @@ infix fun ByteArray.strcmp(other: ByteArray): Int {
     return getOrElse(i) { 0 }.compareTo(other.getOrElse(i) { 0 })
 }
 
+fun ByteArray.strncmp(other: ByteArray, len: Int): Int {
+    check(size >= len && other.size >= len)
+    for (i in 0 until len) {
+        val cmp = this[i].compareTo(other[i])
+        if (cmp != 0)
+            return cmp
+    }
+    return 0
+}
+
 /** TODO -> uno or kool */
 operator fun <T> KMutableProperty0<T>.invoke(t: T): KMutableProperty0<T> {
     set(t)
@@ -213,3 +241,37 @@ operator fun <T> KMutableProperty0<T>.invoke(t: T): KMutableProperty0<T> {
 }
 
 val ByteArray.cStr get() = String(this, 0, strlen())
+
+typealias Vec3Setter = (x: Float, y: Float, z: Float) -> Unit
+typealias Vec4Setter = (x: Float, y: Float, z: Float, w: Float) -> Unit
+
+inline infix fun Vec3.into(setter: Vec3Setter) = setter(x, y, z)
+inline infix fun Vec4.into(setter: Vec3Setter) = setter(x, y, z)
+inline infix fun Vec4.into(setter: Vec4Setter) = setter(x, y, z, w)
+inline fun Vec4.into(setter: Vec4Setter, w: Float) = setter(x, y, z, w)
+
+fun Vec4.put(x: Float, y: Float, z: Float) {
+    put(x, y, z, w)
+}
+
+fun Vec3.put(x: Float, y: Float, z: Float, w: Float) {
+    put(x, y, z)
+}
+
+fun FloatArray.put(x: Float, y: Float, z: Float) {
+    this[0] = x
+    this[1] = y
+    this[2] = z
+}
+
+fun FloatArray.put(x: Float, y: Float, z: Float, w: Float) {
+    this[0] = x
+    this[1] = y
+    this[2] = z
+    this[3] = w
+}
+
+fun FloatArray.put(vararg f: Float) {
+    f.copyInto(this)
+
+}

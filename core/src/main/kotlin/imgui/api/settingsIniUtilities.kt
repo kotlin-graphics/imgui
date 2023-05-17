@@ -6,9 +6,10 @@ import java.io.File
 import java.nio.file.Paths
 
 
-/*  Settings/.Ini Utilities
-    - The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
-    - Set io.IniFilename to NULL to load/save manually. Read io.WantSaveIniSettings description about handling .ini saving manually. */
+// Settings/.Ini Utilities
+// - The disk functions are automatically called if io.IniFilename != NULL (default is "imgui.ini").
+// - Set io.IniFilename to NULL to load/save manually. Read io.WantSaveIniSettings description about handling .ini saving manually.
+// - Important: default value "imgui.ini" is relative to current working dir! Most apps will want to lock this to an absolute path (e.g. same path as executables).
 interface settingsIniUtilities {
 
     /** call after CreateContext() and before the first call to NewFrame(). NewFrame() automatically calls LoadIniSettingsFromDisk(io.IniFilename). */

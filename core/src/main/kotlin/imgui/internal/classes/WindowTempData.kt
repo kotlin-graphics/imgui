@@ -7,7 +7,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-/** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame)
+/** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame, in practice we currently keep it for each window)
  *
  *  Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
  *  (That's theory, in practice the delimitation between ImGuiWindow and ImGuiWindowTempData is quite tenuous and could be reconsidered..)
@@ -19,7 +19,7 @@ class WindowTempData {
     var cursorPos = Vec2()
 
     /** Current emitting position, in absolute coordinates. */
-    var cursorPosPrevLine = Vec2()
+    val cursorPosPrevLine = Vec2()
 
     /** Initial position after Begin(), generally ~ window position + WindowPadding. */
     var cursorStartPos = Vec2()
@@ -39,6 +39,10 @@ class WindowTempData {
 
     var prevLineTextBaseOffset = 0f
 
+    var isSameLine = false
+
+    var isSetPos = false
+
     /** Indentation / start position from left of window (increased by TreePush/TreePop, etc.)  */
     var indent = 0f
 
@@ -48,21 +52,8 @@ class WindowTempData {
 
     var groupOffset = 0f
 
-
-    // Last item status
-
-    /** ID for last item */
-    var lastItemId: ID = 0
-
-    /** Status flags for last item (see ImGuiItemStatusFlags_) */
-    var lastItemStatusFlags = ItemStatusFlag.None.i
-
-    /** Interaction rect for last item    */
-    var lastItemRect = Rect()
-
-    /** End-user display rect for last item (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */
-    var lastItemDisplayRect = Rect()
-
+    /** Record the loss of precision of CursorStartPos due to really large scrolling amount. This is used by clipper to compensentate and fix the most common use case of large scroll area. */
+    val cursorStartPosLossyness = Vec2()
 
     // Keyboard/Gamepad navigation
 
@@ -70,13 +61,10 @@ class WindowTempData {
     var navLayerCurrent = NavLayer.Main
 
     /** Which layers have been written to (result from previous frame)   */
-    var navLayerActiveMask = 0
+    var navLayersActiveMask = 0
 
     /** Which layers have been written to (accumulator for current frame) */
-    var navLayerActiveMaskNext = 0x00
-
-    /** Current focus scope ID while appending */
-    var navFocusScopeIdCurrent: ID = 0
+    var navLayersActiveMaskNext = 0x00
 
     var navHideHighlightOneFrame = false
 
@@ -116,20 +104,8 @@ class WindowTempData {
 
     var parentLayoutType = LayoutType.Horizontal
 
-    /** (Legacy Focus/Tabbing system) Sequential counter, start at -1 and increase as assigned via FocusableItemRegister() (FIXME-NAV: Needs redesign) */
-    var focusCounterRegular = 0
-
-    /** (Legacy Focus/Tabbing system) Same, but only count widgets which you can Tab through. */
-    var focusCounterTabStop = 0
-
 
     // Local parameters stacks
-
-    /*  We store the current settings outside of the vectors to increase memory locality (reduce cache misses).
-        The vectors are rarely modified. Also it allows us to not heap allocate for short-lived windows which are not
-        using those settings.   */
-    /** == g.ItemFlagsStack.back() */
-    var itemFlags = ItemFlag.None.i
 
     /** Current item width (>0.0: width in pixels, <0.0: align xx pixels to the right of window). */
     var itemWidth = 0f
@@ -142,7 +118,4 @@ class WindowTempData {
 
     /** Store text wrap pos to restore (attention: .back() is not == TextWrapPos) */
     val textWrapPosStack = Stack<Float>()
-
-    /** Store size of various stacks for asserting  */
-    val stackSizesOnBegin = StackSizes()
 }

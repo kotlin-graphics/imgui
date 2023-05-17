@@ -8,22 +8,26 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
 import imgui.ImGui.getColumnOffset
+import imgui.ImGui.getNormFrom
+import imgui.ImGui.getOffsetFrom
 import imgui.ImGui.io
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
 import imgui.ImGui.style
-import imgui.internal.*
+import imgui.emptyFlags
+import imgui.has
+import imgui.hasnt
+import imgui.internal.floor
+import imgui.internal.lerp
 import imgui.internal.sections.OldColumns
 import imgui.internal.sections.OldColumnsFlags
-import imgui.internal.sections.has
-import imgui.internal.sections.hasnt
 import kotlin.math.max
 import kotlin.math.min
 import imgui.internal.sections.OldColumnsFlag as Cf
 
-/** Legacy Columns API (2020: prefer using Tables!)
- *  - You can also use SameLine(pos_x) to mimic simplified columns. */
+// Legacy Columns API (prefer using Tables!)
+// - You can also use SameLine(pos_x) to mimic simplified columns.
 interface columns {
 
     fun columns(columnsCount: Int = 1, id: String = "", border: Boolean = true) {
@@ -31,7 +35,7 @@ interface columns {
         val window = currentWindow
         assert(columnsCount >= 1)
 
-        val flags: OldColumnsFlags = if (border) Cf.None.i else Cf.NoBorder.i
+        val flags: OldColumnsFlags = if (border) emptyFlags else Cf.NoBorder
         //flags |= ImGuiOldColumnFlags_NoPreserveWidths; // NB: Legacy behavior
         window.dc.currentColumns?.let {
             if (it.count == columnsCount && it.flags == flags)
@@ -80,6 +84,7 @@ interface columns {
             } else {
                 // New row/line: column 0 honor IndentX.
                 dc.columnsOffset = (columnPadding - window.windowPadding.x) max 0f
+                dc.isSameLine = false
                 columns.lineMinY = columns.lineMaxY
             }
             dc.cursorPos.x = floor(pos.x + dc.indent + dc.columnsOffset)

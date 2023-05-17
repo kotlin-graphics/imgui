@@ -1,20 +1,18 @@
 package imgui.api
 
 import glm_.max
-import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
+import imgui.ImGui.setScrollFromPosX
+import imgui.ImGui.setScrollFromPosY
+import imgui.ImGui.setScrollX
+import imgui.ImGui.setScrollY
 import imgui.ImGui.style
-import imgui.internal.sections.NextWindowDataFlag
-import imgui.internal.sections.or
-import imgui.lerp
+import imgui.internal.lerp
 
-/** Windows Scrolling */
+// Windows Scrolling
+// - Any change of Scroll will be applied at the beginning of next frame in the first call to Begin().
+// - You may instead use SetNextWindowScroll() prior to calling Begin() to avoid this delay, as an alternative to using SetScrollX()/SetScrollY().
 interface windowScrolling {
-
-    fun setNextWindowScroll(scroll: Vec2) {
-        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasScroll
-        g.nextWindowData.scrollVal put scroll
-    }
 
     /** Scrolling amount [0..GetScrollMaxX()] */
     var scrollX: Float
@@ -45,9 +43,8 @@ interface windowScrolling {
      *  adjust scrolling amount to make current cursor position visible. center_x_ratio=0.0: left, 0.5: center, 1.0: right. When using to make a "default/current item" visible, consider using SetItemDefaultFocus() instead. */
     fun setScrollHereX(centerXRatio: Float) {
         val window = g.currentWindow!!
-        val spacingX = style.itemSpacing.x
-        val targetPosX =
-            lerp(window.dc.lastItemRect.min.x - spacingX, window.dc.lastItemRect.max.x + spacingX, centerXRatio)
+        val spacingX = window.windowPadding.x max style.itemSpacing.x
+        val targetPosX = lerp(g.lastItemData.rect.min.x - spacingX, g.lastItemData.rect.max.x + spacingX, centerXRatio)
         window.setScrollFromPosX(targetPosX - window.pos.x, centerXRatio) // Convert from absolute to local pos
 
         // Tweak: snap on edges when aiming at an item very close to the edge
@@ -59,19 +56,15 @@ interface windowScrolling {
      *   When using to make a "default/current item" visible, consider using setItemDefaultFocus() instead.*/
     fun setScrollHereY(centerYRatio: Float = 0.5f) {
         val window = g.currentWindow!!
-        val spacingY = style.itemSpacing.y
-        val targetPosY = lerp(window.dc.cursorPosPrevLine.y - spacingY,
-            window.dc.cursorPosPrevLine.y + window.dc.prevLineSize.y + spacingY,
-            centerYRatio)
+        val spacingY = window.windowPadding.y max style.itemSpacing.y
+        val targetPosY = lerp(window.dc.cursorPosPrevLine.y - spacingY, window.dc.cursorPosPrevLine.y + window.dc.prevLineSize.y + spacingY, centerYRatio)
         window.setScrollFromPosY(targetPosY - window.pos.y, centerYRatio) // Convert from absolute to local pos
 
         // Tweak: snap on edges when aiming at an item very close to the edge
         window.scrollTargetEdgeSnapDist.y = 0f max (window.windowPadding.y - spacingY)
     }
 
-    fun setScrollFromPosX(localX: Float, centerXratio: Float) =
-        g.currentWindow!!.setScrollFromPosX(localX, centerXratio)
+    fun setScrollFromPosX(localX: Float, centerXratio: Float) = g.currentWindow!!.setScrollFromPosX(localX, centerXratio)
 
-    fun setScrollFromPosY(localY: Float, centerYratio: Float) =
-        g.currentWindow!!.setScrollFromPosY(localY, centerYratio)
+    fun setScrollFromPosY(localY: Float, centerYratio: Float) = g.currentWindow!!.setScrollFromPosY(localY, centerYratio)
 }

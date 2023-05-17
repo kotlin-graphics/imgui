@@ -1,14 +1,13 @@
 package imgui.font
 
-import gli_.has
 import imgui.UNICODE_CODEPOINT_MAX
-import kool.BYTES
+import imgui.internal.textCharFromUtf8
+import uno.kotlin.NUL
 
-/** Helper to build glyph ranges from text/string data. Feed your application strings/characters to it then call BuildRanges().
- *  This is essentially a tightly packed of vector of 64k booleans = 8KB storage. */
 class FontGlyphRangesBuilder {
+
     /** Store 1-bit per Unicode code point (0=unused, 1=used) */
-    lateinit var usedChars: IntArray
+    val usedChars = ArrayList<UInt>()
 
     init {
         clear()
@@ -16,61 +15,62 @@ class FontGlyphRangesBuilder {
 
     fun clear() {
         val sizeInBytes = (UNICODE_CODEPOINT_MAX + 1) / 8
-        usedChars = IntArray(sizeInBytes / Int.BYTES)
+        usedChars.clear()
+        for (i in 0 until sizeInBytes / UInt.SIZE_BYTES)
+            usedChars += 0u
     }
 
     /** Get bit n in the array */
     fun getBit(n: Int): Boolean {
         val off = n shr 5
-        val mask = 1 shl (n and 31)
-        return usedChars[off] has mask
+        val mask = 1u shl (n and 31)
+        return (usedChars[off] and mask) != 0u
     }
 
     /** Set bit n in the array */
     fun setBit(n: Int) {
         val off = n shr 5
-        val mask = 1 shl (n and 31)
+        val mask = 1u shl (n and 31)
         usedChars[off] = usedChars[off] or mask
     }
 
     /** Add character */
-    fun addChar(c: Int) = setBit(c)
+    fun addChar(c: Char) = setBit(c.code)
+
     /** Add string (each character of the UTF-8 string are added) */
-//    fun addText(const char* text, const char* text_end)
-//    {
-//        while (text_end ? (text < text_end) : *text)
-//        {
-//            unsigned int c = 0;
-//            int c_len = ImTextCharFromUtf8(&c, text, text_end);
-//            text += c_len;
-//            if (c_len == 0)
-//                break;
-//            AddChar((ImWchar)c);
-//        }
-//    }
+    fun addText(text: ByteArray, textEnd: Int? = null) {
+        var p = 0
+        while (p < (textEnd ?: text.size)) {
+            val (c, cLen) = textCharFromUtf8(text, p, textEnd ?: 0)
+            p += cLen
+            if (cLen == 0)
+                break
+            addChar(Char(c))
+        }
+    }
 
     /** Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault()) to force add all of ASCII/Latin+Ext */
-    fun addRanges(ranges: Array<IntRange>) {
-        for (range in ranges)
-            for (c in range)
-                addChar(c)
+    fun addRanges(ranges: ArrayList<Char>) {
+        for (i in ranges.indices step 2) {
+            var c = ranges[i]
+            while (c <= ranges[i + 1] && c.code <= UNICODE_CODEPOINT_MAX) //-V560
+                addChar(c++)
+        }
     }
 
     /** Output new ranges */
-    fun buildRanges(): Array<IntRange> {
+    infix fun buildRanges(outRanges: ArrayList<Char>) {
         val maxCodepoint = UNICODE_CODEPOINT_MAX
-        val outRanges = ArrayList<Int>()
         var n = 0
         while (n <= maxCodepoint) {
             if (getBit(n)) {
-                outRanges += n
+                outRanges += Char(n)
                 while (n < maxCodepoint && getBit(n + 1))
                     n++
-                outRanges += n
+                outRanges += Char(n)
             }
             n++
         }
-        val size = outRanges.size / 2
-        return Array(size) { IntRange(outRanges[it * 2], outRanges[it * 2 + 1]) }
+        outRanges += NUL
     }
 }

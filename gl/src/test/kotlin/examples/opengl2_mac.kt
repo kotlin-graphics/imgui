@@ -16,18 +16,19 @@ import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryStack
+import uno.gl.GlWindow
 import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
 
-
+// TODO refresh
 fun main() {
     ImGuiOpenGL2_Mac()
 }
 
 private class ImGuiOpenGL2_Mac {
 
-    val window: GlfwWindow
+    val window: GlWindow
     val ctx: Context
 
     var f = 0f
@@ -47,17 +48,18 @@ private class ImGuiOpenGL2_Mac {
 
         // Setup window
         glfw {
-            errorCallback = { error, description -> println("Glfw Error $error: $description") }
+            errorCB = { error, description -> println("Glfw Error $error: $description") }
             GLFW.glfwInit()
-            windowHint {
+            hints.context {
                 debug = DEBUG
-                context.version = "2.0"
+                version = "2.0"
             }
         }
 
         // Create window with graphics context
-        window = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
-        window.makeContextCurrent()
+        val glfwWindow = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
+        window = GlWindow(glfwWindow)
+        window.makeCurrent()
         glfw.swapInterval = VSync.ON   // Enable vsync
         // Initialize OpenGL loader
         GL.createCapabilities()

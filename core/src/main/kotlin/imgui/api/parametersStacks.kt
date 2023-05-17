@@ -3,7 +3,6 @@ package imgui.api
 import glm_.f
 import glm_.max
 import glm_.vec2.Vec2
-import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.contentRegionMaxAbs
@@ -13,13 +12,10 @@ import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.style
 import imgui.font.Font
-import imgui.internal.*
 import imgui.internal.classes.ColorMod
 import imgui.internal.classes.StyleMod
+import imgui.internal.floor
 import imgui.internal.sections.NextItemDataFlag
-import imgui.internal.sections.has
-import imgui.internal.sections.or
-import imgui.internal.sections.wo
 import imgui.internal.sections.ItemFlag as If
 
 // Parameters stacks (shared)
@@ -29,11 +25,11 @@ interface parametersStacks {
     fun pushFont(font: Font = defaultFont) {
         font.setCurrent()
         g.fontStack.push(font)
-        g.currentWindow!!.drawList.pushTextureId(font.containerAtlas.texID)
+        g.currentWindow!!.drawList.pushTextureID(font.containerAtlas.texID)
     }
 
     fun popFont() {
-        g.currentWindow!!.drawList.popTextureId()
+        g.currentWindow!!.drawList.popTextureID()
         g.fontStack.pop()
         (g.fontStack.lastOrNull() ?: defaultFont).setCurrent()
     }
@@ -54,9 +50,16 @@ interface parametersStacks {
         style.colors[idx] = col
     }
 
-    fun popStyleColor(count: Int = 1) = repeat(count) {
-        val backup = g.colorStack.pop()
-        style.colors[backup.col] put backup.backupValue
+    fun popStyleColor(count_: Int = 1) {
+        var count = count_
+        if (g.colorStack.size < count) {
+            System.err.println("Calling PopStyleColor() too many times: stack underflow.")
+            count = g.colorStack.size
+        }
+        repeat(count) {
+            val backup = g.colorStack.pop()
+            style.colors[backup.col] put backup.backupValue
+        }
     }
 
     /** It'll throw error if wrong correspondence between idx and value type
@@ -71,9 +74,13 @@ interface parametersStacks {
                     it.floats[0] = style.alpha
                     style.alpha = value as Float
                 }
+                StyleVar.DisabledAlpha -> {
+                    it.floats[0] = style.disabledAlpha
+                    style.disabledAlpha = value as Float
+                }
                 StyleVar.WindowPadding -> {
                     style.windowPadding to it.floats
-                    style.windowPadding put (value as Vec2)
+                    style.windowPadding put value as Vec2
                 }
                 StyleVar.WindowRounding -> {
                     it.floats[0] = style.windowRounding
@@ -84,12 +91,12 @@ interface parametersStacks {
                     style.windowBorderSize = value as Float
                 }
                 StyleVar.WindowMinSize -> {
-                    style.windowMinSize to it.ints
-                    style.windowMinSize put (value as Vec2i)
+                    style.windowMinSize to it.floats
+                    style.windowMinSize put value as Vec2
                 }
                 StyleVar.WindowTitleAlign -> {
                     style.windowTitleAlign to it.floats
-                    style.windowTitleAlign put (value as Vec2)
+                    style.windowTitleAlign put value as Vec2
                 }
                 StyleVar.ChildRounding -> {
                     it.floats[0] = style.childRounding
@@ -109,7 +116,7 @@ interface parametersStacks {
                 }
                 StyleVar.FramePadding -> {
                     style.framePadding to it.floats
-                    style.framePadding put (value as Vec2)
+                    style.framePadding put value as Vec2
                 }
                 StyleVar.FrameRounding -> {
                     it.floats[0] = style.frameRounding
@@ -121,11 +128,11 @@ interface parametersStacks {
                 }
                 StyleVar.ItemSpacing -> {
                     style.itemSpacing to it.floats
-                    style.itemSpacing put (value as Vec2)
+                    style.itemSpacing put value as Vec2
                 }
                 StyleVar.ItemInnerSpacing -> {
                     style.itemInnerSpacing to it.floats
-                    style.itemInnerSpacing put (value as Vec2)
+                    style.itemInnerSpacing put value as Vec2
                 }
                 StyleVar.IndentSpacing -> {
                     it.floats[0] = style.indentSpacing
@@ -133,7 +140,7 @@ interface parametersStacks {
                 }
                 StyleVar.CellPadding -> {
                     style.cellPadding to it.floats
-                    style.cellPadding put (value as Vec2)
+                    style.cellPadding put value as Vec2
                 }
                 StyleVar.ScrollbarSize -> {
                     it.floats[0] = style.scrollbarSize
@@ -157,54 +164,65 @@ interface parametersStacks {
                 }
                 StyleVar.ButtonTextAlign -> {
                     style.buttonTextAlign to it.floats
-                    style.buttonTextAlign put (value as Vec2)
+                    style.buttonTextAlign put value as Vec2
                 }
                 StyleVar.SelectableTextAlign -> {
                     style.selectableTextAlign to it.floats
-                    style.selectableTextAlign put (value as Vec2)
+                    style.selectableTextAlign put value as Vec2
                 }
             }
         })
     }
 
-    fun popStyleVar(count: Int = 1) = repeat(count) {
-        val backup = g.styleVarStack.pop()
-        when (backup.idx) {
-            StyleVar.Alpha -> style.alpha = backup.floats[0]
-            StyleVar.WindowPadding -> style.windowPadding put backup.floats
-            StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
-            StyleVar.WindowBorderSize -> style.windowBorderSize = backup.floats[0]
-            StyleVar.WindowMinSize -> style.windowMinSize put backup.ints
-            StyleVar.WindowTitleAlign -> style.windowTitleAlign put backup.floats
-            StyleVar.ChildRounding -> style.childRounding = backup.floats[0]
-            StyleVar.ChildBorderSize -> style.childBorderSize = backup.floats[0]
-            StyleVar.PopupRounding -> style.popupRounding = backup.floats[0]
-            StyleVar.PopupBorderSize -> style.popupBorderSize = backup.floats[0]
-            StyleVar.FrameBorderSize -> style.frameBorderSize = backup.floats[0]
-            StyleVar.FramePadding -> style.framePadding put backup.floats
-            StyleVar.FrameRounding -> style.frameRounding = backup.floats[0]
-            StyleVar.ItemSpacing -> style.itemSpacing put backup.floats
-            StyleVar.ItemInnerSpacing -> style.itemInnerSpacing put backup.floats
-            StyleVar.IndentSpacing -> style.indentSpacing = backup.floats[0]
-            StyleVar.ScrollbarSize -> style.scrollbarSize = backup.floats[0]
-            StyleVar.ScrollbarRounding -> style.scrollbarRounding = backup.floats[0]
-            StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]
-            StyleVar.GrabRounding -> style.grabRounding = backup.floats[0]
-            StyleVar.TabRounding -> style.tabRounding = backup.floats[0]
-            StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
-            StyleVar.SelectableTextAlign -> style.selectableTextAlign put backup.floats
+    fun popStyleVar(count_: Int = 1) {
+        var count = count_
+        if (g.styleVarStack.size < count) {
+            System.err.println( "Calling PopStyleVar() too many times: stack underflow.")
+            count = g.styleVarStack.size
+        }
+        repeat(count) {
+            val backup = g.styleVarStack.pop()
+            when (backup.idx) {
+                StyleVar.Alpha -> style.alpha = backup.floats[0]
+                StyleVar.DisabledAlpha -> style.disabledAlpha = backup.floats[0]
+                StyleVar.WindowPadding -> style.windowPadding put backup.floats
+                StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
+                StyleVar.WindowBorderSize -> style.windowBorderSize = backup.floats[0]
+                StyleVar.WindowMinSize -> style.windowMinSize put backup.floats
+                StyleVar.WindowTitleAlign -> style.windowTitleAlign put backup.floats
+                StyleVar.ChildRounding -> style.childRounding = backup.floats[0]
+                StyleVar.ChildBorderSize -> style.childBorderSize = backup.floats[0]
+                StyleVar.PopupRounding -> style.popupRounding = backup.floats[0]
+                StyleVar.PopupBorderSize -> style.popupBorderSize = backup.floats[0]
+                StyleVar.FrameBorderSize -> style.frameBorderSize = backup.floats[0]
+                StyleVar.FramePadding -> style.framePadding put backup.floats
+                StyleVar.FrameRounding -> style.frameRounding = backup.floats[0]
+                StyleVar.ItemSpacing -> style.itemSpacing put backup.floats
+                StyleVar.ItemInnerSpacing -> style.itemInnerSpacing put backup.floats
+                StyleVar.IndentSpacing -> style.indentSpacing = backup.floats[0]
+                StyleVar.CellPadding -> style.cellPadding put backup.floats
+                StyleVar.ScrollbarSize -> style.scrollbarSize = backup.floats[0]
+                StyleVar.ScrollbarRounding -> style.scrollbarRounding = backup.floats[0]
+                StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]
+                StyleVar.GrabRounding -> style.grabRounding = backup.floats[0]
+                StyleVar.TabRounding -> style.tabRounding = backup.floats[0]
+                StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
+                StyleVar.SelectableTextAlign -> style.selectableTextAlign put backup.floats
+            }
         }
     }
 
-    // FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
-    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop.i, !allowKeyboardFocus)
+    /** FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
+     *
+     *  == tab stop enable. Allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets */
+    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop, !allowKeyboardFocus)
 
     fun popAllowKeyboardFocus() = popItemFlag()
 
     /** in 'repeat' mode, Button*() functions return repeated true in a typematic manner
      *  (using io.KeyRepeatDelay/io.KeyRepeatRate setting). Note that you can call IsItemActive() after any Button() to
      *  tell if the button is held in the current frame.    */
-    fun pushButtonRepeat(repeat: Boolean) = pushItemFlag(If.ButtonRepeat.i, repeat)
+    fun pushButtonRepeat(repeat: Boolean) = pushItemFlag(If.ButtonRepeat, repeat)
 
     fun popButtonRepeat() = popItemFlag()
 

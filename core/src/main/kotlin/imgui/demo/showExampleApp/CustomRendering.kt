@@ -11,7 +11,6 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorEdit4
 import imgui.ImGui.cursorScreenPos
-import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endTabBar
@@ -23,21 +22,21 @@ import imgui.ImGui.getColorU32
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
-import imgui.ImGui.isMouseReleased
 import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
-import imgui.ImGui.sliderInt
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowSize
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.drag
+import imgui.api.slider
 import imgui.dsl.menuItem
 import imgui.internal.sections.ButtonFlag
-import imgui.internal.sections.DrawCornerFlag
+import imgui.internal.sections.DrawFlag
 import kotlin.reflect.KMutableProperty0
 
 object CustomRendering {
@@ -104,23 +103,22 @@ object CustomRendering {
 
                 // Draw a bunch of primitives
                 text("All primitives")
-                dragFloat("Size", ::sz, 0.2f, 2.0f, 72.0f, "%.0f")
-                dragFloat("Thickness", ::thickness, 0.05f, 1.0f, 8.0f, "%.02f")
-                sliderInt("N-gon sides", ::ngonSides, 3, 12)
+                drag("Size", ::sz, 0.2f, 2f, 100f, "%.0f")
+                drag("Thickness", ::thickness, 0.05f, 1f, 8f, "%.02f")
+                slider("N-gon sides", ::ngonSides, 3, 12)
                 checkbox("##circlesegmentoverride", ::circleSegmentsOverride)
                 sameLine(0f, style.itemInnerSpacing.x)
-                circleSegmentsOverride = sliderInt("Circle segments override", ::circleSegmentsOverrideV, 3, 40) or circleSegmentsOverride
+                circleSegmentsOverride = slider("Circle segments override", ::circleSegmentsOverrideV, 3, 40) or circleSegmentsOverride
                 checkbox("##curvessegmentoverride", ::curveSegmentsOverride)
                 sameLine(0f, style.itemInnerSpacing.x)
-                curveSegmentsOverride = sliderInt("Curves segments override", ::curveSegmentsOverrideV, 3, 40) or curveSegmentsOverride
+                curveSegmentsOverride = slider("Curves segments override", ::curveSegmentsOverrideV, 3, 40) or curveSegmentsOverride
                 colorEdit4("Color", colf)
 
                 val p = cursorScreenPos
                 val col = getColorU32(colf)
                 val spacing = 10f
-                val cornersNone = DrawCornerFlag.None.i
-                val cornersAll = DrawCornerFlag.All.i
-                val cornersTlBr = DrawCornerFlag.TopLeft or DrawCornerFlag.BotRight
+                val cornersTlBr = DrawFlag.RoundCornersTopLeft or DrawFlag.RoundCornersBottomRight
+                val rounding = sz / 5f
                 val circleSegments = if (circleSegmentsOverride) circleSegmentsOverrideV else 0
                 val curveSegments = if(curveSegmentsOverride) curveSegmentsOverrideV else 0
                 var (x, y) = p + 4f
@@ -130,9 +128,9 @@ object CustomRendering {
                     drawList.apply {
                         addNgon(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides, th); x += sz + spacing  // N-gon
                         addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, circleSegments, th); x += sz + spacing  // Circle
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0.0f, cornersNone, th); x += sz + spacing  // Square
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersAll, th); x += sz + spacing  // Square with all rounded corners
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersTlBr, th); x += sz + spacing  // Square with two rounded corners
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0f, thickness = th); x += sz + spacing  // Square
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, thickness = th); x += sz + spacing  // Square with all rounded corners
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, cornersTlBr, th); x += sz + spacing  // Square with two rounded corners
                         addTriangle(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col, th); x += sz + spacing      // Triangle
 //                        addTriangle(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col, th); x += sz * 0.4f + spacing // Thin triangle
                         addLine(Vec2(x, y), Vec2(x + sz, y), col, th); x += sz + spacing  // Horizontal line (note: drawing a filled rectangle will be faster!)
@@ -225,8 +223,8 @@ object CustomRendering {
 
                 // Context menu (under default mouse threshold)
                 val dragDelta = getMouseDragDelta(MouseButton.Right)
-                if (optEnableContextMenu && isMouseReleased(MouseButton.Right) && dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
-                    openPopupOnItemClick("context")
+                if (optEnableContextMenu && dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
+                    openPopupOnItemClick("context", PopupFlag.MouseButtonRight)
                 dsl.popup("context") {
                     if (addingLine) {
                         points.pop()

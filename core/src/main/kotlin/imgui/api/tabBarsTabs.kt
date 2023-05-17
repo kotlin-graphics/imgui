@@ -2,29 +2,32 @@ package imgui.api
 
 import glm_.max
 import imgui.*
+import imgui.ImGui.beginEx
+import imgui.ImGui.findTabByID
 import imgui.ImGui.popID
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
+import imgui.ImGui.tabItemEx
 import imgui.internal.classes.PtrOrIndex
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
+import imgui.static.calcTabID
+import imgui.static.layout
 import kotlin.reflect.KMutableProperty0
 
-/** Tab Bars, Tabs */
+// Tab Bars, Tabs
+// - Note: Tabs are automatically created by the docking system (when in 'docking' branch). Use this to create tab bars/tabs yourself.
 interface tabBarsTabs {
 
     /** create and append into a TabBar */
-    fun beginTabBar(strId: String, flags: TabBarFlags = 0): Boolean {
+    fun beginTabBar(strId: String, flags: TabBarFlags = emptyFlags): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems) return false
 
         val id = window.getID(strId)
         val tabBar = g.tabBars.getOrAddByKey(id)
-        val tabBarBb = Rect(window.dc.cursorPos.x,
-            window.dc.cursorPos.y,
-            window.innerClipRect.max.x,
-            window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
+        val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.workRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
         tabBar.id = id
         return tabBar.beginEx(tabBarBb, flags or TabBarFlag._IsFocused)
     }
@@ -46,37 +49,37 @@ interface tabBarsTabs {
         if (tabBar.visibleTabWasSubmitted || tabBar.visibleTabId == 0 || tabBarAppearing) {
             tabBar.currTabsContentsHeight = (window.dc.cursorPos.y - tabBar.barRect.max.y) max tabBar.currTabsContentsHeight
             window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.currTabsContentsHeight
-        }
-        else
+        } else
             window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.prevTabsContentsHeight
         if (tabBar.beginCount > 1)
             window.dc.cursorPos put tabBar.backupCursorPos
 
-        if (tabBar.flags hasnt TabBarFlag._DockNode) popID()
+        if (tabBar.flags hasnt TabBarFlag._DockNode)
+            popID()
 
         g.currentTabBarStack.pop()
         g.currentTabBar = g.currentTabBarStack.lastOrNull()?.tabBar
     }
 
     /** create a Tab. Returns true if the Tab is selected. */
-    fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemFlags = 0) =
-        withBoolean(pOpen, index) { beginTabItem(label, it, flags) }
+    fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemOnlyFlags = emptyFlags): Boolean =
+        beginTabItem(label, pOpen mutablePropertyAt index, flags)
 
     /** create a Tab. Returns true if the Tab is selected. */
-    fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0): Boolean {
+    fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemOnlyFlags = emptyFlags): Boolean {
 
         val window = g.currentWindow!!
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
-        assert(flags hasnt TabItemFlag._Button) { "BeginTabItem() Can't be used with button flags, use TabItemButton() instead!" }
 
-        return tabBar.tabItemEx(label, pOpen, flags).also {
-            if (it && flags hasnt TabItemFlag.NoPushId) {
-                val tab = tabBar.tabs[tabBar.lastTabItemIdx]
-                pushOverrideID(tab.id) // We already hashed 'label' so push into the ID stack directly instead of doing another hash through PushID(label)
-            }
+        val ret = tabBar.tabItemEx(label, pOpen, flags, null)
+        if (ret && flags hasnt TabItemFlag.NoPushId) {
+            val tab = tabBar.tabs[tabBar.lastTabItemIdx]
+            pushOverrideID(tab.id) // We already hashed 'label' so push into the ID stack directly instead of doing another hash through PushID(label)
         }
+        return ret
     }
 
     /** only call EndTabItem() if BeginTabItem() returns true! */
@@ -93,14 +96,14 @@ interface tabBarsTabs {
     }
 
     /** create a Tab behaving like a button. return true when clicked. cannot be selected in the tab bar. */
-    fun tabItemButton(label: String, flags: TabItemFlags = TabItemFlag.None.i): Boolean {
+    fun tabItemButton(label: String, flags: TabItemOnlyFlags = emptyFlags): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems)
             return false
 
         val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
-        return tabBar.tabItemEx(label, null, flags or TabItemFlag._Button or TabItemFlag.NoReorder)
+        return tabBar.tabItemEx(label, null, flags or TabItemFlag._Button or TabItemFlag.NoReorder, null)
     }
 
     /** notify TabBar or Docking system of a closed tab/window ahead (useful to reduce visual flicker on reorderable tab bars).
@@ -114,7 +117,7 @@ interface tabBarsTabs {
         val isWithinManualTabBar = g.currentTabBar?.flags?.hasnt(TabBarFlag._DockNode) == true
         if (isWithinManualTabBar) {
             val tabBar = g.currentTabBar!!
-            val tabId = tabBar calcTabID tabOrDockedWindowLabel
+            val tabId = tabBar.calcTabID(tabOrDockedWindowLabel, null)
             tabBar.findTabByID(tabId)?.let {
                 it.wantClose = true // Will be processed by next call to TabBarLayout()
             }

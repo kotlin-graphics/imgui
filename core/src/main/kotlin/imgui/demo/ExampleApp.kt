@@ -13,10 +13,12 @@ import imgui.ImGui.end
 import imgui.ImGui.endTable
 import imgui.ImGui.fontSize
 import imgui.ImGui.io
+import imgui.ImGui.isPressed
 import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
+import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItem
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -24,6 +26,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.showDebugLogWindow
 import imgui.ImGui.showMetricsWindow
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.spacing
@@ -57,13 +60,16 @@ object ExampleApp {
         var autoResize = false
         var constrainedResize = false
         var simpleOverlay = false
+        var fullscreen = false
         var windowTitles = false
         var customRendering = false
 
-        // Dear ImGui Apps (accessible from the "Tools" menu)
+        // Dear ImGui Tools/Apps (accessible from the "Tools" menu)
         var metrics = false
-        var styleEditor = false
+        var debugLog = false
+        var stackTool = false
         var about = false
+        var styleEditor = false
     }
 
     // Demonstrate the various window flags. Typically you would just use the default!
@@ -77,6 +83,7 @@ object ExampleApp {
     var noNav = false
     var noBackground = false
     var noBringToFront = false
+    var unsavedDocument = false
 
     var filter = TextFilter()
     var lineWidth = 1f
@@ -95,17 +102,24 @@ object ExampleApp {
         if (show.autoResize) AutoResize(show::autoResize)
         if (show.constrainedResize) ConstrainedResize(show::constrainedResize)
         if (show.simpleOverlay) SimpleOverlay(show::simpleOverlay)
+        if (show.fullscreen) Fullscreen(show::fullscreen)
         if (show.windowTitles) WindowTitles()
         if (show.customRendering) CustomRendering(show::customRendering)
 
-        if (show.metrics) showMetricsWindow(show::metrics)
-        if (show.about) ShowAboutWindow(show::about)
+        if (show.metrics)
+            showMetricsWindow(show::metrics)
+        if (show.debugLog)
+            showDebugLogWindow(show::debugLog)
+        if (show.stackTool)
+            showMetricsWindow(show::stackTool)
+        if (show.about)
+            ShowAboutWindow(show::about)
         if (show.styleEditor)
             window("Dear ImGui Style Editor", show::styleEditor) {
                 StyleEditor()
             }
 
-        var windowFlags = 0
+        var windowFlags: WindowFlags = emptyFlags
         if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
         if (noScrollbar) windowFlags = windowFlags or Wf.NoScrollbar
         if (!noMenu) windowFlags = windowFlags or Wf.MenuBar
@@ -115,10 +129,12 @@ object ExampleApp {
         if (noNav) windowFlags = windowFlags or Wf.NoNav
         if (noBackground) windowFlags = windowFlags or Wf.NoBackground
         if (noBringToFront) windowFlags = windowFlags or Wf.NoBringToFrontOnFocus
+        if (unsavedDocument) windowFlags = windowFlags or Wf.UnsavedDocument
         if (noClose) open = null // Don't pass our bool* to Begin
         // We specify a default position/size in case there's no data in the .ini file.
         // We only do it to make the demo applications a little more welcoming, but typically this isn't required.
-        setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
+        val mainViewport = mainViewport
+        setNextWindowPos(Vec2(mainViewport.workPos.x + 650, mainViewport.workPos.y + 20), Cond.FirstUseEver)
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
 
         // Main body of the Demo window starts here.
@@ -128,19 +144,17 @@ object ExampleApp {
         }
 
         // Most "big" widgets share a common width settings by default. See 'Demo->Layout->Widgets Width' for details.
-
         // e.g. Use 2/3 of the space for widgets and 1/3 for labels (right align)
         //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.35f);
-
         // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
         pushItemWidth(fontSize * -12)
 
         // Menu Bar
         menuBar {
             menu("Menu") { MenuFile() }
-//            stop = true
-//            println("nav window name " + g.navWindow?.rootWindow?.name)
-//            println("Examples")
+            //            stop = true
+            //            println("nav window name " + g.navWindow?.rootWindow?.name)
+            //            println("Examples")
             menu("Examples") {
                 menuItem("Main menu bar", "", show::mainMenuBar)
                 menuItem("Console", "", show::console)
@@ -151,18 +165,25 @@ object ExampleApp {
                 menuItem("Auto-resizing window", "", show::autoResize)
                 menuItem("Constrained-resizing window", "", show::constrainedResize)
                 menuItem("Simple overlay", "", show::simpleOverlay)
+                menuItem("Fullscreen window", "", show::fullscreen)
                 menuItem("Manipulating window titles", "", show::windowTitles)
                 menuItem("Custom rendering", "", show::customRendering)
                 menuItem("Documents", "", show::documents)
             }
+            //if (ImGui::MenuItem("MenuItem")) {} // You can also use MenuItem() inside a menu bar!
             menu("Tools") {
-                menuItem("Metrics/Debugger", "", show::metrics)
+
+                val hasDebugTools = IMGUI_DISABLE_DEBUG_TOOLS
+
+                menuItem("Metrics/Debugger", "", show::metrics, hasDebugTools)
+                menuItem("Debug Log", "", show::debugLog, hasDebugTools)
+                menuItem("Stack Tool", "", show::stackTool, hasDebugTools)
                 menuItem("Style Editor", "", show::styleEditor)
                 menuItem("About Dear ImGui", "", show::about)
             }
         }
 
-        text("dear imgui says hello. ($IMGUI_VERSION)")
+        text("dear imgui says hello! ($IMGUI_VERSION) ($IMGUI_VERSION_NUM)")
         spacing()
 
         collapsingHeader("Help") {
@@ -171,7 +192,7 @@ object ExampleApp {
             bulletText("Sections below are demonstrating many aspects of the library.")
             bulletText("The \"Examples\" menu above leads to more demo contents.")
             bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
-                    "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
+                "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
             separator()
 
             text("PROGRAMMER GUIDE:")
@@ -191,13 +212,13 @@ object ExampleApp {
 
             treeNode("Configuration##2") {
 
-                checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
+                checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard)
                 sameLine(); helpMarker("Enable keyboard controls.")
-                checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
+                checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad)
                 sameLine(); helpMarker("Enable gamepad controls. Require backend to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
-                checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
+                checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos)
                 sameLine(); helpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
-                checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
+                checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse)
                 if (io.configFlags has ConfigFlag.NoMouse) {
                     // The "NoMouse" option can get us stuck with a disabled mouse! Let's provide an alternative way to fix it:
                     if ((time.f % 0.4f) < 0.2f) {
@@ -207,10 +228,14 @@ object ExampleApp {
                     if (Key.Space.isPressed)
                         io.configFlags = io.configFlags wo ConfigFlag.NoMouse
                 }
-                checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
+                checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange)
                 sameLine(); helpMarker("Instruct backend to not alter mouse cursor shape and visibility.")
+                checkbox("io.ConfigInputTrickleEventQueue", io::configInputTrickleEventQueue)
+                sameLine(); helpMarker("Enable input queue trickling: some types of events submitted during the same frame (e.g. button down + up) will be spread over multiple frames, improving interactions with low framerates.")
                 checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
-                sameLine(); helpMarker("Enable blinking cursor (optional as some users consider it to be distracting)")
+                sameLine(); helpMarker("Enable blinking cursor (optional as some users consider it to be distracting).")
+                checkbox("io.ConfigInputTextEnterKeepActive", io::configInputTextEnterKeepActive)
+                sameLine(); helpMarker("Pressing Enter will keep item active and select contents (single-line only).")
                 checkbox("io.ConfigDragClickToInputText", io::configDragClickToInputText)
                 sameLine(); helpMarker("Enable turning DragXXX widgets into text input with a simple mouse click-release (without moving).")
                 checkbox("io.ConfigWindowsResizeFromEdges", io::configWindowsResizeFromEdges)
@@ -222,16 +247,19 @@ object ExampleApp {
                 separator()
             }
             treeNode("Backend Flags") {
-                helpMarker("""
+                helpMarker(
+                    """
                     Those flags are set by the backends (imgui_impl_xxx files) to specify their capabilities.
-                    Here we expose then as read-only fields to avoid breaking interactions with your backend.""".trimIndent())
+                    Here we expose them as read-only fields to avoid breaking interactions with your backend.""".trimIndent()
+                )
 
                 // Make a local copy to avoid modifying actual backend flags.
-                val backendFlags = intArrayOf(io.backendFlags)
-                checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
-                checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
-                checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos.i)
-                checkboxFlags("io.BackendFlags: RendererHasVtxOffset", backendFlags, BackendFlag.RendererHasVtxOffset.i)
+                // FIXME: We don't use BeginDisabled() to keep label bright, maybe we need a BeginReadonly() equivalent..
+                val backendFlags = flagArrayOf(io.backendFlags)
+                checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad)
+                checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors)
+                checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos)
+                checkboxFlags("io.BackendFlags: RendererHasVtxOffset", backendFlags, BackendFlag.RendererHasVtxOffset)
                 separator()
             }
 
@@ -268,6 +296,7 @@ object ExampleApp {
                 tableNextColumn(); checkbox("No nav", ::noNav); sameLine(300)
                 tableNextColumn(); checkbox("No background", ::noBackground)
                 tableNextColumn(); checkbox("No bring to front", ::noBringToFront)
+                tableNextColumn(); checkbox("Unsaved document", ::unsavedDocument)
                 endTable()
             }
         }
@@ -277,7 +306,7 @@ object ExampleApp {
         ShowDemoWindowLayout()
         ShowDemoWindowPopups()
         ShowDemoWindowTables()
-        ShowDemoWindowMisc()
+        ShowDemoWindowInputs()
 
         // End of ShowDemoWindow()
         popItemWidth()

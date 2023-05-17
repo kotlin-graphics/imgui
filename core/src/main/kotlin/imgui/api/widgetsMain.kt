@@ -1,8 +1,8 @@
 package imgui.api
 
-import glm_.*
+import glm_.glm
+import glm_.max
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.arrowButtonEx
 import imgui.ImGui.buttonBehavior
@@ -10,18 +10,18 @@ import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.checkboxFlagsT
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
-import imgui.ImGui.getColorU32
-import imgui.ImGui.imageButtonEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popID
-import imgui.ImGui.pushID
+import imgui.ImGui.renderBullet
+import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
+import imgui.ImGui.renderRectFilledRangeH
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
@@ -31,41 +31,29 @@ import imgui.internal.floor
 import imgui.internal.lerp
 import imgui.internal.round
 import imgui.internal.saturate
-import imgui.internal.sections.*
+import imgui.internal.sections.ButtonFlags
+import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.ItemStatusFlag
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.internal.sections.ButtonFlag as Bf
 
-
-// @formatter:off
-val S8_MIN: Int = -128
-val S8_MAX: Int = 127
-val U8_MIN: Int = 0
-val U8_MAX: Int = 0xFF
-val S16_MIN: Int = -32768
-val S16_MAX: Int = 32767
-val U16_MIN: Int = 0
-val U16_MAX: Int = 0xFFFF
-val S32_MIN: Int = Integer.MIN_VALUE
-val S32_MAX: Int = Integer.MAX_VALUE
-// @formatter:on
-
-
-/** Widgets: Main
- *  - Most widgets return true when the value has been changed or when pressed/selected
- *  - You may also use one of the many IsItemXXX functions (e.g. IsItemActive, IsItemHovered, etc.) to query widget state.  */
+// Widgets: Main
+// - Most widgets return true when the value has been changed or when pressed/selected
+// - You may also use one of the many IsItemXXX functions (e.g. IsItemActive, IsItemHovered, etc.) to query widget state.
 interface widgetsMain {
 
     /** button  */
-    fun button(label: String, sizeArg: Vec2 = Vec2()): Boolean = buttonEx(label, sizeArg, Bf.None.i)
+    fun button(label: String, sizeArg: Vec2 = Vec2()): Boolean = buttonEx(label, sizeArg, emptyFlags)
 
     /** button with FramePadding = (0,0) to easily embed within text
      *  Small buttons fits within text without additional vertical spacing.     */
     fun smallButton(label: String): Boolean {
         val backupPaddingY = style.framePadding.y
         style.framePadding.y = 0f
-        val pressed = buttonEx(label, Vec2(), Bf.AlignTextBaseLine.i)
+        val pressed = buttonEx(label, Vec2(), Bf.AlignTextBaseLine)
         style.framePadding.y = backupPaddingY
         return pressed
     }
@@ -75,7 +63,7 @@ interface widgetsMain {
      *  Tip: use pushId()/popId() to push indices or pointers in the ID stack.
      *  Then you can keep 'strid' empty or the same for all your buttons (instead of creating a string based on a
      *  non-string id)  */
-    fun invisibleButton(strId: String, sizeArg: Vec2, flags: ButtonFlags = Bf.None.i): Boolean {
+    fun invisibleButton(strId: String, sizeArg: Vec2, flags: ButtonFlags = emptyFlags): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -89,55 +77,14 @@ interface widgetsMain {
 
         val (pressed, _, _) = buttonBehavior(bb, id, flags)
 
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, strId, g.lastItemData.statusFlags)
         return pressed
     }
 
-    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), Bf.None.i)
-
-    fun image(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
-              borderCol: Vec4 = Vec4()) {
-
-        val window = currentWindow
-        if (window.skipItems) return
-
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        if (borderCol.w > 0f) bb.max plusAssign 2
-        itemSize(bb)
-        if (!itemAdd(bb, 0)) return
-
-        if (borderCol.w > 0f) {
-            window.drawList.addRect(bb.min, bb.max, getColorU32(borderCol), 0f)
-            window.drawList.addImage(userTextureId, bb.min + 1, bb.max - 1, uv0, uv1, getColorU32(tintCol))
-        } else
-            window.drawList.addImage(userTextureId, bb.min, bb.max, uv0, uv1, getColorU32(tintCol))
-    }
-
-    /** frame_padding < 0: uses FramePadding from style (default)
-     *  frame_padding = 0: no framing/padding
-     *  frame_padding > 0: set framing size
-     *  The color used are the button colors.   */
-    fun imageButton(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(), framePadding: Int = -1,
-                    bgCol: Vec4 = Vec4(), tintCol: Vec4 = Vec4(1)): Boolean {
-
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        // Default to using texture ID as ID. User can still push string/integer prefixes.
-        pushID(userTextureId.L)
-        val id = window.getID("#image")
-        popID()
-
-        val padding = if (framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
-        return imageButtonEx(id, userTextureId, size, uv0, uv1, padding, bgCol, tintCol)
-    }
+    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), emptyFlags)
 
     fun checkbox(label: String, v: BooleanArray) = checkbox(label, v, 0)
-    fun checkbox(label: String, v: BooleanArray, i: Int): Boolean {
-        _b = v[i]
-        return checkbox(label, ::_b).also {
-            v[i] = _b
-        }
-    }
+    fun checkbox(label: String, v: BooleanArray, i: Int): Boolean = checkbox(label, v mutablePropertyAt i)
 
     fun checkbox(label: String, vPtr: KMutableProperty0<Boolean>): Boolean {
 
@@ -153,7 +100,7 @@ interface widgetsMain {
         val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id)) {
-            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None)
+            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else emptyFlags)
             return false
         }
 
@@ -168,7 +115,7 @@ interface widgetsMain {
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)
         val checkCol = Col.CheckMark.u32
-        val mixedValue = window.dc.itemFlags has ItemFlag.MixedValue
+        val mixedValue = g.lastItemData.inFlags has ItemFlag.MixedValue
         if (mixedValue) {
             // Undocumented tristate/mixed/indeterminate checkbox (#2644)
             val pad = Vec2(1f max floor(squareSz / 3.6f))
@@ -185,45 +132,19 @@ interface widgetsMain {
         if (labelSize.x > 0f)
             renderText(renderTextPos, label)
 
-        val flags = ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags or flags)
+        val flags = ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else emptyFlags
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or flags)
 
         return pressed
     }
 
-    fun checkboxFlags(label: String, flags: IntArray, flagsValue: Int): Boolean {
-        _b = (flags[0] and flagsValue) == flagsValue // ~allOn
-        val anyOn = flags[0] has flagsValue
-        val pressed = when {
-            !_b && anyOn -> {
-                val window = currentWindow
-                val backupItemFlags = window.dc.itemFlags
-                window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
-                checkbox(label, ::_b).also {
-                    window.dc.itemFlags = backupItemFlags
-                }
-            }
-            else -> checkbox(label, ::_b)
-        }
-        if (pressed)
-            flags[0] = when {
-                _b -> flags[0] or flagsValue
-                else -> flags[0] wo flagsValue
-            }
-        return pressed
-    }
+    // We use JvmName to ensure that the function can be seen in Java as checkboxFlags
+    // Suppressing the warning since we're in an interface.
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @JvmName("checkboxFlags")
+    fun <F : Flag<F>> checkboxFlags(label: String, flags: FlagArray<F>, flagsValue: Flag<F>): Boolean = checkboxFlagsT(label, flags mutablePropertyAt 0, flagsValue)
 
-    fun checkboxFlags(label: String, flagsPtr: KMutableProperty0<Int>, flagsValue: Int): Boolean {
-        var flags by flagsPtr
-        val v = booleanArrayOf((flags and flagsValue) == flagsValue)
-        val pressed = checkbox(label, v)
-        if (pressed)
-            flags = when {
-                v[0] -> flags or flagsValue
-                else -> flags wo flagsValue
-            }
-        return pressed
-    }
+    fun <F : Flag<F>> checkboxFlags(label: String, flagsPtr: KMutableProperty0<Flag<F>>, flagsValue: Flag<F>): Boolean = checkboxFlagsT(label, flagsPtr, flagsValue)
 
     /** use with e.g. if (radioButton("one", myValue==1))  myValue = 1 */
     fun radioButton(label: String, active: Boolean): Boolean {
@@ -270,7 +191,7 @@ interface widgetsMain {
         if (labelSize.x > 0f)
             renderText(renderTextPos, label)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return pressed
     }
 

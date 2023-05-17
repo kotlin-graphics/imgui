@@ -41,6 +41,10 @@ class Rect {
         this.min = Vec2(min)
         this.max = Vec2(max)
     }
+    constructor(min: Float, max: Float) {
+        this.min put min
+        this.max put max
+    }
 
     constructor(v: Vec4) {
         min.put(v.x, v.y)
@@ -61,6 +65,7 @@ class Rect {
     val size get() = max - min
     val width get() = max.x - min.x
     val height get() = max.y - min.y
+    val area get() = (max.x - min.x) * (max.y - min.y)
 
     /** Top-left    */
     val tl get() = Vec2(min)
@@ -153,6 +158,11 @@ class Rect {
     fun toVec4(): Vec4 = Vec4(min, max)
 
     fun put(min: Vec2, max: Vec2) {
+        this.min put min
+        this.max put max
+    }
+
+    fun put(min: Float, max: Float) {
         this.min put min
         this.max put max
     }

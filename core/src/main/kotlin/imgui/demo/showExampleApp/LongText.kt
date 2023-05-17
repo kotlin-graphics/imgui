@@ -62,6 +62,7 @@ object LongText {
                     for (i in clipper.display)
                         text("$i The quick brown fox jumps over the lazy dog")
                 popStyleVar()
+                clipper.end()
             }
             2 -> {
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(0, 1))

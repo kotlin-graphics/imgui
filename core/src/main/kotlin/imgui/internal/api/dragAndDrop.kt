@@ -1,15 +1,20 @@
 package imgui.internal.api
 
-import imgui.DragDropFlag
+import glm_.vec2.Vec2
+import imgui.Col
 import imgui.ID
+import imgui.ImGui
 import imgui.ImGui.isMouseHoveringRect
 import imgui.api.g
+import imgui.emptyFlags
 import imgui.internal.classes.Rect
-import kool.lib.fill
+import kool.fill
 import java.nio.ByteBuffer
 
 internal interface dragAndDrop {
 
+    val isDragDropActive: Boolean
+        get() = g.dragDropActive
     fun beginDragDropTargetCustom(bb: Rect, id: ID): Boolean {
         if (!g.dragDropActive) return false
 
@@ -34,7 +39,7 @@ internal interface dragAndDrop {
     fun clearDragDrop() = with(g) {
         dragDropActive = false
         dragDropPayload.clear()
-        dragDropAcceptFlags = DragDropFlag.None.i
+        dragDropAcceptFlags = emptyFlags
         dragDropAcceptIdPrev = 0
         dragDropAcceptIdCurr = 0
         dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
@@ -46,4 +51,8 @@ internal interface dragAndDrop {
 
     val isDragDropPayloadBeingAccepted: Boolean
         get() = g.dragDropActive && g.dragDropAcceptIdPrev != 0
+
+    /** FIXME-DRAGDROP: Settle on a proper default visuals for drop target. */
+    fun renderDragDropTargetRect(bb: Rect) =
+        ImGui.windowDrawList.addRect(bb.min - Vec2(3.5f), bb.max + Vec2(3.5f), Col.DragDropTarget.u32, 0f, thickness = 2f)
 }

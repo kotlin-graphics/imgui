@@ -3,24 +3,22 @@ package examples
 
 import glm_.vec4.Vec4
 import gln.checkError
-import gln.glClearColor
 import gln.glViewport
 import imgui.DEBUG
 import imgui.ImGui
+import imgui.api.slider
 import imgui.classes.Context
-import imgui.dsl
 import imgui.impl.gl.ImplGL3
-import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
-import org.lwjgl.opengl.GL11.glClear
+import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.Platform
+import uno.gl.GlWindow
 import uno.glfw.GlfwWindow
+import uno.glfw.Hints
 import uno.glfw.VSync
 import uno.glfw.glfw
-import uno.glfw.windowHint.Profile.core
 
 //import org.lwjgl.util.remotery.Remotery
 //import org.lwjgl.util.remotery.RemoteryGL
@@ -31,7 +29,7 @@ fun main() {
 
 private class ImGuiOpenGL3 {
 
-    val window: GlfwWindow
+    val window: GlWindow
     val ctx: Context
 
 
@@ -58,25 +56,29 @@ private class ImGuiOpenGL3 {
 
     init {
         //Configuration.DEBUG_MEMORY_ALLOCATOR.set(true) // for native leaks
+//        println(Char(27))
+//        println(Char(27) + "[4;96mciao")
+//        println(Char(27) + "[0m")
 
         // Setup window
         glfw {
-            errorCallback = { error, description -> println("Glfw Error $error: $description") }
+            errorCB = { error, description -> println("Glfw Error $error: $description") }
             init()
-            windowHint {
+            hints.context {
                 debug = DEBUG
 
                 // Decide GL+GLSL versions
                 when (Platform.get()) {
+                    // TODO Opengl_es2? GL ES 2.0 + GLSL 100
                     Platform.MACOSX -> {    // GL 3.2 + GLSL 150
-                        glslVersion = 150
-                        context.version = "3.2"
-                        profile = core      // 3.2+ only
+                        ImplGL3.data.glslVersion = 150
+                        version = "3.2"
+                        profile = Hints.Context.Profile.Core      // 3.2+ only
                         forwardComp = true  // Required on Mac
                     }
                     else -> {   // GL 3.0 + GLSL 130
-                        glslVersion = 130
-                        context.version = "3.0"
+//                        ImplGL3.data.glslVersion = 130
+                        version = "3.0"
                         //profile = core      // 3.2+ only
                         //forwardComp = true  // 3.0+ only
                     }
@@ -85,8 +87,9 @@ private class ImGuiOpenGL3 {
         }
 
         // Create window with graphics context
-        window = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
-        window.makeContextCurrent()
+        val glfwWindow = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
+        window = GlWindow(glfwWindow)
+        window.makeCurrent()
         glfw.swapInterval = VSync.ON   // Enable vsync
 
         // Initialize OpenGL loader
@@ -99,7 +102,7 @@ private class ImGuiOpenGL3 {
 
         // Setup Dear ImGui style
         ImGui.styleColorsDark()
-//        ImGui.styleColorsClassic()
+//        ImGui.styleColorsLight()
 
         // Setup Platform/Renderer backend
         implGlfw = ImplGlfw(window, true)
@@ -108,31 +111,33 @@ private class ImGuiOpenGL3 {
 //        RemoteryGL.rmt_BindOpenGL()
 
         // Load Fonts
-        /*  - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use
-                pushFont()/popFont() to select them.
-            - addFontFromFileTTF() will return the Font so you can store it if you need to select the font among multiple.
-            - If the file cannot be loaded, the function will return null. Please handle those errors in your application
-                (e.g. use an assertion, or display an error and quit).
-            - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling
-                FontAtlas.build()/getTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-            - Read 'docs/FONTS.txt' for more instructions and details.
-            - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write
-                a double backslash \\ ! */
+        // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
+        // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
+        // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
+        // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+        // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
+        // - Read 'docs/FONTS.md' for more instructions and details.
+        // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
         //io.Fonts->AddFontDefault();
+        //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-//        ImGui.io.fonts.addFontFromFileTTF("fonts/ArialUni.ttf", 16f, glyphRanges = imgui.font.glyphRanges.japanese)!!
+        //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+        //IM_ASSERT(font != NULL);
 
-        /*  Main loop
-            This automatically also polls events, swaps buffers and resets the appBuffer
+        /*  [JVM] Main loop
+            This automatically also polls events, swaps buffers and resets the appBuffer */
 
-            Poll and handle events (inputs, window resize, etc.)
-            You can read the io.wantCaptureMouse, io.wantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-            - When io.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
-            - When io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-            Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
+        // Poll and handle events (inputs, window resize, etc.)
+        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
+        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         window.loop(::mainLoop)
 
         implGl3.shutdown()
@@ -162,7 +167,7 @@ private class ImGuiOpenGL3 {
             if (showDemoWindow)
                 showDemoWindow(::showDemoWindow)
 
-            // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+            // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
             run {
 
                 begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
@@ -174,7 +179,7 @@ private class ImGuiOpenGL3 {
                 checkbox("Demo Window", ::showDemoWindow)             // Edit bools storing our window open/close state
                 checkbox("Another Window", ::showAnotherWindow)
 
-                sliderFloat("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
+                slider("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
                 colorEdit3("clear color", clearColor)           // Edit 3 floats representing a color
 
                 if (button("Button"))                           // Buttons return true when clicked (most widgets return true when edited/activated)
@@ -205,7 +210,7 @@ private class ImGuiOpenGL3 {
         // Rendering
         ImGui.render()
         glViewport(window.framebufferSize)
-        glClearColor(clearColor)
+        glClearColor(clearColor.x * clearColor.w, clearColor.y * clearColor.w, clearColor.z * clearColor.w, clearColor.w)
         glClear(GL_COLOR_BUFFER_BIT)
 
         implGl3.renderDrawData(ImGui.drawData!!)

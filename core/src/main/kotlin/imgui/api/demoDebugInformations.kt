@@ -1,38 +1,65 @@
 package imgui.api
 
-import glm_.i
+import glm_.*
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
+import imgui.ImGui.beginChild
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginCombo
+import imgui.ImGui.beginTable
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.clearIniSettings
+import imgui.ImGui.clipboardText
 import imgui.ImGui.combo
+import imgui.ImGui.data
+import imgui.ImGui.debugLocateItemOnHover
 import imgui.ImGui.debugNodeDrawList
+import imgui.ImGui.debugNodeInputTextState
 import imgui.ImGui.debugNodeTabBar
+import imgui.ImGui.debugNodeTable
+import imgui.ImGui.debugNodeTableSettings
+import imgui.ImGui.debugNodeViewport
 import imgui.ImGui.debugNodeWindowSettings
 import imgui.ImGui.debugNodeWindowsList
+import imgui.ImGui.debugNodeWindowsListByBeginStackParent
+import imgui.ImGui.debugRenderKeyboardPreview
 import imgui.ImGui.debugStartItemPicker
+import imgui.ImGui.debugTextEncoding
 import imgui.ImGui.end
+import imgui.ImGui.endChild
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endCombo
+import imgui.ImGui.endTable
 import imgui.ImGui.endTooltip
+import imgui.ImGui.findWindowByID
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getID
+import imgui.ImGui.getInstanceData
+import imgui.ImGui.getKeyChordName
 import imgui.ImGui.indent
+import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
+import imgui.ImGui.isDown
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.isPressed
+import imgui.ImGui.isReleased
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
+import imgui.ImGui.ownerData
 import imgui.ImGui.popID
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushID
@@ -43,26 +70,43 @@ import imgui.ImGui.saveIniSettingsToMemory
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
+import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setScrollHereY
+import imgui.ImGui.showFontAtlas
 import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.styleColorsClassic
 import imgui.ImGui.styleColorsDark
 import imgui.ImGui.styleColorsLight
+import imgui.ImGui.tableHeadersRow
+import imgui.ImGui.tableNextColumn
+import imgui.ImGui.tableSetBgColor
+import imgui.ImGui.tableSetupColumn
 import imgui.ImGui.text
+import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
+import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
+import imgui.classes.ListClipper
 import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
+import imgui.dsl.listBox
 import imgui.dsl.treeNode
-import imgui.internal.*
+import imgui.internal.DrawIdx
+import imgui.internal.DrawVert
+import imgui.internal.api.debugTools.Companion.metricsHelpMarker
 import imgui.internal.classes.*
+import imgui.internal.formatString
+import imgui.internal.sections.KeyOwner_None
+import imgui.internal.sections.NextWindowDataFlag
+import imgui.internal.sections.testEngine_FindItemDebugLabel
 import kool.BYTES
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -107,27 +151,29 @@ interface demoDebugInformations {
     /** create Demo window. demonstrate most ImGui features. call this to learn about the library! try to make it always available in your application! */
     fun showDemoWindow(open: KMutableProperty0<Boolean>) {
         // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
-        // Most ImGui functions would normally just crash if the context is missing.
-        assert(gImGui != null) { "Missing dear imgui context. Refer to examples app!" }
+        // Most functions would normally just crash if the context is missing.
         ExampleApp(open)
     }
 
     /** create Metrics/Debugger window. display Dear ImGui internals: windows, draw commands, various internal state, etc. */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
-        if (!begin("Dear ImGui Metrics/Debugger", open)) {
+        val cfg = g.debugMetricsConfig
+        if (cfg.showDebugLog)
+            showDebugLogWindow(cfg::showDebugLog)
+        if (cfg.showStackTool)
+            showStackToolWindow(cfg::showStackTool)
+
+        if (!begin("Dear ImGui Metrics/Debugger", open) || ImGui.currentWindow.beginCount > 1) {
             end()
             return
         }
-
-        val cfg = g.debugMetricsConfig
 
         // Basic info
         text("Dear ImGui $version")
         text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
         text("${io.metricsRenderVertices} vertices, ${io.metricsRenderIndices} indices (${io.metricsRenderIndices / 3} triangles)")
-        text("${io.metricsActiveWindows} active windows (${io.metricsRenderWindows} visible)")
-        text("${io.metricsAllocs} active allocations")
+        text("${io.metricsRenderWindows} visible windows, ${io.metricsActiveAllocations} active allocations")
         //SameLine(); if (SmallButton("GC")) { g.GcCompactAll = true; }
 
         separator()
@@ -150,30 +196,50 @@ interface demoDebugInformations {
         // Tools
         treeNode("Tools") {
 
-            // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
-            if (button("Item Picker..")) debugStartItemPicker()
+            val showEncodingViewer = treeNode("UTF-8 Encoding viewer")
             sameLine()
-            helpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
+            metricsHelpMarker("You can also call ImGui::DebugTextEncoding() from your code with a given string to test that your UTF-8 encoding settings are correct.")
+            if (showEncodingViewer) {
+                setNextItemWidth(-Float.MIN_VALUE)
+                inputText("##Text", buf)
+                if (buf.isNotEmpty())
+                    debugTextEncoding(buf)
+                treePop()
+            }
+
+            // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
+            if (checkbox("Show Item Picker", g::debugItemPickerActive) && g.debugItemPickerActive)
+                debugStartItemPicker()
+            sameLine()
+            metricsHelpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
+
+            // Stack Tool is your best friend!
+            checkbox("Show Debug Log", cfg::showDebugLog)
+            sameLine()
+            metricsHelpMarker("You can also call ImGui::ShowDebugLogWindow() from your code.")
+
+            // Stack Tool is your best friend!
+            checkbox("Show Stack Tool", cfg::showStackTool)
+            sameLine()
+            helpMarker("You can also call ImGui::ShowStackToolWindow() from your code.")
 
             checkbox("Show windows begin order", ::showWindowsBeginOrder)
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
             setNextItemWidth(fontSize * 12)
-            _i = showWindowsRectType.ordinal
-            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ::_i, WRT.names, WRT.names.size)
-            showWindowsRectType = WRT.values()[_i]
+            val ordinalRef = showWindowsRectType.ordinal.mutableReference
+            val ordinal by ordinalRef
+            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ordinalRef, WRT.names, WRT.names.size)
+            showWindowsRectType = WRT.values()[ordinal]
             if (showWindowsRects) g.navWindow?.let { nav ->
                 bulletText("'${nav.name}':")
                 indent {
                     for (rectN in WRT.values()) {
                         val r = Funcs.getWindowRect(nav, rectN)
-                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${WRT.names[rectN.ordinal]}",
-                             r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${WRT.names[rectN.ordinal]}", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                     }
                 }
             }
-            checkbox("Show ImDrawCmd mesh when hovering", ::showDrawcmdMesh)
-            checkbox("Show ImDrawCmd bounding boxes when hovering", ::showDrawcmdAabb)
 
             checkbox("Show tables rectangles", cfg::showTablesRects)
             sameLine()
@@ -188,7 +254,7 @@ interface demoDebugInformations {
 
                     bulletText("Table 0x%08X (${table.columnsCount} columns, in '${table.outerWindow!!.name}')", table.id)
                     if (isItemHovered())
-                        foregroundDrawList.addRect(table.outerRect.min - 1, table.outerRect.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
+                        foregroundDrawList.addRect(table.outerRect.min - 1, table.outerRect.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
                     indent()
                     for (rectN in TRT.values()) {
                         if (rectN >= TRT.ColumnsRect) {
@@ -197,10 +263,10 @@ interface demoDebugInformations {
                             for (columnN in 0 until table.columnsCount) {
                                 val r = Funcs.getTableRect(table, rectN, columnN)
                                 val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}"
-                                    .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                                        .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                                 selectable(buf)
                                 if (isItemHovered())
-                                    foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
+                                    foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
                             }
                         } else {
                             val r = Funcs.getTableRect(table, rectN, -1)
@@ -208,28 +274,61 @@ interface demoDebugInformations {
                                 r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                             selectable(buf)
                             if (isItemHovered())
-                                foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
+                                foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
                         }
                     }
                     unindent()
                 }
         }
 
-        // Contents
-        debugNodeWindowsList(g.windows, "Windows")
-        //DebugNodeWindowList(&g.WindowsFocusOrder, "WindowsFocusOrder");
-        treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})") {
-            for (layer in g.drawDataBuilder.layers[0])
-                debugNodeDrawList(null, layer, "DrawList")
+        // Windows
+        treeNode("Windows", "Windows (${g.windows.size})") {
+            //SetNextItemOpen(true, ImGuiCond_Once);
+            debugNodeWindowsList(g.windows, "By display order")
+            debugNodeWindowsList(g.windowsFocusOrder, "By focus order (root windows)")
+            treeNode("By submission order (begin stack)") {
+                // Here we display windows in their submitted order/hierarchy, however note that the Begin stack doesn't constitute a Parent<>Child relationship!
+                val tempBuffer = g.windowsTempSortBuffer
+                tempBuffer.clear()
+                for (i in g.windows.indices)
+                    if (g.windows[i].lastFrameActive + 1 >= g.frameCount)
+                        tempBuffer += g.windows[i]
+                tempBuffer.sortBy(Window::beginOrderWithinContext)
+                debugNodeWindowsListByBeginStackParent(tempBuffer, null)
+            }
+        }
+
+        // DrawLists
+        val drawlistCount = g.viewports.sumOf { it.drawDataBuilder.drawListCount }
+        treeNode("DrawLists", "Active DrawLists ($drawlistCount)") {
+            checkbox("Show ImDrawCmd mesh when hovering", cfg::showDrawCmdMesh)
+            checkbox("Show ImDrawCmd bounding boxes when hovering", cfg::showDrawCmdBoundingBoxes)
+            for (viewport in g.viewports)
+                for (layer in viewport.drawDataBuilder.layers)
+                    for (drawListIdx in layer.indices)
+                        debugNodeDrawList(null, layer[drawListIdx], "DrawList")
+        }
+
+        // Viewports
+        treeNode("Viewports", "Viewports (${g.viewports.size})") {
+            indent(treeNodeToLabelSpacing) {
+                renderViewportsThumbnails()
+            }
+            for (viewport in g.viewports)
+                debugNodeViewport(viewport)
         }
 
         // Details for Popups
         if (treeNode("Popups", "Popups (${g.openPopupStack.size})")) {
-            for (popup in g.openPopupStack) {
-                val window = popup.window
-                val childWindow = if (window != null && window.flags has Wf._ChildWindow) " ChildWindow" else ""
-                val childMenu = if (window != null && window.flags has Wf._ChildMenu) " ChildMenu" else ""
-                bulletText("PopupID: %08x, Window: '${window?.name}'$childWindow$childMenu", popup.popupId)
+            for (popupData in g.openPopupStack) {
+                // As it's difficult to interact with tree nodes while popups are open, we display everything inline.
+                val window = popupData.window
+                val windowName = window?.name ?: "NULL"
+                val childWindow = if (window != null && window.flags has Wf._ChildWindow) "Child;" else ""
+                val childMenu = if (window != null && window.flags has Wf._ChildMenu) "Menu;" else ""
+                val backupName = popupData.backupNavWindow?.name ?: "NULL"
+                val parentName = window?.parentWindow?.name ?: "NULL"
+                bulletText("PopupID: %08x, Window: '$windowName' ($childWindow$childMenu), BackupNavWindow '$backupName', ParentWindow '$parentName'", popupData.popupId)
             }
             treePop()
         }
@@ -241,15 +340,23 @@ interface demoDebugInformations {
 
         }
 
-        //        #ifdef IMGUI_HAS_TABLE
-        //                if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
-        //                {
-        //                    for (int n = 0; n < g.Tables.GetSize(); n++)
-        //                    Funcs::NodeTable(g.Tables.GetByIndex(n));
-        //                    ImGui::TreePop();
-        //                }
-        //        #endif // #define IMGUI_HAS_TABLE
-        //
+        treeNode("Tables", "Tables (${g.tables.size})") {
+            for (n in 0 until g.tables.size)
+                debugNodeTable(g.tables.getByIndex(n))
+        }
+
+        // Details for Fonts
+        val atlas = g.io.fonts
+        treeNode("Fonts", "Fonts (${atlas.fonts.size})") {
+            showFontAtlas(atlas)
+        }
+
+        // Details for InputText
+        treeNode("InputText") {
+            debugNodeInputTextState(g.inputTextState)
+        }
+
+
         // Details for Docking
         //        #ifdef IMGUI_HAS_DOCK
         treeNode("Dock nodes") {
@@ -272,28 +379,119 @@ interface demoDebugInformations {
             }
             treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
                 g.settingsWindows.forEach(::debugNodeWindowSettings)
-            } //            #ifdef IMGUI_HAS_TABLE
-            //            treeNode("SettingsTables", "Settings packed data: Tables: ${g.settingsTables.size} bytes") {
-            //                g.settingsTables.forEach(Funcs::nodeTableSettings)
-            //            }
-            //            #endif
+            }
+
+            treeNode("SettingsTables", "Settings packed data: Tables: ${g.settingsTables.size} bytes") {
+                g.settingsTables.forEach(::debugNodeTableSettings)
+            }
 
             //            #ifdef IMGUI_HAS_DOCK
             //            #endif
 
             treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
                 val size = Vec2(-Float.MIN_VALUE, ImGui.textLineHeight * 20)
-                inputTextMultiline("##Ini", g.settingsIniData, size, InputTextFlag.ReadOnly.i)
+                inputTextMultiline("##Ini", g.settingsIniData, size, InputTextFlag.ReadOnly)
             }
         }
 
-        // Misc Details
+        treeNode("Inputs") {
+            text("KEYBOARD/GAMEPAD/MOUSE KEYS")
+            // We iterate both legacy native range and named ImGuiKey ranges, which is a little odd but this allows displaying the data for old/new backends.
+            // User code should never have to go through such hoops: old code may use native keycodes, new code may use ImGuiKey codes.
+            indent {
+                //                #ifdef IMGUI_DISABLE_OBSOLETE_KEYIO
+                //                    struct funcs { static bool IsLegacyNativeDupe(ImGuiKey) { return false; } };
+                //                #else
+                //                struct funcs { static bool IsLegacyNativeDupe(ImGuiKey key) { return key < 512 && GetIO().KeyMap[key] != -1; } }; // Hide Native<>ImGuiKey duplicates when both exists in the array
+                //Text("Legacy raw:");      for (ImGuiKey key = ImGuiKey_KeysData_OFFSET; key < ImGuiKey_COUNT; key++) { if (io.KeysDown[key]) { SameLine(); Text("\"%s\" %d", GetKeyName(key), key); } }
+                //                #endif
+                text("Keys down:")
+                for (key in Key.Data) {
+                    if (!key.isDown) continue
+                    sameLine(); text('"' + key.name + '"'); sameLine(); text("(%.02f)", key.data.downDuration)
+                }
+                text("Keys pressed:")
+                for (key in Key.Data) {
+                    if (!key.isPressed) continue
+                    sameLine(); text('"' + key.name + '"')
+                }
+                text("Keys released:")
+                for (key in Key.Data) {
+                    if (!key.isReleased) continue
+                    sameLine(); text('"' + key.name + '"')
+                }
+                text("Keys mods: ${if (io.keyCtrl) "CTRL " else ""}${if (io.keyShift) "SHIFT " else ""}${if (io.keyAlt) "ALT " else ""}${if (io.keySuper) "SUPER " else ""}")
+                text("Chars queue:")
+                for (c in io.inputQueueCharacters) {
+                    sameLine(); text("'${if (c > ' ' && c <= 255) c else '?'}\' (0x%04X)", c)
+                } // FIXME: We should convert 'c' to UTF-8 here but the functions are not public.
+                debugRenderKeyboardPreview(ImGui.windowDrawList)
+            }
+
+            text("MOUSE STATE")
+            indent {
+                if (ImGui.isMousePosValid())
+                    text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
+                else
+                    text("Mouse pos: <INVALID>")
+                text("Mouse delta: (%g, %g)", io.mouseDelta.x, io.mouseDelta.y)
+                val count = io.mouseDown.size
+                text("Mouse down:"); for (i in 0 until count) if (ImGui.isMouseDown(MouseButton of i)) {; sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i]); }
+                text("Mouse clicked:"); for (i in 0 until count) if (ImGui.isMouseClicked(MouseButton of i)) {; sameLine(); text("b$i (${io.mouseClickedCount[i]})"); }
+                text("Mouse released:"); for (i in 0 until count) if (ImGui.isMouseReleased(MouseButton of i)) {; sameLine(); text("b$i"); }
+                text("Mouse wheel: %.1f", io.mouseWheel)
+                text("Pen Pressure: %.1f", io.penPressure) // Note: currently unused
+            }
+
+            text("MOUSE WHEELING")
+            indent {
+                text("WheelingWindow: '${g.wheelingWindow?.name ?: "NULL"}'")
+                text("WheelingWindowReleaseTimer: %.2f", g.wheelingWindowReleaseTimer)
+                val axis = if (g.wheelingAxisAvg.x > g.wheelingAxisAvg.y) "X" else if (g.wheelingAxisAvg.x < g.wheelingAxisAvg.y) "Y" else "<none>"
+                text("WheelingAxisAvg[] = { %.3f, %.3f }, Main Axis: %s", g.wheelingAxisAvg.x, g.wheelingAxisAvg.y)
+            }
+
+            text("KEY OWNERS")
+            indent {
+                listBox("##owners", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 6)) {
+                    for (key in Key.Named) {
+                        val ownerData = key.ownerData
+                        if (ownerData.ownerCurr == KeyOwner_None)
+                            continue
+                        text("$key: 0x%08X${if (ownerData.lockUntilRelease) " LockUntilRelease" else if (ownerData.lockThisFrame) " LockThisFrame" else ""}", ownerData.ownerCurr)
+                        debugLocateItemOnHover(ownerData.ownerCurr)
+                    }
+                }
+            }
+
+            text("SHORTCUT ROUTING")
+            indent {
+                listBox("##routes", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 8)) {
+                    for (key in Key.Named) {
+                        val rt = g.keysRoutingTable
+                        var idx = rt.index[key]
+                        while (idx != -1) {
+                            val routingData = rt.entries[idx]
+                            val keyChordName = getKeyChordName(key or routingData.mods)
+                            text("$keyChordName: 0x%08X", routingData.routingCurr)
+                            debugLocateItemOnHover(routingData.routingCurr)
+                            idx = routingData.nextEntryIndex
+                        }
+                    }
+                }
+                text("(ActiveIdUsing: AllKeyboardKeys: %d, NavDirMask: 0x%X)", g.activeIdUsingAllKeyboardKeys, g.activeIdUsingNavDirMask)
+            }
+        }
+
         if (treeNode("Internal state")) {
+
+            // [JVM] redundant
+            //            const char* input_source_names[] = { "None", "Mouse", "Keyboard", "Gamepad", "Nav", "Clipboard" }; IM_ASSERT(IM_ARRAYSIZE(input_source_names) == ImGuiInputSource_COUNT);
 
             text("WINDOWING")
             indent {
                 text("HoveredWindow: '${g.hoveredWindow?.name}'")
-                text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
+                text("HoveredWindow->Root: '${g.hoveredWindow?.rootWindow!!.name}'")
                 text("HoveredWindowUnderMovingWindow: '${g.hoveredWindowUnderMovingWindow?.name}'")/*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
                     information or not                 */
                 text("MovingWindow: '${g.movingWindow?.name ?: "NULL"}'")
@@ -301,26 +499,26 @@ interface demoDebugInformations {
 
             text("ITEMS")
             indent {
-                text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}",
-                     g.activeId,
-                     g.activeIdPreviousFrame,
-                     g.activeIdTimer)
+                text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
+                debugLocateItemOnHover(g.activeId)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
-                text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}",
-                     g.hoveredId,
-                     g.hoveredIdPreviousFrame,
-                     g.hoveredIdTimer) // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
-                text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)",
-                     g.dragDropPayload.sourceId)
+
+                text("ActiveIdUsing: AllKeyboardKeys: ${g.activeIdUsingAllKeyboardKeys} NavDirMask: %X", g.activeIdUsingNavDirMask)
+                text("HoveredId: 0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}", g.hoveredIdPreviousFrame, g.hoveredIdTimer) // Not displaying g.HoveredId as it is update mid-frame
+                text("HoverDelayId: 0x%08X, Timer: %.2f, ClearTimer: %.2f", g.hoverDelayId, g.hoverDelayTimer, g.hoverDelayClearTimer)
+                text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
+                debugLocateItemOnHover(g.dragDropPayload.sourceId)
             }
 
             text("NAV,FOCUS")
             indent {
                 text("NavWindow: '${g.navWindow?.name}'")
                 text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
+                debugLocateItemOnHover(g.navId)
                 text("NavInputSource: ${g.navInputSource}")
                 text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
-                text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
+                text("NavActivateId/DownId/PressedId/InputId: %08X/%08X/%08X/%08X", g.navActivateId, g.navActivateDownId, g.navActivatePressedId, g.navActivateInputId)
+                text("NavActivateFlags: %04X", g.navActivateFlags)
                 text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
                 text("NavFocusScopeId = 0x%08X", g.navFocusScopeId)
                 text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
@@ -356,7 +554,7 @@ interface demoDebugInformations {
                         val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], columnN)
                         val col = if (table.hoveredColumnBody == columnN) COL32(255, 255, 128, 255) else COL32(255, 0, 128, 255)
                         val thickness = if (table.hoveredColumnBody == columnN) 3f else 1f
-                        drawList.addRect(r.min, r.max, col, 0f, 0.inv(), thickness)
+                        drawList.addRect(r.min, r.max, col, thickness = thickness)
                     }
                 } else {
                     val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], -1)
@@ -375,12 +573,150 @@ interface demoDebugInformations {
         end()
     }
 
+    /** create Debug Log window. display a simplified log of important dear imgui events. */
+    fun showDebugLogWindow(pOpen: KMutableProperty0<Boolean>? = null) {
+        if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasSize)
+            setNextWindowSize(Vec2(0f, ImGui.fontSize * 12f), Cond.FirstUseEver)
+        if (!begin("Dear ImGui Debug Log", pOpen) || ImGui.currentWindow.beginCount > 1) {
+            end()
+            return
+        }
+
+        alignTextToFramePadding()
+        text("Log events:")
+        sameLine(); checkboxFlags("All", g::debugLogFlags, DebugLogFlag.EventMask)
+        sameLine(); checkboxFlags("ActiveId", g::debugLogFlags, DebugLogFlag.EventActiveId)
+        sameLine(); checkboxFlags("Focus", g::debugLogFlags, DebugLogFlag.EventFocus)
+        sameLine(); checkboxFlags("Popup", g::debugLogFlags, DebugLogFlag.EventPopup)
+        sameLine(); checkboxFlags("Nav", g::debugLogFlags, DebugLogFlag.EventNav)
+        sameLine(); checkboxFlags("Clipper", g::debugLogFlags, DebugLogFlag.EventClipper)
+        sameLine(); checkboxFlags("IO", g::debugLogFlags, DebugLogFlag.EventIO)
+
+        if (smallButton("Clear")) {
+            g.debugLogBuf.clear()
+            g.debugLogIndex.clear()
+        }
+        sameLine()
+        if (smallButton("Copy"))
+            clipboardText = g.debugLogBuf.toString()
+        beginChild("##log", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar)
+
+        val clipper = ListClipper()
+        clipper.begin(g.debugLogIndex.size)
+        while (clipper.step())
+            for (lineNo in clipper.displayStart until clipper.displayEnd) {
+                val lineBegin = g.debugLogIndex getLineBegin lineNo
+                val lineEnd = g.debugLogIndex getLineEnd lineNo
+                textUnformatted(g.debugLogBuf.toString(), lineEnd)
+                val textRect = g.lastItemData.rect
+                if (isItemHovered()) {
+                    var p = lineBegin
+                    while (p < lineEnd - 10) {
+                        val buf = g.debugLogBuf.toString()
+                        val id: ID = buf.drop(2).parseInt()
+                        if (buf[p] != '0' || (buf[p + 1] != 'x' && buf[p + 1] != 'X')/* || sscanf(p + 2, "%X", & id) != 1*/)
+                            continue
+                        val p0 = calcTextSize(buf.drop(lineBegin).take(p - lineBegin))
+                        val p1 = calcTextSize(buf.drop(p).take(10))
+                        g.lastItemData.rect.put(textRect.min + Vec2(p0.x, 0f), textRect.min + Vec2(p0.x + p1.x, p1.y))
+                        if (isMouseHoveringRect(g.lastItemData.rect.min, g.lastItemData.rect.max, true))
+                            debugLocateItemOnHover(id)
+                        p += 10
+                    }
+                }
+            }
+        if (ImGui.scrollY >= ImGui.scrollMaxY)
+            setScrollHereY(1f)
+        endChild()
+
+        end()
+        clipper.end()
+    }
+
+    /** create Stack Tool window. hover items with mouse to query information about the source of their unique ID.
+     *
+     *  Stack Tool: Display UI     */
+    fun showStackToolWindow(pOpen: KMutableProperty0<Boolean>? = null) {
+
+        if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasSize)
+            setNextWindowSize(Vec2(0f, fontSize * 8f), Cond.FirstUseEver)
+        if (!begin("Dear ImGui Stack Tool", pOpen) || ImGui.currentWindow.beginCount > 1) {
+            end()
+            return
+        }
+
+        // Display hovered/active status
+        val tool = g.debugStackTool
+        val hoveredId = g.hoveredIdPreviousFrame
+        val activeId = g.activeId
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            text("HoveredId: 0x%08X (\"${if (hoveredId != 0) testEngine_FindItemDebugLabel(g, hoveredId) else ""}\"), ActiveId:  0x%08X (\"${if (activeId != 0) testEngine_FindItemDebugLabel(g, activeId) else ""}\")", hoveredId, activeId)
+        else
+            text("HoveredId: 0x%08X, ActiveId:  0x%08X", hoveredId, activeId)
+
+        sameLine()
+        metricsHelpMarker("Hover an item with the mouse to display elements of the ID Stack leading to the item's final ID.\nEach level of the stack correspond to a PushID() call.\nAll levels of the stack are hashed together to make the final ID of a widget (ID displayed at the bottom level of the stack).\nRead FAQ entry about the ID stack for details.")
+
+        // CTRL+C to copy path
+        val timeSinceCopy = g.time.f - tool.copyToClipboardLastTime
+        checkbox("Ctrl+C: copy path to clipboard", tool::copyToClipboardOnCtrlC)
+        sameLine()
+        textColored(if (timeSinceCopy >= 0f && timeSinceCopy < 0.75f && glm.mod(timeSinceCopy, 0.25f) < 0.25f * 0.5f) Vec4(1f, 1f, 0.3f, 1f) else Vec4(), "*COPIED*")
+        if (tool.copyToClipboardOnCtrlC && Key.Mod_Ctrl.isDown && Key.C.isPressed) {
+            tool.copyToClipboardLastTime = g.time.f
+            var p = 0 //g.tempBuffer
+            val pEnd = g.tempBuffer.size
+            var stackN = 0
+            while (stackN < tool.results.size && p + 3 < pEnd) {
+                g.tempBuffer[p++] = '/'.code.toByte()
+                val levelDesc = ByteArray(256)
+                stackToolFormatLevelInfo(tool, stackN, false, levelDesc)
+                var n = 0
+                while (levelDesc[n] != 0.b && p + 2 < pEnd) {
+                    if (levelDesc[n] == '/'.code.b)
+                        g.tempBuffer[p++] = '\\'.code.b
+                    g.tempBuffer[p++] = levelDesc[n]
+                    n++
+                }
+                stackN++
+            }
+            g.tempBuffer[p] = 0.b
+            clipboardText = g.tempBuffer.cStr
+        }
+
+        // Display decorated stack
+        tool.lastActiveFrame = g.frameCount
+        if (tool.results.isNotEmpty() && beginTable("##table", 3, TableFlag.Borders)) {
+
+            val idWidth = calcTextSize("0xDDDDDDDD").x
+            tableSetupColumn("Seed", TableColumnFlag.WidthFixed, idWidth)
+            tableSetupColumn("PushID", TableColumnFlag.WidthStretch)
+            tableSetupColumn("Result", TableColumnFlag.WidthFixed, idWidth)
+            tableHeadersRow()
+            for (n in tool.results.indices) {
+                val info = tool.results[n]
+                tableNextColumn()
+                text("0x%08X", if (n > 0) tool.results[n - 1].id else 0)
+                tableNextColumn()
+
+                stackToolFormatLevelInfo(tool, n, true, g.tempBuffer)
+                textUnformatted(g.tempBuffer.cStr)
+                tableNextColumn()
+                text("0x%08X", info.id)
+                if (n == tool.results.lastIndex)
+                    tableSetBgColor(TableBgTarget.CellBg, Col.Header.u32)
+            }
+            endTable()
+        }
+        end()
+    }
+
     /** create About window. display Dear ImGui version, credits and build/system information. */
     object ShowAboutWindow {
         var showConfigInfo = false
         operator fun invoke(open: KMutableProperty0<Boolean>) {
 
-            if (!begin("About Dear ImGui", open, Wf.AlwaysAutoResize.i)) {
+            if (!begin("About Dear ImGui", open, Wf.AlwaysAutoResize)) {
                 end()
                 return
             }
@@ -396,7 +732,7 @@ interface demoDebugInformations {
 
                 val copyToClipboard = button("Copy to clipboard")
                 val childSize = Vec2(0f, textLineHeightWithSpacing * 18)
-                beginChildFrame(getID("cfginfos"), childSize, Wf.NoMove.i)
+                beginChildFrame(getID("cfginfos"), childSize, Wf.NoMove)
                 if (copyToClipboard) {
                     logToClipboard()
                     logText("```\n") // Back quotes will make text appears without formatting when pasting on GitHub
@@ -459,6 +795,7 @@ interface demoDebugInformations {
 
     object ShowStyleSelector {
         var styleIdx = -1
+
         /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
          *  Here we use the simplified Combo() api that packs items into a single literal string.
          *  Useful for quick combo boxes where the choices are known locally.
@@ -476,7 +813,7 @@ interface demoDebugInformations {
     }
 
     /** Demo helper function to select among loaded fonts.
-     *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one.
+     *  Here we use the regular BeginCombo()/EndCombo() api which is the more flexible one.
      *
      *  add font selector block (not a window), essentially a combo listing the loaded fonts. */
     fun showFontSelector(label: String) {
@@ -497,7 +834,9 @@ interface demoDebugInformations {
             - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().""")
     }
 
-    /** Helper to display basic user controls. */
+    /** Helper to display basic user controls.
+     *
+     *  add basic help/info block (not a window): how to manipulate ImGui as an end-user (mouse/keyboard controls). */
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
         bulletText("""
@@ -505,7 +844,9 @@ interface demoDebugInformations {
             (double-click to auto fit window to its contents).""".trimIndent())
         bulletText("CTRL+Click on a slider or drag box to input value as text.")
         bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
-        if (io.fontAllowUserScaling) bulletText("CTRL+Mouse Wheel to zoom window contents.")
+        bulletText("CTRL+Tab to select a window.")
+        if (io.fontAllowUserScaling)
+            bulletText("CTRL+Mouse Wheel to zoom window contents.")
         bulletText("While inputing text:\n")
         indent {
             bulletText("CTRL+Left/Right to word jump.")
@@ -513,7 +854,6 @@ interface demoDebugInformations {
             bulletText("CTRL+X/C/V to use clipboard cut/copy/paste.")
             bulletText("CTRL+Z,CTRL+Y to undo/redo.")
             bulletText("ESCAPE to revert.")
-            bulletText("You can apply arithmetic operators +,*,/ on numerical values.\nUse +- to subtract.")
         }
         bulletText("With keyboard navigation enabled:")
         indent {
@@ -522,7 +862,6 @@ interface demoDebugInformations {
             bulletText("Return to input text into a widget.")
             bulletText("Escape to deactivate a widget, close popup, exit child window.")
             bulletText("Alt to jump to the menu layer of a window.")
-            bulletText("CTRL+Tab to select a window.")
         }
     }
 
@@ -574,20 +913,23 @@ interface demoDebugInformations {
         // - NodeStorage()
         object Funcs {
 
-            fun getTableRect(table: Table, rectType: TRT, n: Int): Rect = when (rectType) {
-                TRT.OuterRect -> table.outerRect
-                TRT.InnerRect -> table.innerRect
-                TRT.WorkRect -> table.workRect
-                TRT.HostClipRect -> table.hostClipRect
-                TRT.InnerClipRect -> table.innerClipRect
-                TRT.BackgroundClipRect -> table.bgClipRect
-                TRT.ColumnsRect -> table.columns[n].let { c -> Rect(c.minX, table.innerClipRect.min.y, c.maxX, table.innerClipRect.min.y + table.lastOuterHeight) }
-                TRT.ColumnsWorkRect -> table.columns[n].let { c -> Rect(c.workMinX, table.workRect.min.y, c.workMaxX, table.workRect.max.y) }
-                TRT.ColumnsClipRect -> table.columns[n].clipRect
-                TRT.ColumnsContentHeadersUsed -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersUsed, table.innerClipRect.min.y + table.lastFirstRowHeight) } // Note: y1/y2 not always accurate
-                TRT.ColumnsContentHeadersIdeal -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersIdeal, table.innerClipRect.min.y + table.lastFirstRowHeight) }
-                TRT.ColumnsContentFrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXFrozen, table.innerClipRect.min.y + table.lastFirstRowHeight) }
-                TRT.ColumnsContentUnfrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y + table.lastFirstRowHeight, c.contentMaxXUnfrozen, table.innerClipRect.max.y) }
+            fun getTableRect(table: Table, rectType: TRT, n: Int): Rect {
+                val tableInstance = table getInstanceData table.instanceCurrent // Always using last submitted instance
+                return when (rectType) {
+                    TRT.OuterRect -> table.outerRect
+                    TRT.InnerRect -> table.innerRect
+                    TRT.WorkRect -> table.workRect
+                    TRT.HostClipRect -> table.hostClipRect
+                    TRT.InnerClipRect -> table.innerClipRect
+                    TRT.BackgroundClipRect -> table.bgClipRect
+                    TRT.ColumnsRect -> table.columns[n].let { c -> Rect(c.minX, table.innerClipRect.min.y, c.maxX, table.innerClipRect.min.y + tableInstance.lastOuterHeight) }
+                    TRT.ColumnsWorkRect -> table.columns[n].let { c -> Rect(c.workMinX, table.workRect.min.y, c.workMaxX, table.workRect.max.y) }
+                    TRT.ColumnsClipRect -> table.columns[n].clipRect
+                    TRT.ColumnsContentHeadersUsed -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersUsed, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight) } // Note: y1/y2 not always accurate
+                    TRT.ColumnsContentHeadersIdeal -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersIdeal, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight) }
+                    TRT.ColumnsContentFrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXFrozen, table.innerClipRect.min.y + tableInstance.lastFrozenHeight) }
+                    TRT.ColumnsContentUnfrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y + tableInstance.lastFrozenHeight, c.contentMaxXUnfrozen, table.innerClipRect.max.y) }
+                }
             }
 
             fun getWindowRect(window: Window, rectType: WRT): Rect = when (rectType) {
@@ -615,7 +957,7 @@ interface demoDebugInformations {
          *  In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.txt)    */
         fun helpMarker(desc: String) {
             textDisabled("(?)")
-            if (isItemHovered()) {
+            if (isItemHovered(HoveredFlag.DelayShort)) {
                 beginTooltip()
                 pushTextWrapPos(fontSize * 35f)
                 textEx(desc)
@@ -623,5 +965,41 @@ interface demoDebugInformations {
                 endTooltip()
             }
         }
+
+        fun renderViewportsThumbnails() {
+            val window = g.currentWindow!!
+
+            // We don't display full monitor bounds (we could, but it often looks awkward), instead we display just enough to cover all of our viewports.
+            val SCALE = 1f / 8f
+            val bbFull = Rect(Float.MAX_VALUE, -Float.MAX_VALUE)
+            for (viewport in g.viewports)
+                bbFull add viewport.mainRect
+            val p = window.dc.cursorPos // careful, class instance
+            val off = p - bbFull.min * SCALE
+            for (viewport in g.viewports) {
+                val viewportDrawBb = Rect(off + (viewport.pos) * SCALE, off + (viewport.pos + viewport.size) * SCALE)
+                ImGui.debugRenderViewportThumbnail(window.drawList, viewport, viewportDrawBb)
+            }
+            ImGui.dummy(bbFull.size * SCALE)
+        }
+
+        fun stackToolFormatLevelInfo(tool: StackTool, n: Int, formatForUi: Boolean, buf: ByteArray): Int {
+            val info = tool.results[n]
+            val desc = info.desc.toByteArray()
+            val window = if (desc[0] == 0.b && n == 0) findWindowByID(info.id) else null
+            if (window != null)                                                                 // Source: window name (because the root ID don't call GetID() and so doesn't get hooked)
+                return formatString(buf, if (formatForUi) "\"%s\" [window]" else "%s", window.name)
+            if (info.querySuccess)                                                     // Source: GetID() hooks (prioritize over ItemInfo() because we frequently use patterns like: PushID(str), Button("") where they both have same id)
+                return formatString(buf, if (formatForUi && info.dataType == DataType._String) "\"%s\"" else "%s", info.desc)
+            if (tool.stackLevel < tool.results.size)                                  // Only start using fallback below when all queries are done, so during queries we don't flickering ??? markers.
+                return 0.also { buf[0] = 0 }
+            if (IMGUI_ENABLE_TEST_ENGINE)
+                testEngine_FindItemDebugLabel(gImGui, info.id)?.let { label ->     // Source: ImGuiTestEngine's ItemInfo()
+                    formatString(buf, if (formatForUi) "??? \"%s\"" else "%s", label)
+                }
+            return formatString(buf, "???")
+        }
+
+        val buf = ""
     }
 }

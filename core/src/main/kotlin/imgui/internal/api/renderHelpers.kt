@@ -1,9 +1,9 @@
 package imgui.internal.api
 
 import glm_.b
-import glm_.bool
 import glm_.f
 import glm_.func.common.max
+import glm_.glm
 import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -11,7 +11,7 @@ import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.getColorU32
-import imgui.ImGui.logText
+import imgui.ImGui.logRenderedText
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.DrawList
@@ -20,7 +20,7 @@ import imgui.internal.classes.Rect
 import imgui.internal.sections.*
 import unsigned.toUInt
 import kotlin.math.max
-import imgui.internal.sections.DrawCornerFlag as Dcf
+import kotlin.math.min
 
 /** Render helpers
  *  AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
@@ -137,7 +137,7 @@ internal interface renderHelpers {
             var ellipsisChar = font.ellipsisChar
             var ellipsisCharCount = 1
             if (ellipsisChar == '\uffff') {
-                ellipsisChar = '.'
+                ellipsisChar = font.dotChar
                 ellipsisCharCount = 3
             }
             val glyph = font.findGlyph(ellipsisChar)!!
@@ -191,16 +191,16 @@ internal interface renderHelpers {
         window.drawList.addRectFilled(pMin, pMax, fillCol, rounding)
         val borderSize = style.frameBorderSize
         if (border && borderSize > 0f) {
-            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, Dcf.All.i, borderSize)
-            window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
+            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, thickness = borderSize)
+            window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding, thickness = borderSize)
         }
     }
 
     fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(g.currentWindow!!) {
         val borderSize = style.frameBorderSize
         if (borderSize > 0f) {
-            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, Dcf.All.i, borderSize)
-            drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
+            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, thickness = borderSize)
+            drawList.addRect(pMin, pMax, Col.Border.u32, rounding, thickness = borderSize)
         }
     }
 
@@ -209,12 +209,18 @@ internal interface renderHelpers {
      * Spent a non reasonable amount of time trying to getting this right for ColorButton with rounding+anti-aliasing+ImGuiColorEditFlags_HalfAlphaPreview flag + various grid sizes and offsets, and eventually gave up... probably more reasonable to disable rounding altogether.
      * FIXME: uses ImGui::GetColorU32
      * [JVM] safe passing Vec2 instances */
-    fun renderColorRectWithAlphaCheckerboard(drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
-                                             gridOff: Vec2, rounding: Float = 0f, roundingCornersFlags: Int = -1) {
+    fun renderColorRectWithAlphaCheckerboard(
+        drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
+        gridOff: Vec2, rounding: Float = 0f, flags_: DrawFlags = emptyFlags
+    ) {
+        val flags = when {
+            flags_ hasnt DrawFlag.RoundCornersMask -> DrawFlag.RoundCornersDefault
+            else -> flags_
+        }
         if (((col and COL32_A_MASK) ushr COL32_A_SHIFT) < 0xFF) {
             val colBg1 = getColorU32(alphaBlendColors(COL32(204, 204, 204, 255), col))
             val colBg2 = getColorU32(alphaBlendColors(COL32(128, 128, 128, 255), col))
-            drawList.addRectFilled(pMin, pMax, colBg1, rounding, roundingCornersFlags)
+            drawList.addRectFilled(pMin, pMax, colBg1, rounding, flags)
 
             var yi = 0
             var y = pMin.y + gridOff.y
@@ -234,29 +240,33 @@ internal interface renderHelpers {
                         x += gridStep * 2f
                         continue
                     }
-                    var roundingCornersFlagsCell = 0
+                    var cellFlags: DrawFlags = DrawFlag.RoundCornersNone
                     if (y1 <= pMin.y) {
-                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.TopLeft
-                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.TopRight
+                        if (x1 <= pMin.x) cellFlags = cellFlags or DrawFlag.RoundCornersTopLeft
+                        if (x2 >= pMax.x) cellFlags = cellFlags or DrawFlag.RoundCornersTopRight
                     }
                     if (y2 >= pMax.y) {
-                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.BotLeft
-                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.BotRight
+                        if (x1 <= pMin.x) cellFlags = cellFlags or DrawFlag.RoundCornersBottomLeft
+                        if (x2 >= pMax.x) cellFlags = cellFlags or DrawFlag.RoundCornersBottomRight
                     }
-                    roundingCornersFlagsCell = roundingCornersFlagsCell and roundingCornersFlags
-                    drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, if (roundingCornersFlagsCell.bool) rounding else 0f, roundingCornersFlagsCell)
+                    // Combine flags
+                    cellFlags = when {
+                        flags == DrawFlag.RoundCornersNone || cellFlags == DrawFlag.RoundCornersNone -> DrawFlag.RoundCornersNone
+                        else -> cellFlags or flags
+                    }
+                    drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, rounding, cellFlags)
                     x += gridStep * 2f
                 }
                 y += gridStep
                 yi++
             }
         } else
-            drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornersFlags)
+            drawList.addRectFilled(pMin, pMax, col, rounding, flags)
     }
 
     /** Navigation highlight
      * @param flags: NavHighlightFlag  */
-    fun renderNavHighlight(bb: Rect, id: ID, flags: NavHighlightFlags = NavHighlightFlag.TypeDefault.i) {
+    fun renderNavHighlight(bb: Rect, id: ID, flags: NavHighlightFlags = NavHighlightFlag.TypeDefault) {
 
         if (id != g.navId) return
         if (g.navDisableHighlight && flags hasnt NavHighlightFlag.AlwaysDraw) return
@@ -273,13 +283,15 @@ internal interface renderHelpers {
             val fullyVisible = displayRect in window.clipRect
             if (!fullyVisible)
                 window.drawList.pushClipRect(displayRect) // check order here down
-            window.drawList.addRect(displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
-                    Col.NavHighlight.u32, rounding, Dcf.All.i, THICKNESS)
+            window.drawList.addRect(
+                displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
+                Col.NavHighlight.u32, rounding, thickness = THICKNESS
+            )
             if (!fullyVisible)
                 window.drawList.popClipRect()
         }
         if (flags has NavHighlightFlag.TypeThin)
-            window.drawList.addRect(displayRect.min, displayRect.max, Col.NavHighlight.u32, rounding, 0.inv(), 1f)
+            window.drawList.addRect(displayRect.min, displayRect.max, Col.NavHighlight.u32, rounding, thickness = 1f)
     }
 
     /** Find the optional ## from which we stop displaying text.    */
@@ -297,6 +309,170 @@ internal interface renderHelpers {
         return textDisplayEnd
     }
 
-    // Render helpers (those functions don't access any ImGui state!)
-    // these are all in the DrawList class
+    fun renderMouseCursor(basePos: Vec2, baseScale: Float, mouseCursor: MouseCursor, colFill: Int, colBorder: Int, colShadow: Int) {
+        //        IM_ASSERT(mouseCursor > ImGuiMouseCursor_None && mouseCursor < ImGuiMouseCursor_COUNT);
+        for (viewport in g.viewports) {
+            val drawList = viewport.foregroundDrawList
+            val fontAtlas = drawList._data.font!!.containerAtlas
+            val offset = Vec2()
+            val size = Vec2()
+            val uv = Array(4) { Vec2() }
+            if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
+                val pos = basePos - offset
+                val scale = baseScale
+                val texId = fontAtlas.texID
+                drawList.pushTextureID(texId)
+                drawList.addImage(texId, pos + Vec2(1, 0) * scale, pos + (Vec2(1, 0) + size) * scale, uv[2], uv[3], colShadow)
+                drawList.addImage(texId, pos + Vec2(2, 0) * scale, pos + (Vec2(2, 0) + size) * scale, uv[2], uv[3], colShadow)
+                drawList.addImage(texId, pos, pos + size * scale, uv[2], uv[3], colBorder)
+                drawList.addImage(texId, pos, pos + size * scale, uv[0], uv[1], colFill)
+                drawList.popTextureID()
+            }
+        }
+    }
+
+    /** Render an arrow aimed to be aligned with text (p_min is a position in the same space text would be positioned). To e.g. denote expanded/collapsed state  */
+    fun DrawList.renderArrow(pos: Vec2, col: Int, dir: Dir, scale: Float = 1f) {
+
+        val h = _data.fontSize * 1f
+        var r = h * 0.4f * scale
+        val center = pos + Vec2(h * 0.5f, h * 0.5f * scale)
+
+        val a: Vec2
+        val b: Vec2
+        val c: Vec2
+        when (dir) {
+            Dir.Up, Dir.Down -> {
+                if (dir == Dir.Up) r = -r
+                a = Vec2(+0.000f, +0.75f) * r
+                b = Vec2(-0.866f, -0.75f) * r
+                c = Vec2(+0.866f, -0.75f) * r
+            }
+
+            Dir.Left, Dir.Right -> {
+                if (dir == Dir.Left) r = -r
+                a = Vec2(+0.75f, +0.000f) * r
+                b = Vec2(-0.75f, +0.866f) * r
+                c = Vec2(-0.75f, -0.866f) * r
+            }
+
+            else -> throw Error()
+        }
+
+        addTriangleFilled(center + a, center + b, center + c, col)
+    }
+
+    fun DrawList.renderBullet(pos: Vec2, col: Int) = addCircleFilled(pos, _data.fontSize * 0.2f, col, 8)
+
+    @Deprecated("placeholder: pos gets modified!")
+    fun DrawList.renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
+
+        val thickness = max(sz_ / 5f, 1f)
+        val sz = sz_ - thickness * 0.5f
+        pos += thickness * 0.25f
+
+        val third = sz / 3f
+        val bx = pos.x + third
+        val by = pos.y + sz - third * 0.5f
+        pathLineTo(Vec2(bx - third, by - third))
+        pathLineTo(Vec2(bx, by))
+        pathLineTo(Vec2(bx + third * 2f, by - third * 2f))
+        pathStroke(col, thickness = thickness)
+    }
+
+    /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
+    fun DrawList.renderArrowPointingAt(pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) =
+            when (direction) {
+                Dir.Left -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
+                Dir.Right -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
+                Dir.Up -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
+                Dir.Down -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
+                else -> Unit
+            }
+
+    /** FIXME: Cleanup and move code to ImDrawList. */
+    fun DrawList.renderRectFilledRangeH(rect: Rect, col: Int, xStartNorm_: Float, xEndNorm_: Float, rounding_: Float) {
+        var xStartNorm = xStartNorm_
+        var xEndNorm = xEndNorm_
+        if (xEndNorm == xStartNorm) return
+        if (xStartNorm > xEndNorm) {
+            val tmp = xStartNorm
+            xStartNorm = xEndNorm
+            xEndNorm = tmp
+        }
+        val p0 = Vec2(lerp(rect.min.x, rect.max.x, xStartNorm), rect.min.y)
+        val p1 = Vec2(lerp(rect.min.x, rect.max.x, xEndNorm), rect.max.y)
+        if (rounding_ == 0f) {
+            addRectFilled(p0, p1, col, 0f)
+            return
+        }
+        val rounding = glm.clamp(glm.min((rect.max.x - rect.min.x) * 0.5f, (rect.max.y - rect.min.y) * 0.5f) - 1f, 0f, rounding_)
+        val invRounding = 1f / rounding
+        val arc0B = acos01(1f - (p0.x - rect.min.x) * invRounding)
+        val arc0E = acos01(1f - (p1.x - rect.min.x) * invRounding)
+        val halfPI = glm.HPIf // We will == compare to this because we know this is the exact value ImAcos01 can return.
+        val x0 = glm.max(p0.x, rect.min.x + rounding)
+        if (arc0B == arc0E) {
+            pathLineTo(Vec2(x0, p1.y))
+            pathLineTo(Vec2(x0, p0.y))
+        } else if (arc0B == 0f && arc0E == halfPI) {
+            pathArcToFast(Vec2(x0, p1.y - rounding), rounding, 3, 6) // BL
+            pathArcToFast(Vec2(x0, p0.y + rounding), rounding, 6, 9) // TR
+        } else {
+            pathArcTo(Vec2(x0, p1.y - rounding), rounding, glm.PIf - arc0E, glm.PIf - arc0B, 3) // BL
+            pathArcTo(Vec2(x0, p0.y + rounding), rounding, glm.PIf + arc0B, glm.PIf + arc0E, 3) // TR
+        }
+        if (p1.x > rect.min.x + rounding) {
+            val arc1B = acos01(1f - (rect.max.x - p1.x) * invRounding)
+            val arc1E = acos01(1f - (rect.max.x - p0.x) * invRounding)
+            val x1 = glm.min(p1.x, rect.max.x - rounding)
+            if (arc1B == arc1E) {
+                pathLineTo(Vec2(x1, p0.y))
+                pathLineTo(Vec2(x1, p1.y))
+            } else if (arc1B == 0f && arc1E == halfPI) {
+                pathArcToFast(Vec2(x1, p0.y + rounding), rounding, 9, 12) // TR
+                pathArcToFast(Vec2(x1, p1.y - rounding), rounding, 0, 3)  // BR
+            } else {
+                pathArcTo(Vec2(x1, p0.y + rounding), rounding, -arc1E, -arc1B, 3) // TR
+                pathArcTo(Vec2(x1, p1.y - rounding), rounding, +arc1B, +arc1E, 3) // BR
+            }
+        }
+        pathFillConvex(col)
+    }
+
+    fun DrawList.renderRectFilledWithHole(outer: Rect, inner: Rect, col: Int, rounding: Float) {
+        val fillL = inner.min.x > outer.min.x
+        val fillR = inner.max.x < outer.max.x
+        val fillU = inner.min.y > outer.min.y
+        val fillD = inner.max.y < outer.max.y
+        if (fillL) addRectFilled(
+            Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
+            DrawFlag.RoundCornersNone or (if (fillU) emptyFlags else DrawFlag.RoundCornersTopLeft) or if (fillD) emptyFlags else DrawFlag.RoundCornersBottomLeft
+        )
+        if (fillR) addRectFilled(
+            Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
+            DrawFlag.RoundCornersNone or (if (fillU) emptyFlags else DrawFlag.RoundCornersTopRight) or if (fillD) emptyFlags else DrawFlag.RoundCornersBottomRight
+        )
+        if (fillU) addRectFilled(
+            Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
+            DrawFlag.RoundCornersNone or (if (fillL) emptyFlags else DrawFlag.RoundCornersTopLeft) or if (fillR) emptyFlags else DrawFlag.RoundCornersTopRight
+        )
+        if (fillD) addRectFilled(
+            Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
+            DrawFlag.RoundCornersNone or (if (fillL) emptyFlags else DrawFlag.RoundCornersBottomLeft) or if (fillR) emptyFlags else DrawFlag.RoundCornersBottomRight
+        )
+        if (fillL && fillU) addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft)
+        if (fillR && fillU) addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight)
+        if (fillL && fillD) addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomLeft)
+        if (fillR && fillD) addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomRight)
+    }
+
+    companion object {
+        private fun acos01(x: Float) = when {
+            x <= 0f -> glm.PIf * 0.5f
+            x >= 1f -> 0f
+            else -> glm.acos(x)
+            //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
+        }
+    }
 }

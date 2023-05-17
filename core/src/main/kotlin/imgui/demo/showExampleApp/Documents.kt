@@ -4,6 +4,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginPopupContextItem
@@ -15,25 +16,26 @@ import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.colorEdit3
 import imgui.ImGui.end
+import imgui.ImGui.endChildFrame
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
+import imgui.ImGui.fontSize
+import imgui.ImGui.getID
 import imgui.ImGui.isPopupOpen
-import imgui.ImGui.listBoxFooter
-import imgui.ImGui.listBoxHeader
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushID
-import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setTabItemClosed
 import imgui.ImGui.text
+import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textWrapped
 import kotlin.reflect.KMutableProperty0
 
@@ -85,7 +87,7 @@ class MyDocument(
         if (button("Modify", Vec2(100, 0)))
             dirty = true
         sameLine()
-        if (button("Save", Vec2(100, 0)))
+        if (button("Save (Ctrl+S)", Vec2(100, 0)))
             doSave()
         colorEdit3("color", color)  // Useful to test drag and drop and hold-dragged-to-open-tab behavior.
         popID()
@@ -133,13 +135,13 @@ object Documents {
 
     // Options
     var optReorderable = true
-    var optFittingFlags: TabBarFlags = TabBarFlag.FittingPolicyDefault_.i
+    var optFittingFlags: TabBarFlags = TabBarFlag.FittingPolicyDefault
 
     val closeQueue = ArrayList<MyDocument>()
 
-    operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
+    operator fun invoke(pOpen: KMutableProperty0<Boolean>?) {
 
-        val windowContentsVisible = begin("Example: Documents", pOpen, WindowFlag.MenuBar.i)
+        val windowContentsVisible = begin("Example: Documents", pOpen, WindowFlag.MenuBar)
         if (!windowContentsVisible) {
             end()
             return
@@ -163,8 +165,8 @@ object Documents {
                 if (menuItem("Close All Documents", "", false, openCount > 0))
                     for (doc in documents)
                         doc.doQueueClose()
-                if (menuItem("Exit", "Alt+F4")) {
-                }
+                if (menuItem("Exit", "Ctrl+F4") && pOpen != null)
+                    pOpen.set(false)
                 endMenu()
             }
             endMenuBar()
@@ -183,9 +185,19 @@ object Documents {
 
         separator()
 
+        // About the ImGuiWindowFlags_UnsavedDocument / ImGuiTabItemFlags_UnsavedDocument flags.
+        // They have multiple effects:
+        // - Display a dot next to the title.
+        // - Tab is selected when clicking the X close button.
+        // - Closure is not assumed (will wait for user to stop submitting the tab).
+        //   Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar.
+        //   We need to assume closure by default otherwise waiting for "lack of submission" on the next frame would leave an empty
+        //   hole for one-frame, both in the tab-bar and in tab-contents when closing a tab/window.
+        //   The rarely used SetTabItemClosed() function is a way to notify of programmatic closure to avoid the one-frame hole.
+
         // Submit Tab Bar and Tabs
         run {
-            val tabBarFlags: TabBarFlags = optFittingFlags or if (optReorderable) TabBarFlag.Reorderable else TabBarFlag.None
+            val tabBarFlags: TabBarFlags = optFittingFlags or if (optReorderable) TabBarFlag.Reorderable else emptyFlags
             if (beginTabBar("##tabs", tabBarFlags)) {
                 if (optReorderable)
                     notifyOfDocumentsClosedElsewhere()
@@ -199,7 +211,7 @@ object Documents {
 
                     if (!doc.open) continue
 
-                    val tabFlags: TabItemFlags = if (doc.dirty) TabItemFlag.UnsavedDocument.i else TabItemFlag.None.i
+                    val tabFlags: TabItemOnlyFlags = if (doc.dirty) TabItemFlag.UnsavedDocument else emptyFlags
                     val visible = beginTabItem(doc.name, doc::open, tabFlags)
 
                     // Cancel attempt to close when unsaved add to save queue so we can display a popup.
@@ -240,15 +252,16 @@ object Documents {
 
                 if (!isPopupOpen("Save?"))
                     openPopup("Save?")
-                if (beginPopupModal("Save?")) {
+                if (beginPopupModal("Save?", null, WindowFlag.AlwaysAutoResize)) {
                     text("Save change to the following items?")
-                    pushItemWidth(-1f)
-                    if (listBoxHeader("##", closeQueueUnsavedDocuments, 6)) {
+                    val itemHeight = textLineHeightWithSpacing
+                    if (beginChildFrame(getID("frame"), Vec2(-Float.MIN_VALUE, 6.25f * itemHeight))) {
                         closeQueue.forEach { if (it.dirty) text(it.name) }
-                        listBoxFooter()
+                        endChildFrame()
                     }
 
-                    if (button("Yes", Vec2(80, 0))) {
+                    val buttonSize = Vec2(fontSize * 7f, 0f)
+                    if (button("Yes", buttonSize)) {
                         closeQueue.forEach {
                             if (it.dirty)
                                 it.doSave()
@@ -258,13 +271,13 @@ object Documents {
                         closeCurrentPopup()
                     }
                     sameLine()
-                    if (button("No", Vec2(80, 0))) {
+                    if (button("No", buttonSize)) {
                         closeQueue.forEach { it.doForceClose() }
                         closeQueue.clear()
                         closeCurrentPopup()
                     }
                     sameLine()
-                    if (button("Cancel", Vec2(80, 0))) {
+                    if (button("Cancel", buttonSize)) {
                         closeQueue.clear()
                         closeCurrentPopup()
                     }

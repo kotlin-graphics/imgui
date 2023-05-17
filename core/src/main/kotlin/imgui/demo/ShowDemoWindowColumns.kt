@@ -8,11 +8,10 @@ import imgui.ImGui.checkbox
 import imgui.ImGui.columnIndex
 import imgui.ImGui.columns
 import imgui.ImGui.contentRegionAvail
-import imgui.ImGui.dragInt
 import imgui.ImGui.fontSize
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
-import imgui.ImGui.inputFloat
+import imgui.ImGui.input
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.nextColumn
 import imgui.ImGui.sameLine
@@ -28,6 +27,7 @@ import imgui.ImGui.treePop
 import imgui.SelectableFlag
 import imgui.WindowFlag
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.drag
 import imgui.classes.ListClipper
 import imgui.dsl.child
 import imgui.dsl.collapsingHeader
@@ -66,7 +66,7 @@ object ShowDemoWindowColumns {
         treeNode("Horizontal Scrolling") {
             setNextWindowContentSize(Vec2(1500f, 0f))
             val childSize = Vec2(0f, fontSize * 20f)
-            child("##ScrollingRegion", childSize, false, WindowFlag.HorizontalScrollbar.i) {
+            child("##ScrollingRegion", childSize, false, WindowFlag.HorizontalScrollbar) {
                 columns(10)
 
                 // Also demonstrate using clipper for large vertical lists
@@ -80,6 +80,7 @@ object ShowDemoWindowColumns {
                             nextColumn()
                         }
                 columns(1)
+                clipper.end()
             }
         }
 
@@ -141,7 +142,7 @@ object ShowDemoWindowColumns {
                 val names = listOf("One", "Two", "Three")
                 val paths = listOf("/path/one", "/path/two", "/path/three")
                 for (i in 0..2) {
-                    selectable("%04d".format(style.locale, i), selected == i, SelectableFlag.SpanAllColumns.i) {
+                    selectable("%04d".format(style.locale, i), selected == i, SelectableFlag.SpanAllColumns) {
                         selected = i
                     }
                     nextColumn()
@@ -164,7 +165,7 @@ object ShowDemoWindowColumns {
                 // NB: Future columns API should allow automatic horizontal borders.
                 val linesCount = 3
                 setNextItemWidth(fontSize * 8)
-                dragInt("##columns_count", ::columnsCount, 0.1f, 2, 10, "%d columns")
+                drag("##columns_count", ::columnsCount, 0.1f, 2, 10, "%d columns")
                 if (columnsCount < 2)
                     columnsCount = 2
                 sameLine()
@@ -206,13 +207,13 @@ object ShowDemoWindowColumns {
 
                 text("ImGui")
                 button("Apple")
-                inputFloat("red", ::foo, 0.05f, 0f, "%.3f")
+                input("red", ::foo, 0.05f, 0f, "%.3f")
                 text("An extra line here.")
                 nextColumn()
 
                 text("Sailor")
                 button("Corniflower")
-                inputFloat("blue", ::bar, 0.05f, 0f, "%.3f")
+                input("blue", ::bar, 0.05f, 0f, "%.3f")
                 nextColumn()
 
                 collapsingHeader("Category A") { text("Blah blah blah") }; nextColumn()

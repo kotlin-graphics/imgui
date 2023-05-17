@@ -23,10 +23,10 @@ import kotlin.math.max
 class InputTextCallbackData {
 
     /** One ImGuiInputTextFlags_Callback*    // Read-only */
-    var eventFlag: InputTextFlags = 0
+    var eventFlag: InputTextFlags = emptyFlags
 
     /** What user passed to InputText()      // Read-only */
-    var flags: InputTextFlags = 0
+    var flags: InputTextFlags = emptyFlags
 
     /** What user passed to InputText()      // Read-only */
     var userData: Any? = null
@@ -40,7 +40,7 @@ class InputTextCallbackData {
     var eventChar = NUL
 
     /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
-    var eventKey = Key.Tab
+    var eventKey: Key = Key.Tab
 
     /** Text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
     var buf = ByteArray(0)
@@ -104,12 +104,10 @@ class InputTextCallbackData {
             assert(editState.id != 0 && g.activeId == editState.id)
             assert(buf === editState.textA)
             val newBufSize = bufTextLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen))
-            val new = ByteArray(newBufSize)
-            System.arraycopy(editState.textA, 0, new, 0, editState.textA.size)
-            editState.textA = new
-            buf = editState.textA
-            editState.bufCapacityA = newBufSize
-            bufSize = newBufSize
+            assert(editState.textA.size >= newBufSize)
+//            edit_state->TextA.reserve(new_buf_size + 1);
+            editState.textA.cStr.toByteArray(buf)
+            bufSize = newBufSize; editState.bufCapacityA = newBufSize
         }
 
         if (bufTextLen != pos)
@@ -126,16 +124,20 @@ class InputTextCallbackData {
         bufTextLen += newTextLen
     }
 
-    fun selectAll() {
-        selectionStart = 0
-        selectionEnd = bufTextLen
-    }
+    val hasSelection: Boolean
+        get() = selectionStart != selectionEnd
 
     fun clearSelection() {
         selectionEnd = bufTextLen
         selectionStart = selectionEnd
     }
 
-    val hasSelection: Boolean
-        get() = selectionStart != selectionEnd
+//    val cursorPos get() = cursor; }
+//    val selectionStart get() = selectionStart
+//    int         GetSelectionEnd() const     { return Stb.select_end; }
+
+    fun selectAll() {
+        selectionStart = 0
+        selectionEnd = bufTextLen
+    }
 }

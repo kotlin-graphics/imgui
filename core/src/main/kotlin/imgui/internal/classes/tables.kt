@@ -1,11 +1,11 @@
 package imgui.internal.classes
 
 import glm_.*
+import glm_.vec2.Vec2
 import imgui.*
+import imgui.api.g
 import imgui.internal.*
 import imgui.internal.sections.NavLayer
-import imgui.TableColumnFlag as Tcf
-import imgui.TableFlag as Tf
 
 /** Special sentinel code which cannot be used as a regular color. */
 val COL32_DISABLE = COL32(0, 0, 0, 1)
@@ -27,7 +27,7 @@ typealias TableDrawChannelIdx = Int
 class TableColumn {
 
     /** Flags after some patching (not directly same as provided by user). See ImGuiTableColumnFlags_ */
-    var flags = Tcf.None.i
+    var flags: TableColumnFlags = emptyFlags
 
     /** Final/actual width visible == (MaxX - MinX), locked in TableUpdateLayout(). May be > WidthRequest to honor minimum width, may be < WidthRequest to honor shrinking columns down in tight space. */
     var widthGiven = 0f
@@ -96,14 +96,19 @@ class TableColumn {
     /** Index within DrawSplitter.Channels[] */
     var drawChannelCurrent: TableDrawChannelIdx = -1
 
+    /** Draw channels for frozen rows (often headers) */
     var drawChannelFrozen: TableDrawChannelIdx = -1
 
+    /** Draw channels for unfrozen rows */
     var drawChannelUnfrozen: TableDrawChannelIdx = -1
 
-    /** Is the column not marked Hidden by the user? (even if off view, e.g. clipped by scrolling). */
+    /** IsUserEnabled && (Flags & ImGuiTableColumnFlags_Disabled) == 0 */
     var isEnabled = false
 
-    var isEnabledNextFrame = false
+    /** Is the column not marked Hidden by the user? (unrelated to being off view, e.g. clipped by scrolling). */
+    var isUserEnabled = false
+
+    var isUserEnabledNextFrame = false
 
     /** Is actually in view (e.g. overlapping the host window clipping rectangle, not scrolled). */
     var isVisibleX = false
@@ -140,6 +145,63 @@ class TableColumn {
     var sortDirectionsAvailList = 0
 }
 
+/** Storage for one instance of a same table
+ *
+ *  Per-instance data that needs preserving across frames (seemingly most others do not need to be preserved aside from debug needs, does that needs they could be moved to ImGuiTableTempData ?) */
+class TableInstanceData {
+    /** Outer height from last frame */
+    var lastOuterHeight = 0f
+
+    /** Height of first row from last frame (FIXME: this is used as "header height" and may be reworked) */
+    var lastFirstRowHeight = 0f
+
+    /** Height of frozen section from last frame */
+    var lastFrozenHeight = 0f
+}
+
+/** Temporary storage for one table (one per table in the stack), shared between tables.
+ *
+ *  Transient data that are only needed between BeginTable() and EndTable(), those buffers are shared (1 per level of stacked table).
+ *  - Accessing those requires chasing an extra pointer so for very frequently used data we leave them in the main table structure.
+ *  - We also leave out of this structure data that tend to be particularly useful for debugging/metrics. */
+class TableTempData {
+
+    /** Index in g.Tables.Buf[] pool */
+    var tableIndex = 0
+
+    /** Last timestamp this structure was used */
+    var lastTimeActive = -1f
+
+    /** outer_size.x passed to BeginTable() */
+    val userOuterSize = Vec2()
+
+    var drawSplitter = DrawListSplitter()
+
+    /** Backup of InnerWindow->WorkRect at the end of BeginTable() */
+    val hostBackupWorkRect = Rect()
+
+    /** Backup of InnerWindow->ParentWorkRect at the end of BeginTable() */
+    val hostBackupParentWorkRect = Rect()
+
+    /** Backup of InnerWindow->DC.PrevLineSize at the end of BeginTable() */
+    val hostBackupPrevLineSize = Vec2()
+
+    /** Backup of InnerWindow->DC.CurrLineSize at the end of BeginTable() */
+    val hostBackupCurrLineSize = Vec2()
+
+    /** Backup of InnerWindow->DC.CursorMaxPos at the end of BeginTable() */
+    val hostBackupCursorMaxPos = Vec2()
+
+    /** Backup of OuterWindow->DC.ColumnsOffset at the end of BeginTable() */
+    var hostBackupColumnsOffset = 0f
+
+    /** Backup of OuterWindow->DC.ItemWidth at the end of BeginTable() */
+    var hostBackupItemWidth = 0f
+
+    /** Backup of OuterWindow->DC.ItemWidthStack.Size at the end of BeginTable() */
+    var hostBackupItemWidthStackSize = 0
+}
+
 /** Transient cell data stored per row.
  *  sizeof() ~ 6 */
 class TableCellData {
@@ -165,102 +227,36 @@ class TableColumnSettings {
 }
 
 /** This is designed to be stored in a single ImChunkStream (1 header followed by N ImGuiTableColumnSettings, etc.) */
-class TableSettings
-
-/** ~TableSettingsCreate */
-constructor(
+class TableSettings(
         /** Set to 0 to invalidate/delete the setting */
         var id: ID = 0,
-
         var columnsCount: TableColumnIdx = 0) {
 
     /** Indicate data we want to save using the Resizable/Reorderable/Sortable/Hideable flags (could be using its own flags..) */
-    var saveFlags = Tf.None.i
+    var saveFlags: TableFlags = emptyFlags
 
     /** Reference scale to be able to rescale columns on font/dpi changes. */
     var refScale = 0f
 
     /** Maximum number of columns this settings instance can store, we can recycle a settings instance with lower number of columns but not higher */
-    var columnsCountMax: TableColumnIdx = 0
+    var columnsCountMax: TableColumnIdx = columnsCount
 
     /** Set when loaded from .ini data (to enable merging/loading .ini data into an already running context) */
     var wantApply = false
 
     var columnSettings = Array(columnsCountMax) { TableColumnSettings() }
 
+    /** ~TableSettingsCreate */
+    init {
+        g.settingsTables += this
+    }
+
     /** ~TableSettingsInit */
     fun init(id: ID, columnsCount: Int, columnsCountMax: Int) {
+        columnSettings = Array(columnsCountMax) { TableColumnSettings() }
         this.id = id
         this.columnsCount = columnsCount
         this.columnsCountMax = columnsCountMax
-        columnSettings = Array(columnsCountMax) { TableColumnSettings() }
         wantApply = true
     }
-}
-
-
-//-----------------------------------------------------------------------------
-// [SECTION] Tables: Main code
-//-----------------------------------------------------------------------------
-
-// Configuration
-
-val TABLE_DRAW_CHANNEL_BG0 = 0
-val TABLE_DRAW_CHANNEL_BG2_FROZEN = 1
-
-/** When using ImGuiTableFlags_NoClip (this becomes the last visible channel) */
-val TABLE_DRAW_CHANNEL_NOCLIP = 2
-
-/** FIXME-TABLE: Currently hard-coded because of clipping assumptions with outer borders rendering. */
-val TABLE_BORDER_SIZE = 1f
-
-/** Extend outside inner borders. */
-val TABLE_RESIZE_SEPARATOR_HALF_THICKNESS = 4f
-
-/** Delay/timer before making the hover feedback (color+cursor) visible because tables/columns tends to be more cramped. */
-val TABLE_RESIZE_SEPARATOR_FEEDBACK_TIMER = 0.06f
-
-
-// Helper
-fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
-
-    var flags = flags_
-
-    // Adjust flags: set default sizing policy
-    if (flags hasnt Tf._SizingMask)
-        flags = flags or when {
-            flags has Tf.ScrollX || outerWindow.flags has WindowFlag.AlwaysAutoResize -> Tf.SizingFixedFit
-            else -> Tf.SizingStretchSame
-        }
-
-    // Adjust flags: enable NoKeepColumnsVisible when using ImGuiTableFlags_SizingFixedSame
-    if (flags and Tf._SizingMask == Tf.SizingFixedSame.i)
-        flags = flags or Tf.NoKeepColumnsVisible
-
-    // Adjust flags: enforce borders when resizable
-    if (flags has Tf.Resizable)
-        flags = flags or Tf.BordersInnerV
-
-    // Adjust flags: disable NoHostExtendX/NoHostExtendY if we have any scrolling going on
-    if (flags has Tf.NoHostExtendY && flags has (Tf.ScrollX or Tf.ScrollY))
-        flags = flags wo (Tf.NoHostExtendX or Tf.NoHostExtendY)
-
-    // Adjust flags: NoBordersInBodyUntilResize takes priority over NoBordersInBody
-    if (flags has Tf.NoBordersInBodyUntilResize)
-        flags = flags wo Tf.NoBordersInBody
-
-    // Adjust flags: disable saved settings if there's nothing to save
-    if (flags hasnt (Tf.Resizable or Tf.Hideable or Tf.Reorderable or Tf.Sortable))
-        flags = flags or Tf.NoSavedSettings
-
-    // Inherit _NoSavedSettings from top-level window (child windows always have _NoSavedSettings set)
-//    #ifdef IMGUI_HAS_DOCK
-//        ImGuiWindow* window_for_settings = outerWindow->RootWindowDockStop
-//    #else
-    val windowForSettings = outerWindow.rootWindow!!
-//    #endif
-    if (windowForSettings.flags has WindowFlag.NoSavedSettings)
-        flags = flags or Tf.NoSavedSettings
-
-    return flags
 }

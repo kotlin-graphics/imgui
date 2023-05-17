@@ -16,11 +16,10 @@ import java.nio.ByteBuffer
 class FontConfig {
 
     /** TTF/OTF data    */
-    var fontData = charArrayOf()
+    var fontData = ByteArray(0)
     /** TTF/OTF data size   */
     var fontDataSize = 0
 
-    lateinit var fontDataBuffer: ByteBuffer
     /** TTF/OTF data ownership taken by the container ImFontAtlas (will delete memory itself).  */
     var fontDataOwnedByAtlas = true
     /** Index of font within TTF/OTF file   */
@@ -110,18 +109,33 @@ class FontGlyph {
  *  Retrieve list of range (2 int per range, values are inclusive) */
 object glyphRanges {
 
-    /** Basic Latin, Extended Latin */
+    /** ~GetGlyphRangesDefault
+     *
+     *  Basic Latin, Extended Latin */
     val default: Array<IntRange>
         get() = arrayOf(IntRange(0x0020, 0x00FF))
 
-    /** Default + Korean characters */
+    /** ~GetGlyphRangesGreek
+     *
+     *  Default + Greek and Coptic */
+    val greek: Array<IntRange>
+        get() = arrayOf(
+                IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+                IntRange(0x0370, 0x03FF)) // Greek and Coptic
+
+    /** ~GetGlyphRangesKorean
+     *
+     *  Default + Korean characters */
     val korean: Array<IntRange>
         get() = arrayOf(
                 *default, // Basic Latin + Latin Supplement
                 IntRange(0x3131, 0x3163), // Korean alphabets
-                IntRange(0xAC00, 0xD7A3)) // Korean characters
+                IntRange(0xAC00, 0xD7A3), // Korean characters
+                IntRange(0xFFFD, 0xFFFD)) // Invalid
 
-    /** Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs  */
+    /** ~GetGlyphRangesJapanese
+     *
+     *  Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs  */
     val japanese: Array<IntRange> by lazy {
 
         /*  1946 common ideograms code points for Japanese
@@ -168,7 +182,8 @@ object glyphRanges {
                 *default, // Basic Latin + Latin Supplement
                 IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
-                IntRange(0xFF00, 0xFFEF)) // Half-width characters
+                IntRange(0xFF00, 0xFFEF), // Half-width characters
+                IntRange(0xFFFD, 0xFFFD)) // Invalid
 
         Array(baseRanges.size + accumulativeOffsetsFrom0x4E00.size * 2 + 1) {
             baseRanges.getOrElse(it) { IntRange.EMPTY }
@@ -177,7 +192,9 @@ object glyphRanges {
         }
     }
 
-    /** Default + Half-Width + Japanese Hiragana/Katakana + full set of about 21000 CJK Unified Ideographs */
+    /** ~GetGlyphRangesChineseFull
+     *
+     *  Default + Half-Width + Japanese Hiragana/Katakana + full set of about 21000 CJK Unified Ideographs */
     val chineseFull: Array<IntRange>
         get() = arrayOf(
                 *default, // Basic Latin + Latin Supplement
@@ -185,9 +202,12 @@ object glyphRanges {
                 IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
                 IntRange(0xFF00, 0xFFEF), // Half-width characters
+                IntRange(0xFFFD, 0xFFFD), // Invalid
                 IntRange(0x4e00, 0x9FAF)) // CJK Ideograms
 
-    /** Default + Half-Width + Japanese Hiragana/Katakana + set of 2500 CJK Unified Ideographs for common simplified Chinese */
+    /** ~GetGlyphRangesChineseSimplifiedCommon
+     *
+     *  Default + Half-Width + Japanese Hiragana/Katakana + set of 2500 CJK Unified Ideographs for common simplified Chinese */
     val chineseSimplifiedCommon: Array<IntRange> by lazy {
 
         /*  Store 2500 regularly used characters for Simplified Chinese.
@@ -243,7 +263,8 @@ object glyphRanges {
                 IntRange(0x2000, 0x206F), // General Punctuation
                 IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
-                IntRange(0xFF00, 0xFFEF)) // Half-width characters
+                IntRange(0xFF00, 0xFFEF), // Half-width characters
+                IntRange(0xFFFD, 0xFFFD)) // Invalid
 
         Array(baseRanges.size + accumulativeOffsetsFrom0x4E00.size * 2 + 1) {
             baseRanges.getOrElse(it) { IntRange.EMPTY }
@@ -252,7 +273,9 @@ object glyphRanges {
         }
     }
 
-    /** Default + about 400 Cyrillic characters */
+    /** ~GetGlyphRangesCyrillic
+     *
+     *  Default + about 400 Cyrillic characters */
     val cyrillic: Array<IntRange>
         get() = arrayOf(
                 *default, // Basic Latin + Latin Supplement
@@ -260,13 +283,18 @@ object glyphRanges {
                 IntRange(0x2DE0, 0x2DFF), // Cyrillic Extended-A
                 IntRange(0xA640, 0xA69F)) // Cyrillic Extended-B
 
-    /** Default + Thai characters   */
+    /** ~GetGlyphRangesThai
+     *
+     *  Default + Thai characters   */
     val thai: Array<IntRange>
         get() = arrayOf(
                 *default, // Basic Latin
                 IntRange(0x2010, 0x205E), // Punctuations
                 IntRange(0x0E00, 0x0E7F)) // Thai
 
+    /** ~GetGlyphRangesVietnamese
+     *
+     *  Default + Vietnamese characters */
     val vietnamese: Array<IntRange>
         get() = arrayOf(
                 *default, // Basic Latin

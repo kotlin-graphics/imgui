@@ -1,45 +1,44 @@
 package imgui.api
 
 import glm_.f
-import glm_.hasnt
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.callHooks
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
-import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.focusTopMostWindowUnderOne
+import imgui.ImGui.gcCompactTransientBuffers
 import imgui.ImGui.gcCompactTransientMiscBuffers
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID
-import imgui.ImGui.mergedKeyModFlags
+import imgui.ImGui.mainViewport
+import imgui.ImGui.renderMouseCursor
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
 import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
+import imgui.ImGui.updateInputEvents
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
-import imgui.classes.ContextHookType
 import imgui.classes.Context
+import imgui.classes.ContextHookType
 import imgui.classes.IO
 import imgui.classes.Style
 import imgui.font.FontAtlas
-import imgui.internal.*
-import imgui.internal.sections.ItemFlag
-import imgui.internal.sections.or
-import imgui.statics.*
+import imgui.internal.DrawData
+import imgui.internal.classes.Rect
+import imgui.internal.sections.DrawListFlags
+import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
+import imgui.static.*
 import org.lwjgl.system.Platform
 import imgui.WindowFlag as Wf
 import imgui.internal.sections.DrawListFlag as Dlf
-
-@Suppress("UNCHECKED_CAST")
 
 /** Main */
 interface main {
@@ -47,22 +46,17 @@ interface main {
     /** Internal state access - if you want to share Dear ImGui state between modules (e.g. DLL) or allocate it yourself
      *  Note that we still point to some static data and members (such as GFontAtlas), so the state instance you end up using will point to the static data within its module */
     val currentContext: Context?
-        get() = gImGui
+        get() = gImGuiNullable
 
     /** access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags) */
     val io: IO
-        get() = gImGui?.io
-                ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
+        get() = gImGui.io
 
     /** access the Style structure (colors, sizes). Always use PushStyleCol(), PushStyleVar() to modify style mid-frame! */
     val style: Style
-        get() = gImGui?.style
-                ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
+        get() = gImGui.style
 
     fun newFrame() {
-
-        assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
-
         // Remove pending delete hooks before frame start.
         // This deferred removal avoid issues of removal while iterating the hook vector
         for (n in g.hooks.indices.reversed())
@@ -80,6 +74,8 @@ interface main {
         g.time += io.deltaTime
         g.withinFrameScope = true
         g.frameCount += 1
+        if (g.debugLogFlags != emptyFlags)
+            println("      [%04d]".format(ImGui.frameCount))
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
         g.menusIdSubmittedThisFrame.clear()
@@ -88,19 +84,25 @@ interface main {
         g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
         g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = io.deltaTime
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
-        io.framerate = if(g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size.f) else Float.MAX_VALUE
+        g.framerateSecPerFrameCount = (g.framerateSecPerFrameCount + 1) min g.framerateSecPerFrame.size
+        io.framerate = if (g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrameCount.f) else Float.MAX_VALUE
+
+        updateViewportsNewFrame()
 
         // Setup current font and draw list shared data
         io.fonts.locked = true
         setCurrentFont(defaultFont)
         assert(g.font.isLoaded)
-        g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
+        val virtualSpace = Rect(Float.MAX_VALUE, -Float.MAX_VALUE)
+        for (v in g.viewports)
+            virtualSpace add v.mainRect
+        g.drawListSharedData.clipRectFullscreen = virtualSpace.toVec4()
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
-        g.drawListSharedData.setCircleSegmentMaxError_(style.circleSegmentMaxError)
-        var flags = Dlf.None.i
+        g.drawListSharedData.setCircleTessellationMaxError_(style.circleTessellationMaxError)
+        var flags: DrawListFlags = emptyFlags
         if (style.antiAliasedLines)
             flags = flags or Dlf.AntiAliasedLines
-        if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i)
+        if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines)
             flags = flags or Dlf.AntiAliasedLinesUseTex
         if (style.antiAliasedFill)
             flags = flags or Dlf.AntiAliasedFill
@@ -108,16 +110,9 @@ interface main {
             flags = flags or Dlf.AllowVtxOffset
         g.drawListSharedData.initialFlags = flags
 
-        g.backgroundDrawList._resetForNewFrame()
-        g.backgroundDrawList.pushTextureId(io.fonts.texID)
-        g.backgroundDrawList.pushClipRectFullScreen()
-
-        g.foregroundDrawList._resetForNewFrame()
-        g.foregroundDrawList.pushTextureId(io.fonts.texID)
-        g.foregroundDrawList.pushClipRectFullScreen()
-
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
-        g.drawData.clear()
+        for (v in g.viewports)
+            v.drawDataP.clear()
 
         // Drag and drop keep the source ID alive so even if the source disappear our state is consistent
         if (g.dragDropActive && g.dragDropPayload.sourceId == g.activeId)
@@ -133,15 +128,19 @@ interface main {
         if (g.hoveredId != 0 && g.activeId != g.hoveredId)
             g.hoveredIdNotActiveTimer += io.deltaTime
         g.hoveredIdPreviousFrame = g.hoveredId
-        g.hoveredIdPreviousFrameUsingMouseWheel = g.hoveredIdUsingMouseWheel
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
-        g.hoveredIdUsingMouseWheel = false
         g.hoveredIdDisabled = false
 
-        // Update ActiveId data (clear reference to active widget if the widget isn't alive anymore)
-        if (g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
+        // Clear ActiveID if the item is not alive anymore.
+        // In 1.87, the common most call to KeepAliveID() was moved from GetID() to ItemAdd().
+        // As a result, custom widget using ButtonBehavior() _without_ ItemAdd() need to call KeepAliveID() themselves.
+        if (g.activeId != 0 && g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId) {
+            IMGUI_DEBUG_LOG_ACTIVEID("NewFrame(): ClearActiveID() because it isn't marked alive anymore!")
             clearActiveID()
+        }
+
+        // Update ActiveId data (clear reference to active widget if the widget isn't alive anymore)
         if (g.activeId != 0)
             g.activeIdTimer += io.deltaTime
         g.lastActiveIdTimer += io.deltaTime
@@ -155,9 +154,23 @@ interface main {
         if (g.tempInputId != 0 && g.activeId != g.tempInputId)
             g.tempInputId = 0
         if (g.activeId == 0) {
-            g.activeIdUsingNavInputMask = 0
             g.activeIdUsingNavDirMask = 0
-            g.activeIdUsingKeyInputMask = 0
+            g.activeIdUsingAllKeyboardKeys = false
+        }
+
+        // Update hover delay for IsItemHovered() with delays and tooltips
+        g.hoverDelayIdPreviousFrame = g.hoverDelayId
+        if (g.hoverDelayId != 0) {
+            //if (g.IO.MouseDelta.x == 0.0f && g.IO.MouseDelta.y == 0.0f) // Need design/flags
+            g.hoverDelayTimer += g.io.deltaTime
+            g.hoverDelayClearTimer = 0f
+            g.hoverDelayId = 0
+        } else if (g.hoverDelayTimer > 0f) {
+            // This gives a little bit of leeway before clearing the hover timer, allowing mouse to cross gaps
+            g.hoverDelayClearTimer += g.io.deltaTime
+            if (g.hoverDelayClearTimer >= 0.2f max (g.io.deltaTime * 2f)) { // ~6 frames at 30 Hz + allow for low framerate
+                g.hoverDelayTimer = 0f; g.hoverDelayClearTimer = 0f // May want a decaying timer, in which case need to clamp at max first, based on max of caller last requested timer.
+            }
         }
 
         // Drag and drop
@@ -168,19 +181,22 @@ interface main {
         g.dragDropWithinTarget = false
         g.dragDropHoldJustPressedId = 0
 
+        // Close popups on focus lost (currently wip/opt-in)
+        //if (g.IO.AppFocusLost)
+        //    ClosePopupsExceptModals();
+
+        // Process input queue (trickle as many events as possible)
+        g.inputEventsTrail.clear()
+        updateInputEvents(g.io.configInputTrickleEventQueue)
+
         // Update keyboard input state
-        // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
-        io.keyMods = mergedKeyModFlags
-        for (i in io.keysDownDuration.indices)
-            io.keysDownDurationPrev[i] = io.keysDownDuration[i]
-        for (i in io.keysDown.indices)
-            io.keysDownDuration[i] = when {
-                io.keysDown[i] -> when {
-                    io.keysDownDuration[i] < 0f -> 0f
-                    else -> io.keysDownDuration[i] + io.deltaTime
-                }
-                else -> -1f
-            }
+        updateKeyboardInputs()
+
+        //IM_ASSERT(g.IO.KeyCtrl == IsKeyDown(ImGuiKey_LeftCtrl) || IsKeyDown(ImGuiKey_RightCtrl));
+        //IM_ASSERT(g.IO.KeyShift == IsKeyDown(ImGuiKey_LeftShift) || IsKeyDown(ImGuiKey_RightShift));
+        //IM_ASSERT(g.IO.KeyAlt == IsKeyDown(ImGuiKey_LeftAlt) || IsKeyDown(ImGuiKey_RightAlt));
+        //IM_ASSERT(g.IO.KeySuper == IsKeyDown(ImGuiKey_LeftSuper) || IsKeyDown(ImGuiKey_RightSuper));
+
         // Update gamepad/keyboard navigation
         navUpdate()
 
@@ -203,22 +219,23 @@ interface main {
         g.wantTextInputNextFrame = -1
         g.wantCaptureKeyboardNextFrame = -1
         g.wantCaptureMouseNextFrame = -1
-        g.platformImePos put 1f // OS Input Method Editor showing on top-left of our window by default
+
+        // Platform IME data: reset for the frame
+        g.platformImeData = PlatformImeData(g.platformImeData) // OS Input Method Editor showing on top-left of our window by default
+        g.platformImeData.wantVisible = false
 
         // Mouse wheel scrolling, scale
         updateMouseWheel()
 
-        // Update legacy TAB focus
-        updateTabFocus()
-
         // Mark all windows as not visible and compact unused memory.
-        assert(g.windowsFocusOrder.size == g.windows.size)
+        assert(g.windowsFocusOrder.size <= g.windows.size)
         val memoryCompactStartTime = if (g.gcCompactAll || io.configMemoryCompactTimer < 0f) Float.MAX_VALUE else g.time.f - io.configMemoryCompactTimer
         g.windows.forEach {
             it.wasActive = it.active
-            it.beginCount = 0
             it.active = false
             it.writeAccessed = false
+            it.beginCountPreviousFrame = it.beginCount
+            it.beginCount = 0
 
             // Garbage collect transient buffers of recently unused windows
             if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
@@ -242,16 +259,18 @@ interface main {
         g.currentWindowStack.clear()
         g.beginPopupStack.clear()
         g.itemFlagsStack.clear()
-        g.itemFlagsStack += ItemFlag.Default_.i
+        g.itemFlagsStack += emptyFlags
         g.groupStack.clear()
-        closePopupsOverWindow(g.navWindow, false)
 
-        // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
+        // // [DEBUG] Update debug features
         updateDebugToolItemPicker()
+        updateDebugToolStackQueries()
+        if (g.debugLocateFrames > 0 && --g.debugLocateFrames == 0)
+            g.debugLocateId = 0
 
         // Create implicit/fallback window - which we will only render it if the user has added something to it.
         // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
-        // This fallback is particularly important as it avoid ImGui:: calls from crashing.
+        // This fallback is particularly important as it prevents ImGui:: calls from crashing.
         g.withinFrameScopeWithImplicitWindow = true
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
@@ -275,13 +294,11 @@ interface main {
 
         errorCheckEndFrameSanityChecks()
 
-        // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-        if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f)) {
-            if (DEBUG)
-                Unit // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
-//            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
-            io.imeSetInputScreenPosFn!!(1000, 1000)
-            g.platformImeLastPos put g.platformImePos
+        // Notify Platform/OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
+        if (io.setPlatformImeDataFn != null && g.platformImeData != g.platformImeDataPrev) {
+            //            if (DEBUG)
+            // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
+            g.io.setPlatformImeDataFn!!(mainViewport, g.platformImeData)
         }
 
         // Hide implicit/fallback "Debug" window if it hasn't been used
@@ -318,8 +335,8 @@ interface main {
         // Initiate moving window + handle left-click and right-click focus
         updateMouseMovingWindowEndFrame()
 
-        /*  Sort the window list so that all child windows are after their parent
-            We cannot do that on FocusWindow() because children may not exist yet         */
+        // Sort the window list so that all child windows are after their parent
+        // We cannot do that on FocusWindow() because children may not exist yet
         g.windowsTempSortBuffer.clear()
         g.windowsTempSortBuffer.ensureCapacity(g.windows.size)
         g.windows.filter { !it.active || it.flags hasnt Wf._ChildWindow }  // if a child is active its parent will add it
@@ -333,62 +350,83 @@ interface main {
         io.fonts.locked = false
 
         // Clear Input data for next frame
-        io.mouseWheel = 0f
-        io.mouseWheelH = 0f
+        io.appFocusLost = false
+        io.mouseWheel = 0f; io.mouseWheelH = 0f
         io.inputQueueCharacters.clear()
-        io.navInputs.fill(0f)
 
         g callHooks ContextHookType.EndFramePost
     }
 
-    /** ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData(). */
+    /** ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData().
+     *
+     *  Prepare the data for rendering so you can call GetDrawData()
+     *  (As with anything within the ImGui:: namspace this doesn't touch your GPU or graphics API at all:
+     *  it is the role of the ImGui_ImplXXXX_RenderDrawData() function provided by the renderer backend) */
     fun render() {
 
         assert(g.initialized)
 
-        if (g.frameCountEnded != g.frameCount) endFrame()
+        if (g.frameCountEnded != g.frameCount)
+            endFrame()
+        val firstRenderOfFrame = g.frameCountRendered != g.frameCount
         g.frameCountRendered = g.frameCount
         io.metricsRenderWindows = 0
-        g.drawDataBuilder.clear()
 
         g callHooks ContextHookType.RenderPre
 
-        // Add background ImDrawList
-        if (g.backgroundDrawList.vtxBuffer.hasRemaining())
-            g.backgroundDrawList addTo g.drawDataBuilder.layers[0]
+        // Add background ImDrawList (for each active viewport)
+        for (viewport in g.viewports) {
+            viewport.drawDataBuilder.clear()
+            if (viewport.drawLists[0] != null)
+                viewport.backgroundDrawList addTo viewport.drawDataBuilder.layers[0]
+        }
+
+        // Draw modal/window whitening backgrounds
+        if (firstRenderOfFrame)
+            renderDimmedBackgrounds()
 
         // Add ImDrawList to render
         val windowsToRenderTopMost = arrayOf(
-                g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
-                g.navWindowingTarget?.let { g.navWindowingListWindow })
+            g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
+            g.navWindowingTarget?.let { g.navWindowingListWindow })
         g.windows
                 .filter { it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
-                .forEach { it.addToDrawData() }
+                .forEach { it.addRootToDrawData() }
         windowsToRenderTopMost
                 .filterNotNull()
                 .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
-                .forEach { it.addToDrawData() }
-        g.drawDataBuilder.flattenIntoSingleLayer()
+                .forEach { it.addRootToDrawData() }
 
-        // Draw software mouse cursor if requested
-        if (io.mouseDrawCursor)
-            g.foregroundDrawList.renderMouseCursor(Vec2(io.mousePos), style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
-        // Add foreground ImDrawList
-        if (g.foregroundDrawList.vtxBuffer.hasRemaining())
-            g.foregroundDrawList addTo g.drawDataBuilder.layers[0]
+        // Draw software mouse cursor if requested by io.MouseDrawCursor flag
+        if (g.io.mouseDrawCursor && firstRenderOfFrame && g.mouseCursor != MouseCursor.None)
+            renderMouseCursor(g.io.mousePos, g.style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
 
-        // Setup ImDrawData structure for end-user
-        g.drawData setup g.drawDataBuilder.layers[0]
-        io.metricsRenderVertices = g.drawData.totalVtxCount
-        io.metricsRenderIndices = g.drawData.totalIdxCount
+        // Setup ImDrawData structures for end-user
+        io.metricsRenderVertices = 0
+        io.metricsRenderIndices = 0
+        for (viewport in g.viewports) {
+            viewport.drawDataBuilder.flattenIntoSingleLayer()
+
+            // Add foreground ImDrawList (for each active viewport)
+            if (viewport.drawLists[1] != null)
+                viewport.foregroundDrawList addTo viewport.drawDataBuilder.layers[0]
+
+            viewport.setupDrawData(viewport.drawDataBuilder.layers[0])
+            val drawData = viewport.drawDataP
+            io.metricsRenderVertices += drawData.totalVtxCount
+            io.metricsRenderIndices += drawData.totalIdxCount
+        }
 
         g callHooks ContextHookType.RenderPost
     }
 
     /** Pass this to your backend rendering function! Valid after Render() and until the next call to NewFrame() */
     val drawData: DrawData?
-        get() = when (Platform.get()) {
-            Platform.MACOSX -> g.drawData.clone()
-            else -> g.drawData
-        }.takeIf { it.valid }
+        get() {
+            val viewport = g.viewports[0]
+            return when (Platform.get()) {
+                Platform.MACOSX -> viewport.drawDataP.clone()
+                else -> viewport.drawDataP
+            }.takeIf { it.valid }
+        }
 }

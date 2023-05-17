@@ -2,15 +2,17 @@ package imgui.api
 
 import glm_.i
 import glm_.vec2.Vec2
-import imgui.ImGui.calcTypematicRepeatAmount
+import imgui.*
 import imgui.ImGui.io
+import imgui.ImGui.isClicked
 import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.style
-import imgui.MOUSE_INVALID
-import imgui.MouseButton
-import imgui.MouseCursor
+import imgui.ImGui.testOwner
+import imgui.internal.classes.InputFlag
 import imgui.internal.classes.Rect
-/** Inputs Utilities: Mouse
+import imgui.internal.sections.KeyOwner_Any
+
+/** Inputs Utilities: Mouse specific
  *  - To refer to a mouse button, you may use named enums in your code e.g. ImGuiMouseButton_Left, ImGuiMouseButton_Right.
  *  - You can also use regular integer: it is forever guaranteed that 0=Left, 1=Right, 2=Middle.
  *  - Dragging operations are only reported after mouse has moved a certain distance away from the initial clicking position (see 'lock_threshold' and 'io.MouseDraggingThreshold') */
@@ -19,27 +21,11 @@ interface inputUtilitiesMouse {
     /** is mouse button held?   */
     fun isMouseDown(button: MouseButton): Boolean {
         assert(button.i in io.mouseDown.indices)
-        return io.mouseDown[button.i]
+        return io.mouseDown[button.i] && button.key testOwner KeyOwner_Any // should be same as IsKeyDown(MouseButtonToKey(button), ImGuiKeyOwner_Any), but this allows legacy code hijacking the io.Mousedown[] array.
     }
 
-    /** did mouse button clicked? (went from !Down to Down) */
-    fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean {
-        if (button == MouseButton.None)
-            return false // The None button is never clicked.
-
-        assert(button.i in io.mouseDown.indices)
-        val t = io.mouseDownDuration[button.i]
-        if (t == 0f)
-            return true
-
-        if (repeat && t > io.keyRepeatDelay) {
-            // FIXME: 2019/05/03: Our old repeat code was wrong here and led to doubling the repeat rate, which made it an ok rate for repeat on mouse hold.
-            val amount = calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay, io.keyRepeatRate * 0.5f)
-            if (amount > 0)
-                return true
-        }
-        return false
-    }
+    /** did mouse button clicked? (went from !Down to Down). Same as GetMouseClickedCount() == 1. */
+    fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean = button.isClicked(KeyOwner_Any, if (repeat) InputFlag.Repeat else emptyFlags)
 
     fun isMouseReleased(button: Int): Boolean = isMouseReleased(MouseButton of button)
 
@@ -48,16 +34,23 @@ interface inputUtilitiesMouse {
         if (button == MouseButton.None)
             return false // The None button is never clicked.
 
-        return io.mouseReleased[button.i]
+        return io.mouseReleased[button.i] && button.key testOwner KeyOwner_Any // Should be same as IsKeyReleased(MouseButtonToKey(button), ImGuiKeyOwner_Any)
     }
 
 
-    /** did mouse button double-clicked? (note that a double-click will also report IsMouseClicked() == true) */
+    /** did mouse button double-clicked? Same as GetMouseClickedCount() == 2. (note that a double-click will also report IsMouseClicked() == true) */
     fun isMouseDoubleClicked(button: MouseButton): Boolean {
         if (button == MouseButton.None)
             return false // The None button is never clicked.
 
-        return io.mouseDoubleClicked[button.i]
+        return io.mouseClickedCount[button.i] == 2 && button.key testOwner KeyOwner_Any
+    }
+
+    /** return the number of successive mouse-clicks at the time where a click happen (otherwise 0). */
+    fun getMouseClickedCount(button: MouseButton): Int {
+        // [JVM] useless
+        //        IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
+        return g.io.mouseClickedCount[button.i]
     }
 
     /** Test if mouse cursor is hovering given rectangle
@@ -68,7 +61,7 @@ interface inputUtilitiesMouse {
      *
      *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings, but disregarding of other consideration of focus/window ordering/popup-block. */
     fun isMouseHoveringRect(r: Rect, clip: Boolean = true): Boolean =
-            isMouseHoveringRect(r.min, r.max, clip)
+        isMouseHoveringRect(r.min, r.max, clip)
 
     fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {
 
@@ -83,12 +76,7 @@ interface inputUtilitiesMouse {
     }
 
     /** by convention we use (-FLT_MAX,-FLT_MAX) to denote that there is no mouse available  */
-    fun isMousePosValid(mousePos: Vec2? = null): Boolean =
-            (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
-
-    /** is any mouse button held?    */
-    val isAnyMouseDown: Boolean
-        get() = io.mouseDown.any()
+    fun isMousePosValid(mousePos: Vec2? = null): Boolean = (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
 
     /** shortcut to io.mousePos provided by user, to be consistent with other calls
      *  ~GetMousePos    */
@@ -132,20 +120,24 @@ interface inputUtilitiesMouse {
     }
 
     var mouseCursor: MouseCursor
-        /** Get desired cursor type, reset in newFrame(), this is updated during the frame. valid before render().
-         *  If you use software rendering by setting io.mouseDrawCursor ImGui will render those for you
+        /** get desired mouse cursor shape. Important: reset in ImGui::NewFrame(), this is updated during the frame. valid before Render(). If you use software rendering by setting io.MouseDrawCursor ImGui will render those for you
+         *
+         *  Get desired mouse cursor shape.
+         *  Important: this is meant to be used by a platform backend, it is reset in ImGui::NewFrame(),
+         *  updated during the frame, and locked in EndFrame()/Render().
+         *  If you use software rendering by setting io.MouseDrawCursor then Dear ImGui will render those for you
          *
          *  ~getMouseCursor  */
         get() = g.mouseCursor
-        /** set desired cursor type
+        /** set desired mouse cursor shape
          *
          *  ~setMouseCursor */
         set(value) {
             g.mouseCursor = value
         }
 
-    /** Manually override io.WantCaptureMouse flag next frame (said flag is entirely left for your application to handle). */
-    fun captureMouseFromApp(capture: Boolean = true) {
-        g.wantCaptureMouseNextFrame = capture.i
+    /** Override io.WantCaptureMouse flag next frame (said flag is left for your application to handle, typical when true it instucts your app to ignore inputs). This is equivalent to setting "io.WantCaptureMouse = want_capture_mouse;" after the next NewFrame() call. */
+    fun setNextFrameWantCaptureMouse(wantCaptureMouse: Boolean = true) {
+        g.wantCaptureMouseNextFrame = wantCaptureMouse.i
     }
 }

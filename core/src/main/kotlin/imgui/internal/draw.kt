@@ -4,12 +4,13 @@ import glm_.asHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
+import imgui.L
 import imgui.TextureID
 import imgui.classes.DrawList
 import imgui.logger
 import imgui.resize
 import kool.*
-import kool.lib.indices
+import kool.indices
 import java.util.Stack
 import java.util.logging.Level
 
@@ -23,9 +24,9 @@ import java.util.logging.Level
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
 // Typically, 1 command = 1 GPU draw call (unless command is a callback)
-// - VtxOffset/IdxOffset: When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset' is enabled,
-//   those fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.
-//   Pre-1.71 backends will typically ignore the VtxOffset/IdxOffset fields.
+// - VtxOffset: When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset' is enabled,
+//   this fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.
+//   Backends made for <1.71. will typically ignore the VtxOffset fields.
 // - The ClipRect/TextureId/VtxOffset fields must be contiguous as we memcmp() them together (this is asserted for).
 class DrawCmd : DrawCmdHeader {
 
@@ -48,7 +49,7 @@ class DrawCmd : DrawCmdHeader {
      *  meshes larger than 64K vertices with 16-bit indices. */
     override var vtxOffset = 0
 
-    /** Start offset in index buffer. Always equal to sum of ElemCount drawn so far. */
+    /** Start offset in index buffer. */
     var idxOffset = 0
 
     /** Number of indices (multiple of 3) to be rendered as triangles. Vertices are stored in the callee ImDrawList's
@@ -68,6 +69,10 @@ class DrawCmd : DrawCmdHeader {
     var userCallbackData: Any? = null
 //    void*           UserCallbackData;       // The draw callback code can access this.
 
+    /** Since 1.83: returns ImTextureID associated with this draw call. Warning: DO NOT assume this is always same as 'TextureId' (we will change this function for an upcoming feature) */
+    val texID: TextureID?
+        get() = textureId
+
     infix fun put(drawCmd: DrawCmd) {
         elemCount = drawCmd.elemCount
         clipRect put drawCmd.clipRect
@@ -78,11 +83,13 @@ class DrawCmd : DrawCmdHeader {
         resetRenderState = drawCmd.resetRenderState
         userCallbackData = drawCmd.userCallbackData
     }
+
+    infix fun areSequentialIdxOffset(cmd: DrawCmd): Boolean = idxOffset + elemCount == cmd.idxOffset
 }
 
-/** Vertex index, default to 16-bit
- *  To allow large meshes with 16-bit indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer backend (recommended).
- *  To use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h. */
+/** ImDrawIdx: vertex index. [Compile-time configurable type]
+ *  - To use 16-bit indices + allow large meshes: backend need to set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset (recommended).
+ *  - To use 32-bit indices: override with '#define ImDrawIdx unsigned int' in your imconfig.h file. */
 typealias DrawIdx = Int
 
 /** Vertex layout
@@ -178,7 +185,7 @@ class DrawListSplitter {
             it._cmdBuffer.clear()
             it._idxBuffer.free()
             if (!destroy)
-                it._idxBuffer = IntBuffer(0).also { i -> logger.log(Level.INFO, "idxBuffer adr = ${i.adr.asHexString}") }
+                it._idxBuffer = IntBuffer(0).also { i -> logger.log(Level.INFO, "idxBuffer adr = ${i.adr.L.asHexString}") }
         }
         _current = 0
         _count = 1
@@ -219,12 +226,12 @@ class DrawListSplitter {
         for (i in 1 until _count) {
 
             val ch = _channels[i]
-
-            // Equivalent of PopUnusedDrawCmd() for this channel's cmdbuffer and except we don't need to test for UserCallback.
-            if (ch._cmdBuffer.lastOrNull()?.elemCount == 0)
+            if (ch._cmdBuffer.lastOrNull()?.elemCount == 0 && ch._cmdBuffer.last().userCallback == null) // Equivalent of PopUnusedDrawCmd()
                 ch._cmdBuffer.pop()
 
             if (ch._cmdBuffer.isNotEmpty() && lastCmd != null) {
+                // Do not include ImDrawCmd_AreSequentialIdxOffset() in the compare as we rebuild IdxOffset values ourselves.
+                // Manipulating IdxOffset (e.g. by reordering draw commands like done by RenderDimmedBackgroundBehindWindow()) is not supported within a splitter.
                 val nextCmd = ch._cmdBuffer[0]
                 if (lastCmd headerCompare nextCmd && lastCmd.userCallback == null && nextCmd.userCallback == null) {
                     // Merge previous channel last draw command with current channel first draw command if matching.
@@ -319,19 +326,19 @@ class DrawData {
     /** Only valid after Render() is called and before the next NewFrame() is called.   */
     var valid = false
 
-    /** Array of ImDrawList* to render. The ImDrawList are owned by ImGuiContext and only pointed to from here. */
-    val cmdLists = ArrayList<DrawList>()
-
     /** For convenience, sum of all DrawList's IdxBuffer.Size   */
     var totalIdxCount = 0
 
     /** For convenience, sum of all DrawList's VtxBuffer.Size   */
     var totalVtxCount = 0
 
-    /** Upper-left position of the viewport to render (== upper-left of the orthogonal projection matrix to use) */
+    /** Array of ImDrawList* to render. The ImDrawList are owned by ImGuiContext and only pointed to from here. */
+    val cmdLists = ArrayList<DrawList>()
+
+    /** Top-left position of the viewport to render (== top-left of the orthogonal projection matrix to use) (== GetMainViewport()->Pos for the main viewport, == (0.0) in most single-viewport applications) */
     var displayPos = Vec2()
 
-    /** Size of the viewport to render (== io.displaySize for the main viewport) (displayPos + displaySize == lower-right of the orthogonal projection matrix to use) */
+    /** Size of the viewport to render (== GetMainViewport()->Size for the main viewport, == io.DisplaySize in most single-viewport applications) */
     var displaySize = Vec2()
 
     /** Amount of pixels for each unit of DisplaySize. Based on io.DisplayFramebufferScale. Generally (1,1) on normal display, (2,2) on OSX with Retina display. */
@@ -390,22 +397,5 @@ class DrawData {
         ret.framebufferScale put framebufferScale
 
         return ret
-    }
-
-    /** ~SetupDrawData */
-    infix fun setup(drawLists: ArrayList<DrawList>) {
-        valid = true
-        cmdLists.clear()
-        if (drawLists.isNotEmpty())
-            cmdLists += drawLists
-        totalIdxCount = 0
-        totalVtxCount = 0
-        displayPos put 0f
-        displaySize put io.displaySize
-        framebufferScale put io.displayFramebufferScale
-        for (n in 0 until drawLists.size) {
-            totalVtxCount += drawLists[n].vtxBuffer.lim
-            totalIdxCount += drawLists[n].idxBuffer.lim
-        }
     }
 }

@@ -9,8 +9,7 @@ import imgui.ImGui.buttonBehavior
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.getColumnOffset
-import imgui.ImGui.isClippedEx
-import imgui.ImGui.keepAliveID
+import imgui.ImGui.itemAdd
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
@@ -20,13 +19,10 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.internal.classes.Rect
 import imgui.internal.*
+import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.internal.sections.OldColumnData
-import imgui.internal.sections.OldColumnsFlag
-import imgui.internal.sections.OldColumnsFlags
-import imgui.internal.sections.hasnt
+import imgui.internal.sections.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -148,8 +144,7 @@ internal interface internalColumnsAPI {
                 val columnId = columns.id + n
                 val columnHitHw = imgui.api.columns.COLUMNS_HIT_RECT_HALF_WIDTH
                 val columnHitRect = Rect(Vec2(x - columnHitHw, y1), Vec2(x + columnHitHw, y2))
-                keepAliveID(columnId)
-                if (isClippedEx(columnHitRect, columnId, false))
+                if (!itemAdd(columnHitRect, columnId, null, ItemFlag.NoNav))
                     continue
 
                 var hovered = false
@@ -234,7 +229,20 @@ internal interface internalColumnsAPI {
                 .also { popID() }
     }
 
-    // findOrCreateColumns is in Window class
+    fun Window.findOrCreateColumns(id: ID): OldColumns {
 
-    // GetColumnOffsetFromNorm and GetColumnNormFromOffset in Columns class
+        // We have few columns per window so for now we don't need bother much with turning this into a faster lookup.
+        for (c in columnsStorage) if (c.id == id) return c
+
+        return OldColumns().also {
+            columnsStorage += it
+            it.id = id
+        }
+    }
+
+    /** ~GetColumnOffsetFromNorm    */
+    infix fun OldColumns.getOffsetFrom(offsetNorm: Float): Float = offsetNorm * (offMaxX - offMinX)
+
+    /** ~GetColumnNormFromOffset    */
+    fun OldColumns.getNormFrom(offset: Float): Float = offset / (offMaxX - offMinX)
 }

@@ -6,10 +6,14 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
+import imgui.ImGui.isChildOf
+import imgui.ImGui.setCollapsed
+import imgui.ImGui.setPos
+import imgui.ImGui.setSize
 import imgui.classes.DrawList
+import imgui.internal.classes.Window.Companion.getCombinedRootWindow
 import imgui.internal.floor
 import imgui.internal.sections.NextWindowDataFlag
-import imgui.internal.sections.or
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
 
@@ -26,46 +30,53 @@ interface windowsUtilities {
         get() = currentWindowRead!!.collapsed
 
     /** is current window focused? or its root/child, depending on flags. see flags for options.    */
-    fun isWindowFocused(flag: Ff): Boolean = isWindowFocused(flag.i)
+    fun isWindowFocused(flags: FocusedFlags = emptyFlags): Boolean {
 
-    /** is current window focused? or its root/child, depending on flags. see flags for options.    */
-    fun isWindowFocused(flags: FocusedFlags = Ff.None.i): Boolean {
+        val refWindow = g.navWindow ?: return false
+        var curWindow = g.currentWindow
 
         if (flags has Ff.AnyWindow)
-            return g.navWindow != null
+            return true
 
-        val curr = g.currentWindow!!     // Not inside a Begin()/End()
-        return when (flags and (Ff.RootWindow or Ff.ChildWindows)) {
-            Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindow === curr.rootWindow } ?: false
-            Ff.RootWindow.i -> g.navWindow === curr.rootWindow
-            Ff.ChildWindows.i -> g.navWindow?.isChildOf(curr) ?: false
-            else -> g.navWindow === curr
+        check(curWindow != null) { "Not inside a Begin() / End()" }
+        val popupHierarchy = flags hasnt Ff.NoPopupHierarchy
+        if (flags has Ff.RootWindow)
+            curWindow = getCombinedRootWindow(curWindow, popupHierarchy)
+
+        return when {
+            flags has Ff.ChildWindows -> refWindow.isChildOf(curWindow, popupHierarchy)
+            else -> refWindow === curWindow
         }
     }
 
-    /** iis current window hovered (and typically: not blocked by a popup/modal)? see flag for options. */
-    fun isWindowHovered(flag: Hf) = isWindowHovered(flag.i)
 
     /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
      *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
      *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
-    fun isWindowHovered(flags: HoveredFlags = Hf.None.i): Boolean {
-        assert(flags hasnt Hf.AllowWhenOverlapped) { "Flags not supported by this function" }
-        if (flags has Hf.AnyWindow) {
-            if (g.hoveredWindow == null)
+    fun isWindowHovered(flags: WindowHoveredFlags = emptyFlags): Boolean {
+        val refWindow = g.hoveredWindow ?: return false
+        var curWindow = g.currentWindow
+
+        if (flags hasnt Hf.AnyWindow) {
+            check(curWindow != null) { "Not inside a Begin () / End()" }
+            val popupHierarchy = flags hasnt Hf.NoPopupHierarchy
+            if (flags has Hf.RootWindow)
+                curWindow = getCombinedRootWindow(curWindow, popupHierarchy)
+
+            val result = when {
+                flags has Hf.ChildWindows -> refWindow.isChildOf(curWindow, popupHierarchy)
+                else -> refWindow === curWindow
+            }
+            if (!result)
                 return false
-        } else when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
-            Hf.RootWindow or Hf.ChildWindows -> if (g.hoveredRootWindow !== g.currentWindow!!.rootWindow) return false
-            Hf.RootWindow.i -> if (g.hoveredWindow != g.currentWindow!!.rootWindow) return false
-            Hf.ChildWindows.i -> g.hoveredWindow.let { if (it == null || !it.isChildOf(g.currentWindow)) return false }
-            else -> if (g.hoveredWindow !== g.currentWindow) return false
         }
 
-        return when {
-            !g.hoveredWindow!!.isContentHoverable(flags) -> false
-            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != g.hoveredWindow!!.moveId -> false
-            else -> true
-        }
+        if (!refWindow.isContentHoverable(flags))
+            return false
+        if (flags hasnt Hf.AllowWhenBlockedByActiveItem)
+            if (g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != refWindow.moveId)
+                return false
+        return true
     }
 
     /** get draw list associated to the current window, to append your own drawing primitives
@@ -91,26 +102,32 @@ interface windowsUtilities {
     val windowHeight: Float
         get() = g.currentWindow!!.size.y
 
-    // Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
 
-    /** set next window position. call before Begin()   */
+    // -----------------------------------------------------------------------------------------------------------------
+    // Window manipulation
+    // - Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
+    // -----------------------------------------------------------------------------------------------------------------
+
+    /** set next window position. call before Begin()
+     *  @param pos: safe, no writes */
     fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
-//        JVM, useless
-//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+        //        JVM, useless
+        //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasPos
+            flags /= NextWindowDataFlag.HasPos
             posVal put pos
             posPivotVal put pivot
             posCond = cond
         }
     }
 
-    /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
+    /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()
+     *  @param size: safe, no writes */
     fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
-//        JVM, useless
-//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+        //        JVM, useless
+        //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasSize
+            flags /= NextWindowDataFlag.HasSize
             sizeVal put size
             sizeCond = cond
         }
@@ -120,7 +137,7 @@ interface windowsUtilities {
      *  Sizes will be rounded down. Use callback to apply non-trivial programmatic constraints.   */
     fun setNextWindowSizeConstraints(sizeMin: Vec2, sizeMax: Vec2, customCallback: SizeCallback? = null, customCallbackUserData: Any? = null) {
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasSizeConstraint
+            flags /= NextWindowDataFlag.HasSizeConstraint
             sizeConstraintRect.min put sizeMin
             sizeConstraintRect.max put sizeMax
             sizeCallback = customCallback
@@ -135,17 +152,17 @@ interface windowsUtilities {
      *  SetNextWindowContentSize(ImVec2(100,100) + ImGuiWindowFlags_AlwaysAutoResize will always allow submitting a 100x100 item.*/
     fun setNextWindowContentSize(size: Vec2) {
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasContentSize
+            flags /= NextWindowDataFlag.HasContentSize
             contentSizeVal put floor(size)
         }
     }
 
     /** Set next window collapsed state. call before Begin()    */
     fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
-//        JVM, useless
-//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+        //        JVM, useless
+        //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasCollapsed
+            flags /= NextWindowDataFlag.HasCollapsed
             collapsedVal = collapsed
             collapsedCond = cond
         }
@@ -154,14 +171,21 @@ interface windowsUtilities {
     /** Set next window to be focused / top-most. call before Begin() */
     fun setNextWindowFocus() {
         // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
-        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasFocus
+        g.nextWindowData.flags /= NextWindowDataFlag.HasFocus
     }
+
+    /** set next window scrolling value (use < 0.0f to not affect a given axis). */
+    fun setNextWindowScroll(scroll: Vec2) {
+        g.nextWindowData.flags /= NextWindowDataFlag.HasScroll
+        g.nextWindowData.scrollVal put scroll
+    }
+
 
     /** Set next window background color alpha. helper to easily override the Alpha component of ImGuiCol_WindowBg/ChildBg/PopupBg.
      *  You may also use ImGuiWindowFlags_NoBackground. */
     fun setNextWindowBgAlpha(alpha: Float) {
         g.nextWindowData.apply {
-            flags = flags or NextWindowDataFlag.HasBgAlpha
+            flags /= NextWindowDataFlag.HasBgAlpha
             bgAlphaVal = alpha
         }
     }
@@ -182,7 +206,7 @@ interface windowsUtilities {
 
     /** per-window font scale. Adjust io.FontGlobalScale if you want to scale all windows
      *
-     *  set font scale. Adjust IO.FontGlobalScale if you want to scale all windows. This is an old API! For correct scaling, prefer to reload font + rebuild ImFontAtlas + call style.ScaleAllSizes(). */
+     *  [OBSOLETE] set font scale. Adjust IO.FontGlobalScale if you want to scale all windows. This is an old API! For correct scaling, prefer to reload font + rebuild ImFontAtlas + call style.ScaleAllSizes(). */
     fun setWindowFontScale(scale: Float) = with(currentWindow) {
         assert(scale > 0f)
         fontWindowScale = scale

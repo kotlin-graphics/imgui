@@ -41,7 +41,6 @@ import imgui.classes.TextFilter
 import imgui.dsl.popupContextItem
 import uno.kotlin.getValue
 import uno.kotlin.setValue
-import java.util.*
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
@@ -125,64 +124,67 @@ object Console {
 
             // Reserve enough left-over height for 1 separator + 1 input text
             val footerHeightToReserve = style.itemSpacing.y + frameHeightWithSpacing
-            beginChild("ScrollingRegion", Vec2(0, -footerHeightToReserve), false, Wf.HorizontalScrollbar.i)
+            if (beginChild("ScrollingRegion", Vec2(0, -footerHeightToReserve), false, Wf.HorizontalScrollbar)) {
+                if (beginPopupContextWindow()) {
+                    if (selectable("Clear")) clearLog()
+                    endPopup()
+                }
 
-            if (beginPopupContextWindow()) {
-                if (selectable("Clear")) clearLog()
-                endPopup()
+                // Display every line as a separate entry so we can change their color or add custom widgets.
+                // If you only want raw text you can use ImGui::TextUnformatted(log.begin(), log.end());
+                // NB- if you have thousands of entries this approach may be too inefficient and may require user-side clipping
+                // to only process visible items. The clipper will automatically measure the height of your first item and then
+                // "seek" to display only items in the visible area.
+                // To use the clipper we can replace your standard loop:
+                //      for (int i = 0; i < Items.Size; i++)
+                //   With:
+                //      ImGuiListClipper clipper;
+                //      clipper.Begin(Items.Size);
+                //      while (clipper.Step())
+                //         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+                // - That your items are evenly spaced (same height)
+                // - That you have cheap random access to your elements (you can access them given their index,
+                //   without processing all the ones before)
+                // You cannot this code as-is if a filter is active because it breaks the 'cheap random-access' property.
+                // We would need random-access on the post-filtered list.
+                // A typical application wanting coarse clipping and filtering may want to pre-compute an array of indices
+                // or offsets of items that passed the filtering test, recomputing this array when user changes the filter,
+                // and appending newly elements as they are inserted. This is left as a task to the user until we can manage
+                // to improve this example code!
+                // If your items are of variable height:
+                // - Split them into same height items would be simpler and facilitate random-seeking into your list.
+                // - Consider using manual call to IsRectVisible() and skipping extraneous decoration from your items.
+                pushStyleVar(StyleVar.ItemSpacing, Vec2(4, 1)) // Tighten spacing
+                if (copyToClipboard) logToClipboard()
+
+                for (i in items) {
+                    if (!filter.passFilter(i)) continue
+
+                    // Normally you would store more information in your item than just a string.
+                    // (e.g. make Items[] an array of structure, store color/type etc.)
+                    var color: Vec4? = null
+                    if ("[error]" in i) color = Vec4(1f, 0.4f, 0.4f, 1f)
+                    else if (i.startsWith("# ")) color = Vec4(1f, 0.8f, 0.6f, 1f)
+                    if (color != null) pushStyleColor(Col.Text, color)
+                    textUnformatted(i)
+                    if (color != null) popStyleColor()
+                }
+                if (copyToClipboard) logFinish()
+
+                // Keep up at the bottom of the scroll region if we were already at the bottom at the beginning of the frame.
+                // Using a scrollbar or mouse-wheel will take away from the bottom edge.
+                if (scrollToBottom || (autoScroll && scrollY >= scrollMaxY))
+                    setScrollHereY(1f)
+                scrollToBottom = false
+
+                popStyleVar()
             }
-
-            // Display every line as a separate entry so we can change their color or add custom widgets.
-            // If you only want raw text you can use ImGui::TextUnformatted(log.begin(), log.end());
-            // NB- if you have thousands of entries this approach may be too inefficient and may require user-side clipping
-            // to only process visible items. The clipper will automatically measure the height of your first item and then
-            // "seek" to display only items in the visible area.
-            // To use the clipper we can replace your standard loop:
-            //      for (int i = 0; i < Items.Size; i++)
-            //   With:
-            //      ImGuiListClipper clipper;
-            //      clipper.Begin(Items.Size);
-            //      while (clipper.Step())
-            //         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-            // - That your items are evenly spaced (same height)
-            // - That you have cheap random access to your elements (you can access them given their index,
-            //   without processing all the ones before)
-            // You cannot this code as-is if a filter is active because it breaks the 'cheap random-access' property.
-            // We would need random-access on the post-filtered list.
-            // A typical application wanting coarse clipping and filtering may want to pre-compute an array of indices
-            // or offsets of items that passed the filtering test, recomputing this array when user changes the filter,
-            // and appending newly elements as they are inserted. This is left as a task to the user until we can manage
-            // to improve this example code!
-            // If your items are of variable height:
-            // - Split them into same height items would be simpler and facilitate random-seeking into your list.
-            // - Consider using manual call to IsRectVisible() and skipping extraneous decoration from your items.
-            pushStyleVar(StyleVar.ItemSpacing, Vec2(4, 1)) // Tighten spacing
-            if (copyToClipboard) logToClipboard()
-
-            for (i in items) {
-                if (!filter.passFilter(i)) continue
-
-                // Normally you would store more information in your item than just a string.
-                // (e.g. make Items[] an array of structure, store color/type etc.)
-                var color: Vec4? = null
-                if ("[error]" in i) color = Vec4(1f, 0.4f, 0.4f, 1f)
-                else if (i.startsWith("# ")) color = Vec4(1f, 0.8f, 0.6f, 1f)
-                if (color != null) pushStyleColor(Col.Text, color)
-                textUnformatted(i)
-                if (color != null) popStyleColor()
-            }
-            if (copyToClipboard) logFinish()
-
-            if (scrollToBottom || (autoScroll && scrollY >= scrollMaxY)) setScrollHereY(1f)
-            scrollToBottom = false
-
-            popStyleVar()
             endChild()
             separator()
 
             // Command-line
             var reclaimFocus = false
-            val inputTextFlags = Itf.EnterReturnsTrue or Itf.CallbackCompletion or Itf.CallbackHistory
+            val inputTextFlags = Itf.EnterReturnsTrue or Itf.EscapeClearsAll or Itf.CallbackCompletion or Itf.CallbackHistory
             if (inputText("Input", inputBuf, inputTextFlags, textEditCallbackStub, this)) {
                 val s = inputBuf.cStr.trimEnd()
                 if (s.isNotEmpty()) execCommand(s)
@@ -229,7 +231,7 @@ object Console {
 
         fun inputTextCallback(data: InputTextCallbackData): Boolean {
             when (data.eventFlag) {
-                imgui.InputTextFlag.CallbackCompletion.i -> {
+                Itf.CallbackCompletion -> {
                     val wordEnd = data.cursorPos
                     var wordStart = wordEnd
                     while (wordStart > 0) {
@@ -242,8 +244,8 @@ object Console {
                     val candidates = ArrayList<String>()
                     for (c in commands) if (c.startsWith(word)) candidates += c
                     when { // No match
-                        candidates.isEmpty() -> addLog("No match for \"%s\"!\n",
-                            word) // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
+                        candidates.isEmpty() -> addLog("No match for \"%s\"!\n", word)
+                        // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
                         candidates.size == 1 -> { // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
                             data.deleteChars(wordStart, wordEnd)
                             data.insertChars(data.cursorPos, candidates[0])
@@ -275,7 +277,8 @@ object Console {
                         }
                     }
                 }
-                Itf.CallbackHistory.i -> {
+
+                Itf.CallbackHistory -> {
                     val prevHistoryPos = historyPos
                     if (data.eventKey == Key.UpArrow) {
                         if (historyPos == -1) historyPos = history.size - 1

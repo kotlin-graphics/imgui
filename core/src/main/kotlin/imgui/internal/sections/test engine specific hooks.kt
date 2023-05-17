@@ -1,6 +1,5 @@
 package imgui.internal.sections
 
-import imgui.DataType
 import imgui.ID
 import imgui.api.g
 import imgui.classes.Context
@@ -11,17 +10,15 @@ import imgui.internal.classes.Rect
 //-----------------------------------------------------------------------------
 
 typealias TestEngineHook_ItemAdd = (ctx: Context, bb: Rect, id: ID) -> Unit
-typealias TestEngineHook_ItemInfo = (ctx: Context, id: ID, label: String, flags: ItemStatusFlags) -> Unit
-typealias TestEngineHook_IdInfo = (ctx: Context, dataType: DataType, id: ID, dataId: Any) -> Unit
-typealias TestEngineHook_IdInfo2 = (ctx: Context, dataType: DataType, id: ID, dataId: Any, dataIdEnd: Any?) -> Unit
-typealias TestEngineHook_Log = (ctx: Context, fmt: String) -> Unit
+typealias TestEngineHook_ItemInfo = (ctx: Context, id: ID, label: String?, flags: ItemStatusFlags) -> Unit
+typealias TestEngineHook_Log = (ctx: Context, fmt: String, args: Array<out Any>) -> Unit
+typealias TestEngine_FindItemDebugLabel = (ctx: Context, id: ID) -> String?
 
 lateinit var testEngineHook_ItemAdd: TestEngineHook_ItemAdd
 lateinit var testEngineHook_ItemInfo: TestEngineHook_ItemInfo
 
-lateinit var testEngineHook_IdInfo: TestEngineHook_IdInfo
-lateinit var testEngineHook_IdInfo2: TestEngineHook_IdInfo2
 lateinit var testEngineHook_Log: TestEngineHook_Log
+lateinit var testEngine_FindItemDebugLabel: TestEngine_FindItemDebugLabel
 
 /**  Register item bounding box */
 fun IMGUI_TEST_ENGINE_ITEM_ADD(bb: Rect, id: ID) {
@@ -30,7 +27,7 @@ fun IMGUI_TEST_ENGINE_ITEM_ADD(bb: Rect, id: ID) {
 }
 
 /** Register item label and status flags (optional)} */
-fun IMGUI_TEST_ENGINE_ITEM_INFO(id: ID, label: String, flags: ItemFlags) {
+fun IMGUI_TEST_ENGINE_ITEM_INFO(id: ID, label: String, flags: ItemStatusFlags) {
     if (g.testEngineHookItems)
         testEngineHook_ItemInfo(g, id, label, flags)
 }
@@ -38,15 +35,5 @@ fun IMGUI_TEST_ENGINE_ITEM_INFO(id: ID, label: String, flags: ItemFlags) {
 /** Custom log entry from user land into test log */
 fun IMGUI_TEST_ENGINE_LOG(fmt: String, vararg args: Any) {
     if (g.testEngineHookItems)
-        testEngineHook_Log(g, fmt.format(*args))
-}
-
-fun IMGUI_TEST_ENGINE_ID_INFO(id: ID, type: DataType, data: Any) {
-    if (g.testEngineHookIdInfo == id)
-        testEngineHook_IdInfo(g, type, id, data)
-}
-
-fun IMGUI_TEST_ENGINE_ID_INFO2(id: ID, type: DataType, data: Any, data2: Any? = null) {
-    if (g.testEngineHookIdInfo == id)
-        testEngineHook_IdInfo2(g, type, id, data, data2)
+        testEngineHook_Log(g, fmt, args)
 }

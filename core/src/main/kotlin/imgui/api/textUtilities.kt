@@ -34,7 +34,6 @@ interface textUtilities {
                 // - https://git.musl-libc.org/cgit/musl/tree/src/math/ceilf.c
                 // - https://embarkstudios.github.io/rust-gpu/api/src/libm/math/ceilf.rs.html
                 x = floor(x + 0.99999f)
-
             }
         }
     }

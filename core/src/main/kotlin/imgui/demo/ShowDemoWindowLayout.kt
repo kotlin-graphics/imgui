@@ -1,6 +1,6 @@
 package imgui.demo
 
-import gli_.has
+import glm_.has
 import glm_.L
 import glm_.f
 import glm_.i
@@ -11,6 +11,7 @@ import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
+import imgui.ImGui.beginListBox
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginTabBar
@@ -25,18 +26,18 @@ import imgui.ImGui.combo
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.cursorStartPos
-import imgui.ImGui.dragFloat
-import imgui.ImGui.dragInt
-import imgui.ImGui.dragVec2
+import imgui.ImGui.drag2
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
+import imgui.ImGui.endListBox
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
 import imgui.ImGui.endTable
+import imgui.ImGui.fontSize
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getID
 import imgui.ImGui.invisibleButton
@@ -46,8 +47,6 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectSize
 import imgui.ImGui.listBox
-import imgui.ImGui.listBoxFooter
-import imgui.ImGui.listBoxHeader
 import imgui.ImGui.nextColumn
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.popID
@@ -72,8 +71,6 @@ import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHereX
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.setTooltip
-import imgui.ImGui.sliderFloat
-import imgui.ImGui.sliderInt
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
@@ -86,10 +83,11 @@ import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowContentRegionMax
-import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.drag
+import imgui.api.slider
 import imgui.classes.Color
 import imgui.demo.showExampleApp.MenuFile
 import imgui.dsl.child
@@ -153,10 +151,10 @@ object ShowDemoWindowLayout {
             button("LEVERAGE\nBUZZWORD", size)
             sameLine()
 
-            if (listBoxHeader("List", size)) {
+            if (beginListBox("List", size)) {
                 selectable("Selected", true)
                 selectable("Not Selected", false)
-                listBoxFooter()
+                endListBox()
             }
         }
 
@@ -293,10 +291,10 @@ object ShowDemoWindowLayout {
 
                 // Child 1: no border, enable horizontal scrollbar
                 run {
-                    var windowFlags = Wf.HorizontalScrollbar.i
+                    var windowFlags: WindowFlags = Wf.HorizontalScrollbar
                     if (disableMouseWheel)
                         windowFlags = windowFlags or Wf.NoScrollWithMouse
-                    child("ChildL", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
+                    child("ChildL", Vec2(contentRegionAvail.x * 0.5f, 260), false, windowFlags) {
                         for (i in 0..99)
                             text("%04d: scrollable region", i)
                     }
@@ -305,7 +303,7 @@ object ShowDemoWindowLayout {
 
                 // Child 2: rounded border
                 run {
-                    var windowFlags = Wf.None.i
+                    var windowFlags: WindowFlags = emptyFlags
                     if (disableMouseWheel)
                         windowFlags = windowFlags or Wf.NoScrollWithMouse
                     if (!disableMenu)
@@ -342,12 +340,12 @@ object ShowDemoWindowLayout {
                 // - Using ImGui::GetItemRectMin/Max() to query the "item" state (because the child window is an item from
                 //   the POV of the parent window). See 'Demo->Querying Status (Active/Focused/Hovered etc.)' for details.
                 run {
-                    setNextItemWidth(100f)
-                    dragInt("Offset X", ::offsetX, 1f, -1000, 1000)
+                    setNextItemWidth(fontSize * 8)
+                    drag("Offset X", ::offsetX, 1f, -1000, 1000)
 
                     ImGui.cursorPosX += offsetX
                     withStyleColor(Col.ChildBg, COL32(255, 0, 0, 100)) {
-                        beginChild("Red", Vec2(200, 100), true, Wf.None.i)
+                        beginChild("Red", Vec2(200, 100), true)
                         for (n in 0..49)
                             text("Some test $n")
                         endChild()
@@ -370,50 +368,50 @@ object ShowDemoWindowLayout {
         operator fun invoke() {
             treeNode("Widgets Width") {
 
+                checkbox("Show indented items", ::showIndentedItems)
+
                 // Use SetNextItemWidth() to set the width of a single upcoming item.
                 // Use PushItemWidth()/PopItemWidth() to set the width of a group of items.
                 // In real code use you'll probably want to choose width values that are proportional to your font size
                 // e.g. Using '20.0f * GetFontSize()' as width instead of '200.0f', etc.
 
-                checkbox("Show indented items", ::showIndentedItems)
-
                 text("SetNextItemWidth/PushItemWidth(100)")
                 sameLine(); helpMarker("Fixed width.")
                 pushItemWidth(100)
-                dragFloat("float##1b", ::f)
+                drag("float##1b", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##1b", ::f)
+                        drag("float (indented)##1b", ::f)
                     }
                 popItemWidth()
 
                 text("SetNextItemWidth/PushItemWidth(-100)")
                 sameLine(); helpMarker("Align to right edge minus 100")
                 pushItemWidth(-100)
-                dragFloat("float##2a", ::f)
+                drag("float##2a", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##2b", ::f)
+                        drag("float (indented)##2b", ::f)
                     }
                 popItemWidth()
 
                 text("SetNextItemWidth/PushItemWidth(GetContentRegionAvail().x * 0.5f)")
                 sameLine(); helpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
                 pushItemWidth(contentRegionAvail.x * 0.5f)
-                dragFloat("float##3a", ::f)
+                drag("float##3a", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##3b", ::f)
+                        drag("float (indented)##3b", ::f)
                     }
                 popItemWidth()
 
                 text("SetNextItemWidth/PushItemWidth(-GetContentRegionAvail().x * 0.5f)")
                 sameLine(); helpMarker("Align to right edge minus half")
                 pushItemWidth(-ImGui.contentRegionAvail.x * 0.5f)
-                dragFloat("float##4a", ::f)
+                drag("float##4a", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##4b", ::f)
+                        drag("float (indented)##4b", ::f)
                     }
                 popItemWidth()
 
@@ -423,10 +421,10 @@ object ShowDemoWindowLayout {
                 sameLine(); helpMarker("Align to right edge")
                 pushItemWidth(-Float.MIN_VALUE)
 
-                dragFloat("##float5a", ::f)
+                drag("##float5a", ::f)
                 if (showIndentedItems)
                     indent {
-                        dragFloat("float (indented)##5b", ::f)
+                        drag("float (indented)##5b", ::f)
                     }
                 popItemWidth()
             }
@@ -488,9 +486,9 @@ object ShowDemoWindowLayout {
                 val items = arrayOf("AAAA", "BBBB", "CCCC", "DDDD")
                 withItemWidth(80f) {
                     combo("Combo", ::item, items); sameLine()
-                    sliderFloat("X", ::f0, 0f, 5f); sameLine()
-                    sliderFloat("Y", ::f1, 0f, 5f); sameLine()
-                    sliderFloat("Z", ::f2, 0f, 5f)
+                    slider("X", ::f0, 0f, 5f); sameLine()
+                    slider("Y", ::f1, 0f, 5f); sameLine()
+                    slider("Z", ::f2, 0f, 5f)
                 }
 
                 withItemWidth(80f) {
@@ -498,9 +496,7 @@ object ShowDemoWindowLayout {
                     for (i in 0..3) {
                         if (i > 0) sameLine()
                         withID(i) {
-                            withInt(selection, i) {
-                                listBox("", it, items)
-                            }
+                            listBox("", selection mutablePropertyAt i, items)
                         }
                         //if (IsItemHovered()) SetTooltip("ListBox %d hovered", i);
                     }
@@ -514,7 +510,7 @@ object ShowDemoWindowLayout {
 
                 // Manually wrapping
                 // (we should eventually provide this as an automatic layout feature, but for now you can do it manually)
-                text("Manually wrapping:")
+                text("Manual wrapping:")
                 val buttonsCount = 20
                 val windowVisibleX2 = windowPos.x + windowContentRegionMax.x
                 for (n in 0 until buttonsCount) {
@@ -559,13 +555,13 @@ object ShowDemoWindowLayout {
 
                 checkbox("Track", ::enableTrack)
                 pushItemWidth(100)
-                sameLine(140); enableTrack = dragInt("##item", ::trackItem, 0.25f, 0, 99, "Item = %d") or enableTrack
+                sameLine(140); enableTrack = drag("##item", ::trackItem, 0.25f, 0, 99, "Item = %d") or enableTrack
 
                 var scrollToOff = button("Scroll Offset")
-                sameLine(140); scrollToOff = dragFloat("##off", ::scrollToOffPx, 1f, 0f, Float.MAX_VALUE, "+%.0f px") or scrollToOff
+                sameLine(140); scrollToOff = drag("##off", ::scrollToOffPx, 1f, 0f, Float.MAX_VALUE, "+%.0f px") or scrollToOff
 
                 var scrollToPos = button("Scroll To Pos")
-                sameLine(140); scrollToPos = dragFloat("##pos", ::scrollToPosPx, 1f, -10f, Float.MAX_VALUE, "X/Y = %.0f px") or scrollToPos
+                sameLine(140); scrollToPos = drag("##pos", ::scrollToPosPx, 1f, -10f, Float.MAX_VALUE, "X/Y = %.0f px") or scrollToPos
 
                 popItemWidth()
                 if (scrollToOff || scrollToPos)
@@ -581,9 +577,9 @@ object ShowDemoWindowLayout {
                         val names = arrayOf("Top", "25%%", "Center", "75%%", "Bottom") // double quote for ::format escaping
                         textUnformatted(names[i])
 
-                        val childFlags = if (enableExtraDecorations) Wf.MenuBar else Wf.None
+                        val childFlags = if (enableExtraDecorations) Wf.MenuBar else emptyFlags
                         val childId = getID(i.L)
-                        val childIsVisible = beginChild(childId, Vec2(childW, 200f), true, childFlags.i)
+                        val childIsVisible = beginChild(childId, Vec2(childW, 200f), true, childFlags)
                         menuBar { textUnformatted("abc") }
                         if (scrollToOff)
                             scrollY = scrollToOffPx
@@ -615,7 +611,7 @@ object ShowDemoWindowLayout {
                 pushID("##HorizontalScrolling")
                 for (i in 0..4) {
                     val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
-                    val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
+                    val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else emptyFlags
                     val childId = getID(i.L)
                     val childIsVisible = beginChild(childId, Vec2(-100f, childHeight), true, childFlags)
                     if (scrollToOff)
@@ -624,12 +620,13 @@ object ShowDemoWindowLayout {
                         setScrollFromPosX(cursorStartPos.x + scrollToPosPx, i * 0.25f)
                     if (childIsVisible) // Avoid calling SetScrollHereY when running with culled items
                         for (item in 0..99) {
+                            if (item > 0)
+                                sameLine()
                             if (enableTrack && item == trackItem) {
                                 textColored(Vec4(1, 1, 0, 1), "Item $item")
                                 setScrollHereX(i * 0.25f) // 0.0f:left, 0.5f:center, 1.0f:right
                             } else
                                 text("Item $item")
-                            sameLine()
                         }
                     endChild()
                     sameLine()
@@ -641,13 +638,13 @@ object ShowDemoWindowLayout {
                 // Miscellaneous Horizontal Scrolling Demo
 
                 helpMarker(
-                    "Horizontal scrolling for a window is enabled via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\n" +
-                            "You may want to also explicitly specify content width by using SetNextWindowContentWidth() before Begin().")
-                sliderInt("Lines", ::lines, 1, 15)
+                        "Horizontal scrolling for a window is enabled via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\n" +
+                                "You may want to also explicitly specify content width by using SetNextWindowContentWidth() before Begin().")
+                slider("Lines", ::lines, 1, 15)
                 pushStyleVar(StyleVar.FrameRounding, 3f)
                 pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
                 val scrollingChildSize = Vec2(0f, ImGui.frameHeightWithSpacing * 7 + 30)
-                beginChild("scrolling", scrollingChildSize, true, Wf.HorizontalScrollbar.i)
+                beginChild("scrolling", scrollingChildSize, true, Wf.HorizontalScrollbar)
                 for (line in 0 until lines) {
                     // Display random stuff. For the sake of this trivial demo we are using basic Button() + SameLine()
                     // If you want to create your own time line for a real application you may be better off manipulating
@@ -696,7 +693,7 @@ object ShowDemoWindowLayout {
                 if (showHorizontalContentsSizeDemoWindow) {
                     if (explicitContentSize)
                         setNextWindowContentSize(Vec2(contentsSizeX, 0f))
-                    begin("Horizontal contents size demo window", ::showHorizontalContentsSizeDemoWindow, if (showHscrollbar) Wf.HorizontalScrollbar.i else Wf.None.i)
+                    begin("Horizontal contents size demo window", ::showHorizontalContentsSizeDemoWindow, if (showHscrollbar) Wf.HorizontalScrollbar else emptyFlags)
                     pushStyleVar(StyleVar.ItemSpacing, Vec2(2, 0))
                     pushStyleVar(StyleVar.FramePadding, Vec2(2, 0))
                     helpMarker("Test of different widgets react and impact the work rectangle growing when horizontal scrolling is enabled.\n\nUse 'Metrics->Tools->Show windows rectangles' to visualize rectangles.")
@@ -712,7 +709,7 @@ object ShowDemoWindowLayout {
                     if (explicitContentSize) {
                         sameLine()
                         setNextItemWidth(100f)
-                        dragFloat("##csx", ::contentsSizeX)
+                        drag("##csx", ::contentsSizeX)
                         val p = cursorScreenPos
                         windowDrawList.addRectFilled(p, Vec2(p.x + 10, p.y + 10), COL32_WHITE)
                         windowDrawList.addRectFilled(Vec2(p.x + contentsSizeX - 10, p.y), Vec2(p.x + contentsSizeX, p.y + 10), COL32_WHITE)
@@ -735,7 +732,7 @@ object ShowDemoWindowLayout {
                         textWrapped("This text should automatically wrap on the edge of the work rectangle.")
                     if (showColumns) {
                         text("Tables:")
-                        if (beginTable("table", 4, TableFlag.Borders.i)) {
+                        if (beginTable("table", 4, TableFlag.Borders)) {
                             for (n in 0..3) {
                                 tableNextColumn()
                                 text("Width %.2f", ImGui.contentRegionAvail.x)
@@ -776,57 +773,53 @@ object ShowDemoWindowLayout {
         val offset = Vec2(30)
         operator fun invoke() {
             treeNode("Clipping") {
-                dragVec2("size", size, 0.5f, 1f, 200f, "%.0f")
+                drag2("size", size, 0.5f, 1f, 200f, "%.0f")
                 textWrapped("(Click and drag to scroll)")
+
+                helpMarker(
+                    "(Left) Using ImGui::PushClipRect():\n" +
+                            "Will alter ImGui hit-testing logic + ImDrawList rendering.\n" +
+                            "(use this if you want your clipping rectangle to affect interactions)\n\n" +
+                            "(Center) Using ImDrawList::PushClipRect():\n" +
+                            "Will alter ImDrawList rendering only.\n" +
+                            "(use this as a shortcut if you are only using ImDrawList calls)\n\n" +
+                            "(Right) Using ImDrawList::AddText() with a fine ClipRect:\n" +
+                            "Will alter only this specific ImDrawList::AddText() rendering.\n" +
+                            "This is often used internally to avoid altering the clipping rectangle and minimize draw calls.")
 
                 for (n in 0..2) {
                     if (n > 0)
                         sameLine()
+
                     pushID(n)
-                    group { // Lock X position
 
-                        invisibleButton("##empty", size)
-                        if (ImGui.isItemActive && ImGui.isMouseDragging(MouseButton.Left))
-                            offset += io.mouseDelta
-                        val p0 = Vec2(ImGui.itemRectMin)
-                        val p1 = Vec2(ImGui.itemRectMax)
-                        val textStr = "Line 1 hello\nLine 2 clip me!"
-                        val textPos = p0 + offset
-                        val drawList = ImGui.windowDrawList
+                    invisibleButton("##canvas", size)
+                    if (ImGui.isItemActive && ImGui.isMouseDragging(MouseButton.Left))
+                        offset += io.mouseDelta
+                    popID()
+                    if (!ImGui.isItemVisible) // Skip rendering as ImDrawList elements are not clipped.
+                        continue
 
-                        when (n) {
-                            0 -> {
-                                helpMarker("""
-                                Using ImGui::PushClipRect():
-                                Will alter ImGui hit-testing logic + ImDrawList rendering.
-                                (use this if you want your clipping rectangle to affect interactions)""".trimIndent())
-                                withClipRect(p0, p1, true) {
-                                    drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
-                                    drawList.addText(textPos, COL32_WHITE, textStr)
-                                }
-                            }
-                            1 -> {
-                                helpMarker("""
-                                Using ImDrawList::PushClipRect():
-                                Will alter ImDrawList rendering only.
-                                (use this as a shortcut if you are only using ImDrawList calls)""".trimIndent())
-                                drawList.withClipRect(p0, p1, true) {
-                                    addRectFilled(p0, p1, COL32(90, 90, 120, 255))
-                                    addText(textPos, COL32_WHITE, textStr)
-                                }
-                            }
-                            2 -> {
-                                helpMarker("""
-                                Using ImDrawList::AddText() with a fine ClipRect:
-                                Will alter only this specific ImDrawList::AddText() rendering.
-                                (this is often used internally to avoid altering the clipping rectangle and minimize draw calls)""".trimIndent())
-                                val clipRect = Vec4(p0, p1) // AddText() takes a ImVec4* here so let's convert.
-                                drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
-                                drawList.addText(ImGui.font, ImGui.fontSize, textPos, COL32_WHITE, textStr, 0f, clipRect)
-                            }
+                    val p0 = Vec2(ImGui.itemRectMin)
+                    val p1 = Vec2(ImGui.itemRectMax)
+                    val textStr = "Line 1 hello\nLine 2 clip me!"
+                    val textPos = p0 + offset
+                    val drawList = ImGui.windowDrawList
+                    when (n) {
+                        0 -> withClipRect(p0, p1, true) {
+                            drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
+                            drawList.addText(textPos, COL32_WHITE, textStr)
+                        }
+                        1 -> drawList.withClipRect(p0, p1, true) {
+                            addRectFilled(p0, p1, COL32(90, 90, 120, 255))
+                            addText(textPos, COL32_WHITE, textStr)
+                        }
+                        2 -> {
+                            val clipRect = Vec4(p0, p1) // AddText() takes a ImVec4* here so let's convert.
+                            drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
+                            drawList.addText(ImGui.font, ImGui.fontSize, textPos, COL32_WHITE, textStr, 0f, clipRect)
                         }
                     }
-                    popID()
                 }
             }
         }

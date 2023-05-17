@@ -1,6 +1,5 @@
 package imgui.demo
 
-import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -13,13 +12,12 @@ import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.colorEdit4
 import imgui.ImGui.combo
-import imgui.ImGui.dragFloat
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.inputText
-import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
 import imgui.ImGui.openPopupOnItemClick
@@ -27,21 +25,23 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setItemDefaultFocus
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setTooltip
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
+import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.drag
+import imgui.demo.showExampleApp.MenuFile
 import imgui.dsl.button
 import imgui.dsl.menu
+import imgui.dsl.menuBar
 import imgui.dsl.popup
 import imgui.dsl.popupContextItem
 import imgui.dsl.popupModal
 import imgui.dsl.treeNode
-import imgui.dsl.withID
-import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleVar
-import imgui.demo.showExampleApp.MenuFile
 import imgui.WindowFlag as Wf
 
 object ShowDemoWindowPopups {
@@ -61,14 +61,9 @@ object ShowDemoWindowPopups {
             textWrapped("Below we are testing adding menu items to a regular window. It's rather unusual but should work!")
             separator()
 
-            // Note: As a quirk in this very specific example, we want to differentiate the parent of this menu from the
-            // parent of the various popup menus above. To do so we are encloding the items in a PushID()/PopID() block
-            // to make them two different menusets. If we don't, opening any popup above and hovering our menu here would
-            // open it. This is because once a menu is active, we allow to switch to a sibling menu by just hovering on it,
-            // which is the desired behavior for regular menus.
-            withID("foo") {
-                menuItem("Menu item", "CTRL+M")
-                menu("Menu inside a regular window") { MenuFile() }
+            menuItem("Menu item", "CTRL+M")
+            menu("Menu inside a regular window") {
+                MenuFile()
             }
             separator()
         }
@@ -104,7 +99,8 @@ object ShowDemoWindowPopups {
 
                 // Simple selection popup (if you want to show the current selection inside the Button itself,
                 // you may want to build a string using the "###" operator to preserve a constant ID with a variable label)
-                if (button("Select..")) openPopup("my_select_popup")
+                if (button("Select.."))
+                    openPopup("my_select_popup")
                 sameLine()
                 textEx(names.getOrElse(selectedFish) { "<None>" })
                 popup("my_select_popup") {
@@ -114,9 +110,10 @@ object ShowDemoWindowPopups {
                 }
 
                 // Showing a menu with toggles
-                if (button("Toggle..")) openPopup("my_toggle_popup")
+                if (button("Toggle.."))
+                    openPopup("my_toggle_popup")
                 popup("my_toggle_popup") {
-                    names.forEachIndexed { i, n -> withBoolean(toggles, i) { b -> menuItem(n, "", b) } }
+                    names.forEachIndexed { i, n -> menuItem(n, "", toggles mutablePropertyAt i) }
 
                     menu("Sub-menu") { menuItem("Click me") }
 
@@ -126,7 +123,7 @@ object ShowDemoWindowPopups {
 
                     if (button("Stacked Popup")) openPopup("another popup")
                     popup("another popup") {
-                        names.forEachIndexed { i, n -> withBoolean(toggles, i) { b -> menuItem(n, "", b) } }
+                        names.forEachIndexed { i, n -> menuItem(n, "", toggles mutablePropertyAt i) }
                         menu("Sub-menu") {
                             menuItem("Click me")
                             button("Stacked Popup") { openPopup("another popup") }
@@ -136,51 +133,103 @@ object ShowDemoWindowPopups {
                 }
 
                 // Call the more complete ShowExampleMenuFile which we use in various places of this demo
-                if (button("File Menu..")) openPopup("my_file_popup")
-                popup("my_file_popup") { MenuFile() }
+                if (button("With a menu.."))
+                    openPopup("my_file_popup")
+                popup("my_file_popup") {
+                    menuBar {
+                        menu("File") {
+                            MenuFile()
+                        }
+                        menu("Edit") {
+                            menuItem("Dummy")
+                        }
+                    }
+                    text("Hello from popup!")
+                    button("This is a dummy button..")
+                }
             }
         }
     }
 
     object `Context Menus` {
+        var selected = -1
         var value = 0.5f
-        var name = "Label1".toByteArray(128)
+        // [JVM] this needs to by a ByteArray to hold a reference, since Strings are final by design
+        var name = "Label1"
         operator fun invoke() {
             treeNode("Context menus") {
 
+                helpMarker("\"Context\" functions are simple helpers to associate a Popup to a given Item or Window identifier.")
+
                 // BeginPopupContextItem() is a helper to provide common/simple popup behavior of essentially doing:
-                //    if (IsItemHovered() && IsMouseReleased(ImGuiMouseButton_Right))
-                //       OpenPopup(id);
-                //    return BeginPopup(id);
-                // For more advanced uses you may want to replicate and customize this code.
-                // See details in BeginPopupContextItem().
-                text("Value = %.3f (<-- right-click here)", value)
-                popupContextItem("item context menu") {
-                    if (selectable("Set to zero")) value = 0f
-                    if (selectable("Set to PI")) value = glm.PIf
-                    withItemWidth(-1) {
-                        dragFloat("##Value", ::value, 0.1f, 0f, 0f)
+                //     if (id == 0)
+                //         id = GetItemID(); // Use last item id
+                //     if (IsItemHovered() && IsMouseReleased(ImGuiMouseButton_Right))
+                //         OpenPopup(id);
+                //     return BeginPopup(id);
+                // For advanced uses you may want to replicate and customize this code.
+                // See more details in BeginPopupContextItem().
+
+                // Example 1
+                // When used after an item that has an ID (e.g. Button), we can skip providing an ID to BeginPopupContextItem(),
+                // and BeginPopupContextItem() will use the last item ID as the popup ID.
+                run {
+                    val names = listOf("Label1", "Label2", "Label3", "Label4", "Label5")
+                    for (n in 0..4) {
+                        selectable(names[n])
+                        if (selectable(names[n], selected == n))
+                            selected = n
+                        popupContextItem { // <-- use last item id as popup id
+                            selected = n
+                            text("This a popup for \"${names[n]}\"!")
+                            if (button("Close"))
+                                closeCurrentPopup()
+                        }
+                        if (isItemHovered())
+                            setTooltip("Right-click to open popup")
                     }
                 }
 
-                // We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the
-                // Begin() call. So here we will make it that clicking on the text field with the right mouse button (1)
-                // will toggle the visibility of the popup above.
-                text("(You can also right-click me to open the same popup as above.)")
-                openPopupOnItemClick("item context menu", MouseButton.Right.i)
+                // Example 2
+                // Popup on a Text() element which doesn't have an identifier: we need to provide an identifier to BeginPopupContextItem().
+                // Using an explicit identifier is also convenient if you want to activate the popups from different locations.
+                run {
+                    helpMarker("Text() elements don't have stable identifiers so we need to provide one.")
+                    text("Value = %.3f <-- (1) right-click this text", value)
+                    popupContextItem("my popup") {
+                        if (selectable("Set to zero")) value = 0.0f
+                        if (selectable("Set to PI")) value = 3.1415f
+                        setNextItemWidth(-Float.MIN_VALUE)
+                        drag("##Value", ::value, 0.1f, 0f, 0f)
+                    }
 
-                // When used after an item that has an ID (e.g.Button), we can skip providing an ID to BeginPopupContextItem().
-                // BeginPopupContextItem() will use the last item ID as the popup ID.
-                // In addition here, we want to include your editable label inside the button label.
-                // We use the ### operator to override the ID (read FAQ about ID for details)
-                val text = "Button: ${name.cStr}###Button" // ### operator override id ignoring the preceding label
-                button(text)
-                popupContextItem {
-                    text("Edit name")
-                    inputText("##edit", name)
-                    if (button("Close")) closeCurrentPopup()
+                    // We can also use OpenPopupOnItemClick() to toggle the visibility of a given popup.
+                    // Here we make it that right-clicking this other text element opens the same popup as above.
+                    // The popup itself will be submitted by the code above.
+                    text("(2) Or right-click this text")
+                    openPopupOnItemClick("my popup", PopupFlag.MouseButtonRight)
+
+                    // Back to square one: manually open the same popup.
+                    if (button("(3) Or click this button"))
+                        openPopup("my popup")
                 }
-                sameLine(); text("(<-- right-click here)")
+
+                // Example 3
+                // When using BeginPopupContextItem() with an implicit identifier (NULL == use last item ID),
+                // we need to make sure your item identifier is stable.
+                // In this example we showcase altering the item label while preserving its identifier, using the ### operator (see FAQ).
+                run {
+                    helpMarker("Showcase using a popup ID linked to item ID, with the item having a changing label + stable ID using the ### operator.")
+                    val buf = "Button: $name###Button" // ### operator override ID ignoring the preceding label
+                    button(buf)
+                    popupContextItem {
+                        text("Edit name:")
+                        inputText("##edit", ::name)
+                        if (button("Close"))
+                            closeCurrentPopup()
+                    }
+                    sameLine(); text("(<-- right-click here)")
+                }
             }
         }
     }
@@ -198,10 +247,10 @@ object ShowDemoWindowPopups {
                     openPopup("Delete?")
 
                 // Always center this window when appearing
-                val center = Vec2(io.displaySize * 0.5f)
+                val center = mainViewport.center
                 setNextWindowPos(center, Cond.Appearing, Vec2(0.5f))
 
-                popupModal("Delete?", null, Wf.AlwaysAutoResize.i) {
+                popupModal("Delete?", null, Wf.AlwaysAutoResize) {
 
                     text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n")
                     separator()
@@ -209,7 +258,9 @@ object ShowDemoWindowPopups {
                     //static int unused_i = 0;
                     //ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
 
-                    withStyleVar(StyleVar.FramePadding, Vec2()) { checkbox("Don't ask me next time", ::dontAskMeNextTime) }
+                    withStyleVar(StyleVar.FramePadding, Vec2()) {
+                        checkbox("Don't ask me next time", ::dontAskMeNextTime)
+                    }
 
                     button("OK", Vec2(120, 0)) { closeCurrentPopup() }
                     setItemDefaultFocus()
@@ -218,7 +269,7 @@ object ShowDemoWindowPopups {
                 }
 
                 button("Stacked modals..") { openPopup("Stacked 1") }
-                popupModal("Stacked 1", null, Wf.MenuBar.i) {
+                popupModal("Stacked 1", null, Wf.MenuBar) {
 
                     if (beginMenuBar()) {
                         if (beginMenu("File")) {
@@ -239,7 +290,7 @@ object ShowDemoWindowPopups {
                     // Also demonstrate passing a bool* to BeginPopupModal(), this will create a regular close button which
                     // will close the popup. Note that the visibility state of popups is owned by imgui, so the input value
                     // of the bool actually doesn't matter here.
-                    val unusedOpen = booleanArrayOf(true)
+                    val unusedOpen = true.mutableReference
                     if (beginPopupModal("Stacked 2", unusedOpen)) {
                         text("Hello from Stacked The Second!")
                         button("Close") { closeCurrentPopup() }

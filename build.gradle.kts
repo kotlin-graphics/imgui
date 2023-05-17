@@ -1,59 +1,39 @@
+import magik.createGithubPublication
 import magik.github
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
-    kotlin("jvm") version embeddedKotlinVersion
-    id("org.lwjgl.plugin") version "0.0.29"
-    id("elect86.magik") version "0.3.1"
+    kotlin("jvm") version "1.8.20"
+    id("org.lwjgl.plugin") version "0.0.34"
+    id("elect86.magik") version "0.3.2"
     `maven-publish`
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+//    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.google.devtools.ksp") version "1.8.20-1.0.10" apply false
 }
 
+dependencies {
+    api(projects.core)
+    api(projects.gl)
+    api(projects.glfw)
+    // vk
+}
 
-//projects.core.dependencyProject.apply {
-//    repositories { github("kotlin-graphics/mary") }
-//    dependencies {
-//        implementation(kotlin("reflect"))
-//        implementation(unsigned, kool, glm, gli/*, uno.core*/)
-//        //        implementation("kotlin.graphics:uno-core:0.7.10")
-//        Lwjgl { implementation(jemalloc, stb) }
-//    }
-//}
+kotlin.jvmToolchain { languageVersion.set(JavaLanguageVersion.of(8)) }
 
-//projects.gl.dependencyProject.dependencies {
-//    implementation(projects.core)
-//    implementation(projects.glfw)
-//    implementation(kotlin("reflect"))
-//    implementation(unsigned, kool, glm, gli, gln, uno)
-//    Lwjgl { implementation(jemalloc, glfw, opengl, remotery, stb) }
-//    testImplementation("com.github.ajalt:mordant:1.2.1")
-//}
-//
-//projects.glfw.dependencyProject.dependencies {
-//    implementation(projects.core)
-//    implementation(kotlin("reflect"))
-//    implementation(kool, glm, uno)
-//    Lwjgl { implementation(glfw, opengl, remotery) }
-//}
-//
-//projects.openjfx.dependencyProject.dependencies {
-//    implementation(projects.core)
-//    val os = current()
-//    val platform = when {
-//        os.isLinux -> "linux"
-//        os.isWindows -> "win"
-//        else -> "mac"
-//    }
-//    listOf("base", "graphics").forEach {
-//        implementation("org.openjfx:javafx-$it:11:$platform")
-//    }
-//    implementation(glm)
-//    Lwjgl { implementation(core) }
-//}
-//
-//projects.vk.dependencyProject.dependencies {
-//    implementation(projects.core)
-//    implementation(projects.glfw)
-//    implementation(kotlin("reflect"))
-//    implementation(kool, glm, gli, vkk, uno)
-//    Lwjgl { implementation(glfw, opengl, remotery, vulkan) }
-//}
+tasks {
+    withType<KotlinCompilationTask<*>>().configureEach { compilerOptions.freeCompilerArgs.addAll("-opt-in=kotlin.RequiresOptIn", "-Xallow-kotlin-package") }
+    test { useJUnitPlatform() }
+}
+
+publishing {
+    publications {
+        createGithubPublication {
+            from(components["java"])
+            artifactId = "${rootProject.name}-${project.name}"
+            suppressAllPomMetadataWarnings()
+        }
+    }
+    repositories.github { domain = "kotlin-graphics/mary" }
+}
+
+java.withSourcesJar()

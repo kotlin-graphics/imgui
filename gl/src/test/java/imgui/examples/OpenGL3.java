@@ -3,46 +3,46 @@ package imgui.examples;
 import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
+import gln.cap.Caps;
 import imgui.Cond;
+import imgui.Flag;
 import imgui.ImGui;
-import imgui.MutableProperty0;
+import imgui.MutableReference;
 import imgui.classes.Context;
 import imgui.classes.IO;
-import imgui.classes.InputTextCallbackData;
 import imgui.impl.gl.ImplGL3;
 import imgui.impl.glfw.ImplGlfw;
-import kotlin.jvm.functions.Function1;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Platform;
+import uno.gl.GlWindow;
 import uno.glfw.GlfwWindow;
+import uno.glfw.Hints;
 import uno.glfw.VSync;
 
 import static gln.GlnKt.glClearColor;
 import static gln.GlnKt.glViewport;
 import static imgui.ImguiKt.DEBUG;
-import static imgui.impl.gl.CommonGLKt.setGlslVersion;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
-import static uno.glfw.windowHint.Profile.core;
 
 public class OpenGL3 {
 
     // The window handle
-    private GlfwWindow window;
+    private GlWindow window;
     private Context ctx;
 
     private uno.glfw.glfw glfw = uno.glfw.glfw.INSTANCE;
-    private uno.glfw.windowHint windowHint = uno.glfw.windowHint.INSTANCE;
     private ImGui imgui = ImGui.INSTANCE;
     private IO io;
 
 
     private float[] f = {0f};
     private Vec4 clearColor = new Vec4(0.45f, 0.55f, 0.6f, 1f);
-    // Java users can use both a MutableProperty0 or a Boolean Array
-    private MutableProperty0<Boolean> showAnotherWindow = new MutableProperty0<>(false);
+    // Java users can use both a MutableReference or a Boolean Array
+    private MutableReference<Boolean> showAnotherWindow = new MutableReference<>(false);
     private boolean[] showDemo = {true};
     private int[] counter = {0};
 
@@ -58,34 +58,35 @@ public class OpenGL3 {
         // Setup window
         GLFW.glfwSetErrorCallback((error, description) -> System.out.println("Glfw Error " + error + ": " + description));
         glfw.init();
-        windowHint.setDebug(DEBUG);
+        Hints.Context hintCtx = glfw.getHints().getContext();
+        hintCtx.setDebug(DEBUG);
 
         // Decide GL+GLSL versions
         if (Platform.get() == Platform.MACOSX) { // GL 3.2 + GLSL 150
-
-            setGlslVersion(150);
-            windowHint.getContext().setVersion("3.2");
-            windowHint.setProfile(core);     // 3.2+ only
-            windowHint.setForwardComp(true); // Required on Mac
+            ImplGL3.Companion.getData().setGlslVersion(150);
+            hintCtx.setVersion("3.2");
+            hintCtx.setProfile(Hints.Context.Profile.Core);     // 3.2+ only
+            hintCtx.setForwardComp(true); // Required on Mac
 
         } else {   // GL 3.0 + GLSL 130
 
-            setGlslVersion(130);
-            windowHint.getContext().setVersion("3.0");
+            ImplGL3.Companion.getData().setGlslVersion(130);
+            hintCtx.setVersion("3.0");
             //profile = core      // 3.2+ only
             //forwardComp = true  // 3.0+ only
         }
 
         // Create window with graphics context
-        window = new GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example", null, new Vec2i(30), true);
-        window.makeContextCurrent();
+        GlfwWindow glfwWindow = GlfwWindow.create(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example", MemoryUtil.NULL, null, new Vec2i(30));
+        window = new GlWindow(glfwWindow, Caps.Profile.COMPATIBILITY, true);
+        window.makeCurrent(true);
         glfw.setSwapInterval(VSync.ON);   // Enable vsync
 
         // Initialize OpenGL loader
         GL.createCapabilities();
 
         // Setup Dear ImGui context
-        ctx = new Context();
+        ctx = new Context(null);
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
         //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
 
@@ -148,7 +149,7 @@ public class OpenGL3 {
         imgui.text("Hello, world!");                                // Display some text (you can use a format string too)
         // TODO
 //        imgui.sliderFloat("float", f, 0, 0f, 1f, "%.3f", 1f);       // Edit 1 float using a slider from 0.0f to 1.0f
-        imgui.colorEdit3("clear color", clearColor, 0);               // Edit 3 floats representing a color
+        imgui.colorEdit3("clear color", clearColor, Flag.empty());               // Edit 3 floats representing a color
 
         imgui.checkbox("Demo Window", showDemo);                 // Edit bools storing our windows open/close state
         imgui.checkbox("Another Window", showAnotherWindow);
@@ -163,7 +164,7 @@ public class OpenGL3 {
 
         // 2. Show another simple window. In most cases you will use an explicit begin/end pair to name the window.
         if (showAnotherWindow.get()) {
-            imgui.begin("Another Window", showAnotherWindow, 0);
+            imgui.begin("Another Window", showAnotherWindow, Flag.empty());
             imgui.text("Hello from another window!");
             if (imgui.button("Close Me", new Vec2()))
                 showAnotherWindow.set(false);
@@ -175,7 +176,7 @@ public class OpenGL3 {
         if (showDemo[0]) {
             /*  Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
                     Here we just want to make the demo initial state a bit more friendly!                 */
-            imgui.setNextWindowPos(new Vec2(650, 20), Cond.FirstUseEver, new Vec2());
+            imgui.setNextWindowPos(new Vec2(650, 20), Cond.FirstUseEver.INSTANCE, new Vec2());
             imgui.showDemoWindow(showDemo);
         }
 

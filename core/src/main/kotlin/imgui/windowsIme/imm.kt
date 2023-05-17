@@ -8,7 +8,7 @@ import org.lwjgl.system.*
 import org.lwjgl.system.MemoryUtil.memGetLong
 import org.lwjgl.system.MemoryUtil.memPutLong
 import org.lwjgl.system.windows.WindowsLibrary
-import uno.glfw.HWND
+import uno.kotlin.HWND
 import java.nio.ByteBuffer
 
 
@@ -18,6 +18,7 @@ object imm {
 
     val ImmCreateContext = lib.getFunctionAddress("ImmCreateContext")
     val ImmGetContext = lib.getFunctionAddress("ImmGetContext")
+    val ImmSetCandidateWindow = lib.getFunctionAddress("ImmSetCandidateWindow")
     val ImmSetCompositionWindow = lib.getFunctionAddress("ImmSetCompositionWindow")
     val ImmReleaseContext = lib.getFunctionAddress("ImmReleaseContext")
 
@@ -28,6 +29,7 @@ object imm {
             JNI.callPP(hwnd.L, ImmGetContext)
         }
     }
+    fun setCandidateWindow(himc: HIMC, candForm: CANDIDATEFORM) = JNI.callPPI(himc.L, candForm.adr, ImmSetCandidateWindow)
     fun setCompositionWindow(himc: HIMC, compForm: COMPOSITIONFORM) = JNI.callPPI(himc.L, compForm.adr, ImmSetCompositionWindow)
     fun releaseContext(hwnd: HWND, himc: HIMC) = JNI.callPPI(hwnd.L, himc.L, ImmReleaseContext)
 
@@ -42,9 +44,11 @@ object imm {
 
 
 // TODO -> uno
-inline class HIMC(val L: Long)
+@JvmInline
+value class HIMC(val L: Long)
 
-inline class DWORD(val L: Long) {
+@JvmInline
+value class DWORD(val L: Long) {
     companion object {
         val BYTES get() = Long.BYTES
     }
@@ -58,9 +62,11 @@ inline class DWORD(val L: Long) {
  *     RECT  rcArea;
  * } CANDIDATEFORM, *PCANDIDATEFORM;
  */
-class CANDIDATEFORM constructor(val adr: Long) {
+class CANDIDATEFORM(val adr: Long) {
 
     val buffer: ByteBuffer = MemoryUtil.memByteBuffer(adr, size)
+
+    constructor() : this(MemoryUtil.nmemAlloc(COMPOSITIONFORM.size.L))
 
     var dwIndex: DWORD
         get() = DWORD(memGetLong(adr + ofs.dwIndex))
@@ -97,7 +103,7 @@ class CANDIDATEFORM constructor(val adr: Long) {
  *      RECT  rcArea;
  * } COMPOSITIONFORM
  */
-class COMPOSITIONFORM constructor(val adr: Long) {
+class COMPOSITIONFORM(val adr: Long) {
 
     val buffer: ByteBuffer = MemoryUtil.memByteBuffer(adr, size)
 

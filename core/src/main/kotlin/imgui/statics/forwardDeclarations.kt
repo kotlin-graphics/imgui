@@ -1,9 +1,9 @@
 package imgui.statics
 
-import gli_.has
-import glm_.L
-import glm_.f
 import glm_.i
+import glm_.max
+import glm_.min
+import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
 import imgui.ImGui.findOrCreateWindowSettings
@@ -13,16 +13,14 @@ import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
+import imgui.classes.DrawList
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.floor
+import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.SettingsHandler
 import imgui.internal.sections.WindowSettings
-import imgui.windowsIme.COMPOSITIONFORM
-import imgui.windowsIme.DWORD
-import imgui.windowsIme.HIMC
-import imgui.windowsIme.imm
-import org.lwjgl.system.MemoryUtil
-import uno.glfw.HWND
+import kool.rem
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
@@ -55,8 +53,8 @@ fun findHoveredWindow() {
     var hoveredWindowIgnoringMovingWindow: Window? = null
 
     val paddingRegular = style.touchExtraPadding // [JVM] careful, no copy
-    val paddingForResizeFromEdges = when { // [JVM] careful, no copy
-        io.configWindowsResizeFromEdges -> style.touchExtraPadding max WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
+    val paddingForResize = when { // [JVM] careful, no copy
+        io.configWindowsResizeFromEdges -> g.windowsHoverPadding
         else -> paddingRegular
     }
 
@@ -70,7 +68,7 @@ fun findHoveredWindow() {
         val bb = Rect(window.outerRectClipped) // [JVM] we need a copy
         bb expand when {
             window.flags has (Wf._ChildWindow or Wf.NoResize or Wf.AlwaysAutoResize) -> paddingRegular
-            else -> paddingForResizeFromEdges
+            else -> paddingForResize
         }
 
         if (io.mousePos !in bb)
@@ -95,11 +93,34 @@ fun findHoveredWindow() {
     }
 
     g.hoveredWindow = hoveredWindow
-    g.hoveredRootWindow = g.hoveredWindow?.rootWindow
     g.hoveredWindowUnderMovingWindow = hoveredWindow
 }
 
-// ApplyWindowSettings -> Window class
+/** ~ApplyWindowSettings */
+infix fun Window.applySettings(settings: WindowSettings) {
+    pos put floor(Vec2(settings.pos))
+    if (settings.size allGreaterThan 0f) sizeFull put floor(Vec2(settings.size))
+    size put sizeFull
+    collapsed = settings.collapsed
+}
+
+fun updateWindowInFocusOrderList(window: Window, justCreated: Boolean, newFlags: WindowFlags) {
+
+    val newIsExplicitChild = newFlags has Wf._ChildWindow && (newFlags hasnt Wf._Popup || newFlags has Wf._ChildMenu)
+    val childFlagChanged = newIsExplicitChild != window.isExplicitChild
+    if ((justCreated || childFlagChanged) && !newIsExplicitChild) {
+        assert(window !in g.windowsFocusOrder)
+        g.windowsFocusOrder += window
+        window.focusOrder = g.windowsFocusOrder.lastIndex
+    } else if (!justCreated && childFlagChanged && newIsExplicitChild) {
+        assert(g.windowsFocusOrder[window.focusOrder] === window)
+        for (n in window.focusOrder + 1 until g.windowsFocusOrder.size)
+            g.windowsFocusOrder[n].focusOrder--
+        g.windowsFocusOrder.removeAt(window.focusOrder)
+        window.focusOrder = -1
+    }
+    window.isExplicitChild = newIsExplicitChild
+}
 
 fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 
@@ -110,19 +131,18 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
     g.windowsById[id] = this
 
     // Default/arbitrary window position. Use SetNextWindowPos() with the appropriate condition flag to change the initial position of a window.
-    pos put 60f
+    pos put (ImGui.mainViewport.pos + 60f)
 
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
     if (flags hasnt Wf.NoSavedSettings) {
         findWindowSettings(id)?.let { settings ->
             //  Retrieve settings from .ini file
             settingsOffset = g.settingsWindows.indexOf(settings)
-            setConditionAllowFlags(Cond.FirstUseEver.i, false)
+            setConditionAllowFlags(Cond.FirstUseEver, false)
             applySettings(settings)
         }
     }
-    dc.cursorMaxPos put pos // So first call to CalcContentSize() doesn't return crazy values
-    dc.cursorStartPos put pos
+    dc.cursorStartPos put pos; dc.cursorMaxPos put pos; dc.idealMaxPos put pos // So first call to CalcWindowContentSizes() doesn't return crazy values
 
     if (flags has Wf.AlwaysAutoResize) {
         autoFitFrames put 2
@@ -133,19 +153,93 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
         autoFitOnlyGrows = autoFitFrames.x > 0 || autoFitFrames.y > 0
     }
 
-    g.windowsFocusOrder += this
     if (flags has Wf.NoBringToFrontOnFocus)
         g.windows.add(0, this) // Quite slow but rare and only once
-    else g.windows += this
+    else
+        g.windows += this
 }
 
-// CheckStacksSize, CalcNextScrollFromScrollTargetAndClamp and AddWindowToSortBuffer are Window class methods
+// Helper to snap on edges when aiming at an item very close to the edge,
+// So the difference between WindowPadding and ItemSpacing will be in the visible area after scrolling.
+// When we refactor the scrolling API this may be configurable with a flag?
+// Note that the effect for this won't be visible on X axis with default Style settings as WindowPadding.x == ItemSpacing.x by default.
+fun calcScrollEdgeSnap(target: Float, snapMin: Float, snapMax: Float, snapThreshold: Float, centerRatio: Float): Float = when {
+    target <= snapMin + snapThreshold -> imgui.internal.lerp(snapMin, target, centerRatio)
+    target >= snapMax - snapThreshold -> imgui.internal.lerp(target, snapMax, centerRatio)
+    else -> target
+}
 
-// AddDrawListToDrawData is a DrawList class method
+fun Window.calcNextScrollFromScrollTargetAndClamp(): Vec2 {
+    val scroll = Vec2(scroll)
+    val decorationSize = Vec2(decoOuterSizeX1 + decoInnerSizeX1 + decoOuterSizeX2, decoOuterSizeY1 + decoInnerSizeY1 + decoOuterSizeY2)
+    for (axis in 0..1) {
+        if (scrollTarget[axis] < Float.MAX_VALUE) {
+            val centerRatio = scrollTargetCenterRatio[axis]
+            var scrollTarget = scrollTarget[axis]
+            if (scrollTargetEdgeSnapDist[axis] > 0f) {
+                val snapMin = 0f
+                val snapMax = scrollMax[axis] + sizeFull[axis] - decorationSize[axis]
+                scrollTarget = calcScrollEdgeSnap(scrollTarget, snapMin, snapMax, scrollTargetEdgeSnapDist[axis], centerRatio)
+            }
+            scroll[axis] = scrollTarget - centerRatio * (sizeFull[axis] - decorationSize[axis])
+        }
+        scroll[axis] = floor(scroll[axis] max 0f)
+        if (!collapsed && !skipItems)
+            scroll[axis] = scroll[axis] min scrollMax[axis]
+    }
+    return scroll
+}
 
-/** ~GetViewportRect */
-val viewportRect: Rect
-    get() = Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
+
+/** AddDrawListToDrawData */
+infix fun DrawList.addTo(outList: ArrayList<DrawList>) {
+
+    if (cmdBuffer.empty())
+        return
+    if (cmdBuffer.size == 1 && cmdBuffer[0].elemCount == 0 && cmdBuffer[0].userCallback == null)
+        return
+
+    /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.
+        May trigger for you if you are using PrimXXX functions incorrectly.   */
+    assert(vtxBuffer.rem == 0 || _vtxWritePtr == vtxBuffer.rem)
+    assert(idxBuffer.rem == 0 || _idxWritePtr == idxBuffer.rem)
+    if (flags hasnt DrawListFlag.AllowVtxOffset)
+        assert(_vtxCurrentIdx == vtxBuffer.rem)
+
+    // JVM ImGui, this doesnt apply, we use Ints by default
+    /*  Check that drawList doesn't use more vertices than indexable
+        (default DrawIdx = unsigned short = 2 bytes = 64K vertices per DrawList = per window)
+        If this assert triggers because you are drawing lots of stuff manually:
+        - First, make sure you are coarse clipping yourself and not trying to draw many things outside visible bounds.
+          Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics/Debugger window to inspect draw list contents.
+        - If you want large meshes with more than 64K vertices, you can either:
+          (A) Handle the ImDrawCmd::VtxOffset value in your renderer backend, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
+              Most example backends already support this from 1.71. Pre-1.71 backends won't.
+              Some graphics API such as GL ES 1/2 don't have a way to offset the starting vertex so it is not supported for them.
+          (B) Or handle 32-bits indices in your renderer backend, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
+              Most example backends already support this. For example, the OpenGL example code detect index size at compile-time:
+                glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
+              Your own engine or render API may use different parameters or function calls to specify index sizes.
+              2 and 4 bytes indices are generally supported by most graphics API.
+        - If for some reason neither of those solutions works for you, a workaround is to call BeginChild()/EndChild() before reaching
+          the 64K limit to split your draw commands in multiple draw lists.         */
+    outList += this
+    io.metricsRenderVertices += vtxBuffer.rem
+    io.metricsRenderIndices += idxBuffer.rem
+}
+
+// FIXME: Add a more explicit sort order in the window structure.
+private val childWindowComparer = compareBy<Window>({ it.flags has Wf._Popup }, { it.flags has Wf._Tooltip }, { it.beginOrderWithinParent })
+
+/** ~AddWindowToSortBuffer */
+infix fun Window.addToSortBuffer(sortedWindows: ArrayList<Window>) {
+    sortedWindows += this
+    if (active) {
+        val count = dc.childWindows.size
+        if (count > 1) dc.childWindows.sortWith(childWindowComparer)
+        dc.childWindows.filter { it.active }.forEach { it addToSortBuffer sortedWindows }
+    }
+}
 
 //-----------------------------------------------------------------------------
 // Settings
@@ -203,6 +297,7 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
         assert(settings.id == window.id)
         settings.pos put window.pos
         settings.size put window.sizeFull
+
         settings.collapsed = window.collapsed
     }
 
@@ -210,11 +305,13 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
     for (setting in g.settingsWindows)
     // all numeric fields to ints to have full c++ compatibility
         buf += """
-            |[${handler.typeName}][${setting.name}]
-            |Pos=${setting.pos.x.i},${setting.pos.y.i}
-            |Size=${setting.size.x.i},${setting.size.y.i}
-            |Collapsed=${setting.collapsed.i} 
-            |""".trimMargin()
+            [${handler.typeName}][${setting.name}]
+            Pos=${setting.pos.x.i},${setting.pos.y.i}
+            Size=${setting.size.x.i},${setting.size.y.i}
+            Collapsed=${setting.collapsed.i}
+            
+            
+            """.trimIndent() // [JVM] prefer trimIndent over trimMargin to preserve the last line
 }
 
 //-----------------------------------------------------------------------------
@@ -233,22 +330,31 @@ val setClipboardTextFn_DefaultImpl: (userData: Any?, text: String) -> Unit = { _
     clipboard.setContents(StringSelection(text), null)
 }
 
-var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->
+val setPlatformImeDataFn_DefaultImpl = { viewport: Viewport, data: PlatformImeData ->
     // Notify OS Input Method Editor of text input position
-    val hwnd: HWND = io.imeWindowHandle
-    if (hwnd.L != MemoryUtil.NULL) {
-        val himc: HIMC = HIMC(imm.getContext(hwnd))
-        if (himc.L != MemoryUtil.NULL) {
-            val cf = COMPOSITIONFORM().apply {
-                ptCurrentPos.x = x.L
-                ptCurrentPos.y = y.L
-                dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
-            }
-            if (imm.setCompositionWindow(himc, cf) == 0)
-                System.err.println("imm.setCompositionWindow failed")
-            if (imm.releaseContext(hwnd, himc) == 0)
-                System.err.println("imm.releaseContext failed")
-            cf.free()
-        }
-    }
+
+    //TODO()
+//    val hwnd: HWND = viewport.platformHandleRaw as HWND
+//
+//    //    ::ImmAssociateContextEx(hwnd, NULL, data->WantVisible ? IACE_DEFAULT : 0);
+//    if (hwnd.L == MemoryUtil.NULL) {
+//
+//        val himc: HIMC = HIMC(imm.getContext(hwnd))
+//        if (himc.L != MemoryUtil.NULL) {
+//            val compositionForm = COMPOSITIONFORM().apply {
+//                ptCurrentPos.x = data.inputPos.x.L
+//                ptCurrentPos.y = data.inputPos.y.L
+//                dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
+//            }
+//            if (imm.setCompositionWindow(himc, compositionForm) == 0) System.err.println("imm::setCompositionWindow failed")
+//            val candidateForm = CANDIDATEFORM().apply {
+//                dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
+//                ptCurrentPos.x = data.inputPos.x.L
+//                ptCurrentPos.y = data.inputPos.y.L
+//            }
+//            if (imm.setCandidateWindow(himc, candidateForm) == 0) System.err.println("imm::setCandidateWindow failed")
+//            if (imm.releaseContext(hwnd, himc) == 0) System.err.println("imm::releaseContext failed")
+//            compositionForm.free()
+//        }
+//    }
 }

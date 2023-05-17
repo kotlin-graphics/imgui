@@ -50,13 +50,8 @@ class Color {
     }
 }
 
-/** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create an UI within
- *  deep-nested code that runs multiple times every frame.
- *  Usage: val oaf = OnceUponAFrame()
- *  if(oaf()) {
- *      ImGui.text("This will be called only once per frame")
- *  }
- */
+/** Helper: Execute a block of code at maximum once a frame. Convenient if you want to quickly create a UI within deep-nested code that runs multiple times every frame.
+ *  Usage: static ImGuiOnceUponAFrame oaf; if (oaf) ImGui::Text("This will be called only once per frame");  */
 class OnceUponAFrame {
     private var refFrame = -1
     operator fun invoke(): Boolean {
@@ -134,7 +129,7 @@ class TableColumnSortSpecs {
  *  Make sure to set 'SpecsDirty = false' after sorting, else you may wastefully sort your data every frame! */
 class TableSortSpecs {
     /** Pointer to sort spec array. */
-    var specs: TableColumnSortSpecs? = null
+    var specs = ArrayList<TableColumnSortSpecs>()
     fun specs(n: Int) = specsArray[specsPtr + n]
     lateinit var specsArray: Array<TableColumnSortSpecs>
     var specsPtr = 0
@@ -147,7 +142,7 @@ class TableSortSpecs {
 }
 
 class SizeCallbackData(
-        /** Read-only.   What user passed to SetNextWindowSizeConstraints() */
+        /** Read-only.   What user passed to SetNextWindowSizeConstraints(). Generally store an integer or float in here (need reinterpret_cast<>). */
         var userData: Any? = null,
         /** Read-only.   Window position, for reference.    */
         val pos: Vec2 = Vec2(),
@@ -250,3 +245,7 @@ class TextFilter(defaultFilter: String = "") {
     }
 }
 
+fun String.memchr(startIdx: Int, c: Char): Int? {
+    val res = indexOf(c, startIdx)
+    return if (res >= 0) res else null
+}
