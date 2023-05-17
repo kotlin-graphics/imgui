@@ -10,9 +10,9 @@ import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
-import imgui.static.navApplyItemToResult
-import imgui.static.navRestoreHighlightAfterMove
-import imgui.static.navUpdateAnyRequestFlag
+import imgui.statics.navApplyItemToResult
+import imgui.statics.navRestoreHighlightAfterMove
+import imgui.statics.navUpdateAnyRequestFlag
 
 // Gamepad/Keyboard Navigation
 internal interface gamepadKeyboardNavigation {

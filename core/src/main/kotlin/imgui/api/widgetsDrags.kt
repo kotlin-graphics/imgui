@@ -36,7 +36,7 @@ import imgui.ImGui.textEx
 import imgui.internal.api.widgetN
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
-import imgui.statics.DRAG_MOUSE_THRESHOLD_FACTOR
+import imgui.static.DRAG_MOUSE_THRESHOLD_FACTOR
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
 

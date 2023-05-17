@@ -9,7 +9,7 @@ import imgui.internal.classes.Window
 import imgui.internal.floor
 import imgui.internal.sections.ScrollFlag
 import imgui.internal.sections.ScrollFlags
-import imgui.static.calcNextScrollFromScrollTargetAndClamp
+import imgui.statics.calcNextScrollFromScrollTargetAndClamp
 
 // Scrolling
 internal interface scrolling {

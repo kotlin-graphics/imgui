@@ -36,6 +36,7 @@ import imgui.internal.classes.Rect
 import imgui.internal.sections.DrawListFlags
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
 import imgui.static.*
+import imgui.statics.*
 import org.lwjgl.system.Platform
 import imgui.WindowFlag as Wf
 import imgui.internal.sections.DrawListFlag as Dlf

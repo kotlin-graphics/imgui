@@ -22,6 +22,10 @@ import imgui.internal.floor
 import imgui.internal.floorSigned
 import imgui.internal.lengthSqr
 import imgui.internal.sections.*
+import imgui.statics.findBestWheelingWindow
+import imgui.statics.lockWheelingWindow
+import imgui.statics.mergedModsFromKeys
+import imgui.statics.updateAliasKey
 
 // Inputs
 fun updateKeyboardInputs() {

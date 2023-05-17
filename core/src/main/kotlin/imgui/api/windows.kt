@@ -36,6 +36,7 @@ import imgui.internal.floor
 import imgui.internal.lengthSqr
 import imgui.internal.sections.*
 import imgui.static.*
+import imgui.statics.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf

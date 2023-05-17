@@ -5,8 +5,8 @@ import imgui.ImGui.isWithinBeginStackOf
 import imgui.api.g
 import imgui.internal.classes.Window
 import imgui.internal.sections.NavLayer
-import imgui.static.findWindowFocusIndex
-import imgui.static.navRestoreLastChildNavWindow
+import imgui.statics.findWindowFocusIndex
+import imgui.statics.navRestoreLastChildNavWindow
 
 // Windows: Display Order and Focus Order
 internal interface windowsDisplayAndFocusOrder {

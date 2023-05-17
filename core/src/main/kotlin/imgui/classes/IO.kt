@@ -18,7 +18,7 @@ import imgui.internal.textCharFromUtf8
 import imgui.statics.findLatestInputEvent
 import imgui.statics.getClipboardTextFn_DefaultImpl
 import imgui.statics.setClipboardTextFn_DefaultImpl
-import imgui.static.setPlatformImeDataFn_DefaultImpl
+import imgui.statics.setPlatformImeDataFn_DefaultImpl
 import org.lwjgl.system.Platform
 import uno.kotlin.NUL
 
