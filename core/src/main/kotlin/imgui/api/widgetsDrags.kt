@@ -373,15 +373,14 @@ interface widgetsDrags {
     }
 }
 
-inline fun <reified N> drag(
-        label: String,
-        pData: KMutableProperty0<N>,
-        vSpeed: Float = 1f,
-        min: N? = null,
-        max: N? = null,
-        format_: String? = null,
-        flags: SliderFlags = emptyFlags)
-        : Boolean where N : Number, N : Comparable<N> = numberOps<N>().drag(label, pData, vSpeed, min, max, format_, flags).also { if (Any() is N) println() }
+inline fun <reified N> drag(label: String,
+                            pData: KMutableProperty0<N>,
+                            vSpeed: Float = 1f,
+                            min: N? = null,
+                            max: N? = null,
+                            format_: String? = null,
+                            flags: SliderFlags = emptyFlags)
+        : Boolean where N : Number, N : Comparable<N> = numberOps<N>().drag(label, pData, vSpeed, min, max, format_, flags)
 
 /** Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget,
  *  p_min and p_max are optional.
@@ -395,7 +394,7 @@ inline fun <reified N> dragN(label: String,
                              format: String? = null,
                              flags: SliderFlags = emptyFlags,
                              properties: (Int) -> KMutableProperty0<N>)
-: Boolean where N : Number, N : Comparable<N> = numberOps<N>().dragN(label, components, vSpeed, min, max, format, flags, properties)
+        : Boolean where N : Number, N : Comparable<N> = numberOps<N>().dragN(label, components, vSpeed, min, max, format, flags, properties)
 
 inline fun <N> NumberOps<N>.dragN(label: String,
                                   components: Int,
@@ -405,4 +404,4 @@ inline fun <N> NumberOps<N>.dragN(label: String,
                                   format: String? = null,
                                   flags: SliderFlags = emptyFlags,
                                   properties: (Int) -> KMutableProperty0<N>)
-: Boolean where N : Number, N : Comparable<N> = widgetN(label, components) { i -> drag("", properties(i), vSpeed, min, max, format, flags) }
+        : Boolean where N : Number, N : Comparable<N> = widgetN(label, components) { i -> drag("", properties(i), vSpeed, min, max, format, flags) }

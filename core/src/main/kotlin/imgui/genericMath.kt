@@ -43,7 +43,7 @@ sealed interface NumberOps<N> where N : Number, N : Comparable<N> {
     fun KMutableProperty0<N>.applyFromText(buf: String, format: String): Boolean {
         val initial = get()
         val v = parse(buf, format)
-        return v?.let { v ->
+        return v?.let {
             this.set(v)
             get() != initial
         } == true
