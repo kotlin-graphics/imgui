@@ -291,9 +291,6 @@ internal interface widgetsLowLevelBehaviors {
         }
         return booleanArrayOf(pressed, hovered, held)
     }
-
-    fun dragBehavior(id: ID, pV: FloatArray, ptr: Int, vSpeed: Float, min: Float?, max: Float?, format: String, flags: SliderFlags): Boolean = dragBehavior(id, pV mutablePropertyAt ptr, vSpeed, min, max, format, flags)
-
     fun <N> NumberOps<N>.dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> {
         if (g.activeId == id)
         // Those are the things we can do easily outside the DragBehaviorT<> template, saves code generation.
@@ -309,9 +306,8 @@ internal interface widgetsLowLevelBehaviors {
     /** For 32-bits and larger types, slider bounds are limited to half the natural type range.
      *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
      *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
-    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean = sliderBehavior(bb, id, pV, 0, pMin, pMax, format, flags, outGrabBb)
-
-    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, ptr: Int, min: Float, max: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean = sliderBehavior(bb, id, pV mutablePropertyAt ptr, min, max, format, flags, outGrabBb)
+    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean =
+            sliderBehavior(bb, id, pV mutablePropertyAt 0, pMin, pMax, format, flags, outGrabBb)
 
     //    fun <N> sliderBehavior(bb: Rect, id: ID,
     //                           v: KMutableProperty0<N>,

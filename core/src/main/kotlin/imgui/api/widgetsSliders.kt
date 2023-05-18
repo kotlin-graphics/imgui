@@ -35,7 +35,6 @@ interface widgetsSliders {
      *  "%5.2f secs"   01.23 secs
      *  "Gold: %.0f"   Gold: 1
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun slider(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = emptyFlags): Boolean = slider(label, v mutablePropertyAt ptr, vMin, vMax, format, flags)
 
     fun slider2(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
 
@@ -55,8 +54,6 @@ interface widgetsSliders {
         vRad = vRad.deg
         return slider(label, vRadPtr, vDegreesMin, vDegreesMax, format, flags).also { vRad = vRad.rad }
     }
-
-    fun slider(label: String, v: IntArray, ptr: Int, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = emptyFlags): Boolean = slider(label, v mutablePropertyAt ptr, vMin, vMax, format, flags)
 
     fun slider2(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
 
@@ -217,13 +214,17 @@ interface widgetsSliders {
 
 }
 
-inline fun <reified N> slider(label: String, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = emptyFlags): Boolean where N : Number, N : Comparable<N> = numberOps<N>().slider(label, pData, min, max, format_, flags)
+inline fun <reified N> slider(label: String, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = emptyFlags): Boolean where N : Number, N : Comparable<N> =
+        numberOps<N>().slider(label, pData, min, max, format_, flags)
 
 /** Add multiple sliders on 1 line for compact edition of multiple components */
-inline fun <reified N> sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = emptyFlags, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> = numberOps<N>().sliderN(label, components, min, max, format, flags, properties)
+inline fun <reified N> sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = emptyFlags, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
+        numberOps<N>().sliderN(label, components, min, max, format, flags, properties)
 
-inline fun <N> NumberOps<N>.sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = emptyFlags, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> = widgetN(label, components) { i ->
+inline fun <N> NumberOps<N>.sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = emptyFlags, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
+        widgetN(label, components) { i ->
     slider("", properties(i), min, max, format, flags)
 }
 
-inline fun <reified N> vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = emptyFlags): Boolean where N : Number, N : Comparable<N> = numberOps<N>().vSlider(label, size, pData, min, max, format_, flags)
+inline fun <reified N> vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = emptyFlags): Boolean where N : Number, N : Comparable<N> =
+        numberOps<N>().vSlider(label, size, pData, min, max, format_, flags)

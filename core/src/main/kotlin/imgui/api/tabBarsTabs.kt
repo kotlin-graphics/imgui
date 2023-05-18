@@ -62,10 +62,6 @@ interface tabBarsTabs {
     }
 
     /** create a Tab. Returns true if the Tab is selected. */
-    fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemOnlyFlags = emptyFlags): Boolean =
-        beginTabItem(label, pOpen mutablePropertyAt index, flags)
-
-    /** create a Tab. Returns true if the Tab is selected. */
     fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemOnlyFlags = emptyFlags): Boolean {
 
         val window = g.currentWindow!!

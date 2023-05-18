@@ -822,10 +822,10 @@ object ShowDemoWindowWidgets {
                 // The earlier is more flexible, as in real application your selection may be stored in many different ways
                 // and not necessarily inside a bool value (e.g. in flags within objects, as an external list, etc).
                 treeNode("Basic") {
-                    selectable("1. I am selectable", selection0, 0)
-                    selectable("2. I am selectable", selection0, 1)
+                    selectable("1. I am selectable", selection0 mutablePropertyAt 0)
+                    selectable("2. I am selectable", selection0 mutablePropertyAt 1)
                     text("(I am not selectable)")
-                    selectable("4. I am selectable", selection0, 2)
+                    selectable("4. I am selectable", selection0 mutablePropertyAt 2)
                     if (selectable("5. I am double clickable", selection0[3], Sf.AllowDoubleClick))
                         if (isMouseDoubleClicked(MouseButton.Left)) selection0[3] = !selection0[3]
                 }
@@ -846,16 +846,16 @@ object ShowDemoWindowWidgets {
                 treeNode("Rendering more text into the same line") {
                     // Using the Selectable() override that takes "bool* p_selected" parameter,
                     // this function toggle your bool value automatically.
-                    selectable("main.c", selected1, 0); sameLine(300); text(" 2,345 bytes")
-                    selectable("Hello.cpp", selected1, 1); sameLine(300); text("12,345 bytes")
-                    selectable("Hello.h", selected1, 2); sameLine(300); text(" 2,345 bytes")
+                    selectable("main.c", selected1 mutablePropertyAt 0); sameLine(300); text(" 2,345 bytes")
+                    selectable("Hello.cpp", selected1 mutablePropertyAt 1); sameLine(300); text("12,345 bytes")
+                    selectable("Hello.h", selected1 mutablePropertyAt 2); sameLine(300); text(" 2,345 bytes")
                 }
                 treeNode("In columns") {
                     if (beginTable("split1", 3, TableFlag.Resizable or TableFlag.NoSavedSettings)) {
                         for (i in 0..9) {
                             val label = "Item $i"
                             tableNextColumn()
-                            selectable(label, selected2, i) // FIXME-TABLE: Selection overlap
+                            selectable(label, selected2 mutablePropertyAt i) // FIXME-TABLE: Selection overlap
                         }
                         endTable()
                     }
@@ -865,7 +865,7 @@ object ShowDemoWindowWidgets {
                             val label = "Item $i"
                             tableNextRow()
                             tableNextColumn()
-                            selectable(label, selected2, i, imgui.SelectableFlag.SpanAllColumns)
+                            selectable(label, selected2 mutablePropertyAt i, imgui.SelectableFlag.SpanAllColumns)
                             tableNextColumn()
                             text("Some other contents")
                             tableNextColumn()
@@ -915,7 +915,7 @@ object ShowDemoWindowWidgets {
                             val name = "(%.1f,%.1f)".format(alignment.x, alignment.y)
                             if (x > 0) sameLine()
                             pushStyleVar(StyleVar.SelectableTextAlign, alignment)
-                            selectable(name, selected4, 3 * y + x, size = Vec2(80))
+                            selectable(name, selected4 mutablePropertyAt 3 * y + x, size = Vec2(80))
                             popStyleVar()
                         }
                 }
@@ -1099,7 +1099,7 @@ object ShowDemoWindowWidgets {
                     tabBar("MyTabBar", tabBarFlags1) {
                         for (n in opened.indices)
                             if (opened[n])
-                                tabItem(names[n], opened, n) {
+                                tabItem(names[n], opened mutablePropertyAt n) {
                                     text("This is the ${names[n]} tab!")
                                     if (n has 1)
                                         text("I am an odd tab.")

@@ -1329,7 +1329,7 @@ object ShowDemoWindowTables {
                         tableNextRow()
                         for (column in 0..2) {
                             tableSetColumnIndex(column)
-                            selectable("Cell $column,$row", columnSelected, column)
+                            selectable("Cell $column,$row", columnSelected mutablePropertyAt column)
                         }
                     }
                 }

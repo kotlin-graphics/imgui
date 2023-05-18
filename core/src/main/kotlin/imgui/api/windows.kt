@@ -57,10 +57,7 @@ import imgui.internal.sections.LayoutType as Lt
 // - Note that the bottom of window stack always contains a window called "Debug".
 interface windows {
 
-    fun begin(name: String, pOpen: BooleanArray, flags: WindowFlags): Boolean = begin(name, pOpen, 0, flags)
-
-    fun begin(name: String, pOpen: BooleanArray?, index: Int, flags: WindowFlags): Boolean =
-        begin(name, pOpen?.mutablePropertyAt(index), flags)
+    fun begin(name: String, pOpen: BooleanArray, flags: WindowFlags): Boolean = begin(name, pOpen mutablePropertyAt 0, flags)
 
     /**  Push a new Dear ImGui window to add widgets to:
     - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use

@@ -480,13 +480,6 @@ object dsl {
         }
     }
 
-    inline fun tabItem(label: String, pOpen: BooleanArray, ptr: Int, flags: TabItemOnlyFlags = emptyFlags, block: () -> Unit) {
-        if (beginTabItem(label, pOpen, ptr, flags)) {
-            block()
-            endTabItem()
-        }
-    }
-
 
     // Drag and Drop
 

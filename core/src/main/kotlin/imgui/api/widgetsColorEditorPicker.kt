@@ -286,7 +286,7 @@ inline fun colorEdit4(label: String, x: Float, y: Float, z: Float, w: Float, fla
             if (flags has Cef.Float) {
                 valueChanged /= drag(ids[n], f mutablePropertyAt n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n])
                 valueChangedAsFloat /= valueChanged
-            } else valueChanged /= drag(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n])
+            } else valueChanged /= drag(ids[n], i mutablePropertyAt n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n])
             if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context", PopupFlag.MouseButtonRight)
         }
 

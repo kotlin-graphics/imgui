@@ -1,7 +1,7 @@
 package imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
-import imgui.Cond
+import imgui.*
 import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
 import imgui.ImGui.drag
@@ -21,11 +21,9 @@ import imgui.ImGui.text
 import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
-import imgui.StyleVar
-import imgui.TableFlag
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.drag
 import imgui.dsl.table
-import imgui.or
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 
@@ -86,9 +84,9 @@ object PropertyEditor {
                     tableSetColumnIndex(1)
                     pushItemWidth(-Float.MIN_VALUE)
                     if (i >= 5)
-                        input("##value", placeholderMembers, i, 1f)
+                        input("##value", placeholderMembers mutablePropertyAt i, 1f)
                     else
-                        drag("##value", placeholderMembers, i, 0.01f)
+                        drag("##value", placeholderMembers mutablePropertyAt i, 0.01f)
                     popItemWidth()
                     nextColumn()
                 }

@@ -98,9 +98,8 @@ interface widgetsInputWithKeyboard {
         return inputTextEx(label, hint, buf, Vec2(), flags, callback, userData)
     }
 
-    fun input(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags): Boolean = input(label, v, 0, step, stepFast, format, flags)
-
-    fun input(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags): Boolean = input(label, v mutablePropertyAt ptr, step, stepFast, format, flags)
+    fun input(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f", flags: InputTextSingleFlags = emptyFlags): Boolean =
+            input(label, v mutablePropertyAt 0, step, stepFast, format, flags)
 
     fun input(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f", flags_: InputTextSingleFlags = emptyFlags): Boolean {
         val flags = flags_ or Itf.CharsScientific

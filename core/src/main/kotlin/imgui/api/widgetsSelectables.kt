@@ -193,10 +193,6 @@ interface widgetsSelectables {
     }
 
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
-    fun selectable(label: String, selected: BooleanArray, index: Int, flags: SelectableFlags = emptyFlags, size: Vec2 = Vec2()): Boolean =
-        selectable(label, selected mutablePropertyAt index, flags, size)
-
-    /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
     fun selectable(label: String, selectedPtr: KMutableProperty0<Boolean>, flags: SelectableFlags = emptyFlags, size: Vec2 = Vec2()): Boolean {
         var selected by selectedPtr
         return if (selectable(label, selected, flags, size)) {

@@ -54,18 +54,8 @@ import kotlin.reflect.KMutableProperty0
 //   If you get a warning converting a float to ImGuiSliderFlags, read https://github.com/ocornut/imgui/issues/3361
 interface widgetsDrags {
 
-    // [JVM] TODO inline? -> class
 
     /** If v_min >= v_max we have no bound */
-    fun drag(label: String,
-             v: FloatArray,
-             ptr: Int,
-             vSpeed: Float = 1f,
-             vMin: Float = 0f,
-             vMax: Float = 0f,
-             format: String = "%.3f",
-             flags: SliderFlags = emptyFlags): Boolean = drag(label, v mutablePropertyAt ptr, vSpeed, vMin, vMax, format, flags)
-
     fun drag2(label: String,
               v: FloatArray,
               vSpeed: Float = 1f,
@@ -159,15 +149,6 @@ interface widgetsDrags {
     /** If v_min >= v_max we have no bound
      *
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
-    fun drag(label: String,
-             v: IntArray,
-             ptr: Int,
-             vSpeed: Float = 1f,
-             vMin: Int = 0,
-             vMax: Int = 0,
-             format: String? = "%d",
-             flags: SliderFlags = emptyFlags): Boolean = drag(label, v mutablePropertyAt ptr, vSpeed, vMin, vMax, format, flags)
-
     fun drag2(label: String,
               v: IntArray,
               vSpeed: Float = 1f,
@@ -270,7 +251,7 @@ interface widgetsDrags {
              min: Float = 0f,
              max: Float = 0f,
              format: String = "%.3f",
-             flags: SliderFlags = emptyFlags): Boolean = drag(label, pData, 0, vSpeed, min, max, format, flags)
+             flags: SliderFlags = emptyFlags): Boolean = drag(label, pData mutablePropertyAt 0, vSpeed, min, max, format, flags)
 
     /** ote: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget, p_min and p_max are optional.
      *  Read code of e.g. DragFloat(), DragInt() etc. or examples in 'Demo->Widgets->Data Types' to understand how to use this function directly. */
@@ -307,15 +288,14 @@ interface widgetsDrags {
         if (!tempInputIsActive) {
 
             // Tabbing or CTRL-clicking on Drag turns it into an InputText
-            val inputRequestedByTabbing =
-                    tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
+            val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
             val clicked = hovered && MouseButton.Left.isClicked(id)
             val doubleClicked = hovered && g.io.mouseClickedCount[0] == 2 && Key.MouseLeft testOwner id
-            val makeActive =
-                    inputRequestedByTabbing || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id
+            val makeActive = inputRequestedByTabbing || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id
             if (makeActive && (clicked || doubleClicked)) Key.MouseLeft.setOwner(id)
-            if (makeActive && tempInputAllowed) if (inputRequestedByTabbing || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navActivateInputId == id) tempInputIsActive =
-                    true
+            if (makeActive && tempInputAllowed)
+                if (inputRequestedByTabbing || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navActivateInputId == id)
+                    tempInputIsActive = true
 
             // (Optional) simple click (without moving) turns Drag into an InputText
             if (io.configDragClickToInputText && tempInputAllowed && !tempInputIsActive)
@@ -362,11 +342,8 @@ interface widgetsDrags {
         if (g.logEnabled) logSetNextTextDecoration("{", "}")
         ImGui.renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
 
-        if (labelSize.x > 0f) ImGui.renderText(
-                Vec2(
-                        frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y
-                ), label
-        )
+        if (labelSize.x > 0f)
+            ImGui.renderText(Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y), label)
 
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return valueChanged
@@ -394,7 +371,8 @@ inline fun <reified N> dragN(label: String,
                              format: String? = null,
                              flags: SliderFlags = emptyFlags,
                              properties: (Int) -> KMutableProperty0<N>)
-        : Boolean where N : Number, N : Comparable<N> = numberOps<N>().dragN(label, components, vSpeed, min, max, format, flags, properties)
+        : Boolean where N : Number, N : Comparable<N> =
+        numberOps<N>().dragN(label, components, vSpeed, min, max, format, flags, properties)
 
 inline fun <N> NumberOps<N>.dragN(label: String,
                                   components: Int,
@@ -404,4 +382,5 @@ inline fun <N> NumberOps<N>.dragN(label: String,
                                   format: String? = null,
                                   flags: SliderFlags = emptyFlags,
                                   properties: (Int) -> KMutableProperty0<N>)
-        : Boolean where N : Number, N : Comparable<N> = widgetN(label, components) { i -> drag("", properties(i), vSpeed, min, max, format, flags) }
+        : Boolean where N : Number, N : Comparable<N> =
+        widgetN(label, components) { i -> drag("", properties(i), vSpeed, min, max, format, flags) }
