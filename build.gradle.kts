@@ -21,7 +21,9 @@ dependencies {
 kotlin.jvmToolchain { languageVersion.set(JavaLanguageVersion.of(8)) }
 
 tasks {
-    withType<KotlinCompilationTask<*>>().configureEach { compilerOptions.freeCompilerArgs.addAll("-opt-in=kotlin.RequiresOptIn", "-Xallow-kotlin-package") }
+    withType<KotlinCompilationTask<*>>().configureEach {
+        compilerOptions.freeCompilerArgs.addAll("-opt-in=kotlin.RequiresOptIn", "-Xallow-kotlin-package")
+    }
     test { useJUnitPlatform() }
 }
 
