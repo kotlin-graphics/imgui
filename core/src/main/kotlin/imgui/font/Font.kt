@@ -149,7 +149,6 @@ class Font {
                 val (char, bytes) = textCharFromUtf8(text, s, textEnd)
                 c = char
                 s += bytes
-                if (c == 0x0) break   // Malformed UTF-8?
             }
 
             if (c < 32) {
@@ -217,6 +216,7 @@ class Font {
         var insideWord = true
 
         var s = textBegin
+        assert(textEnd != -1)
         while (s < textEnd) {
             var c = text[s].toUInt()
             val nextS = s + when {
@@ -227,7 +227,6 @@ class Font {
                     bytes
                 }
             }
-            if (c == 0) break
 
             if (c < 32) {
                 if (c == '\n'.i) {
@@ -391,8 +390,6 @@ class Font {
                 val (char, bytes) = textCharFromUtf8(text, s, textEnd)
                 c = char
                 s += bytes
-                if (c == 0) // Malformed UTF-8?
-                    break
             }
 
             if (c < 32) {

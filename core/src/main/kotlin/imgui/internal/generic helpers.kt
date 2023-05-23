@@ -526,31 +526,20 @@ fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = -1): Pair<I
     return outChar to wanted
 }
 
-/** return input UTF-8 bytes count */
+/** return input UTF-8 bytes count
+ * ~ImTextStrFromUtf8 */
 fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = -1, textRemaining: KMutableProperty0<Int>? = null): Int {
     var pBuf = 0
     var pText = 0
     while (pBuf < buf.size && (textEnd == -1 || pText < textEnd) && pText < text.size && text[pText] != 0.b) {
         val (code, bytes) = textCharFromUtf8(text, pText, textEnd)
         pText += bytes
-        if (code == 0)
-            break
         buf[pBuf++] = code.c
     }
     if (pBuf < buf.size)
         buf[pBuf] = NUL
     textRemaining?.set(pText)
     return pBuf
-}
-
-/** ~ImTextStrFromUtf8 */
-fun CharArray.textStr(src: CharArray): Int {
-    var i = 0
-    while (i < size) {
-        if (src[i] == NUL) break
-        this[i] = src[i++]
-    }
-    return i
 }
 
 /** return number of UTF-8 code-points (NOT bytes count)
@@ -561,8 +550,6 @@ fun textCountCharsFromUtf8(text: ByteArray, textEnd: Int = text.size): Int {
     while (t < textEnd && text[t] != 0.b) {
         val (c, bytes) = textCharFromUtf8(text, t, textEnd)
         t += bytes
-        if (c == 0)
-            break
         charCount++
     }
     return charCount

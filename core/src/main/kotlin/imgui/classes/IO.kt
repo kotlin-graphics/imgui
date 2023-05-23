@@ -342,11 +342,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (!appAcceptingEvents)
             return
         var p = 0
-        while (p < utf8Chars.size || utf8Chars[p] == 0.b) {
+        while (p < utf8Chars.size && utf8Chars[p] != 0.b) {
             val (c, bytes) = textCharFromUtf8(utf8Chars)
             p += bytes
-            if (c != 0)
-                addInputCharacter(c.c)
+            addInputCharacter(c.c)
         }
     }
 

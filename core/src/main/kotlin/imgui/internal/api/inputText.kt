@@ -546,11 +546,11 @@ internal interface inputText {
                     val clipboardLen = clipboard.length
                     val clipboardFiltered = CharArray(clipboardLen)
                     var clipboardFilteredLen = 0
-                    for (c in clipboard) {
-                        if (c == NUL) break
-                        val cRef = c.mutableReference
+                    for (char in clipboard) {
+                        val cRef = char.mutableReference
                         val c by cRef
-                        if (!inputTextFilterCharacter(cRef, flags, callback, callbackUserData, InputSource.Keyboard)) continue
+                        if (!inputTextFilterCharacter(cRef, flags, callback, callbackUserData, InputSource.Keyboard))
+                            continue
                         clipboardFiltered[clipboardFilteredLen++] = c
                     }
                     if (clipboardFilteredLen > 0) { // If everything was filtered, ignore the pasting operation
