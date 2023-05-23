@@ -61,13 +61,18 @@ class Font {
     var configDataCount = 0                     // 2     // in  // ~ 1
 
     /** Character used if a glyph isn't found. */
-    var fallbackChar = '\uffff'                      // out // = FFFD/'?'
+    var fallbackChar = '\uFFFF'                      // out // = FFFD/'?'
 
     /** Character used for ellipsis rendering. */
-    var ellipsisChar = '\uffff'                 // out // = '...'
+    var ellipsisChar = '\uFFFF'                 // out // = '...'/'.'
 
-    /** Character used for ellipsis rendering (if a single '...' character isn't found) */
-    var dotChar = '\uffff'            // 2     // out
+    var ellipsisCharCount = 0  // 1     // out // 1 or 3
+
+    /** Width */
+    var ellipsisWidth = 0f      // 4     // out
+
+    /** Step between characters when EllipsisCount > 0 */
+    var ellipsisCharStep = 0f   // 4     // out
 
     var dirtyLookupTables = true                // 1     // out //
 
@@ -317,15 +322,14 @@ class Font {
         if (y + lineHeight < clipRect.y)
             while (y + lineHeight < clipRect.y && s < textEnd) {
                 val lineEnd = text.memchr(s, '\n')
-                val lineNext = if(lineEnd != -1) lineEnd + 1 else textEnd
+                val lineNext = if (lineEnd != -1) lineEnd + 1 else textEnd
                 if (wordWrapEnabled) {
                     // FIXME-OPT: This is not optimal as do first do a search for \n before calling CalcWordWrapPositionA().
                     // If the specs for CalcWordWrapPositionA() were reworked to optionally return on \n we could combine both.
                     // However it is still better than nothing performing the fast-forward!
                     s = calcWordWrapPositionA(scale, text, s, lineNext, wrapWidth)
                     s = calcWordWrapNextLineStartA(text, s, textEnd)
-                }
-                else
+                } else
                     s = lineNext
                 y += lineHeight
             }
@@ -527,8 +531,19 @@ class Font {
         val dotsChars = listOf('.', '\uFF0E')
         if (ellipsisChar == '\uFFFF')
             ellipsisChar = findFirstExistingGlyph(ellipsisChars)
-        if (dotChar == '\uFFFF')
-            dotChar = findFirstExistingGlyph(dotsChars)
+        val dotChar = findFirstExistingGlyph(dotsChars)
+        if (ellipsisChar != '\uFFFF') {
+            ellipsisCharCount = 1
+            ellipsisCharStep = findGlyph(ellipsisChar)!!.x1
+            ellipsisWidth = ellipsisCharStep
+        }
+        else if (dotChar != '\uFFFF') {
+            val glyph = findGlyph(dotChar)!!
+            ellipsisChar = dotChar
+            ellipsisCharCount = 3
+            ellipsisCharStep = (glyph.x1 - glyph.x0) + 1f
+            ellipsisWidth = ellipsisCharStep * 3f - 1f
+        }
 
         // Setup fallback character
         val fallbackChars = listOf(UNICODE_CODEPOINT_INVALID.toChar(), '?', ' ') // TODO JVM check `UNICODE_CODEPOINT_INVALID.toChar`
@@ -679,7 +694,8 @@ class Font {
 
 
     // [JVM] cant be static because we need the Font class instance to call `findGlyphNoFallback`
-    fun findFirstExistingGlyph(candidateChars: List<Char>) = candidateChars.find { findGlyphNoFallback(it) != null } ?: '\uFFFF'
+    fun findFirstExistingGlyph(candidateChars: List<Char>) = candidateChars.find { findGlyphNoFallback(it) != null }
+            ?: '\uFFFF'
 
     companion object {
 
@@ -720,6 +736,7 @@ class Font {
                     0x0178 -> 159 // Ÿ
                     else -> i
                 }
+
                 else -> i
             }
         }
