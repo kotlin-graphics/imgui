@@ -361,7 +361,7 @@ class Font {
 
         var vtxWrite = drawList._vtxWritePtr
         var idxWrite = drawList._idxWritePtr
-        var vtxCurrentIdx = drawList._vtxCurrentIdx
+        var vtxIndex = drawList._vtxCurrentIdx
 
         val colUntinted = col or COL32_A_MASK.inv()
         var wordWrapEol = 0
@@ -448,18 +448,18 @@ class Font {
 
                     // We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a debug builds. Inlined here:
                     drawList.apply {
-                        idxBuffer.let {
-                            it += vtxCurrentIdx; it += vtxCurrentIdx + 1; it += vtxCurrentIdx + 2
-                            it += vtxCurrentIdx; it += vtxCurrentIdx + 2; it += vtxCurrentIdx + 3
-                        }
                         vtxBuffer.let {
                             it += x1; it += y1; it += u1; it += v1; it += glyphCol
                             it += x2; it += y1; it += u2; it += v1; it += glyphCol
                             it += x2; it += y2; it += u2; it += v2; it += glyphCol
                             it += x1; it += y2; it += u1; it += v2; it += glyphCol
                         }
+                        idxBuffer.let {
+                            it += vtxIndex; it += vtxIndex + 1; it += vtxIndex + 2
+                            it += vtxIndex; it += vtxIndex + 2; it += vtxIndex + 3
+                        }
                         vtxWrite += 4
-                        vtxCurrentIdx += 4
+                        vtxIndex += 4
                         idxWrite += 6
                     }
                 }
@@ -476,7 +476,7 @@ class Font {
         drawList.cmdBuffer.last().elemCount -= (idxExpectedSize - drawList.idxBuffer.lim)
         drawList._vtxWritePtr = vtxWrite
         drawList._idxWritePtr = idxWrite
-        drawList._vtxCurrentIdx = vtxCurrentIdx
+        drawList._vtxCurrentIdx = vtxIndex
     }
 
     // [Internal] Don't use!
