@@ -1,7 +1,8 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package imgui.internal.api
 
 import glm_.b
-import glm_.f
 import glm_.func.common.max
 import glm_.glm
 import glm_.vec2.Vec2
@@ -134,26 +135,10 @@ internal interface renderHelpers {
             val pTextEndEllipsis = (-1).mutableReference
             var textEndEllipsis by pTextEndEllipsis
 
-            var ellipsisChar = font.ellipsisChar
-            var ellipsisCharCount = 1
-            if (ellipsisChar == '\uffff') {
-                ellipsisChar = font.dotChar
-                ellipsisCharCount = 3
-            }
-            val glyph = font.findGlyph(ellipsisChar)!!
-
-            var ellipsisGlyphWidth = glyph.x1 * fontScale       // Width of the glyph with no padding on either side
-            var ellipsisTotalWidth = ellipsisGlyphWidth  // Full width of entire ellipsis
-
-            if (ellipsisCharCount > 1) {
-                // Full ellipsis size without free spacing after it.
-                val spacingBetweenDots = 1f * fontScale
-                ellipsisGlyphWidth = (glyph.x1 - glyph.x0) * fontScale + spacingBetweenDots
-                ellipsisTotalWidth = ellipsisGlyphWidth * ellipsisCharCount.f - spacingBetweenDots
-            }
+            val ellipsisWidth = font.ellipsisWidth * fontScale
 
             // We can now claim the space between pos_max.x and ellipsis_max.x
-            val textAvailWidth = ((max(posMax.x, ellipsisMaxX) - ellipsisTotalWidth) - posMin.x) max 1f
+            val textAvailWidth = ((max(posMax.x, ellipsisMaxX) - ellipsisWidth) - posMin.x) max 1f
             var textSizeClippedX = font.calcTextSizeA(fontSize, textAvailWidth, 0f, text, textEnd = textEndFull, remaining = pTextEndEllipsis).x
             if (textEndEllipsis == 0 && textEndEllipsis < textEndFull) {
                 // Always display at least 1 character if there's no room for character + ellipsis
@@ -168,11 +153,11 @@ internal interface renderHelpers {
 
             // Render text, render ellipsis
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndEllipsis, textSize, Vec2())
-            var ellipsisX = posMin.x + textSizeClippedX
-            if (ellipsisX + ellipsisTotalWidth <= ellipsisMaxX)
-                for (i in 0 until ellipsisCharCount) {
-                    font.renderChar(drawList, fontSize, Vec2(ellipsisX, posMin.y), Col.Text.u32, ellipsisChar)
-                    ellipsisX += ellipsisGlyphWidth
+            val ellipsisPos = floor(Vec2(posMin.x + textSizeClippedX, posMin.y))
+            if (ellipsisPos.x + ellipsisWidth <= ellipsisMaxX)
+                for (i in 0 ..< font.ellipsisCharCount) {
+                    font.renderChar(drawList, fontSize, ellipsisPos, Col.Text.u32, font.ellipsisChar)
+                    ellipsisPos.x += font.ellipsisCharStep * fontScale
                 }
         } else
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndFull, textSize, Vec2())
