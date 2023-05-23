@@ -604,7 +604,7 @@ interface tablesInternal {
                 // Latch initial size for fixed columns and update it constantly for auto-resizing column (unless clipped!)
                 if (column.autoFitQueue != 0x00)
                     column.widthRequest = widthAuto
-                else if (column.flags has TableColumnFlag.WidthFixed && !columnIsResizable && requestOutputMaskByIndex has (1L shl columnN))
+                else if (column.flags has TableColumnFlag.WidthFixed && !columnIsResizable && column.isRequestOutput)
                     column.widthRequest = widthAuto
 
                 // FIXME-TABLE: Increase minimum size during init frame to avoid biasing auto-fitting widgets
@@ -710,7 +710,6 @@ interface tablesInternal {
         val hostClipRect = Rect(innerClipRect) // [JVM] local copy, shadow is fine
         //host_clip_rect.Max.x += table->CellPaddingX + table->CellSpacingX2;
         visibleMaskByIndex = 0x00
-        requestOutputMaskByIndex = 0x00
         for (orderN in 0 until columnsCount) {
             val columnN = displayOrderToIndex[orderN]
             val column = columns[columnN]
@@ -787,8 +786,6 @@ interface tablesInternal {
 
             // Mark column as requesting output from user. Note that fixed + non-resizable sets are auto-fitting at all times and therefore always request output.
             column.isRequestOutput = isVisible || column.autoFitQueue != 0 || column.cannotSkipItemsQueue != 0
-            if (column.isRequestOutput)
-                requestOutputMaskByIndex = requestOutputMaskByIndex or (1L shl columnN)
 
             // Mark column as SkipItems (ignoring all items/layout)
             column.isSkipItems = !column.isEnabled || hostSkipItems

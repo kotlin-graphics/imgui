@@ -337,7 +337,7 @@ interface tables {
         // Return whether the column is visible. User may choose to skip submitting items based on this return value,
         // however they shouldn't skip submitting for columns that may have the tallest contribution to row height.
         val columnN = table.currentColumn
-        return table.requestOutputMaskByIndex has (1L shl columnN)
+        return table.columns[table.currentColumn].isRequestOutput
     }
 
     /** [Public] Append into a specific column
@@ -356,7 +356,7 @@ interface tables {
 
         // Return whether the column is visible. User may choose to skip submitting items based on this return value,
         // however they shouldn't skip submitting for columns that may have the tallest contribution to row height.
-        return table.requestOutputMaskByIndex has (1L shl columnN)
+        return table.columns[columnN].isRequestOutput
     }
 
     // Tables: Headers & Columns declaration

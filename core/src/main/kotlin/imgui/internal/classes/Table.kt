@@ -40,9 +40,6 @@ class Table {
     /** Column Index -> IsVisibleX|IsVisibleY map (== not hidden by user/api && not hidden by scrolling/cliprect) */
     var visibleMaskByIndex = 0L
 
-    /** Column Index -> IsVisible || AutoFit (== expect user to submit items) */
-    var requestOutputMaskByIndex = 0L
-
     /** Which data were loaded from the .ini file (e.g. when order is not altered we won't save order) */
     var settingsLoadedFlags: TableFlags = none
 
