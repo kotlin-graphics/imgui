@@ -486,7 +486,7 @@ fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = -1): Pair<I
     var end = textEnd
 
     val len = lengths[(text[begin] ushr 3).i]
-    var wanted = len + (len == 0).i
+    var wanted = len + if (len != 0) 0 else 1
 
     if (textEnd == -1)
         end = begin + wanted // Max length, nulls will be taken into account.
