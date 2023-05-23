@@ -138,11 +138,26 @@ object glyphRanges {
      *  Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs  */
     val japanese: Array<IntRange> by lazy {
 
-        /*  1946 common ideograms code points for Japanese
-            Sourced from http://theinstructionlimit.com/common-kanji-character-ranges-for-xna-spritefont-rendering
-            FIXME: Source a list of the revised 2136 Joyo Kanji list from 2010 and rebuild this.
-            You can use ImFontAtlas::GlyphRangesBuilder to create your own ranges derived from this, by merging existing ranges or adding new characters.
-            (Stored as accumulative offsets from the initial unicode codepoint 0x4E00. This encoding is designed to helps us compact the source code size.) */
+        // 2999 ideograms code points for Japanese
+        // - 2136 Joyo (meaning "for regular use" or "for common use") Kanji code points
+        // - 863 Jinmeiyo (meaning "for personal name") Kanji code points
+        // - Sourced from official information provided by the government agencies of Japan:
+        //   - List of Joyo Kanji by the Agency for Cultural Affairs
+        //     - https://www.bunka.go.jp/kokugo_nihongo/sisaku/joho/joho/kijun/naikaku/kanji/
+        //   - List of Jinmeiyo Kanji by the Ministry of Justice
+        //     - http://www.moj.go.jp/MINJI/minji86.html
+        //   - Available under the terms of the Creative Commons Attribution 4.0 International (CC BY 4.0).
+        //     - https://creativecommons.org/licenses/by/4.0/legalcode
+        // - You can generate this code by the script at:
+        //   - https://github.com/vaiorabbit/everyday_use_kanji
+        // - References:
+        //   - List of Joyo Kanji
+        //     - (Wikipedia) https://en.wikipedia.org/wiki/List_of_j%C5%8Dy%C5%8D_kanji
+        //   - List of Jinmeiyo Kanji
+        //     - (Wikipedia) https://en.wikipedia.org/wiki/Jinmeiy%C5%8D_kanji
+        // - Missing 1 Joyo Kanji: U+20B9F (Kun'yomi: Shikaru, On'yomi: Shitsu,shichi), see https://github.com/ocornut/imgui/pull/3627 for details.
+        // You can use ImFontGlyphRangesBuilder to create your own ranges derived from this, by merging existing ranges or adding new characters.
+        // (Stored as accumulative offsets from the initial unicode codepoint 0x4E00. This encoding is designed to helps us compact the source code size.)
         val accumulativeOffsetsFrom0x4E00 = shortArrayOf(
                 0, 1, 2, 4, 1, 1, 1, 1, 2, 1, 6, 2, 2, 1, 8, 5, 7, 11, 1, 2, 10, 10, 8, 2, 4, 20, 2, 11, 8, 2, 1, 2, 1, 6, 2, 1, 7, 5, 3, 7, 1, 1, 13, 7, 9, 1, 4, 6, 1, 2, 1, 10, 1, 1, 9, 2, 2, 4, 5, 6, 14, 1, 1, 9, 3, 18,
                 5, 4, 2, 2, 10, 7, 1, 1, 1, 3, 2, 4, 3, 23, 2, 10, 12, 2, 14, 2, 4, 13, 1, 6, 10, 3, 1, 7, 13, 6, 4, 13, 5, 2, 3, 17, 2, 2, 5, 7, 6, 4, 1, 7, 14, 16, 6, 13, 9, 15, 1, 1, 7, 16, 4, 7, 1, 19, 9, 2, 7, 15,
