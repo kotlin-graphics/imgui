@@ -7,6 +7,7 @@ import glm_.i
 import glm_.isNaN
 import glm_.vec2.Vec2
 import imgui.Col
+import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
@@ -28,7 +29,8 @@ import kotlin.math.min
 /** Plot */
 
 @PublishedApi
-internal inline fun plotEx(plotType: PlotType, label: String, valuesCount: Int, valuesOffset: Int, overlayText: String, scaleMin_: Float, scaleMax_: Float, frameSize: Vec2, data: (Int) -> Float): Int {
+internal inline fun plotEx(plotType: PlotType, label: String, valuesCount: Int, valuesOffset: Int, overlayText: String,
+                           scaleMin_: Float, scaleMax_: Float, sizeArg: Vec2, data: (Int) -> Float): Int {
 
     val window = currentWindow
     if (window.skipItems) return -1
@@ -37,8 +39,7 @@ internal inline fun plotEx(plotType: PlotType, label: String, valuesCount: Int, 
     var scaleMax = scaleMax_
 
     val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
-    if (frameSize.x == 0f) frameSize.x = calcItemWidth()
-    if (frameSize.y == 0f) frameSize.y = labelSize.y + style.framePadding.y * 2
+    val frameSize = calcItemSize(sizeArg, calcItemWidth(), labelSize.y + style.framePadding.y * 2f)
 
     val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
     val innerBb = Rect(frameBb.min + style.framePadding, frameBb.max - style.framePadding)
