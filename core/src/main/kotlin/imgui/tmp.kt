@@ -108,7 +108,7 @@ abstract class MutableProperty<V> : KMutableProperty0<V> {
 
         }
     override val setter: KMutableProperty0.Setter<V>
-        get() = object: KMutableProperty0.Setter<V> {
+        get() = object : KMutableProperty0.Setter<V> {
             override val annotations: List<Annotation>
                 get() = TODO("Not yet implemented")
             override val isAbstract: Boolean
@@ -197,7 +197,8 @@ class MutableReference<V>(var field: V) : MutableProperty<V>() {
 val <V> V.mutableReference: MutableReference<V>
     get() = MutableReference(this)
 
-val KMutableProperty0<Float>.L get() = mutableProperty({ get().L }, { set(it.f) })
+val KMutableProperty0<Float>.L: MutableProperty<Long>
+    get() = mutableProperty({ get().L }) { set(it.f) }
 
 val ULong.L: Long
     get() = toLong()

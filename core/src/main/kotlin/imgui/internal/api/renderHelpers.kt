@@ -4,7 +4,6 @@ import glm_.b
 import glm_.f
 import glm_.func.common.max
 import glm_.glm
-import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -124,15 +123,16 @@ internal interface renderHelpers {
         //draw_list->AddLine(ImVec2(clip_max_x, pos_min.y), ImVec2(clip_max_x, pos_max.y), IM_COL32(255, 0, 0, 255));
         // FIXME: We could technically remove (last_glyph->AdvanceX - last_glyph->X1) from text_size.x here and save a few pixels.
         if (textSize.x > posMax.x - posMin.x) {
-            /*
-                Hello wo...
-                |       |   |
-                min   max   ellipsis_max
-                         <-> this is generally some padding value
-             */
+            // Hello wo...
+            // |       |   |
+            // min   max   ellipsis_max
+            //          <-> this is generally some padding value
+
             val font = drawList._data.font!!
             val fontSize = drawList._data.fontSize
-            val textEndEllipsis = Vec1i(-1)
+            val fontScale = fontSize / font.fontSize
+            val pTextEndEllipsis = (-1).mutableReference
+            var textEndEllipsis by pTextEndEllipsis
 
             var ellipsisChar = font.ellipsisChar
             var ellipsisCharCount = 1
@@ -142,34 +142,32 @@ internal interface renderHelpers {
             }
             val glyph = font.findGlyph(ellipsisChar)!!
 
-            var ellipsisGlyphWidth = glyph.x1       // Width of the glyph with no padding on either side
+            var ellipsisGlyphWidth = glyph.x1 * fontScale       // Width of the glyph with no padding on either side
             var ellipsisTotalWidth = ellipsisGlyphWidth  // Full width of entire ellipsis
 
             if (ellipsisCharCount > 1) {
                 // Full ellipsis size without free spacing after it.
-                val spacingBetweenDots = 1f * (drawList._data.fontSize / font.fontSize)
-                ellipsisGlyphWidth = glyph.x1 - glyph.x0 + spacingBetweenDots
+                val spacingBetweenDots = 1f * fontScale
+                ellipsisGlyphWidth = (glyph.x1 - glyph.x0) * fontScale + spacingBetweenDots
                 ellipsisTotalWidth = ellipsisGlyphWidth * ellipsisCharCount.f - spacingBetweenDots
             }
 
             // We can now claim the space between pos_max.x and ellipsis_max.x
             val textAvailWidth = ((max(posMax.x, ellipsisMaxX) - ellipsisTotalWidth) - posMin.x) max 1f
-            var textSizeClippedX = font.calcTextSizeA(fontSize, textAvailWidth, 0f, text,
-                    textEnd = textEndFull, remaining = textEndEllipsis).x
-            if (0 == textEndEllipsis[0] && textEndEllipsis[0] < textEndFull) {
+            var textSizeClippedX = font.calcTextSizeA(fontSize, textAvailWidth, 0f, text, textEnd = textEndFull, remaining = pTextEndEllipsis).x
+            if (textEndEllipsis == 0 && textEndEllipsis < textEndFull) {
                 // Always display at least 1 character if there's no room for character + ellipsis
-                textEndEllipsis[0] = textCountUtf8BytesFromChar(text, textEndFull)
-                textSizeClippedX = font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text, textEnd = textEndEllipsis[0]).x
+                textEndEllipsis = textCountUtf8BytesFromChar(text, textEndFull)
+                textSizeClippedX = font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text, textEnd = textEndEllipsis).x
             }
-            while (textEndEllipsis[0] > 0 && charIsBlankA(text[textEndEllipsis[0] - 1].toUInt())) {
+            while (textEndEllipsis > 0 && charIsBlankA(text[textEndEllipsis - 1].toUInt())) {
                 // Trim trailing space before ellipsis (FIXME: Supporting non-ascii blanks would be nice, for this we need a function to backtrack in UTF-8 text)
-                textEndEllipsis[0]--
-                textSizeClippedX -= font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text,
-                        textEndEllipsis[0], textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
+                textEndEllipsis--
+                textSizeClippedX -= font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text, textEndEllipsis, textEndEllipsis + 1).x // Ascii blanks are always 1 byte
             }
 
             // Render text, render ellipsis
-            renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndEllipsis[0], textSize, Vec2())
+            renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndEllipsis, textSize, Vec2())
             var ellipsisX = posMin.x + textSizeClippedX
             if (ellipsisX + ellipsisTotalWidth <= ellipsisMaxX)
                 for (i in 0 until ellipsisCharCount) {

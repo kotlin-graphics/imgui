@@ -2,7 +2,6 @@ package imgui.font
 
 
 import glm_.*
-import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -105,7 +104,7 @@ class Font {
     /*  'maxWidth' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
         'wrapWidth' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable. */
     fun calcTextSizeA(size: Float, maxWidth: Float, wrapWidth: Float, text: ByteArray, textBegin: Int = 0,
-                      textEnd: Int = text.strlen(), remaining: Vec1i? = null): Vec2 { // utf8
+                      textEnd: Int = text.strlen(), remaining: MutableReference<Int>? = null): Vec2 { // utf8
 
         val lineHeight = size
         val scale = size / fontSize
@@ -172,7 +171,7 @@ class Font {
         if (lineWidth > 0 || textSize.y == 0f)
             textSize.y += lineHeight
 
-        remaining?.put(s)
+        remaining?.set(s)
 
         return textSize
     }
