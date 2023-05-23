@@ -37,7 +37,7 @@ sealed class ViewportFlag : FlagBase<ViewportFlag>() {
 //   - Windows are generally trying to stay within the Work Area of their host viewport.
 open class Viewport {
     /** See ImGuiViewportFlags_ */
-    var flags: ViewportFlags = emptyFlags
+    var flags: ViewportFlags = none
 
     /** Main Area: Position of the viewport (Dear ImGui coordinates are the same as OS desktop/native coordinates) */
     val pos = Vec2()

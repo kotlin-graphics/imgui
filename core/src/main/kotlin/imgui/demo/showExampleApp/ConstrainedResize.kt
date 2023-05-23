@@ -90,7 +90,7 @@ object ConstrainedResize {
         // Submit window
         if (!windowPadding)
             pushStyleVar(StyleVar.WindowPadding, Vec2())
-        val windowFlags = if (autoResize) WindowFlag.AlwaysAutoResize else emptyFlags
+        val windowFlags = if (autoResize) WindowFlag.AlwaysAutoResize else none
         val windowOpen = begin("Example: Constrained Resize", pOpen, windowFlags)
         if (!windowPadding)
             popStyleVar()

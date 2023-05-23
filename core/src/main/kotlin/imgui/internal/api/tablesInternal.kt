@@ -38,8 +38,8 @@ interface tablesInternal {
     fun tableFindByID(id: ID): Table? = g.tables.getByKey(id)
 
     fun beginTableEx(
-        name: String, id: ID, columnsCount: Int, flags_: TableFlags = emptyFlags, outerSize: Vec2 = Vec2(),
-        innerWidth: Float = 0f
+            name: String, id: ID, columnsCount: Int, flags_: TableFlags = none, outerSize: Vec2 = Vec2(),
+            innerWidth: Float = 0f
     ): Boolean {
 
         var flags = flags_
@@ -121,7 +121,7 @@ interface tablesInternal {
                 setNextWindowScroll(Vec2())
 
             // Create scrolling region (without border and zero window padding)
-            val childFlags = if (flags has Tf.ScrollX) Wf.HorizontalScrollbar else emptyFlags
+            val childFlags = if (flags has Tf.ScrollX) Wf.HorizontalScrollbar else none
             beginChildEx(name, instanceId, outerRect.size, false, childFlags)
             table.innerWindow = g.currentWindow
             val inner = table.innerWindow!!
@@ -191,7 +191,7 @@ interface tablesInternal {
         table.currentColumn = -1
         table.currentRow = -1
         table.rowBgColorCounter = 0
-        table.lastRowFlags = emptyFlags
+        table.lastRowFlags = none
         table.innerClipRect put if (innerWindow === outerWindow) table.workRect else innerWindow.clipRect
         table.innerClipRect clipWith table.workRect     // We need this to honor inner_width
         table.innerClipRect clipWithFull table.hostClipRect
@@ -1730,7 +1730,7 @@ interface tablesInternal {
         window.skipItems = column.isSkipItems
         if (column.isSkipItems) {
             g.lastItemData.id = 0
-            g.lastItemData.statusFlags = emptyFlags
+            g.lastItemData.statusFlags = none
         }
 
         if (flags has Tf.NoClip) {

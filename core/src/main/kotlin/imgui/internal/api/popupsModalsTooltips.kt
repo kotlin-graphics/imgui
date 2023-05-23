@@ -91,7 +91,7 @@ internal interface popupsModalsTooltips {
      *  level).
      *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
      *  to NULL)    */
-    fun openPopupEx(id: ID, popupFlags: PopupFlags = emptyFlags) {
+    fun openPopupEx(id: ID, popupFlags: PopupFlags = none) {
 
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.beginPopupStack.size
@@ -206,7 +206,7 @@ internal interface popupsModalsTooltips {
     /** Supported flags: ImGuiPopupFlags_AnyPopupId, ImGuiPopupFlags_AnyPopupLevel
      *
      *  Test for id at the current BeginPopup() level of the popup stack (this doesn't scan the whole popup stack!) */
-    fun isPopupOpen(id: ID, popupFlags: PopupFlags = emptyFlags): Boolean = when {
+    fun isPopupOpen(id: ID, popupFlags: PopupFlags = none): Boolean = when {
         popupFlags has PopupFlag.AnyPopupId -> { // Return true if any popup is open at the current BeginPopup() level of the popup stack
             // This may be used to e.g. test for another popups already opened to handle popups priorities at the same level.
             assert(id == 0)
@@ -241,7 +241,7 @@ internal interface popupsModalsTooltips {
 
     /** Not exposed publicly as BeginTooltip() because bool parameters are evil. Let's see if other needs arise first.
      *  @param extraWindowFlags WindowFlag   */
-    fun beginTooltipEx(tooltipFlags_: TooltipFlags = emptyFlags, extraWindowFlags: WindowFlags = emptyFlags) {
+    fun beginTooltipEx(tooltipFlags_: TooltipFlags = none, extraWindowFlags: WindowFlags = none) {
         var tooltipFlags = tooltipFlags_
         if (g.dragDropWithinSource || g.dragDropWithinTarget) { // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
             // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.

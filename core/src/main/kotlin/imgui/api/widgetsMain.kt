@@ -46,7 +46,7 @@ import imgui.internal.sections.ButtonFlag as Bf
 interface widgetsMain {
 
     /** button  */
-    fun button(label: String, sizeArg: Vec2 = Vec2()): Boolean = buttonEx(label, sizeArg, emptyFlags)
+    fun button(label: String, sizeArg: Vec2 = Vec2()): Boolean = buttonEx(label, sizeArg, none)
 
     /** button with FramePadding = (0,0) to easily embed within text
      *  Small buttons fits within text without additional vertical spacing.     */
@@ -63,7 +63,7 @@ interface widgetsMain {
      *  Tip: use pushId()/popId() to push indices or pointers in the ID stack.
      *  Then you can keep 'strid' empty or the same for all your buttons (instead of creating a string based on a
      *  non-string id)  */
-    fun invisibleButton(strId: String, sizeArg: Vec2, flags: ButtonFlags = emptyFlags): Boolean {
+    fun invisibleButton(strId: String, sizeArg: Vec2, flags: ButtonFlags = none): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -81,7 +81,7 @@ interface widgetsMain {
         return pressed
     }
 
-    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), emptyFlags)
+    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), none)
 
     fun checkbox(label: String, v: BooleanArray) = checkbox(label, v, 0)
     fun checkbox(label: String, v: BooleanArray, i: Int): Boolean = checkbox(label, v mutablePropertyAt i)
@@ -100,7 +100,7 @@ interface widgetsMain {
         val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id)) {
-            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else emptyFlags)
+            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else none)
             return false
         }
 
@@ -132,7 +132,7 @@ interface widgetsMain {
         if (labelSize.x > 0f)
             renderText(renderTextPos, label)
 
-        val flags = ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else emptyFlags
+        val flags = ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else none
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or flags)
 
         return pressed

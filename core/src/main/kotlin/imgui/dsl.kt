@@ -86,7 +86,7 @@ object dsl {
     // Tables
 
     inline fun table(
-            strId: String, columns: Int, flags: TableFlags = emptyFlags,
+            strId: String, columns: Int, flags: TableFlags = none,
             outerSize: Vec2 = Vec2(), innerWidth: Float = 0f, block: () -> Unit
     ) {
         if (beginTable(strId, columns, flags, outerSize, innerWidth)) { // ~open
@@ -97,7 +97,7 @@ object dsl {
 
     // Windows
 
-    inline fun window(name: String, open: KMutableProperty0<Boolean>? = null, flags: WindowFlags = emptyFlags, block: () -> Unit) {
+    inline fun window(name: String, open: KMutableProperty0<Boolean>? = null, flags: WindowFlags = none, block: () -> Unit) {
         if (begin(name, open, flags)) // ~open
             block()
         end()
@@ -105,7 +105,7 @@ object dsl {
 
     // Child Windows
 
-    inline fun child(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: WindowFlags = emptyFlags, block: () -> Unit) {
+    inline fun child(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: WindowFlags = none, block: () -> Unit) {
         if (beginChild(strId, size, border, extraFlags)) // ~open
             block()
         endChild()
@@ -299,7 +299,7 @@ object dsl {
     // Widgets: Combo Box
 
 
-    inline fun useCombo(label: String, previewValue: String?, flags: ComboFlags = emptyFlags, block: () -> Unit) {
+    inline fun useCombo(label: String, previewValue: String?, flags: ComboFlags = none, block: () -> Unit) {
         if (beginCombo(label, previewValue, flags)) {
             block()
             endCombo()
@@ -336,7 +336,7 @@ object dsl {
         }
     }
 
-    inline fun treeNodeEx(strID: String, flags: TreeNodeFlags = emptyFlags, block: () -> Unit) {
+    inline fun treeNodeEx(strID: String, flags: TreeNodeFlags = none, block: () -> Unit) {
         if (treeNodeEx(strID, flags)) {
             block()
             treePop()
@@ -369,12 +369,12 @@ object dsl {
     //        try { block() } finally { treePop() }
     //    }
 
-    inline fun collapsingHeader(label: String, flags: TreeNodeFlags = emptyFlags, block: () -> Unit) {
+    inline fun collapsingHeader(label: String, flags: TreeNodeFlags = none, block: () -> Unit) {
         if (collapsingHeader(label, flags))
             block()
     }
 
-    inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: TreeNodeFlags = emptyFlags, block: () -> Unit) {
+    inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: TreeNodeFlags = none, block: () -> Unit) {
         if (collapsingHeader(label, open, flags))
             block()
     }
@@ -382,7 +382,7 @@ object dsl {
 
     // Widgets: Selectables
 
-    inline fun selectable(label: String, selected: Boolean = false, flags: SelectableFlags = emptyFlags, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
+    inline fun selectable(label: String, selected: Boolean = false, flags: SelectableFlags = none, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
         if (selectable(label, selected, flags, sizeArg))
             block()
     }
@@ -428,7 +428,7 @@ object dsl {
 
     // Popups, Modals
 
-    inline fun popup(strId: String, flags: WindowFlags = emptyFlags, block: () -> Unit) {
+    inline fun popup(strId: String, flags: WindowFlags = none, block: () -> Unit) {
         if (beginPopup(strId, flags)) {
             block()
             endPopup()
@@ -456,7 +456,7 @@ object dsl {
         }
     }
 
-    inline fun popupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, extraFlags: WindowFlags = emptyFlags, block: () -> Unit) {
+    inline fun popupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, extraFlags: WindowFlags = none, block: () -> Unit) {
         if (beginPopupModal(name, pOpen, extraFlags)) {
             block()
             endPopup()
@@ -466,14 +466,14 @@ object dsl {
 
     // Tab Bars, Tabs
 
-    inline fun tabBar(strId: String, flags: TabBarFlags = emptyFlags, block: () -> Unit) {
+    inline fun tabBar(strId: String, flags: TabBarFlags = none, block: () -> Unit) {
         if (beginTabBar(strId, flags)) {
             block()
             endTabBar()
         }
     }
 
-    inline fun tabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemOnlyFlags = emptyFlags, block: () -> Unit) {
+    inline fun tabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemOnlyFlags = none, block: () -> Unit) {
         if (beginTabItem(label, pOpen, flags)) {
             block()
             endTabItem()
@@ -483,7 +483,7 @@ object dsl {
 
     // Drag and Drop
 
-    inline fun dragDropSource(flags: DragDropFlags = emptyFlags, block: () -> Unit) {
+    inline fun dragDropSource(flags: DragDropFlags = none, block: () -> Unit) {
         if (beginDragDropSource(flags)) {
             block()
             endDragDropSource()
@@ -509,7 +509,7 @@ object dsl {
 
     // Miscellaneous Utilities
 
-    inline fun childFrame(id: ID, size: Vec2, extraFlags: WindowFlags = emptyFlags, block: () -> Unit) {
+    inline fun childFrame(id: ID, size: Vec2, extraFlags: WindowFlags = none, block: () -> Unit) {
         beginChildFrame(id, size, extraFlags)
         block()
         endChildFrame()
@@ -517,7 +517,7 @@ object dsl {
 
     // Columns
 
-    inline fun columns(strId: String = "", columnsCount: Int, flags: OldColumnsFlags = emptyFlags, block: () -> Unit) {
+    inline fun columns(strId: String = "", columnsCount: Int, flags: OldColumnsFlags = none, block: () -> Unit) {
         beginColumns(strId, columnsCount, flags)
         block()
         endColumns()

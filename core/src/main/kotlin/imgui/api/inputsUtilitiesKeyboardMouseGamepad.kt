@@ -7,7 +7,7 @@ import imgui.ImGui.isDown
 import imgui.ImGui.isPressed
 import imgui.ImGui.isReleased
 import imgui.Key
-import imgui.emptyFlags
+import imgui.none
 import imgui.internal.classes.InputFlag
 import imgui.internal.sections.KeyOwner_Any
 
@@ -34,7 +34,7 @@ interface inputsUtilitiesKeyboardMouseGamepad {
      *  uses io.KeyRepeatDelay / KeyRepeatRate
      *
      *  was key pressed (went from !Down to Down)? if repeat=true, uses io.KeyRepeatDelay / KeyRepeatRate */
-    infix fun Key.isPressed(repeat: Boolean): Boolean = isPressed(KeyOwner_Any, if (repeat) InputFlag.Repeat else emptyFlags)
+    infix fun Key.isPressed(repeat: Boolean): Boolean = isPressed(KeyOwner_Any, if (repeat) InputFlag.Repeat else none)
 
     /** ~IsKeyPressed() */
     val Key.isPressed: Boolean

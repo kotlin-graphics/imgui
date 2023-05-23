@@ -6,7 +6,7 @@ import imgui.ID
 import imgui.ImGui
 import imgui.ImGui.isMouseHoveringRect
 import imgui.api.g
-import imgui.emptyFlags
+import imgui.none
 import imgui.internal.classes.Rect
 import kool.fill
 import java.nio.ByteBuffer
@@ -39,7 +39,7 @@ internal interface dragAndDrop {
     fun clearDragDrop() = with(g) {
         dragDropActive = false
         dragDropPayload.clear()
-        dragDropAcceptFlags = emptyFlags
+        dragDropAcceptFlags = none
         dragDropAcceptIdPrev = 0
         dragDropAcceptIdCurr = 0
         dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE

@@ -58,15 +58,15 @@ internal interface scrolling {
     }
 
     // Early work-in-progress API (ScrollToItem() will become public)
-    fun scrollToItem(flags: ScrollFlags = emptyFlags) {
+    fun scrollToItem(flags: ScrollFlags = none) {
         val window = g.currentWindow!!
         scrollToRectEx(window, g.lastItemData.navRect, flags)
     }
 
-    fun scrollToRect(window: Window, rect: Rect, flags: ScrollFlags = emptyFlags): Vec2 =
+    fun scrollToRect(window: Window, rect: Rect, flags: ScrollFlags = none): Vec2 =
         scrollToRectEx(window, rect, flags)
 
-    fun scrollToRectEx(window: Window, itemRect: Rect, flags_: ScrollFlags = emptyFlags): Vec2 {
+    fun scrollToRectEx(window: Window, itemRect: Rect, flags_: ScrollFlags = none): Vec2 {
 
         var flags = flags_
 

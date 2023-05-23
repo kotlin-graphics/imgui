@@ -54,7 +54,7 @@ interface widgetsSelectables {
      *  size.x > 0f -> specify width
      *  size.y == 0f -> use label height
      *  size.y > 0f -> specify height   */
-    fun selectable(label: String, selected_: Boolean = false, flags: SelectableFlags = emptyFlags, sizeArg: Vec2 = Vec2()): Boolean {
+    fun selectable(label: String, selected_: Boolean = false, flags: SelectableFlags = none, sizeArg: Vec2 = Vec2()): Boolean {
 
         var selected = selected_
         val window = currentWindow
@@ -104,7 +104,7 @@ interface widgetsSelectables {
         }
 
         val disabledItem = flags has Sf.Disabled
-        val itemAdd = itemAdd(bb, id, null, if (disabledItem) If.Disabled else emptyFlags)
+        val itemAdd = itemAdd(bb, id, null, if (disabledItem) If.Disabled else none)
 
         if (spanAllColumns) {
             window.clipRect.min.x = backupClipRectMinX
@@ -126,7 +126,7 @@ interface widgetsSelectables {
             tablePushBackgroundChannel()
 
         // We use NoHoldingActiveID on menus so user can click and _hold_ on a menu then drag to browse child entries
-        var buttonFlags: ButtonFlags = emptyFlags
+        var buttonFlags: ButtonFlags = none
         if (flags has Sf._NoHoldingActiveID) buttonFlags /= Bf.NoHoldingActiveId
         if (flags has Sf._NoSetKeyOwner) buttonFlags /= Bf.NoSetKeyOwner
         if (flags has Sf._SelectOnClick) buttonFlags /= Bf.PressedOnClick
@@ -193,7 +193,7 @@ interface widgetsSelectables {
     }
 
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
-    fun selectable(label: String, selectedPtr: KMutableProperty0<Boolean>, flags: SelectableFlags = emptyFlags, size: Vec2 = Vec2()): Boolean {
+    fun selectable(label: String, selectedPtr: KMutableProperty0<Boolean>, flags: SelectableFlags = none, size: Vec2 = Vec2()): Boolean {
         var selected by selectedPtr
         return if (selectable(label, selected, flags, size)) {
             selected = !selected

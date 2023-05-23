@@ -4,7 +4,7 @@ import com.livefront.sealedenum.GenSealedEnum
 import imgui.Flag
 import imgui.FlagBase
 import imgui.ID
-import imgui.emptyFlags
+import imgui.none
 import imgui.internal.DrawListSplitter
 import imgui.internal.classes.Rect
 
@@ -48,14 +48,14 @@ class OldColumnData {
     var offsetNormBeforeResize = 0f
 
     /** Not exposed */
-    var flags: OldColumnsFlags = emptyFlags
+    var flags: OldColumnsFlags = none
     var clipRect = Rect()
 }
 
 /** Storage data for a columns set for legacy Columns() api */
 class OldColumns {
     var id: ID = 0
-    var flags: OldColumnsFlags = emptyFlags
+    var flags: OldColumnsFlags = none
     var isFirstFrame = false
     var isBeingResized = false
     var current = 0

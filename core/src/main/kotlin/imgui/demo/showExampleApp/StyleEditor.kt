@@ -85,7 +85,7 @@ object StyleEditor {
 
     var outputDest = 0
     var outputOnlyModified = true
-    var alphaFlags: ColorEditFlags = emptyFlags
+    var alphaFlags: ColorEditFlags = none
     val filter = TextFilter()
     var windowScale = 1f
 
@@ -211,7 +211,7 @@ object StyleEditor {
 
                 filter.draw("Filter colors", fontSize * 16)
 
-                radioButton("Opaque", alphaFlags.isEmpty) { alphaFlags = emptyFlags }; sameLine()
+                radioButton("Opaque", alphaFlags.isEmpty) { alphaFlags = none }; sameLine()
                 radioButton("Alpha", alphaFlags == Cef.AlphaPreview) { alphaFlags = Cef.AlphaPreview }; sameLine()
                 radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf) {
                     alphaFlags = Cef.AlphaPreviewHalf

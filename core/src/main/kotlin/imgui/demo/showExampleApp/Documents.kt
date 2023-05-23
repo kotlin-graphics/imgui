@@ -197,7 +197,7 @@ object Documents {
 
         // Submit Tab Bar and Tabs
         run {
-            val tabBarFlags: TabBarFlags = optFittingFlags or if (optReorderable) TabBarFlag.Reorderable else emptyFlags
+            val tabBarFlags: TabBarFlags = optFittingFlags or if (optReorderable) TabBarFlag.Reorderable else none
             if (beginTabBar("##tabs", tabBarFlags)) {
                 if (optReorderable)
                     notifyOfDocumentsClosedElsewhere()
@@ -211,7 +211,7 @@ object Documents {
 
                     if (!doc.open) continue
 
-                    val tabFlags: TabItemOnlyFlags = if (doc.dirty) TabItemFlag.UnsavedDocument else emptyFlags
+                    val tabFlags: TabItemOnlyFlags = if (doc.dirty) TabItemFlag.UnsavedDocument else none
                     val visible = beginTabItem(doc.name, doc::open, tabFlags)
 
                     // Cancel attempt to close when unsaved add to save queue so we can display a popup.

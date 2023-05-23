@@ -685,7 +685,7 @@ internal interface debugTools {
         }
 
         val isActive = window.wasActive
-        val treeNodeFlags = if (window === g.navWindow) TreeNodeFlag.Selected else emptyFlags
+        val treeNodeFlags = if (window === g.navWindow) TreeNodeFlag.Selected else none
         if (!isActive)
             pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
         val open = treeNodeEx(label, treeNodeFlags, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")

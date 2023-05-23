@@ -125,7 +125,7 @@ fun navUpdate() {
 
     // Process manual activation request
     g.navActivateId = 0; g.navActivateDownId = 0; g.navActivatePressedId = 0; g.navActivateInputId = 0
-    g.navActivateFlags = emptyFlags
+    g.navActivateFlags = none
     if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
         val activateDown = (navKeyboardActive && Key.Space.isDown) || (navGamepadActive && Key._NavGamepadActivate.isDown)
         val activatePressed = activateDown && ((navKeyboardActive && Key.Space isPressed false) || (navGamepadActive && Key._NavGamepadActivate isPressed false))
@@ -483,8 +483,8 @@ fun navUpdateCreateMoveRequest() {
     } else {
         // Initiate directional inputs request
         g.navMoveDir = Dir.None
-        g.navMoveFlags = emptyFlags
-        g.navMoveScrollFlags = emptyFlags
+        g.navMoveFlags = none
+        g.navMoveScrollFlags = none
         if (window != null && g.navWindowingTarget == null && window.flags hasnt Wf.NoNavInputs) {
             val repeatMode = InputFlag.Repeat or InputFlag.RepeatRateNavMove
             if (!isActiveIdUsingNavDir(Dir.Left) && ((navGamepadActive && Key.GamepadDpadLeft.isPressed(KeyOwner_None, repeatMode)) || (navKeyboardActive && Key.LeftArrow.isPressed(KeyOwner_None, repeatMode))))

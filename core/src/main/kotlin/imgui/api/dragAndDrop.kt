@@ -34,7 +34,7 @@ interface dragAndDrop {
      *  - We then pull and use the mouse button that was used to activate the item and use it to carry on the drag.
      *  If the item has no identifier:
      *  - Currently always assume left mouse button. */
-    fun beginDragDropSource(flags: DragDropFlags = emptyFlags): Boolean {
+    fun beginDragDropSource(flags: DragDropFlags = none): Boolean {
 
         var window: Window? = g.currentWindow!!
 
@@ -215,7 +215,7 @@ interface dragAndDrop {
 
     /** Accept contents of a given type. If DragDropFlag.AcceptBeforeDelivery is set you can peek into the payload
      *  before the mouse button is released. */
-    fun acceptDragDropPayload(type: String, flags_: DragDropFlags = emptyFlags): Payload? {
+    fun acceptDragDropPayload(type: String, flags_: DragDropFlags = none): Payload? {
         var flags = flags_
         val window = g.currentWindow!!
         val payload = g.dragDropPayload

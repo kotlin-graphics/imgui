@@ -17,7 +17,7 @@ public class Jdsl {
     // Tables
 
     public static void table(String strId, int columnsCount, Runnable block) {
-        tables(strId, columnsCount, Flag.empty(), new Vec2(), 0f, block);
+        tables(strId, columnsCount, Flag.none(), new Vec2(), 0f, block);
     }
 
     public static void tables(String strId, int columnsCount, Flag<TableFlag> flags, Runnable block) {
@@ -39,11 +39,11 @@ public class Jdsl {
     // Windows
 
     public static void window(String name, Runnable block) {
-        window(name, null, Flag.empty(), block);
+        window(name, null, Flag.none(), block);
     }
 
     public static void window(String name, MutableReference<Boolean> open, Runnable block) {
-        window(name, open, Flag.empty(), block);
+        window(name, open, Flag.none(), block);
     }
 
     public static void window(String name, MutableReference<Boolean> open, Flag<WindowFlag> windowFlags, Runnable block) {
@@ -55,15 +55,15 @@ public class Jdsl {
     // Child Windows
 
     public static void child(String strId, Runnable block) {
-        child(strId, new Vec2(), false, Flag.empty(), block);
+        child(strId, new Vec2(), false, Flag.none(), block);
     }
 
     public static void child(String strId, Vec2 size, Runnable block) {
-        child(strId, size, false, Flag.empty(), block);
+        child(strId, size, false, Flag.none(), block);
     }
 
     public static void child(String strId, Vec2 size, boolean border, Runnable block) {
-        child(strId, size, border, Flag.empty(), block);
+        child(strId, size, border, Flag.none(), block);
     }
 
     public static void child(String strId, Vec2 size, boolean border, Flag<WindowFlag> windowFlags, Runnable block) {
@@ -285,7 +285,7 @@ public class Jdsl {
 
 
     public static void useCombo(String label, String previewValue, Runnable block) {
-        useCombo(label, previewValue, Flag.empty(), block);
+        useCombo(label, previewValue, Flag.none(), block);
     }
 
     public static void useCombo(String label, String previewValue, Flag<ComboFlag> comboFlags, Runnable block) {
@@ -362,7 +362,7 @@ public class Jdsl {
 //    }
 
     public static void collapsingHeader(String label, Runnable block) {
-        collapsingHeader(label, Flag.empty(), block);
+        collapsingHeader(label, Flag.none(), block);
     }
 
     public static void collapsingHeader(String label, Flag<TreeNodeFlag> treeNodeFlags, Runnable block) {
@@ -371,7 +371,7 @@ public class Jdsl {
     }
 
     public static void collapsingHeader(String label, MutableReference<Boolean> open, Runnable block) {
-        collapsingHeader(label, open, Flag.empty(), block);
+        collapsingHeader(label, open, Flag.none(), block);
     }
 
     public static void collapsingHeader(String label, MutableReference<Boolean> open, Flag<TreeNodeFlag> treeNodeFlags, Runnable block) {
@@ -383,11 +383,11 @@ public class Jdsl {
     // Widgets: Selectables
 
     public static void selectable(String label, Runnable block) {
-        selectable(label, false, Flag.empty(), new Vec2(), block);
+        selectable(label, false, Flag.none(), new Vec2(), block);
     }
 
     public static void selectable(String label, boolean selected, Runnable block) {
-        selectable(label, selected, Flag.empty(), new Vec2(), block);
+        selectable(label, selected, Flag.none(), new Vec2(), block);
     }
 
     public static void selectable(String label, boolean selected, Flag<SelectableFlag> flags, Runnable block) {
@@ -457,7 +457,7 @@ public class Jdsl {
     // Popups, Modals
 
     public static void popup(String strId, Runnable block) {
-        popup(strId, Flag.empty(), block);
+        popup(strId, Flag.none(), block);
     }
 
     public static void popup(String strId, Flag<WindowFlag> windowFlags, Runnable block) {
@@ -468,7 +468,7 @@ public class Jdsl {
     }
 
     public static void popupContextItem(String strId, Runnable block) {
-        popupContextItem(strId, Flag.empty(), block);
+        popupContextItem(strId, Flag.none(), block);
     }
 
     public static void popupContextItem(String strId, Flag<PopupFlag> popupFlags, Runnable block) {
@@ -479,7 +479,7 @@ public class Jdsl {
     }
 
     public static void popupContextWindow(String strId, Runnable block) {
-        popupContextWindow(strId, Flag.empty(), block);
+        popupContextWindow(strId, Flag.none(), block);
     }
 
     public static void popupContextWindow(String strId, Flag<PopupFlag> popupFlags, Runnable block) {
@@ -490,7 +490,7 @@ public class Jdsl {
     }
 
     public static void popupContextVoid(String strId, Runnable block) {
-        popupContextVoid(strId, Flag.empty(), block);
+        popupContextVoid(strId, Flag.none(), block);
     }
 
     public static void popupContextVoid(String strId, Flag<PopupFlag> popupFlags, Runnable block) {
@@ -501,11 +501,11 @@ public class Jdsl {
     }
 
     public static void popupModal(String name, Runnable block) {
-        popupModal(name, null, Flag.empty(), block);
+        popupModal(name, null, Flag.none(), block);
     }
 
     public static void popupModal(String name, MutableReference<Boolean> pOpen, Runnable block) {
-        popupModal(name, pOpen, Flag.empty(), block);
+        popupModal(name, pOpen, Flag.none(), block);
     }
 
     public static void popupModal(String name, MutableReference<Boolean> pOpen, Flag<WindowFlag> windowFlags, Runnable block) {
@@ -519,7 +519,7 @@ public class Jdsl {
     // Tab Bars, Tabs
 
     public static void tabBar(String strId, Runnable block) {
-        tabBar(strId, Flag.empty(), block);
+        tabBar(strId, Flag.none(), block);
     }
 
     public static void tabBar(String strId, Flag<TabBarFlag> tabBarFlags, Runnable block) {
@@ -529,11 +529,11 @@ public class Jdsl {
     }
 
     public static void tabItem(String label, Runnable block) {
-        tabItem(label, null, Flag.empty(), block);
+        tabItem(label, null, Flag.none(), block);
     }
 
     public static void tabItem(String label, MutableReference<Boolean> pOpen, Runnable block) {
-        tabItem(label, pOpen, Flag.empty(), block);
+        tabItem(label, pOpen, Flag.none(), block);
     }
 
     public static void tabItem(String label, MutableReference<Boolean> pOpen, Flag<TabItemFlag.ItemOnly> tabItemFlags, Runnable block) {
@@ -546,7 +546,7 @@ public class Jdsl {
     // Drag and Drop
 
     public static void dragDropSource(Runnable block) {
-        dragDropSource(Flag.empty(), block);
+        dragDropSource(Flag.none(), block);
     }
 
     public static void dragDropSource(Flag<DragDropFlag> dragDropFlags, Runnable block) {
@@ -576,7 +576,7 @@ public class Jdsl {
     // Miscellaneous Utilities
 
     public static void childFrame(int id, Vec2 size, Runnable block) {
-        childFrame(id, size, Flag.empty(), block);
+        childFrame(id, size, Flag.none(), block);
     }
 
     public static void childFrame(int id, Vec2 size, Flag<WindowFlag> windowFlags, Runnable block) {

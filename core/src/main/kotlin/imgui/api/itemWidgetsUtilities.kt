@@ -17,7 +17,7 @@ interface itemWidgetsUtilities {
      *          such as a text() item still returns true with isItemHovered()
      *      - this should work even for non-interactive items that have no ID, so we cannot use LastItemId  */
 
-    fun isItemHovered(flags: ItemHoveredFlags = emptyFlags): Boolean {
+    fun isItemHovered(flags: ItemHoveredFlags = none): Boolean {
 
         val window = g.currentWindow!!
         if (g.navDisableMouseHover && !g.navDisableHighlight && flags hasnt Hf.NoNavOverride) {

@@ -5,7 +5,7 @@ import imgui.TableFlags
 import imgui.TableRowFlags
 import imgui.classes.TableColumnSortSpecs
 import imgui.classes.TableSortSpecs
-import imgui.emptyFlags
+import imgui.none
 import imgui.internal.DrawListSplitter
 
 
@@ -14,7 +14,7 @@ class Table {
 
     var id: ID = 0
 
-    var flags: TableFlags = emptyFlags
+    var flags: TableFlags = none
 
     /** Single allocation to hold Columns[], DisplayOrderToIndex[] and RowCellData[] */
     //    var rawData: Any? = null
@@ -44,7 +44,7 @@ class Table {
     var requestOutputMaskByIndex = 0L
 
     /** Which data were loaded from the .ini file (e.g. when order is not altered we won't save order) */
-    var settingsLoadedFlags: TableFlags = emptyFlags
+    var settingsLoadedFlags: TableFlags = none
 
     /** Offset in g.SettingsTables */
     var settingsOffset = 0
@@ -76,9 +76,9 @@ class Table {
     var rowIndentOffsetX = 0f
 
     /** Current row flags, see ImGuiTableRowFlags_ */
-    var rowFlags: TableRowFlags = emptyFlags
+    var rowFlags: TableRowFlags = none
 
-    var lastRowFlags: TableRowFlags = emptyFlags
+    var lastRowFlags: TableRowFlags = none
 
     /** Counter for alternating background colors (can be fast-forwarded by e.g clipper), not same as CurrentRow because header rows typically don't increase this. */
     var rowBgColorCounter = 0

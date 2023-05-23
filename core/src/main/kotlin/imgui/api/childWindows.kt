@@ -30,14 +30,14 @@ interface childWindows {
      *    [Important: due to legacy reason, this is inconsistent with most other functions such as BeginMenu/EndMenu,
      *     BeginPopup/EndPopup, etc. where the EndXXX call should only be called if the corresponding BeginXXX function
      *     returned true. Begin and BeginChild are the only odd ones out. Will be fixed in a future update.] */
-    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = emptyFlags): Boolean =
+    fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = none): Boolean =
         beginChildEx(strId, currentWindow.getID(strId), size, border, flags)
 
     /** begin a scrolling region.
      *  size == 0f: use remaining window size
      *  size < 0f: use remaining window size minus abs(size)
      *  size > 0f: fixed size. each axis can use a different mode, e.g. Vec2(0, 400).   */
-    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = emptyFlags): Boolean {
+    fun beginChild(id: ID, sizeArg: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = none): Boolean {
         assert(id != 0)
         return beginChildEx("", id, sizeArg, border, flags)
     }

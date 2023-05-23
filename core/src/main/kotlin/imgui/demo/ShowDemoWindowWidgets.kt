@@ -706,7 +706,7 @@ object ShowDemoWindowWidgets {
     }
 
     object Combo {
-        var flags: ComboFlags = emptyFlags
+        var flags: ComboFlags = none
         var itemCurrentIdx = 0
         var itemCurrent2 = 0
         var itemCurrent3 = 0
@@ -1041,7 +1041,7 @@ object ShowDemoWindowWidgets {
                     // than usually reported by a typical string class.
                     if (myStr.isEmpty())
                         myStr = ByteArray(1)
-                    Funcs2.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), emptyFlags)
+                    Funcs2.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), none)
                     text("Data: ${myStr.hashCode()}\nSize: ${myStr.strlen()}\nCapacity: ${myStr.size}")
                 }
             }
@@ -1261,7 +1261,7 @@ object ShowDemoWindowWidgets {
                 checkbox("With Drag and Drop", ::dragAndDrop)
                 checkbox("With Options Menu", ::optionsMenu); sameLine(); helpMarker("Right-click on the individual color widget to show options.")
                 checkbox("With HDR", ::hdr); sameLine(); helpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
-                var miscFlags = if (hdr) Cef.HDR else emptyFlags
+                var miscFlags = if (hdr) Cef.HDR else none
                 if (!dragAndDrop) miscFlags = miscFlags or Cef.NoDragDrop
                 if (alphaHalfPreview) miscFlags = miscFlags or Cef.AlphaPreviewHalf
                 else if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview
@@ -1342,7 +1342,7 @@ object ShowDemoWindowWidgets {
                 }
                 text("Color button only:")
                 checkbox("ImGuiColorEditFlags_NoBorder", ::noBorder)
-                colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else emptyFlags, Vec2(80))
+                colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else none, Vec2(80))
 
                 text("Color picker:")
                 checkbox("With Alpha", ::alpha)
@@ -1409,7 +1409,7 @@ object ShowDemoWindowWidgets {
     }
 
     object `DragSlider Flags` {
-        var flags: SliderFlags = emptyFlags
+        var flags: SliderFlags = none
         var dragF = 0.5f
         var dragI = 50
         var sliderF = 0.5f

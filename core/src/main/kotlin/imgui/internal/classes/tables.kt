@@ -27,7 +27,7 @@ typealias TableDrawChannelIdx = Int
 class TableColumn {
 
     /** Flags after some patching (not directly same as provided by user). See ImGuiTableColumnFlags_ */
-    var flags: TableColumnFlags = emptyFlags
+    var flags: TableColumnFlags = none
 
     /** Final/actual width visible == (MaxX - MinX), locked in TableUpdateLayout(). May be > WidthRequest to honor minimum width, may be < WidthRequest to honor shrinking columns down in tight space. */
     var widthGiven = 0f
@@ -233,7 +233,7 @@ class TableSettings(
         var columnsCount: TableColumnIdx = 0) {
 
     /** Indicate data we want to save using the Resizable/Reorderable/Sortable/Hideable flags (could be using its own flags..) */
-    var saveFlags: TableFlags = emptyFlags
+    var saveFlags: TableFlags = none
 
     /** Reference scale to be able to rescale columns on font/dpi changes. */
     var refScale = 0f

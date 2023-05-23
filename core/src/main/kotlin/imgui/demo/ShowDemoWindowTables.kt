@@ -103,7 +103,7 @@ object ShowDemoWindowTables {
     class EnumDesc(val value: TableFlags, val name: String, val tooltip: String)
 
     val policies = arrayOf(
-        EnumDesc(emptyFlags, "Default", "Use default sizing policy:\n- ImGuiTableFlags_SizingFixedFit if ScrollX is on or if host window has ImGuiWindowFlags_AlwaysAutoResize.\n- ImGuiTableFlags_SizingStretchSame otherwise."),
+        EnumDesc(none, "Default", "Use default sizing policy:\n- ImGuiTableFlags_SizingFixedFit if ScrollX is on or if host window has ImGuiWindowFlags_AlwaysAutoResize.\n- ImGuiTableFlags_SizingStretchSame otherwise."),
         EnumDesc(Tf.SizingFixedFit, "ImGuiTableFlags_SizingFixedFit", "Columns default to _WidthFixed (if resizable) or _WidthAuto (if not resizable), matching contents width."),
         EnumDesc(Tf.SizingFixedSame, "ImGuiTableFlags_SizingFixedSame", "Columns are all the same width, matching the maximum contents width.\nImplicitly disable ImGuiTableFlags_Resizable and enable ImGuiTableFlags_NoKeepColumnsVisible."),
         EnumDesc(Tf.SizingStretchProp, "ImGuiTableFlags_SizingStretchProp", "Columns default to _WidthStretch with weights proportional to their widths."),
@@ -980,7 +980,7 @@ object ShowDemoWindowTables {
     object `Columns flags` {
         var columnCount = 3
         val columnNames = arrayOf("One", "Two", "Three")
-        val columnFlags = flagArrayOf(Tcf.DefaultSort, emptyFlags, Tcf.DefaultHide)
+        val columnFlags = flagArrayOf(Tcf.DefaultSort, none, Tcf.DefaultHide)
         val columnFlagsOut = FlagArray<Tcf<*>>(columnCount)// Output from TableGetColumnFlags()
 
         operator fun invoke() {
@@ -1037,7 +1037,7 @@ object ShowDemoWindowTables {
 
     object `Columns widths` {
         var flags1 = Tf.Borders or Tf.NoBordersInBodyUntilResize
-        var flags2: TableFlags = emptyFlags
+        var flags2: TableFlags = none
         operator fun invoke() {
             treeNode("Columns widths") {
                 helpMarker("Using TableSetupColumn() to setup default width.")
@@ -1682,7 +1682,7 @@ object ShowDemoWindowTables {
                     tableSetupColumn("Name", Tcf.WidthFixed, 0f, MyItemColumnID.Name.ordinal)
                     tableSetupColumn("Action", Tcf.NoSort or Tcf.WidthFixed, 0f, MyItemColumnID.Action.ordinal)
                     tableSetupColumn("Quantity", Tcf.PreferSortDescending, 0f, MyItemColumnID.Quantity.ordinal)
-                    tableSetupColumn("Description", if (flags has Tf.NoHostExtendX) emptyFlags else Tcf.WidthStretch, 0f, MyItemColumnID.Description.ordinal)
+                    tableSetupColumn("Description", if (flags has Tf.NoHostExtendX) none else Tcf.WidthStretch, 0f, MyItemColumnID.Description.ordinal)
                     tableSetupColumn("Hidden", Tcf.DefaultHide or Tcf.NoSort)
                     tableSetupScrollFreeze(freezeCols, freezeRows)
 
@@ -1744,7 +1744,7 @@ object ShowDemoWindowTables {
                             else if (type == ContentsType.Selectable || type == ContentsType.SelectableSpanRow) {
                                 val selectableFlags = when (type) {
                                     ContentsType.SelectableSpanRow -> SelectableFlag.SpanAllColumns or SelectableFlag.AllowItemOverlap
-                                    else -> emptyFlags
+                                    else -> none
                                 }
                                 if (selectable(label, itemIsSelected, selectableFlags, Vec2(0f, rowMinHeight)))
                                     if (io.keyCtrl)

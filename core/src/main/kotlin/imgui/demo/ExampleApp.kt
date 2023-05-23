@@ -119,7 +119,7 @@ object ExampleApp {
                 StyleEditor()
             }
 
-        var windowFlags: WindowFlags = emptyFlags
+        var windowFlags: WindowFlags = none
         if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
         if (noScrollbar) windowFlags = windowFlags or Wf.NoScrollbar
         if (!noMenu) windowFlags = windowFlags or Wf.MenuBar

@@ -20,7 +20,7 @@ import kotlin.reflect.KMutableProperty0
 interface tabBarsTabs {
 
     /** create and append into a TabBar */
-    fun beginTabBar(strId: String, flags: TabBarFlags = emptyFlags): Boolean {
+    fun beginTabBar(strId: String, flags: TabBarFlags = none): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems) return false
@@ -62,7 +62,7 @@ interface tabBarsTabs {
     }
 
     /** create a Tab. Returns true if the Tab is selected. */
-    fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemOnlyFlags = emptyFlags): Boolean {
+    fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemOnlyFlags = none): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems)
@@ -92,7 +92,7 @@ interface tabBarsTabs {
     }
 
     /** create a Tab behaving like a button. return true when clicked. cannot be selected in the tab bar. */
-    fun tabItemButton(label: String, flags: TabItemOnlyFlags = emptyFlags): Boolean {
+    fun tabItemButton(label: String, flags: TabItemOnlyFlags = none): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems)

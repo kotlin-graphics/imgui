@@ -91,8 +91,8 @@ inline fun <F : Flag<F>> FlagArray(size: Int, init: (Int) -> Flag<F>) = FlagArra
         this[i] = init(i)
 }
 
-val emptyFlags: Flag<Nothing> = Flags()
-fun <F : Flag<F>> emptyFlags(): Flag<F> = emptyFlags
+val none: Flag<Nothing> = Flags()
+fun <F : Flag<F>> emptyFlags(): Flag<F> = none
 fun <F : Flag<F>> flagArrayOf(flag: Flag<F>): FlagArray<F> = FlagArray(flag)
 fun <F : Flag<F>> flagArrayOf(vararg flags: Flag<F>): FlagArray<F> = FlagArray(flags)
 
@@ -101,10 +101,10 @@ interface Flag<out Self : Flag<Self>> {
 
     companion object {
         @JvmStatic
-        fun <F : Flag<F>> empty(): Flag<F> = emptyFlags
+        fun <F : Flag<F>> none(): Flag<F> = none
     }
 
-    val isEmpty get() = this == emptyFlags
+    val isEmpty get() = this == none
     val isNotEmpty get() = !isEmpty
     val isPowerOfTwo get() = i.isPowerOfTwo
 }
@@ -418,7 +418,7 @@ sealed class PopupFlag(override val i: Int) : FlagBase<PopupFlag>() {
             MouseButton.Left -> MouseButtonLeft
             MouseButton.Right -> MouseButtonRight
             MouseButton.Middle -> MouseButtonMiddle
-            else -> emptyFlags
+            else -> none
         }
     }
 }

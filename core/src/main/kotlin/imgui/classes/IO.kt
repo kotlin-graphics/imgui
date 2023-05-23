@@ -53,10 +53,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
 
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
-    var configFlags: ConfigFlags = emptyFlags
+    var configFlags: ConfigFlags = none
 
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom backend to communicate features supported by the backend. */
-    var backendFlags: BackendFlags = emptyFlags
+    var backendFlags: BackendFlags = none
 
     /** Main display size, in pixels (generally == GetMainViewport()->Size). May change every frame.   */
     var displaySize = Vec2i(-1)
@@ -476,7 +476,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
 
     /** Key mods flags (any of ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Alt/ImGuiMod_Super flags, same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags. DOES NOT CONTAINS ImGuiMod_Shortcut which is pretranslated). Read-only, updated by NewFrame() */
-    var keyMods: KeyChord = emptyFlags
+    var keyMods: KeyChord = none
 
     /** Key state for all known keys. Use IsKeyXXX() functions to access this. */
     val keysData = Array(Key.COUNT) { KeyData().apply { downDuration = -1f; downDurationPrev = -1f } }

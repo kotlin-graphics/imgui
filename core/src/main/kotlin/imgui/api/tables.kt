@@ -86,8 +86,8 @@ interface tables {
 
     /** Read about "TABLE SIZING" at the top of this file. */
     fun beginTable(
-        strId: String, columns: Int, flags: TableFlags = emptyFlags,
-        outerSize: Vec2 = Vec2(), innerWidth: Float = 0f
+            strId: String, columns: Int, flags: TableFlags = none,
+            outerSize: Vec2 = Vec2(), innerWidth: Float = 0f
     ): Boolean {
         val id = getID(strId)
         return beginTableEx(strId, id, columns, flags, outerSize, innerWidth)
@@ -295,7 +295,7 @@ interface tables {
     /** [Public] Starts into the first cell of a new row
      *
      *  append into the first cell of a new row. */
-    fun tableNextRow(rowFlags: TableRowFlags = emptyFlags, rowMinHeight: Float = 0f) {
+    fun tableNextRow(rowFlags: TableRowFlags = none, rowMinHeight: Float = 0f) {
 
         val table = g.currentTable!!
 
@@ -370,7 +370,7 @@ interface tables {
 
     /** See "COLUMN SIZING POLICIES" comments at the top of this file
      *  If (init_width_or_weight <= 0.0f) it is ignored */
-    fun tableSetupColumn(label: String?, flags: TableColumnSetupFlags = emptyFlags, initWidthOrWeight: Float = 0f, userId: ID = 0) {
+    fun tableSetupColumn(label: String?, flags: TableColumnSetupFlags = none, initWidthOrWeight: Float = 0f, userId: ID = 0) {
         val table = g.currentTable
         check(table != null) { "Need to call TableSetupColumn() after BeginTable()!" }
         assert(!table.isLayoutLocked) { "Need to call call TableSetupColumn() before first row!" }
@@ -707,10 +707,10 @@ interface tables {
      *
      *  return column flags so you can query their Enabled/Visible/Sorted/Hovered status flags. Pass -1 to use current column. */
     fun tableGetColumnFlags(columnN_: Int = -1): TableColumnFlags {
-        val table = g.currentTable ?: return emptyFlags
+        val table = g.currentTable ?: return none
         val columnN = if (columnN_ < 0) table.currentColumn else columnN_
         return when (columnN) {
-            table.columnsCount -> if (table.hoveredColumnBody == columnN) Tcf.IsHovered else emptyFlags
+            table.columnsCount -> if (table.hoveredColumnBody == columnN) Tcf.IsHovered else none
             else -> table.columns[columnN].flags
         }
     }

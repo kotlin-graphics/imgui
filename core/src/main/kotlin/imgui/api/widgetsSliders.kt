@@ -36,36 +36,36 @@ interface widgetsSliders {
      *  "Gold: %.0f"   Gold: 1
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
 
-    fun slider2(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider2(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = none): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider2(label: String, v: Vec2, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider2(label: String, v: Vec2, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = none): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider3(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 3, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider3(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = none): Boolean = sliderN(label, 3, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider3(label: String, v: Vec3, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 3, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider3(label: String, v: Vec3, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = none): Boolean = sliderN(label, 3, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider4(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 4, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider4(label: String, v: FloatArray, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = none): Boolean = sliderN(label, 4, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider4(label: String, v: Vec4, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 4, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider4(label: String, v: Vec4, vMin: Float, vMax: Float, format: String = "%.3f", flags: SliderFlags = none): Boolean = sliderN(label, 4, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f, vDegreesMax: Float = 360f, format_: String = "%.0f deg", flags: SliderFlags = emptyFlags): Boolean {
+    fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f, vDegreesMax: Float = 360f, format_: String = "%.0f deg", flags: SliderFlags = none): Boolean {
         val format = format_.ifEmpty { "%.0f deg" }
         var vRad by vRadPtr
         vRad = vRad.deg
         return slider(label, vRadPtr, vDegreesMin, vDegreesMax, format, flags).also { vRad = vRad.rad }
     }
 
-    fun slider2(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider2(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = none): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider2(label: String, v: Vec2i, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider2(label: String, v: Vec2i, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = none): Boolean = sliderN(label, 2, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider3(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 3, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider3(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = none): Boolean = sliderN(label, 3, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider3(label: String, v: Vec3i, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 3, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider3(label: String, v: Vec3i, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = none): Boolean = sliderN(label, 3, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider4(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 4, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider4(label: String, v: IntArray, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = none): Boolean = sliderN(label, 4, vMin, vMax, format, flags, v::mutablePropertyAt)
 
-    fun slider4(label: String, v: Vec4i, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = emptyFlags): Boolean = sliderN(label, 4, vMin, vMax, format, flags, v::mutablePropertyAt)
+    fun slider4(label: String, v: Vec4i, vMin: Int, vMax: Int, format: String = "%d", flags: SliderFlags = none): Boolean = sliderN(label, 4, vMin, vMax, format, flags, v::mutablePropertyAt)
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234
@@ -75,7 +75,7 @@ interface widgetsSliders {
      *
      *  Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a slider, they are all required.
      *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand how to use this function directly. */
-    fun <N> NumberOps<N>.slider(label: String, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = emptyFlags): Boolean where N : Number, N : Comparable<N> {
+    fun <N> NumberOps<N>.slider(label: String, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> {
 
         val window = ImGui.currentWindow
         if (window.skipItems) return false
@@ -89,7 +89,7 @@ interface widgetsSliders {
 
         val tempInputAllowed = flags hasnt SliderFlag.NoInput
         ImGui.itemSize(totalBb, ImGui.style.framePadding.y)
-        if (!ImGui.itemAdd(totalBb, id, frameBb, if (tempInputAllowed) ItemFlag.Inputable else emptyFlags)) return false
+        if (!ImGui.itemAdd(totalBb, id, frameBb, if (tempInputAllowed) ItemFlag.Inputable else none)) return false
 
         // Default format string when passing NULL
         val format = format_ ?: defaultFormat
@@ -157,7 +157,7 @@ interface widgetsSliders {
     }
 
     /** Internal implementation */
-    fun <N> NumberOps<N>.vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = emptyFlags): Boolean where N : Number, N : Comparable<N> {
+    fun <N> NumberOps<N>.vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> {
 
         val window = ImGui.currentWindow
         if (window.skipItems) return false
@@ -214,17 +214,17 @@ interface widgetsSliders {
 
 }
 
-inline fun <reified N> slider(label: String, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = emptyFlags): Boolean where N : Number, N : Comparable<N> =
+inline fun <reified N> slider(label: String, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
         numberOps<N>().slider(label, pData, min, max, format_, flags)
 
 /** Add multiple sliders on 1 line for compact edition of multiple components */
-inline fun <reified N> sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = emptyFlags, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
+inline fun <reified N> sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
         numberOps<N>().sliderN(label, components, min, max, format, flags, properties)
 
-inline fun <N> NumberOps<N>.sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = emptyFlags, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
+inline fun <N> NumberOps<N>.sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
         widgetN(label, components) { i ->
     slider("", properties(i), min, max, format, flags)
 }
 
-inline fun <reified N> vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = emptyFlags): Boolean where N : Number, N : Comparable<N> =
+inline fun <reified N> vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
         numberOps<N>().vSlider(label, size, pData, min, max, format_, flags)

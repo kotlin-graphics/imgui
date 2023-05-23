@@ -386,7 +386,7 @@ class FontAtlas {
     }
 
     /** Build flags (see ImFontAtlasFlags_) */
-    var flags: FontAtlasFlags = emptyFlags
+    var flags: FontAtlasFlags = none
 
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */

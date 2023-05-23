@@ -184,7 +184,7 @@ internal interface inputs {
     // - SetKeyOwner(..., None)              : clears owner
     // - SetKeyOwner(..., Any, !Lock)        : illegal (assert)
     // - SetKeyOwner(..., Any or None, Lock) : set lock
-    fun Key.setOwner(ownerId: ID, flags: InputFlags = emptyFlags) {
+    fun Key.setOwner(ownerId: ID, flags: InputFlags = none) {
 
         assert(isNamedOrMod && (ownerId != KeyOwner_Any || flags has (InputFlag.LockThisFrame or InputFlag.LockUntilRelease))) { "Can only use _Any with _LockXXX flags(to eat a key away without an ID to retrieve it)" }
         assert((flags wo InputFlag.SupportedBySetKeyOwner).isEmpty) { "Passing flags not supported by this function !" }
@@ -204,7 +204,7 @@ internal interface inputs {
     // Extensive uses of that (e.g. many calls for a single item) may want to manually perform the tests once and then call SetKeyOwner() multiple times.
     // More advanced usage scenarios may want to call SetKeyOwner() manually based on different condition.
     // Worth noting is that only one item can be hovered and only one item can be active, therefore this usage pattern doesn't need to bother with routing and priority.
-    fun Key.setItemKeyOwner(flags_: InputFlags = emptyFlags) { // Set key owner to last item if it is hovered or active. Equivalent to 'if (IsItemHovered() || IsItemActive()) { SetKeyOwner(key, GetItemID());'.
+    fun Key.setItemKeyOwner(flags_: InputFlags = none) { // Set key owner to last item if it is hovered or active. Equivalent to 'if (IsItemHovered() || IsItemActive()) { SetKeyOwner(key, GetItemID());'.
         var flags = flags_
         val id = g.lastItemData.id
         if (id == 0 || (g.hoveredId != id && g.activeId != id))
@@ -273,7 +273,7 @@ internal interface inputs {
 
     // Important: unless legacy IsKeyPressed(ImGuiKey, bool repeat=true) which DEFAULT to repeat, this requires EXPLICIT repeat.
     /** ~IsKeyPressed */
-    fun Key.isPressed(ownerId: ID, flags: InputFlags = emptyFlags): Boolean { // Important: when transitioning from old to new IsKeyPressed(): old API has "bool repeat = true", so would default to repeat. New API requiress explicit ImGuiInputFlags_Repeat.
+    fun Key.isPressed(ownerId: ID, flags: InputFlags = none): Boolean { // Important: when transitioning from old to new IsKeyPressed(): old API has "bool repeat = true", so would default to repeat. New API requiress explicit ImGuiInputFlags_Repeat.
         val keyData = data
         if (!keyData.down) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitates eating mechanism (until we finish work on key ownership)
             return false
@@ -307,7 +307,7 @@ internal interface inputs {
     }
 
     /** ~IsMouseClicked */
-    fun MouseButton.isClicked(ownerId: ID, flags: InputFlags = emptyFlags): Boolean {
+    fun MouseButton.isClicked(ownerId: ID, flags: InputFlags = none): Boolean {
 
         //        IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
         if (!g.io.mouseDown[i]) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitates eating mechanism (until we finish work on key ownership)

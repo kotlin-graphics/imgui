@@ -38,7 +38,7 @@ internal interface widgets {
     /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
      *  A) doesn't require null terminated string if 'textEnd' is specified
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textEx(text: String, textEnd: Int = -1, flags: TextFlags = emptyFlags) {
+    fun textEx(text: String, textEnd: Int = -1, flags: TextFlags = none) {
         val bytes = text.toByteArray()
         textEx(bytes, if (textEnd != -1) textEnd else bytes.strlen(), flags)
     }
@@ -46,7 +46,7 @@ internal interface widgets {
     /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
      *  A) doesn't require null terminated string if 'textEnd' is specified
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textEx(text: ByteArray, textEnd: Int = text.strlen(), flags: TextFlags = emptyFlags) {
+    fun textEx(text: ByteArray, textEnd: Int = text.strlen(), flags: TextFlags = none) {
 
         val window = currentWindow
         if (window.skipItems)
@@ -142,7 +142,7 @@ internal interface widgets {
         }
     }
 
-    fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags_: ButtonFlags = emptyFlags): Boolean {
+    fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags_: ButtonFlags = none): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -187,7 +187,7 @@ internal interface widgets {
     }
 
     /** square button with an arrow shape */
-    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags = emptyFlags): Boolean {
+    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags = none): Boolean {
 
         var flags = flags_
 

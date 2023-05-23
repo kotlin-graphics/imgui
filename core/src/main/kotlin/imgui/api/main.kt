@@ -75,7 +75,7 @@ interface main {
         g.time += io.deltaTime
         g.withinFrameScope = true
         g.frameCount += 1
-        if (g.debugLogFlags != emptyFlags)
+        if (g.debugLogFlags != none)
             println("      [%04d]".format(ImGui.frameCount))
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
@@ -100,7 +100,7 @@ interface main {
         g.drawListSharedData.clipRectFullscreen = virtualSpace.toVec4()
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
         g.drawListSharedData.setCircleTessellationMaxError_(style.circleTessellationMaxError)
-        var flags: DrawListFlags = emptyFlags
+        var flags: DrawListFlags = none
         if (style.antiAliasedLines)
             flags /= Dlf.AntiAliasedLines
         if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines)
@@ -260,7 +260,7 @@ interface main {
         g.currentWindowStack.clear()
         g.beginPopupStack.clear()
         g.itemFlagsStack.clear()
-        g.itemFlagsStack += emptyFlags
+        g.itemFlagsStack += none
         g.groupStack.clear()
 
         // // [DEBUG] Update debug features

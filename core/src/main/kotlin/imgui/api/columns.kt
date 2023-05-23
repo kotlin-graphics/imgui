@@ -15,7 +15,7 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
 import imgui.ImGui.style
-import imgui.emptyFlags
+import imgui.none
 import imgui.has
 import imgui.hasnt
 import imgui.internal.floor
@@ -35,7 +35,7 @@ interface columns {
         val window = currentWindow
         assert(columnsCount >= 1)
 
-        val flags: OldColumnsFlags = if (border) emptyFlags else Cf.NoBorder
+        val flags: OldColumnsFlags = if (border) none else Cf.NoBorder
         //flags |= ImGuiOldColumnFlags_NoPreserveWidths; // NB: Legacy behavior
         window.dc.currentColumns?.let {
             if (it.count == columnsCount && it.flags == flags)

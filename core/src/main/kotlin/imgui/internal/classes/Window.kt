@@ -31,7 +31,7 @@ class Window(var context: Context,
     val id: ID = hashStr(name)
 
     /** See enum ImGuiWindowFlags_ */
-    var flags: WindowFlags = emptyFlags
+    var flags: WindowFlags = none
 
     /** Always set in Begin(). Inactive windows may have a NULL value here if their viewport was discarded. */
     var viewport: ViewportP? = null
@@ -422,7 +422,7 @@ class Window(var context: Context,
     }
 
     val isContentHoverable: Boolean
-        get() = isContentHoverable(emptyFlags)
+        get() = isContentHoverable(none)
 
     /** ~CalcWindowAutoFitSize */
     fun calcAutoFitSize(sizeContents: Vec2): Vec2 {

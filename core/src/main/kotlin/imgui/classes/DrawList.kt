@@ -58,7 +58,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     var vtxBuffer = DrawVert_Buffer(0)
 
     /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
-    var flags: DrawListFlags = emptyFlags
+    var flags: DrawListFlags = none
 
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -174,7 +174,7 @@ class DrawList(sharedData: DrawListSharedData?) {
      * @param pMin: upper-left
      * @param pMax: lower-right
      * (== upper-left + size)   */
-    fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = emptyFlags, thickness: Float = 1f) {
+    fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = none, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
         if (this.flags has DrawListFlag.AntiAliasedLines)
             pathRect(pMin + 0.5f, pMax - 0.5f, rounding, flags)
@@ -186,7 +186,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** @param pMin: upper-left
      *  @param pMax: lower-right
      *  (== upper-left + size) */
-    fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = emptyFlags) {
+    fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = none) {
         if (col hasnt COL32_A_MASK) return
         if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask) == DrawFlag.RoundCornersNone) {
             primReserve(6, 4)
@@ -766,7 +766,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             popTextureID()
     }
 
-    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float, flags_: DrawFlags = emptyFlags) {
+    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float, flags_: DrawFlags = none) {
         if (col hasnt COL32_A_MASK)
             return
 
@@ -804,7 +804,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathFillConvex(col: Int) = addConvexPolyFilled(_path, col).also { pathClear() }
 
     /** rounding_corners_flags: 4 bits corresponding to which corner to round   */
-    fun pathStroke(col: Int, flags: DrawFlags = emptyFlags, thickness: Float = 1.0f) =
+    fun pathStroke(col: Int, flags: DrawFlags = none, thickness: Float = 1.0f) =
         addPolyline(_path, col, flags, thickness).also { pathClear() }
 
     /** @param center must be a new instance */
@@ -959,7 +959,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, flags_: DrawFlags = emptyFlags) {
+    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, flags_: DrawFlags = none) {
         val flags = fixRectCornerFlags(flags_)
         var cond = (DrawFlag.RoundCornersTop in flags) or (DrawFlag.RoundCornersBottom in flags)
         var rounding = rounding_ min ((b.x - a.x).abs * (if (cond) 0.5f else 1f) - 1f)
@@ -1197,7 +1197,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             idxBuffer = idxBuffer.resize(0)
             vtxBuffer = vtxBuffer.resize(0)
         }
-        flags = emptyFlags
+        flags = none
         _vtxCurrentIdx = 0
         _vtxWritePtr = 0
         _idxWritePtr = 0

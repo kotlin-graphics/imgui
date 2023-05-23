@@ -258,7 +258,7 @@ class StackTool {
 
 /** Storage for SetNextWindow** functions    */
 class NextWindowData {
-    var flags: NextWindowDataFlags = emptyFlags
+    var flags: NextWindowDataFlags = none
     var posCond: Cond = Cond.None
     var sizeCond: Cond = Cond.None
     var collapsedCond: Cond = Cond.None
@@ -281,27 +281,27 @@ class NextWindowData {
     var menuBarOffsetMinVal = Vec2()
 
     fun clearFlags() {
-        flags = emptyFlags
+        flags = none
     }
 }
 
 data class NextItemData(
-    var flags: NextItemDataFlags = emptyFlags,
+        var flags: NextItemDataFlags = none,
 
-    /** Set by SetNextItemWidth() */
+        /** Set by SetNextItemWidth() */
     var width: Float = 0f,
 
-    /** Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging) */
+        /** Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging) */
     var focusScopeId: ID = 0,
 
-    var openCond: Cond = Cond.None,
+        var openCond: Cond = Cond.None,
 
-    /** Set by SetNextItemOpen() function. */
+        /** Set by SetNextItemOpen() function. */
     var openVal: Boolean = false) {
 
     /** Also cleared manually by ItemAdd()! */
     fun clearFlags() {
-        flags = emptyFlags
+        flags = none
     }
 }
 
@@ -309,8 +309,8 @@ data class NextItemData(
 // TODO -> data class?
 class LastItemData {
     var id: ID = 0
-    var inFlags: ItemFlags = emptyFlags // See ImGuiItemFlags_
-    var statusFlags: ItemStatusFlags = emptyFlags // See ImGuiItemStatusFlags_
+    var inFlags: ItemFlags = none // See ImGuiItemFlags_
+    var statusFlags: ItemStatusFlags = none // See ImGuiItemStatusFlags_
     val rect = Rect() // Full rectangle
     val navRect = Rect() // Navigation scoring rectangle (not displayed)
     val displayRect = Rect() // Display rectangle (only if ImGuiItemStatusFlags_HasDisplayRect is set)
@@ -483,7 +483,7 @@ class ComboPreviewData {
 /** Storage for one active tab item (sizeof() 40 bytes) */
 class TabItem {
     var id: ID = 0
-    var flags: TabItemFlags = emptyFlags
+    var flags: TabItemFlags = none
     var lastFrameVisible = -1
 
     /** This allows us to infer an ordered list of the last activated tabs with little maintenance */

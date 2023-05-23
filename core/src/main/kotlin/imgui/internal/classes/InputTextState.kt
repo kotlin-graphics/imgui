@@ -57,7 +57,7 @@ class InputTextState(
     var edited = false
 
     /** copy of InputText() flags. may be used to check if e.g. ImGuiInputTextFlags_Password is set. */
-    var flags: InputTextFlags = emptyFlags
+    var flags: InputTextFlags = none
 
     fun clearText() {
         curLenW = 0

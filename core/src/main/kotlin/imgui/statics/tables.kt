@@ -27,7 +27,7 @@ val TABLE_RESIZE_SEPARATOR_FEEDBACK_TIMER = 0.06f
 /** Adjust flags: default width mode + stretch columns are not allowed when auto extending
  *
  *  ~static void TableSetupColumnFlags(ImGuiTable* table, ImGuiTableColumn* column, ImGuiTableColumnFlags flags_in) */
-fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnSetupFlags = emptyFlags) {
+fun Table.setupColumnFlags(column: TableColumn, flagsIn: TableColumnSetupFlags = none) {
 
     var flags = flagsIn
 

@@ -194,7 +194,7 @@ val MouseButton.buttonFlags: ButtonFlags
         MouseButton.Left -> MouseButtonLeft
         MouseButton.Right -> MouseButtonRight
         MouseButton.Middle -> MouseButtonMiddle
-        else -> emptyFlags
+        else -> none
     }
 
 typealias SeparatorFlags = Flag<SeparatorFlag>
@@ -393,7 +393,7 @@ class NavItemData {
     lateinit var rectRel: Rect
 
     /** ????,Move    // Best candidate item flags */
-    var inFlags: ItemFlags = emptyFlags
+    var inFlags: ItemFlags = none
 
     /**      Move    // Best candidate box distance to current NavId */
     var distBox = Float.MAX_VALUE
