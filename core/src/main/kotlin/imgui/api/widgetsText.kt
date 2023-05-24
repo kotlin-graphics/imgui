@@ -49,10 +49,7 @@ interface widgetsText {
      *      PopStyleColor();   */
     fun textColored(col: Vec4, fmt: String, vararg args: Any) {
         pushStyleColor(Col.Text, col)
-        if (fmt == "%s")
-            textEx(args[0] as String, -1, TextFlag.NoWidthForLargeClippedText) // Skip formatting
-        else
-            text(fmt, *args)
+        text(fmt, *args)
         popStyleColor()
     }
 
@@ -62,10 +59,7 @@ interface widgetsText {
      *      popStyleColor() */
     fun textDisabled(fmt: String, vararg args: Any) =
             dsl.withStyleColor(Col.Text, style.colors[Col.TextDisabled]) {
-                if (fmt == "%s")
-                    textEx(args[0] as String, -1, TextFlag.NoWidthForLargeClippedText) // Skip formatting
-                else
-                    text(fmt, *args)
+                text(fmt, *args)
             }
 
     /** shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an
@@ -75,10 +69,7 @@ interface widgetsText {
         val needBackup = g.currentWindow!!.dc.textWrapPos < 0f  // Keep existing wrap position is one ia already set
         if (needBackup)
             pushTextWrapPos(0f)
-        if (fmt == "%s")
-            textEx(args[0] as String, -1, TextFlag.NoWidthForLargeClippedText) // Skip formatting
-        else
-            text(fmt, *args)
+        text(fmt, *args)
         if (needBackup)
             popTextWrapPos()
     }
