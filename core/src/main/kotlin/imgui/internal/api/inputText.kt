@@ -234,6 +234,7 @@ internal interface inputText {
                 state.stb.insertMode = true // stb field name is indeed incorrect (see #2863)
         }
 
+        val isOsx = io.configMacOSXBehaviors
         if (g.activeId != id && initMakeActive) {
             assert(state!!.id == id)
             setActiveID(id, window)
@@ -255,6 +256,8 @@ internal interface inputText {
                 Key.PageUp.setOwner(id)
                 Key.PageDown.setOwner(id)
             }
+            if (isOsx)
+                Key.Mod_Alt.setOwner(id)
             if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out as we will use the \t character.
                 Key.Tab.setOwner(id)
         }
@@ -327,7 +330,6 @@ internal interface inputText {
                 else -> g.fontSize * 0.5f
             }
 
-            val isOsx = io.configMacOSXBehaviors
             if (selectAll) {
                 state.selectAll()
                 state.selectedAllMouseLock = true
@@ -414,7 +416,6 @@ internal interface inputText {
             state.stb.rowCountPerPage = rowCountPerPage
 
             val kMask = if (io.keyShift) K.SHIFT else 0
-            val isOsx = io.configMacOSXBehaviors
             val isWordmoveKeyDown = if (isOsx) io.keyAlt else io.keyCtrl // OS X style: Text editing cursor movement using Alt instead of Ctrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
