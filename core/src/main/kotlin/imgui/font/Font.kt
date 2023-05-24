@@ -320,17 +320,15 @@ class Font {
         var s = textBegin
         if (y + lineHeight < clipRect.y)
             while (y + lineHeight < clipRect.y && s < textEnd) {
-                var lineEnd = text.memchr(s, '\n')
-                if (lineEnd == -1)
-                    lineEnd = textEnd
+                val lineEnd = text.memchr(s, '\n')
                 if (wordWrapEnabled) {
                     // FIXME-OPT: This is not optimal as do first do a search for \n before calling CalcWordWrapPositionA().
                     // If the specs for CalcWordWrapPositionA() were reworked to optionally return on \n we could combine both.
                     // However it is still better than nothing performing the fast-forward!
-                    s = calcWordWrapPositionA(scale, text, s, lineEnd, wrapWidth)
+                    s = calcWordWrapPositionA(scale, text, s, if (lineEnd == -1) textEnd else lineEnd, wrapWidth)
                     s = calcWordWrapNextLineStartA(text, s, textEnd)
                 } else
-                    s = lineEnd + 1
+                    s = if(lineEnd != -1) lineEnd + 1 else textEnd
                 y += lineHeight
             }
 
@@ -534,8 +532,7 @@ class Font {
             ellipsisCharCount = 1
             ellipsisCharStep = findGlyph(ellipsisChar)!!.x1
             ellipsisWidth = ellipsisCharStep
-        }
-        else if (dotChar != '\uFFFF') {
+        } else if (dotChar != '\uFFFF') {
             val glyph = findGlyph(dotChar)!!
             ellipsisChar = dotChar
             ellipsisCharCount = 3
