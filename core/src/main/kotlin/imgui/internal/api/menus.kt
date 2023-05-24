@@ -135,7 +135,7 @@ internal interface menus {
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
             val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
-            pressed = selectable("", menuIsOpen, selectableFlags, Vec2(w, 0f))
+            pressed = selectable("", menuIsOpen, selectableFlags, Vec2(w, labelSize.y))
             renderText(textPos, label)
             popStyleVar()
             window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f)) // -1 spacing to compensate the spacing added when Selectable() did a SameLine(). It would also work to call SameLine() ourselves after the PopStyleVar().
@@ -149,7 +149,7 @@ internal interface menus {
             val minW = window.dc.menuColumns.declColumns(iconW, labelSize.x, 0f, checkmarkW) // Feedback to next frame
             val extraW = 0f max (contentRegionAvail.x - minW)
             val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
-            pressed = selectable("", menuIsOpen, selectableFlags or SelectableFlag._SpanAvailWidth, Vec2(minW, 0f))
+            pressed = selectable("", menuIsOpen, selectableFlags or SelectableFlag._SpanAvailWidth, Vec2(minW, labelSize.y))
             renderText(textPos, label)
             if (iconW > 0f)
                 renderText(pos + Vec2(offsets.offsetIcon, 0f), icon)
@@ -297,7 +297,7 @@ internal interface menus {
             val checkmarkW = floor(g.fontSize * 1.2f)
             val minW = window.dc.menuColumns.declColumns(iconW, labelSize.x, shortcutW, checkmarkW) // Feedback for next frame
             val stretchW = 0f max (contentRegionAvail.x - minW)
-            pressed = selectable("", false, selectableFlags or SelectableFlag._SpanAvailWidth, Vec2(minW, 0f))
+            pressed = selectable("", false, selectableFlags or SelectableFlag._SpanAvailWidth, Vec2(minW, labelSize.y))
             if (g.lastItemData.statusFlags has ItemStatusFlag.Visible) {
                 renderText(pos + Vec2(offsets.offsetLabel, 0f), label)
                 if (iconW > 0f)
