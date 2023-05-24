@@ -254,7 +254,7 @@ object ShowDemoWindowWidgets {
         var check = true
         var e = 0
         val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
-        var currentItem0 = 0
+        var itemCurrent1 = 0
         var str0 = "Hello, world!".toByteArray(128)
         var str1 = ByteArray(128)
         var i0 = 123
@@ -276,7 +276,7 @@ object ShowDemoWindowWidgets {
         var elem = Element.Fire.ordinal
         val col1 = Vec3(1f, 0f, 0.2f)
         val col2 = Vec4(0.4f, 0.7f, 0f, 0.5f)
-        var itemCurrent = 1
+        var itemCurrent0 = 1
 
         operator fun invoke() {
             treeNode("Basic") {
@@ -322,15 +322,36 @@ object ShowDemoWindowWidgets {
                 text("$counter")
 
                 separator()
-                labelText("label", "Value")
-
                 run {
-                    // Using the _simplified_ one-liner Combo() api here
-                    // See "Combo" section for examples of how to use the more flexible BeginCombo()/EndCombo() api.
-                    val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK")
-                    combo("combo", ::currentItem0, items)
-                    sameLine(); helpMarker("Using the simplified one-liner Combo API here.\nRefer to the \"Combo\" section below for an explanation of how to use the more flexible and general BeginCombo/EndCombo API.")
+                    // Tooltips
+//                    IMGUI_DEMO_MARKER("Widgets/Basic/Tooltips");
+                    //ImGui::AlignTextToFramePadding();
+                    text("Tooltips:")
+
+                    sameLine()
+                    smallButton("Button")
+                    if (isItemHovered())
+                        setTooltip("I am a tooltip")
+
+                    sameLine()
+                    smallButton("Fancy")
+                    if (isItemHovered()) {
+                        beginTooltip()
+                        text("I am a fancy tooltip")
+                        plotLines("Curve", arr)
+                        text("Sin(time) = " + ImGui.time.f.sin)
+                        endTooltip()
+                    }
+
+                    sameLine()
+                    smallButton("Delayed")
+                    if (isItemHovered(HoveredFlag.DelayNormal)) // With a delay
+                        setTooltip("I am a tooltip with a delay.")
+
+                    sameLine()
+                    helpMarker("Tooltip are created by using the IsItemHovered() function over any kind of item.")
                 }
+                labelText("label", "Value")
 
                 run {
                     // To wire InputText() with std::string or any other custom string type,
@@ -407,43 +428,22 @@ object ShowDemoWindowWidgets {
                 }
 
                 run {
-                    // Using the _simplified_ one-liner ListBox() api here
-                    // See "List boxes" section for examples of how to use the more flexible BeginListBox()/EndListBox() api.
-                    val items = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
-                    listBox("listbox", ::itemCurrent, items, 4)
-
-                    sameLine(); helpMarker("Using the simplified one-liner ListBox API here.\nRefer to the \"List boxes\" section below for an explanation of how to use the more flexible and general BeginListBox/EndListBox API.")
+                    // Using the _simplified_ one-liner Combo() api here
+                    // See "Combo" section for examples of how to use the more flexible BeginCombo()/EndCombo() api.
+//                    IMGUI_DEMO_MARKER("Widgets/Basic/Combo");
+                    val items = listOf( "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK" )
+                    combo("combo", ::itemCurrent1, items)
+                    sameLine(); helpMarker("Using the simplified one-liner Combo API here.\nRefer to the \"Combo\" section below for an explanation of how to use the more flexible and general BeginCombo/EndCombo API.")
                 }
 
                 run {
-                    alignTextToFramePadding()
-                    text("Tooltips:")
+                    // Using the _simplified_ one-liner ListBox() api here
+                    // See "List boxes" section for examples of how to use the more flexible BeginListBox()/EndListBox() api.
+                    val items = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
+                    listBox("listbox", ::itemCurrent0, items, 4)
 
-                    sameLine()
-                    button("Button")
-                    if (isItemHovered())
-                        setTooltip("I am a tooltip")
-
-                    sameLine()
-                    button("Fancy")
-                    if (isItemHovered()) {
-                        beginTooltip()
-                        text("I am a fancy tooltip")
-                        plotLines("Curve", arr)
-                        text("Sin(time) = ${ImGui.time.f.sin}")
-                        endTooltip()
-                    }
-
-                    sameLine()
-                    button("Delayed")
-                    if (isItemHovered(HoveredFlag.DelayNormal)) // Delay best used on items that highlight on hover, so this not a great example!
-                        setTooltip("I am a tooltip with a delay.")
-
-                    sameLine()
-                    helpMarker("Tooltip are created by using the IsItemHovered() function over any kind of item.")
-
+                    sameLine(); helpMarker("Using the simplified one-liner ListBox API here.\nRefer to the \"List boxes\" section below for an explanation of how to use the more flexible and general BeginListBox/EndListBox API.")
                 }
-
             }
         }
     }

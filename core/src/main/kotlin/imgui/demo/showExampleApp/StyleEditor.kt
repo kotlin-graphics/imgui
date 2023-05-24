@@ -160,7 +160,6 @@ object StyleEditor {
                 slider("PopupRounding", style::popupRounding, 0f, 16f, "%.0f")
                 slider("ScrollbarRounding", style::scrollbarRounding, 0f, 12f, "%.0f")
                 slider("GrabRounding", style::grabRounding, 0f, 12f, "%.0f")
-                slider("LogSliderDeadzone", style::logSliderDeadzone, 0f, 12f, "%.0f")
                 slider("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
                 text("Alignment")
                 slider2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
@@ -184,6 +183,7 @@ object StyleEditor {
                 text("Safe Area Padding")
                 sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
                 slider2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
+                slider("LogSliderDeadzone", style::logSliderDeadzone, 0f, 12f, "%.0f")
                 endTabItem()
             }
 
