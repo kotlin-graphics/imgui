@@ -80,7 +80,7 @@ class InputTextState(
         get() = te.UNDOSTATECOUNT - stb.undoState.redoPoint
 
     /** Cannot be inline because we call in code in stb_textedit.h implementation */
-    fun onKeyPressed(key: Int) {
+    infix fun onKeyPressed(key: Int) {
         key(key)
         cursorFollow = true
         cursorAnimReset()

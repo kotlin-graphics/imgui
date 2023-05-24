@@ -340,7 +340,7 @@ internal interface inputText {
                     // FIXME: There are likely many ways to improve this behavior, but there's no "right" behavior (depends on use-case, software, OS)
                     val isBol = state.stb.cursor == 0 || state getChar state.stb.cursor - 1 == '\n'
                     if (state.hasSelection || !isBol)
-                        state.onKeyPressed(K.WORDLEFT)
+                        state onKeyPressed K.WORDLEFT
                     //state->OnKeyPressed(STB_TEXTEDIT_K_WORDRIGHT | STB_TEXTEDIT_K_SHIFT);
                     if (!state.hasSelection)
                         state.stb.prepSelectionAtCursor()
@@ -350,9 +350,9 @@ internal interface inputText {
                 } else {
                     // Triple-click: Select line
                     val isEol = state getChar state.stb.cursor == '\n'
-                    state.onKeyPressed(K.LINESTART)
-                    state.onKeyPressed(K.LINEEND or K.SHIFT)
-                    state.onKeyPressed(K.RIGHT or K.SHIFT)
+                    state onKeyPressed K.LINESTART
+                    state onKeyPressed (K.LINEEND or K.SHIFT)
+                    state onKeyPressed (K.RIGHT or K.SHIFT)
                     if (!isEol && isMultiline) {
                         val swap = state.stb.selectStart
                         state.stb.selectStart = state.stb.selectEnd
@@ -383,7 +383,7 @@ internal interface inputText {
                 val charRef = '\t'.mutableReference
                 val char by charRef
                 if (inputTextFilterCharacter(charRef, flags, callback, callbackUserData, InputSource.Keyboard)) {
-                    state.onKeyPressed(char.i)
+                    state onKeyPressed char.i
                 }
             }
 
@@ -397,7 +397,7 @@ internal interface inputText {
                     if (c == NUL || c == '\t') // Skip Tab, see above.
                         continue
                     if (inputTextFilterCharacter(cRef, flags, callback, callbackUserData, InputSource.Keyboard)) {
-                        state.onKeyPressed(c.i)
+                        state onKeyPressed c.i
                     }
                 }
                 // Consume characters
@@ -437,55 +437,55 @@ internal interface inputText {
 
             // FIXME: Should use more Shortcut() and reduce IsKeyPressed()+SetKeyOwner(), but requires modifiers combination to be taken account of.
             when {
-                Key.LeftArrow.isPressed -> state.onKeyPressed(when {
-                                                                  isStartendKeyDown -> K.LINESTART
-                                                                  isWordmoveKeyDown -> K.WORDLEFT
-                                                                  else -> K.LEFT
-                                                              } or kMask)
+                Key.LeftArrow.isPressed -> state onKeyPressed (when {
+                    isStartendKeyDown -> K.LINESTART
+                    isWordmoveKeyDown -> K.WORDLEFT
+                    else -> K.LEFT
+                } or kMask)
 
-                Key.RightArrow.isPressed -> state.onKeyPressed(when {
-                                                                   isStartendKeyDown -> K.LINEEND
-                                                                   isWordmoveKeyDown -> K.WORDRIGHT
-                                                                   else -> K.RIGHT
-                                                               } or kMask)
+                Key.RightArrow.isPressed -> state onKeyPressed (when {
+                    isStartendKeyDown -> K.LINEEND
+                    isWordmoveKeyDown -> K.WORDRIGHT
+                    else -> K.RIGHT
+                } or kMask)
 
                 Key.UpArrow.isPressed && isMultiline -> when {
                     io.keyCtrl -> drawWindow setScrollY glm.max(drawWindow.scroll.y - g.fontSize, 0f)
-                    else -> state.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
+                    else -> state onKeyPressed ((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
                 }
 
                 Key.DownArrow.isPressed && isMultiline -> when {
                     io.keyCtrl -> drawWindow setScrollY glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY)
-                    else -> state.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
+                    else -> state onKeyPressed ((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
                 }
 
                 Key.PageUp.isPressed && isMultiline -> {
-                    state.onKeyPressed(K.PGUP or kMask)
+                    state onKeyPressed (K.PGUP or kMask)
                     scrollY -= rowCountPerPage * g.fontSize
                 }
 
                 Key.PageDown.isPressed && isMultiline -> {
-                    state.onKeyPressed(K.PGDOWN or kMask)
+                    state onKeyPressed (K.PGDOWN or kMask)
                     scrollY += rowCountPerPage * g.fontSize
                 }
 
-                Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
-                Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
+                Key.Home.isPressed -> state onKeyPressed ((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
+                Key.End.isPressed -> state onKeyPressed ((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
                 Key.Delete.isPressed && !isReadOnly && !isCut -> {
                     if (!state.hasSelection) {
                         // OSX doesn't seem to have Super+Delete to delete until end-of-line, so we don't emulate that (as opposed to Super+Backspace)
                         if (isWordmoveKeyDown)
-                            state.onKeyPressed(K.WORDRIGHT or K.SHIFT)
+                            state onKeyPressed (K.WORDRIGHT or K.SHIFT)
                     }
-                    state.onKeyPressed(K.DELETE or kMask)
+                    state onKeyPressed (K.DELETE or kMask)
                 }
                 Key.Backspace.isPressed && !isReadOnly -> {
                     if (!state.hasSelection)
                         if (isWordmoveKeyDown)
-                            state.onKeyPressed(K.WORDLEFT or K.SHIFT)
+                            state onKeyPressed (K.WORDLEFT or K.SHIFT)
                         else if (isOsx && io.keySuper && !io.keyAlt && !io.keyCtrl)
-                            state.onKeyPressed(K.LINESTART or K.SHIFT)
-                    state.onKeyPressed(K.BACKSPACE or kMask)
+                            state onKeyPressed (K.LINESTART or K.SHIFT)
+                    state onKeyPressed (K.BACKSPACE or kMask)
                 }
 
                 isEnterPressed || isGamepadValidate -> {
@@ -501,7 +501,7 @@ internal interface inputText {
                         val charRef = '\n'.mutableReference
                         val char by charRef
                         if (inputTextFilterCharacter(charRef, flags, callback, callbackUserData, InputSource.Keyboard)) {
-                            state.onKeyPressed(char.i)
+                            state onKeyPressed char.i
                         }
                     }
                 }
@@ -520,7 +520,7 @@ internal interface inputText {
                     }
 
                 isUndo || isRedo -> {
-                    state.onKeyPressed(if (isUndo) K.UNDO else K.REDO)
+                    state onKeyPressed if (isUndo) K.UNDO else K.REDO
                     state.clearSelection()
                 }
 
