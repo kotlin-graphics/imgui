@@ -218,7 +218,7 @@ internal interface widgets {
 
     /** ImageButton() is flawed as 'id' is always derived from 'texture_id' (see #2464 #1390)
      *  We provide this internal helper to write your own variant while we figure out how to redesign the public ImageButton() API. */
-    fun imageButtonEx(id: ID, textureId: TextureID, size: Vec2, uv0: Vec2, uv1: Vec2, bgCol: Vec4, tintCol: Vec4): Boolean {
+    fun imageButtonEx(id: ID, textureId: TextureID, size: Vec2, uv0: Vec2, uv1: Vec2, bgCol: Vec4, tintCol: Vec4, flags: ButtonFlags = none): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -230,7 +230,7 @@ internal interface widgets {
         itemSize(bb)
         if (!itemAdd(bb, id))
             return false
-        val (pressed, hovered, held) = buttonBehavior(bb, id)
+        val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
         // Render
         val col = getColorU32(if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button)
