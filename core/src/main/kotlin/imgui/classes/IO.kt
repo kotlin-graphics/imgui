@@ -268,7 +268,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         g.inputEventsQueue += InputEvent.MouseButton(mouseButton, down)
     }
 
-    /** Queue a mouse wheel update */
+    /** Queue a mouse wheel update. wheel_y<0: scroll down, wheel_y>0: scroll up, wheel_x<0: scroll right, wheel_x>0: scroll left.
+     *
+     *  Queue a mouse wheel event (some mouse/API may only have a Y component) */
     fun addMouseWheelEvent(wheelX: Float, wheelY: Float) {
         assert(g.io === this) { "Can only add events to current context." }
 
@@ -441,6 +443,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // [Internal] Dear ImGui will maintain those fields. Forward compatibility not guaranteed!
     //------------------------------------------------------------------
 
+    // Main Input State
+    // (this block used to be written by backend, since 1.87 it is best to NOT write to those directly, call the AddXXX functions above instead)
+    // (reading from those variables is fair game, as they are extremely unlikely to be moving anywhere)
+
     /** Mouse position, in pixels. Set to ImVec2(-FLT_MAX, -FLT_MAX) if mouse is unavailable (on another screen, etc.) */
     val mousePos = Vec2(-Float.MAX_VALUE)
 
@@ -449,10 +455,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      *  to user as a convenience via IsMouse** API.   */
     val mouseDown = BooleanArray(5)
 
-    /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
+    /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. >0 scrolls Up, <0 scrolls Down. Hold SHIFT to turn vertical scroll into horizontal scroll. */
     var mouseWheel = 0f
 
-    /** Mouse wheel Horizontal. Most users don't have a mouse with a horizontal wheel, may not be filled by all backends.   */
+    /** Mouse wheel Horizontal. >0 scrolls Left, <0 scrolls Right. Most users don't have a mouse with a horizontal wheel, may not be filled by all backends.  */
     var mouseWheelH = 0f
 
     /** Keyboard modifier down: Control  */
@@ -472,7 +478,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
 
     // Other state maintained from data above + IO function calls
-
 
     /** Key mods flags (any of ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Alt/ImGuiMod_Super flags, same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags. DOES NOT CONTAINS ImGuiMod_Shortcut which is pretranslated). Read-only, updated by NewFrame() */
     var keyMods: KeyChord = none

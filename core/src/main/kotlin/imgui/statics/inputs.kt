@@ -182,7 +182,8 @@ fun updateMouseWheel() {
 
     // Mouse wheel scrolling
     // As a standard behavior holding SHIFT while using Vertical Mouse Wheel triggers Horizontal scroll instead
-    // (we avoid doing it on OSX as it the OS input layer handles this already)
+    // - We avoid doing it on OSX as it the OS input layer handles this already.
+    // - However this means when running on OSX over Emcripten, Shift+WheelY will incur two swappings (1 in OS, 1 here), cancelling the feature.
     val swapAxis = g.io.keyShift && !g.io.configMacOSXBehaviors
     if (swapAxis) {
         wheel.x = wheel.y
