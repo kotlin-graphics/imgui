@@ -6,7 +6,7 @@ import imgui.ImGui.clearDragDrop
 import imgui.ImGui.endTooltip
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
-import imgui.ImGui.isMouseDown
+import imgui.ImGui.isDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.keepAliveID
@@ -242,7 +242,7 @@ interface dragAndDrop {
 
         g.dragDropAcceptFrameCount = g.frameCount
         // For extern drag sources affecting os window focus, it's easier to just test !isMouseDown() instead of isMouseReleased()
-        payload.delivery = wasAcceptedPreviously && !isMouseDown(g.dragDropMouseButton)
+        payload.delivery = wasAcceptedPreviously && !g.dragDropMouseButton.isDown
         if (!payload.delivery && flags hasnt Ddf.AcceptBeforeDelivery) return null
 
         return payload

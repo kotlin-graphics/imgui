@@ -4,7 +4,7 @@ import imgui.*
 import imgui.ImGui.end
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
-import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isClicked
 import imgui.ImGui.isPressed
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.style
@@ -87,12 +87,12 @@ fun updateDebugToolItemPicker() {
         if (Key.Escape.isPressed)
             g.debugItemPickerActive = false
         val changeMapping = g.io.keyMods == Key.Mod_Ctrl or Key.Mod_Shift
-        if (!changeMapping && isMouseClicked(g.debugItemPickerMouseButton) && hoveredId != 0) {
+        if (!changeMapping && g.debugItemPickerMouseButton.isClicked && hoveredId != 0) {
             g.debugItemPickerBreakId = hoveredId
             g.debugItemPickerActive = false
         }
         for (mouseButton in MouseButton.values().drop(1)) // drop None
-            if (changeMapping && isMouseClicked(mouseButton))
+            if (changeMapping && mouseButton.isClicked)
                 g.debugItemPickerMouseButton = mouseButton
         setNextWindowBgAlpha(0.7f)
         tooltip {

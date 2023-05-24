@@ -22,6 +22,8 @@ import imgui.ImGui.getColorU32
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
+import imgui.ImGui.isClicked
+import imgui.ImGui.isDown
 import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -203,14 +205,14 @@ object CustomRendering {
                 val mousePosInCanvas = io.mousePos - origin
 
                 // Add first and second point
-                if (isHovered && !addingLine && ImGui.isMouseClicked(MouseButton.Left)) {
+                if (isHovered && !addingLine && MouseButton.Left.isClicked) {
                     points += mousePosInCanvas // TODO problems with same instance?
                     points += mousePosInCanvas
                     addingLine = true
                 }
                 if (addingLine) {
                     points.last() put mousePosInCanvas
-                    if (!ImGui.isMouseDown(MouseButton.Left))
+                    if (!MouseButton.Left.isDown)
                         addingLine = false
                 }
 

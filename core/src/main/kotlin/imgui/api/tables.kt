@@ -24,7 +24,7 @@ import imgui.ImGui.getID
 import imgui.ImGui.getInstanceData
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseDragging
-import imgui.ImGui.isMouseReleased
+import imgui.ImGui.isReleased
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.mergeDrawChannels
@@ -120,7 +120,7 @@ interface tables {
 
         // Context menu in columns body
         if (flags has Tf.ContextMenuInBody)
-            if (table.hoveredColumnBody != -1 && !ImGui.isAnyItemHovered && ImGui.isMouseReleased(MouseButton.Right))
+            if (table.hoveredColumnBody != -1 && !ImGui.isAnyItemHovered && MouseButton.Right.isReleased)
                 tableOpenContextMenu(table.hoveredColumnBody)
 
         // Finalize table height
@@ -514,7 +514,7 @@ interface tables {
 
         // Allow opening popup from the right-most section after the last column.
         val mousePos = ImGui.mousePos
-        if (isMouseReleased(1) && tableGetHoveredColumn() == columnsCount)
+        if (MouseButton.of(1).isReleased && tableGetHoveredColumn() == columnsCount)
             if (mousePos.y >= rowY1 && mousePos.y < rowY1 + rowHeight)
                 tableOpenContextMenu(-1) // Will open a non-column-specific popup.
     }
@@ -648,7 +648,7 @@ interface tables {
             setTooltip(label.substring(0, labelEnd))
 
         // We don't use BeginPopupContextItem() because we want the popup to stay up even after the column is hidden
-        if (isMouseReleased(1) && isItemHovered())
+        if (MouseButton.of(1).isReleased && isItemHovered())
             tableOpenContextMenu(columnN)
     }
 

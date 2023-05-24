@@ -6,6 +6,7 @@ import imgui.*
 import imgui.ImGui.beginChildEx
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.isClippedEx
+import imgui.ImGui.isDoubleClicked
 import imgui.ImGui.itemSize
 import imgui.ImGui.loadSettings
 import imgui.ImGui.menuItem
@@ -922,7 +923,7 @@ interface tablesInternal {
             //GetForegroundDrawList()->AddRect(hit_rect.Min, hit_rect.Max, IM_COL32(255, 0, 0, 100));
 
             var (pressed, hovered, held) = ImGui.buttonBehavior(hitRect, columnId, ButtonFlag.FlattenChildren or ButtonFlag.AllowItemOverlap or ButtonFlag.PressedOnClick or ButtonFlag.PressedOnDoubleClick or ButtonFlag.NoNavFocus)
-            if (pressed && ImGui.isMouseDoubleClicked(MouseButton.Left)) {
+            if (pressed && MouseButton.Left.isDoubleClicked) {
                 setColumnWidthAutoSingle(columnN)
                 ImGui.clearActiveID()
                 held = false

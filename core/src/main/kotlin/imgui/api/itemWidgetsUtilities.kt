@@ -2,7 +2,7 @@ package imgui.api
 
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isClicked
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
 import imgui.HoveredFlag as Hf
@@ -98,8 +98,7 @@ interface itemWidgetsUtilities {
      *
      *  Important: this can be useful but it is NOT equivalent to the behavior of e.g.Button()!
      *  Most widgets have specific reactions based on mouse-up/down state, mouse position etc. */
-    fun isItemClicked(mouseButton: MouseButton = MouseButton.Left): Boolean =
-        isMouseClicked(mouseButton) && isItemHovered()
+    fun isItemClicked(mouseButton: MouseButton = MouseButton.Left): Boolean = mouseButton.isClicked && isItemHovered()
 
     /** Is the last item visible? (items may be out of sight because of clipping/scrolling)    */
     val isItemVisible: Boolean

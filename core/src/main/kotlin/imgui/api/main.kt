@@ -14,7 +14,7 @@ import imgui.ImGui.end
 import imgui.ImGui.focusTopMostWindowUnderOne
 import imgui.ImGui.gcCompactTransientBuffers
 import imgui.ImGui.gcCompactTransientMiscBuffers
-import imgui.ImGui.isMouseDown
+import imgui.ImGui.isDown
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.mainViewport
 import imgui.ImGui.renderMouseCursor
@@ -317,7 +317,7 @@ interface main {
         if (g.dragDropActive) {
             val isDelivered = g.dragDropPayload.delivery
             val isElapsed = g.dragDropPayload.dataFrameCount + 1 < g.frameCount &&
-                    (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !isMouseDown(g.dragDropMouseButton))
+                    (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !g.dragDropMouseButton.isDown)
             if (isDelivered || isElapsed)
                 clearDragDrop()
         }

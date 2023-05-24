@@ -7,7 +7,8 @@ import glm_.vec2.Vec2bool
 import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
-import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isClicked
+import imgui.ImGui.isReleased
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.pushStyleVar
@@ -409,7 +410,7 @@ internal interface tabBars {
 
         // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
         val hoveredUnblocked = ImGui.isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)
-        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || ImGui.isMouseReleased(MouseButton.Right)) && !isTabButton)
+        if (hoveredUnblocked && (MouseButton.Right.isClicked || MouseButton.Right.isReleased) && !isTabButton)
             queueFocus(tab)
 
         if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton)
@@ -536,7 +537,7 @@ internal interface tabBars {
             g.lastItemData put lastItemBackup
 
             // Close with middle mouse button
-            if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && isMouseClicked(MouseButton.Middle))
+            if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && MouseButton.Middle.isClicked)
                 closeButtonPressed = true
         } else if (unsavedMarkerVisible) {
             val bulletBb = Rect(buttonPos, buttonPos + buttonSz + g.style.framePadding * 2f)

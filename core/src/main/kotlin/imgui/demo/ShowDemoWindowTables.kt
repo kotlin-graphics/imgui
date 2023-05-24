@@ -22,6 +22,7 @@ import imgui.ImGui.endTable
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.io
+import imgui.ImGui.isReleased
 import imgui.ImGui.openPopup
 import imgui.ImGui.popButtonRepeat
 import imgui.ImGui.popID
@@ -1439,7 +1440,7 @@ object ShowDemoWindowTables {
                         pushID(column)
                         if (tableGetColumnFlags(column) has Tcf.IsHovered)
                             hoveredColumn = column
-                        if (hoveredColumn == column && !ImGui.isAnyItemHovered && ImGui.isMouseReleased(MouseButton.Right))
+                        if (hoveredColumn == column && !ImGui.isAnyItemHovered && MouseButton.Right.isReleased)
                             openPopup("MyPopup")
                         popup("MyPopup") {
                             if (column == COLUMNS_COUNT)

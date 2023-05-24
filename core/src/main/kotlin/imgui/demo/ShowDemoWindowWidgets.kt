@@ -61,6 +61,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.inputTextWithHint
 import imgui.ImGui.io
+import imgui.ImGui.isDoubleClicked
 import imgui.ImGui.isItemActivated
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemClicked
@@ -71,7 +72,6 @@ import imgui.ImGui.isItemFocused
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isItemToggledOpen
 import imgui.ImGui.isItemVisible
-import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isWindowFocused
 import imgui.ImGui.isWindowHovered
 import imgui.ImGui.itemRectMax
@@ -827,7 +827,7 @@ object ShowDemoWindowWidgets {
                     text("(I am not selectable)")
                     selectable("4. I am selectable", selection0 mutablePropertyAt 2)
                     if (selectable("5. I am double clickable", selection0[3], Sf.AllowDoubleClick))
-                        if (isMouseDoubleClicked(MouseButton.Left)) selection0[3] = !selection0[3]
+                        if (MouseButton.Left.isDoubleClicked) selection0[3] = !selection0[3]
                 }
                 treeNode("Selection State: Single Selection") {
                     for (n in 0..4)

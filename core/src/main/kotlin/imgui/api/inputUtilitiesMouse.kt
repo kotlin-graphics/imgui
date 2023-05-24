@@ -18,33 +18,38 @@ import imgui.internal.sections.KeyOwner_Any
  *  - Dragging operations are only reported after mouse has moved a certain distance away from the initial clicking position (see 'lock_threshold' and 'io.MouseDraggingThreshold') */
 interface inputUtilitiesMouse {
 
-    /** is mouse button held?   */
-    fun isMouseDown(button: MouseButton): Boolean {
-        assert(button.i in io.mouseDown.indices)
-        return io.mouseDown[button.i] && button.key testOwner KeyOwner_Any // should be same as IsKeyDown(MouseButtonToKey(button), ImGuiKeyOwner_Any), but this allows legacy code hijacking the io.Mousedown[] array.
-    }
+    /** is mouse button held?
+     *  ~isMouseDown */
+    val MouseButton.isDown: Boolean
+        get() {
+            assert(i in io.mouseDown.indices)
+            return io.mouseDown[i] && key testOwner KeyOwner_Any // should be same as IsKeyDown(MouseButtonToKey(button), ImGuiKeyOwner_Any), but this allows legacy code hijacking the io.Mousedown[] array.
+        }
 
-    /** did mouse button clicked? (went from !Down to Down). Same as GetMouseClickedCount() == 1. */
-    fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean = button.isClicked(KeyOwner_Any, if (repeat) InputFlag.Repeat else none)
+    /** did mouse button clicked? (went from !Down to Down). Same as GetMouseClickedCount() == 1.
+     *  ~isMouseClicked */
+    val MouseButton.isClicked
+        get() = isClicked(false)
 
-    fun isMouseReleased(button: Int): Boolean = isMouseReleased(MouseButton of button)
+    /** ~isMouseClicked */
+    infix fun MouseButton.isClicked(repeat: Boolean): Boolean = isClicked(KeyOwner_Any, if (repeat) InputFlag.Repeat else none)
 
-    /** did mouse button released? (went from Down to !Down) */
-    fun isMouseReleased(button: MouseButton): Boolean {
-        if (button == MouseButton.None)
-            return false // The None button is never clicked.
+    /** did mouse button released? (went from Down to !Down)
+     *  ~isMouseReleased */
+    val MouseButton.isReleased: Boolean
+        get() = when (this) {
+            MouseButton.None -> false // The None button is never clicked.
+            else -> io.mouseReleased[i] && key testOwner KeyOwner_Any // Should be same as IsKeyReleased(MouseButtonToKey(button), ImGuiKeyOwner_Any)
+        }
 
-        return io.mouseReleased[button.i] && button.key testOwner KeyOwner_Any // Should be same as IsKeyReleased(MouseButtonToKey(button), ImGuiKeyOwner_Any)
-    }
 
-
-    /** did mouse button double-clicked? Same as GetMouseClickedCount() == 2. (note that a double-click will also report IsMouseClicked() == true) */
-    fun isMouseDoubleClicked(button: MouseButton): Boolean {
-        if (button == MouseButton.None)
-            return false // The None button is never clicked.
-
-        return io.mouseClickedCount[button.i] == 2 && button.key testOwner KeyOwner_Any
-    }
+    /** did mouse button double-clicked? Same as GetMouseClickedCount() == 2. (note that a double-click will also report IsMouseClicked() == true)
+     *  ~isMouseDoubleClicked */
+    val MouseButton.isDoubleClicked: Boolean
+        get() = when (this) {
+            MouseButton.None -> false // The None button is never clicked.
+            else -> io.mouseClickedCount[i] == 2 && key testOwner KeyOwner_Any
+        }
 
     /** return the number of successive mouse-clicks at the time where a click happen (otherwise 0). */
     fun getMouseClickedCount(button: MouseButton): Int {
@@ -61,7 +66,7 @@ interface inputUtilitiesMouse {
      *
      *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings, but disregarding of other consideration of focus/window ordering/popup-block. */
     fun isMouseHoveringRect(r: Rect, clip: Boolean = true): Boolean =
-        isMouseHoveringRect(r.min, r.max, clip)
+            isMouseHoveringRect(r.min, r.max, clip)
 
     fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {
 

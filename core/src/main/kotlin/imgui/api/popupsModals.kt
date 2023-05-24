@@ -8,8 +8,8 @@ import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.end
 import imgui.ImGui.isAnyItemHovered
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isPopupOpen
+import imgui.ImGui.isReleased
 import imgui.ImGui.isWindowHovered
 import imgui.ImGui.mainViewport
 import imgui.ImGui.navMoveRequestTryWrapping
@@ -127,7 +127,7 @@ interface popupsModals {
     fun openPopupOnItemClick(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight) =
         with(g.currentWindow!!) {
             val mouseButton = popupFlags.mouseButton
-            if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
+            if (mouseButton.isReleased && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
                 val id = if (strId.isNotEmpty()) getID(strId) else g.lastItemData.id // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
                 assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
                 openPopupEx(id, popupFlags)
@@ -198,7 +198,7 @@ interface popupsModals {
         val id = if (strId.isNotEmpty()) window.getID(strId) else g.lastItemData.id // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
         assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)" }
         val mouseButton = popupFlags.mouseButton
-        if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup))
+        if (mouseButton.isReleased && isItemHovered(Hf.AllowWhenBlockedByPopup))
             openPopupEx(id, popupFlags)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
@@ -210,7 +210,7 @@ interface popupsModals {
         val window = g.currentWindow!!
         val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
         val mouseButton = popupFlags.mouseButton
-        if (isMouseReleased(mouseButton) && isWindowHovered(Hf.AllowWhenBlockedByPopup))
+        if (mouseButton.isReleased && isWindowHovered(Hf.AllowWhenBlockedByPopup))
             if (popupFlags hasnt PopupFlag.NoOpenOverItems || !isAnyItemHovered)
                 openPopupEx(id, popupFlags)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
@@ -223,7 +223,7 @@ interface popupsModals {
         val window = g.currentWindow!!
         val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
         val mouseButton = popupFlags.mouseButton
-        if (isMouseReleased(mouseButton) && !isWindowHovered(Hf.AnyWindow))
+        if (mouseButton.isReleased && !isWindowHovered(Hf.AnyWindow))
             if (topMostPopupModal == null)
                 openPopupEx(id, popupFlags)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)

@@ -51,6 +51,7 @@ import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
+import imgui.ImGui.isClicked
 import imgui.ImGui.isDown
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseHoveringRect
@@ -436,9 +437,9 @@ interface demoDebugInformations {
                     text("Mouse pos: <INVALID>")
                 text("Mouse delta: (%g, %g)", io.mouseDelta.x, io.mouseDelta.y)
                 val count = io.mouseDown.size
-                text("Mouse down:"); for (i in 0 until count) if (ImGui.isMouseDown(MouseButton of i)) {; sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i]); }
-                text("Mouse clicked:"); for (i in 0 until count) if (ImGui.isMouseClicked(MouseButton of i)) {; sameLine(); text("b$i (${io.mouseClickedCount[i]})"); }
-                text("Mouse released:"); for (i in 0 until count) if (ImGui.isMouseReleased(MouseButton of i)) {; sameLine(); text("b$i"); }
+                text("Mouse down:"); for (i in 0 until count) if (MouseButton.of(i).isDown) {; sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i]); }
+                text("Mouse clicked:"); for (i in 0 until count) if (MouseButton.of(i).isClicked) {; sameLine(); text("b$i (${io.mouseClickedCount[i]})"); }
+                text("Mouse released:"); for (i in 0 until count) if (MouseButton.of(i).isReleased) {; sameLine(); text("b$i"); }
                 text("Mouse wheel: %.1f", io.mouseWheel)
                 text("Pen Pressure: %.1f", io.penPressure) // Note: currently unused
             }

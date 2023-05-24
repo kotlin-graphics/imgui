@@ -18,7 +18,6 @@ import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isDown
 import imgui.ImGui.isItemActive
-import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.popAllowKeyboardFocus
@@ -59,7 +58,7 @@ object ShowDemoWindowInputs {
                     text("Mouse pos: <INVALID>")
                 text("Mouse delta: (%g, %g)", io.mouseDelta.x, io.mouseDelta.y)
                 text("Mouse down:")
-                for (i in io.mouseDown.indices) if (isMouseDown(MouseButton.of(i))) {; sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i]); }
+                for (i in io.mouseDown.indices) if (MouseButton.of(i).isDown) {; sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i]); }
                 text("Mouse wheel: %.1f", io.mouseWheel)
 
                 // We iterate both legacy native range and named ImGuiKey ranges, which is a little odd but this allows displaying the data for old/new backends.
