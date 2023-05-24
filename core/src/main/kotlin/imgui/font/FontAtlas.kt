@@ -21,6 +21,7 @@ import java.nio.ByteBuffer
 import kotlin.math.sqrt
 
 typealias FontAtlasFlags = Flag<FontAtlas.Flag>
+
 /** Load and rasterize multiple TTF/OTF fonts into a same texture. The font atlas will build a single texture holding:
  *      - One or more fonts.
  *      - Custom graphics data needed to render the shapes needed by Dear ImGui.
@@ -504,14 +505,11 @@ class FontAtlas {
             storage = IntArray(0)
         }
 
-        infix fun testBit(n: Int): Boolean {
-            assert(n < storage.size shl 5); return storage testBit n; }
+        infix fun testBit(n: Int): Boolean {; assert(n < storage.size shl 5); return storage testBit n; }
 
-        infix fun setBit(n: Int) {
-            assert(n < storage.size shl 5); storage setBit n; }
+        infix fun setBit(n: Int) {; assert(n < storage.size shl 5); storage setBit n; }
 
-        infix fun clearBit(n: Int) {
-            assert(n < storage.size shl 5); storage clearBit n; }
+        infix fun clearBit(n: Int) {; assert(n < storage.size shl 5); storage clearBit n; }
 
         fun unpack(): ArrayList<Int> {
             val res = arrayListOf<Int>()
@@ -829,7 +827,7 @@ class FontAtlas {
                 val q = AlignedQuad()
                 getPackedQuad(srcTmp.packedChars, texSize.x, texSize.y, glyphIdx, q = q)
                 dstFont.addGlyph(cfg, codepoint, q.x0 + fontOff.x, q.y0 + fontOff.y,
-                    q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
+                        q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
             }
         }
 //        bufPackedchars.free()
@@ -928,7 +926,7 @@ class FontAtlas {
             val uv1 = Vec2()
             calcCustomRectUV(r, uv0, uv1)
             font.addGlyph(null, r.glyphID, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
-                uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
+                    uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
         }
         // Build all fonts lookup tables
         fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }

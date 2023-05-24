@@ -10,11 +10,8 @@ import imgui.internal.sections.NavLayer
 /** Special sentinel code which cannot be used as a regular color. */
 val COL32_DISABLE = COL32(0, 0, 0, 1)
 
-/** sizeof(ImU64) * 8. This is solely because we frequently encode columns set in a ImU64. */
-val TABLE_MAX_COLUMNS = 64
-
-/** See TableSetupDrawChannels() */
-val TABLE_MAX_DRAW_CHANNELS = 4 + 64 * 2
+/** May be further lifted */
+val TABLE_MAX_COLUMNS = 512
 
 // Our current column maximum is 64 but we may raise that in the future.
 typealias TableColumnIdx = Int

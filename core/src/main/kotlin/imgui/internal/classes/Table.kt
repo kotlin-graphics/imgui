@@ -1,11 +1,9 @@
 package imgui.internal.classes
 
-import imgui.ID
-import imgui.TableFlags
-import imgui.TableRowFlags
+import imgui.*
 import imgui.classes.TableColumnSortSpecs
 import imgui.classes.TableSortSpecs
-import imgui.none
+import imgui.internal.BitArray
 import imgui.internal.DrawListSplitter
 
 
@@ -29,16 +27,16 @@ class Table {
     var displayOrderToIndex = intArrayOf()
 
     /** Point within RawData[]. Store cells background requests for current row. */
-    var rowCellData = arrayOf<TableCellData>()
+    var rowCellData = emptyArray<TableCellData>()
 
     /** Column DisplayOrder -> IsEnabled map */
-    var enabledMaskByDisplayOrder = 0L
+    lateinit var enabledMaskByDisplayOrder: BitArray
 
     /** Column Index -> IsEnabled map (== not hidden by user/api) in a format adequate for iterating column without touching cold data */
-    var enabledMaskByIndex = 0L
+    lateinit var enabledMaskByIndex: BitArray
 
     /** Column Index -> IsVisibleX|IsVisibleY map (== not hidden by user/api && not hidden by scrolling/cliprect) */
-    var visibleMaskByIndex = 0L
+    lateinit var visibleMaskByIndex: BitArray
 
     /** Which data were loaded from the .ini file (e.g. when order is not altered we won't save order) */
     var settingsLoadedFlags: TableFlags = none

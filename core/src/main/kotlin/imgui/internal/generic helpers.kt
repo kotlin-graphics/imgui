@@ -866,6 +866,9 @@ class BitArray(val bitCount: Int) {
 
     val storage = IntArray((bitCount + 31) ushr 5)
 
+    val indices: IntRange
+        get() = storage.indices
+
     init {
         clearAllBits()
     }

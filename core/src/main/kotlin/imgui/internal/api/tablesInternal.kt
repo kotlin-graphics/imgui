@@ -37,10 +37,7 @@ interface tablesInternal {
 
     fun tableFindByID(id: ID): Table? = g.tables.getByKey(id)
 
-    fun beginTableEx(
-            name: String, id: ID, columnsCount: Int, flags_: TableFlags = none, outerSize: Vec2 = Vec2(),
-            innerWidth: Float = 0f
-    ): Boolean {
+    fun beginTableEx(name: String, id: ID, columnsCount: Int, flags_: TableFlags = none, outerSize: Vec2 = Vec2(), innerWidth: Float = 0f): Boolean {
 
         var flags = flags_
         val outerWindow = ImGui.currentWindow
@@ -328,21 +325,12 @@ interface tablesInternal {
      *  ~tableBeginInitMemory */
     infix fun Table.beginInitMemory(columnsCount: Int) {
         // Allocate single buffer for our arrays
-        //        ImSpanAllocator<3> span_allocator;
-        repeat(columnsCount) {
-            columns += TableColumn()
-        }
-        displayOrderToIndex += IntArray(columnsCount)
-        rowCellData += Array(columnsCount) { TableCellData() }
-        //        span_allocator.Reserve(0, columnsCount1 * sizeof(ImGuiTableColumn));
-        //        span_allocator.Reserve(1, columnsCount1 * sizeof(ImGuiTableColumnIdx));
-        //        span_allocator.Reserve(2, columnsCount1 * sizeof(ImGuiTableCellData), 4);
-        //        table->RawData = IM_ALLOC(span_allocator.GetArenaSizeInBytes());
-        //        memset(table->RawData, 0, span_allocator.GetArenaSizeInBytes());
-        //        span_allocator.SetArenaBasePtr(table->RawData);
-        //        span_allocator.GetSpan(0, &table->Columns);
-        //        span_allocator.GetSpan(1, &table->DisplayOrderToIndex);
-        //        span_allocator.GetSpan(2, &table->RowCellData);
+        repeat(columnsCount) { columns += TableColumn() }
+        displayOrderToIndex = IntArray(columnsCount)
+        rowCellData = Array(columnsCount) { TableCellData() }
+        enabledMaskByDisplayOrder = BitArray(columnsCount)
+        enabledMaskByIndex = BitArray(columnsCount)
+        visibleMaskByIndex = BitArray(columnsCount)
     }
 
     /** Apply queued resizing/reordering/hiding requests
@@ -433,7 +421,7 @@ interface tablesInternal {
         val freezeRowMultiplier = if (freezeRowsCount > 0) 2 else 1
         val channelsForRow = if (flags has Tf.NoClip) 1 else columnsEnabledCount
         val channelsForBg = 1 + 1 * freezeRowMultiplier
-        val channelsForDummy = (columnsEnabledCount < columnsCount || visibleMaskByIndex != enabledMaskByIndex).i
+        val channelsForDummy = (columnsEnabledCount < columnsCount || !visibleMaskByIndex.storage.contentEquals(enabledMaskByIndex.storage)).i
         val channelsTotal = channelsForBg + (channelsForRow * freezeRowMultiplier) + channelsForDummy
         drawSplitter.split(innerWindow!!.drawList, channelsTotal)
         dummyDrawChannel = if (channelsForDummy > 0) channelsTotal - 1 else -1
@@ -476,8 +464,8 @@ interface tablesInternal {
         val tableSizingPolicy = flags and Tf._SizingMask
         isDefaultDisplayOrder = true
         columnsEnabledCount = 0
-        enabledMaskByIndex = 0x00
-        enabledMaskByDisplayOrder = 0x00
+        enabledMaskByIndex.clearAllBits()
+        enabledMaskByDisplayOrder.clearAllBits()
         leftMostEnabledColumn = -1
         minColumnWidth = 1f max (g.style.framePadding.x * 1f) // g.Style.ColumnsMinSpacing; // FIXME-TABLE
 
@@ -543,8 +531,8 @@ interface tablesInternal {
             else
                 leftMostEnabledColumn = columnN
             column.indexWithinEnabledSet = columnsEnabledCount++
-            enabledMaskByIndex = enabledMaskByIndex or (1L shl columnN)
-            enabledMaskByDisplayOrder = enabledMaskByDisplayOrder or (1L shl column.displayOrder)
+            enabledMaskByIndex setBit columnN
+            enabledMaskByDisplayOrder setBit column.displayOrder
             prevVisibleColumnIdx = columnN
             assert(column.indexWithinEnabledSet <= column.displayOrder)
 
@@ -589,7 +577,7 @@ interface tablesInternal {
         leftMostStretchedColumn = -1
         rightMostStretchedColumn = -1
         for (columnN in 0 until columnsCount) {
-            if (enabledMaskByIndex hasnt (1L shl columnN))
+            if (!enabledMaskByIndex.testBit(columnN))
                 continue
             val column = columns[columnN]
 
@@ -646,7 +634,7 @@ interface tablesInternal {
         var widthRemainingForStretchedColumns = widthAvailForStretchedColumns
         columnsGivenWidth = widthSpacings + (cellPaddingX * 2) * columnsEnabledCount
         for (columnN in 0 until columnsCount) {
-            if (enabledMaskByIndex hasnt (1L shl columnN))
+            if (!enabledMaskByIndex.testBit(columnN))
                 continue
             val column = columns[columnN]
 
@@ -672,7 +660,7 @@ interface tablesInternal {
         if (widthRemainingForStretchedColumns >= 1f && flags hasnt Tf.PreciseWidths) {
             var orderN = columnsCount - 1
             while (stretchSumWeights > 0f && widthRemainingForStretchedColumns >= 1f && orderN >= 0) {
-                if (enabledMaskByDisplayOrder hasnt (1L shl orderN)) {
+                if (!enabledMaskByDisplayOrder.testBit(orderN)) {
                     orderN--
                     continue
                 }
@@ -709,7 +697,7 @@ interface tablesInternal {
         var offsetX = (if (freezeColumnsCount > 0) outerRect.min.x else workRect.min.x) + outerPaddingX - cellSpacingX1
         val hostClipRect = Rect(innerClipRect) // [JVM] local copy, shadow is fine
         //host_clip_rect.Max.x += table->CellPaddingX + table->CellSpacingX2;
-        visibleMaskByIndex = 0x00
+        visibleMaskByIndex.clearAllBits()
         for (orderN in 0 until columnsCount) {
             val columnN = displayOrderToIndex[orderN]
             val column = columns[columnN]
@@ -724,7 +712,7 @@ interface tablesInternal {
             // Clear status flags
             column.flags = column.flags wo TableColumnFlag.StatusMask
 
-            if (enabledMaskByDisplayOrder hasnt (1L shl orderN)) {
+            if (!enabledMaskByDisplayOrder.testBit(orderN)) {
                 // Hidden column: clear a few fields and we are done with it for the remainder of the function.
                 // We set a zero-width clip rect but set Min.y/Max.y properly to not interfere with the clipper.
                 column.minX = offsetX
@@ -782,7 +770,7 @@ interface tablesInternal {
             column.isVisibleY = true // (column->ClipRect.Max.y > column->ClipRect.Min.y);
             val isVisible = column.isVisibleX //&& column->IsVisibleY;
             if (isVisible)
-                visibleMaskByIndex = visibleMaskByIndex or (1L shl columnN)
+                visibleMaskByIndex setBit columnN
 
             // Mark column as requesting output from user. Note that fixed + non-resizable sets are auto-fitting at all times and therefore always request output.
             column.isRequestOutput = isVisible || column.autoFitQueue != 0 || column.cannotSkipItemsQueue != 0
@@ -912,7 +900,7 @@ interface tablesInternal {
 
         for (orderN in 0 until columnsCount) {
 
-            if (enabledMaskByDisplayOrder hasnt (1L shl orderN))
+            if (!enabledMaskByDisplayOrder.testBit(orderN))
                 continue
 
             val columnN = displayOrderToIndex[orderN]
@@ -1004,7 +992,7 @@ interface tablesInternal {
         if (flags has Tf.BordersInnerV)
             for (orderN in 0 until columnsCount) {
 
-                if (enabledMaskByDisplayOrder hasnt (1L shl orderN))
+                if (!enabledMaskByDisplayOrder.testBit(orderN))
                     continue
 
                 val columnN = displayOrderToIndex[orderN]
@@ -1144,7 +1132,7 @@ interface tablesInternal {
                     name = "<Unknown>"
 
                 // Make sure we can't hide the last active column
-                var menuItemActive = otherColumn?.flags?.hasnt(TableColumnFlag.NoHide) == true
+                var menuItemActive = otherColumn.flags?.hasnt(TableColumnFlag.NoHide) == true
                 if (otherColumn.isUserEnabled && columnsEnabledCount <= 1)
                     menuItemActive = false
                 if (ImGui.menuItem(name, "", otherColumn.isUserEnabled, menuItemActive))
@@ -1205,18 +1193,21 @@ interface tablesInternal {
         assert(splitter._current == 0)
 
         // Track which groups we are going to attempt to merge, and which channels goes into each group.
-        class MergeGroup {
+        class MergeGroup(channelsMaskSize: Int) {
             val clipRect = Rect()
             var channelsCount = 0
-            val channelsMask = BitArray(TABLE_MAX_DRAW_CHANNELS)
+            val channelsMask = BitArray(channelsMaskSize)
         }
 
         var mergeGroupMask = 0x00
-        val mergeGroups = Array(4) { MergeGroup() }
+        // Use a reusable temp buffer for the merge masks as they are dynamically sized.
+        val maxDrawChannels = 4 + columnsCount * 2
+        val remainingMask = BitArray(maxDrawChannels)
+        val mergeGroups = Array(4) { MergeGroup(maxDrawChannels) }
 
         // 1. Scan channels and take note of those which can be merged
         for (columnN in 0 until columnsCount) {
-            if (visibleMaskByIndex hasnt (1L shl columnN))
+            if (!visibleMaskByIndex.testBit(columnN))
                 continue
             val column = columns[columnN]
 
@@ -1244,7 +1235,7 @@ interface tablesInternal {
                 }
 
                 val mergeGroupN = (if (hasFreezeH && columnN < freezeColumnsCount) 0 else 1) + if (hasFreezeV && mergeGroupSubN == 0) 0 else 2
-                assert(channelNo < TABLE_MAX_DRAW_CHANNELS)
+                assert(channelNo < maxDrawChannels)
                 val mergeGroup = mergeGroups[mergeGroupN]
                 if (mergeGroup.channelsCount == 0)
                     mergeGroup.clipRect.put(+Float.MAX_VALUE, +Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
@@ -1291,9 +1282,8 @@ interface tablesInternal {
                 dst._idxBuffer = IntBuffer(src._idxBuffer)
             }
 
-            val remainingMask = BitArray(TABLE_MAX_DRAW_CHANNELS)                       // We need 132-bit of storage
             remainingMask.setBitRange(LEADING_DRAW_CHANNELS, splitter._count)
-            remainingMask.clearBit(bg2DrawChannelUnfrozen)
+            remainingMask clearBit bg2DrawChannelUnfrozen
             assert(!hasFreezeV || bg2DrawChannelUnfrozen != TABLE_DRAW_CHANNEL_BG2_FROZEN)
             var remainingCount = splitter._count - if (hasFreezeV) LEADING_DRAW_CHANNELS + 1 else LEADING_DRAW_CHANNELS
             //ImRect host_rect = (table->InnerWindow == table->OuterWindow) ? table->InnerClipRect : table->HostClipRect;
@@ -1325,7 +1315,7 @@ interface tablesInternal {
                     //                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Max, merge_clip_rect.Max, IM_COL32(255, 100, 0, 200))
                     //                    #endif
                     remainingCount -= mergeGroup.channelsCount
-                    for (n in remainingMask.storage.indices)
+                    for (n in remainingMask.indices)
                         remainingMask.storage[n] = remainingMask.storage[n] wo mergeGroup.channelsMask.storage[n]
                     var n = 0
                     while (n < splitter._count && mergeChannelsCount != 0) {

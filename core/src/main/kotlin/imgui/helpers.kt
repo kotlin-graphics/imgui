@@ -273,5 +273,6 @@ fun FloatArray.put(x: Float, y: Float, z: Float, w: Float) {
 
 fun FloatArray.put(vararg f: Float) {
     f.copyInto(this)
-
 }
+
+typealias BitArrayPtr = Int

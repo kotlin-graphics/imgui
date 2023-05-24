@@ -188,7 +188,7 @@ interface tables {
         var autoFitWidthForStretched = 0f
         var autoFitWidthForStretchedMin = 0f
         for (columnN in 0 until table.columnsCount)
-            if (table.enabledMaskByIndex has (1L shl columnN)) {
+            if (table.enabledMaskByIndex testBit columnN) {
                 val column = table.columns[columnN]
                 val columnWidthRequest = if (column.flags has Tcf.WidthFixed && column.flags hasnt Tcf.NoResize) column.widthRequest else table getColumnWidthAuto column
                 if (column.flags has Tcf.WidthFixed)
@@ -752,7 +752,7 @@ interface tables {
                     return
                 if (columnN == -1)
                     columnN = table.currentColumn
-                if (table.visibleMaskByIndex hasnt (1L shl columnN))
+                if (!table.visibleMaskByIndex.testBit(columnN))
                     return
                 if (table.rowCellDataCurrent < 0 || table.rowCellData[table.rowCellDataCurrent].column != columnN)
                     table.rowCellDataCurrent++
