@@ -7,13 +7,11 @@ import imgui.ImGui.calcNextAutoFitSize
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popupAllowedExtentRect
 import imgui.ImGui.pushClipRect
+import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.api.g
 import imgui.api.widgetsComboBox
 import imgui.internal.classes.Rect
-import imgui.internal.sections.ItemStatusFlag
-import imgui.internal.sections.LayoutType
-import imgui.internal.sections.NextWindowDataFlag
-import imgui.internal.sections.PopupPositionPolicy
+import imgui.internal.sections.*
 
 
 // Combos
@@ -42,7 +40,13 @@ internal interface combos {
                 flags has ComboFlag.HeightLarge -> 20
                 else -> -1
             }
-            ImGui.setNextWindowSizeConstraints(Vec2(w, 0f), Vec2(Float.MAX_VALUE, widgetsComboBox.calcMaxPopupHeightFromItemCount(popupMaxHeightInItems)))
+            val constraintMin = Vec2()
+            val constraintMax = Vec2(Float.MAX_VALUE)
+            if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasSize || g.nextWindowData.sizeVal.x <= 0f) // Don't apply constraints if user specified a size
+                constraintMin.x = w
+            if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasSize || g.nextWindowData.sizeVal.y <= 0f)
+                constraintMax.y = widgetsComboBox.calcMaxPopupHeightFromItemCount(popupMaxHeightInItems)
+            setNextWindowSizeConstraints(constraintMin, constraintMax)
         }
 
         // This is essentially a specialized version of BeginPopupEx()
