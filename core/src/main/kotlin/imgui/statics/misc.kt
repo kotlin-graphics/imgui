@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package imgui.statics
 
 import glm_.has
@@ -150,7 +152,7 @@ fun Window.updateManualResize(sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCou
 
     var retAutoFit = false
     val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
-    val gripDrawSize = floor(kotlin.math.max(g.fontSize * 1.35f, windowRounding + 1f + g.fontSize * 0.2f))
+    val gripDrawSize = floor(max(g.fontSize * 1.35f, windowRounding + 1f + g.fontSize * 0.2f))
     val gripHoverInnerSize = floor(gripDrawSize * 0.75f)
     val gripHoverOuterSize = if (io.configWindowsResizeFromEdges) WINDOWS_HOVER_PADDING else 0f
 
@@ -236,7 +238,7 @@ fun Window.updateManualResize(sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCou
             navResizeDir put getKeyMagnitude2d(Key.GamepadDpadLeft, Key.GamepadDpadRight, Key.GamepadDpadUp, Key.GamepadDpadDown)
         if (navResizeDir.x != 0f || navResizeDir.y != 0f) {
             val NAV_RESIZE_SPEED = 600f
-            val resizeStep = floor(NAV_RESIZE_SPEED * g.io.deltaTime * kotlin.math.min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
+            val resizeStep = floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
             g.navWindowingAccumDeltaSize += navResizeDir * resizeStep
             g.navWindowingAccumDeltaSize put (g.navWindowingAccumDeltaSize max (visibilityRect.min - pos - size)) // We need Pos+Size >= visibility_rect.Min, so Size >= visibility_rect.Min - Pos, so size_delta >= visibility_rect.Min - window->Pos - window->Size
             g.navWindowingToggleLayer = false
@@ -279,15 +281,15 @@ fun Window.renderOuterBorders() {
         val borderR = getResizeBorderRect(borderHeld, rounding, 0f)
         drawList.apply {
             pathArcTo(borderR.min.lerp(borderR.max, def.segmentN1) + Vec2(0.5f) + def.innerDir * rounding,
-                rounding,
-                def.outerAngle - glm.PIf * 0.25f,
-                def.outerAngle
+                    rounding,
+                    def.outerAngle - glm.PIf * 0.25f,
+                    def.outerAngle
             )
             pathArcTo(
-                borderR.min.lerp(borderR.max, def.segmentN2) + Vec2(0.5f) + def.innerDir * rounding,
-                rounding,
-                def.outerAngle,
-                def.outerAngle + glm.PIf * 0.25f
+                    borderR.min.lerp(borderR.max, def.segmentN2) + Vec2(0.5f) + def.innerDir * rounding,
+                    rounding,
+                    def.outerAngle,
+                    def.outerAngle + glm.PIf * 0.25f
             )
             pathStroke(Col.SeparatorActive.u32, thickness = 2f max borderSize) // Thicker than usual
         }
@@ -295,9 +297,9 @@ fun Window.renderOuterBorders() {
     if (ImGui.style.frameBorderSize > 0f && flags hasnt WindowFlag.NoTitleBar) {
         val y = pos.y + titleBarHeight - 1
         drawList.addLine(Vec2(pos.x + borderSize, y),
-                         Vec2(pos.x + size.x - borderSize, y),
-                         Col.Border.u32,
-                         ImGui.style.frameBorderSize)
+                Vec2(pos.x + size.x - borderSize, y),
+                Col.Border.u32,
+                ImGui.style.frameBorderSize)
     }
 }
 
@@ -317,7 +319,7 @@ fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, h
         val backupBorderSize = ImGui.style.frameBorderSize
         g.style.frameBorderSize = windowBorderSize
         val titleBarCol =
-            if (titleBarIsHighlight && !g.navDisableHighlight) Col.TitleBgActive else Col.TitleBgCollapsed
+                if (titleBarIsHighlight && !g.navDisableHighlight) Col.TitleBgActive else Col.TitleBgCollapsed
         ImGui.renderFrame(titleBarRect.min, titleBarRect.max, titleBarCol.u32, true, windowRounding)
         ImGui.style.frameBorderSize = backupBorderSize
     } else { // Window background
@@ -329,12 +331,13 @@ fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, h
                     overrideAlpha = true
                     g.nextWindowData.bgAlphaVal
                 }
+
                 else -> 1f
             }
             if (overrideAlpha) bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
             drawList.addRectFilled(
-                pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
-                if (flags has WindowFlag.NoTitleBar) none else DrawFlag.RoundCornersBottom
+                    pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
+                    if (flags has WindowFlag.NoTitleBar) none else DrawFlag.RoundCornersBottom
             )
         }
 
@@ -350,9 +353,9 @@ fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, h
             menuBarRect clipWith rect() // Soft clipping, in particular child window don't have minimum size covering the menu bar so this is useful for them.
             val rounding = if (flags has WindowFlag.NoTitleBar) windowRounding else 0f
             drawList.addRectFilled(
-                menuBarRect.min + Vec2(windowBorderSize, 0f),
-                menuBarRect.max - Vec2(windowBorderSize, 0f),
-                Col.MenuBarBg.u32, rounding, DrawFlag.RoundCornersTop
+                    menuBarRect.min + Vec2(windowBorderSize, 0f),
+                    menuBarRect.max - Vec2(windowBorderSize, 0f),
+                    Col.MenuBarBg.u32, rounding, DrawFlag.RoundCornersTop
             )
             if (ImGui.style.frameBorderSize > 0f && menuBarRect.max.y < pos.y + size.y)
                 drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, ImGui.style.frameBorderSize)
@@ -364,22 +367,25 @@ fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, h
 
         // Render resize grips (after their input handling so we don't have a frame of latency)
         if (handleBordersAndResizeGrips && flags hasnt WindowFlag.NoResize)
-            repeat(resizeGripCount) { resizeGripN ->
+            for (resizeGripN in 0..<resizeGripCount) {
+                val col = resizeGripCol[resizeGripN]
+                if (col hasnt COL32_A_MASK)
+                    continue
                 val grip = Window.resizeGripDef[resizeGripN]
                 val corner = pos.lerp(pos + size, grip.cornerPosN)
                 with(drawList) {
                     pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize, resizeGripDrawSize) else Vec2(resizeGripDrawSize, windowBorderSize)))
                     pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(resizeGripDrawSize, windowBorderSize) else Vec2(windowBorderSize, resizeGripDrawSize)))
                     pathArcToFast(Vec2(corner.x + grip.innerDir.x * (windowRounding + windowBorderSize),
-                                       corner.y + grip.innerDir.y * (windowRounding + windowBorderSize)),
-                                  windowRounding, grip.angleMin12, grip.angleMax12)
-                    pathFillConvex(resizeGripCol[resizeGripN])
+                            corner.y + grip.innerDir.y * (windowRounding + windowBorderSize)),
+                            windowRounding, grip.angleMin12, grip.angleMax12)
+                    pathFillConvex(col)
                 }
             }
 
         // Borders
         if (handleBordersAndResizeGrips)
-        renderOuterBorders()
+            renderOuterBorders()
     }
 }
 
@@ -457,7 +463,7 @@ fun Window.renderTitleBarContents(titleBarRect: Rect, name: String, pOpen: KMuta
     val clipR = Rect(layoutR.min.x, layoutR.min.y, (layoutR.max.x + ImGui.style.itemInnerSpacing.x) min titleBarRect.max.x, layoutR.max.y)
     if (flags has WindowFlag.UnsavedDocument) {
         val markerPos = Vec2(clamp(layoutR.min.x + (layoutR.width - textSize.x) * ImGui.style.windowTitleAlign.x + textSize.x, layoutR.min.x, layoutR.max.x),
-                             (layoutR.min.y + layoutR.max.y) * 0.5f)
+                (layoutR.min.y + layoutR.max.y) * 0.5f)
         if (markerPos.x > layoutR.min.x) {
             drawList.renderBullet(markerPos, Col.Text.u32)
             clipR.max.x = clipR.max.x min (markerPos.x - (markerSizeX * 0.5f).i)
@@ -582,7 +588,7 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
 
     val iCurrent = findWindowFocusIndex(target)
     val windowTarget = findWindowNavFocusable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
-        ?: findWindowNavFocusable(if (focusChangeDir < 0) g.windowsFocusOrder.lastIndex else 0, iCurrent, focusChangeDir)
+            ?: findWindowNavFocusable(if (focusChangeDir < 0) g.windowsFocusOrder.lastIndex else 0, iCurrent, focusChangeDir)
     // Don't reset windowing target if there's a single window in the list
     windowTarget?.let {
         g.navWindowingTarget = it
@@ -593,10 +599,10 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
 }
 
 inline fun <reified T : InputEvent> findLatestInputEvent(predicate: (T) -> Boolean = { true }): T? =
-    g.inputEventsQueue.asReversed().firstOrNull { it is T && predicate(it) } as T?
+        g.inputEventsQueue.asReversed().firstOrNull { it is T && predicate(it) } as T?
 
 fun findLatestInputEvent(key: Key? = null): InputEvent.Key? =
-    findLatestInputEvent<InputEvent.Key> { it.key == key }
+        findLatestInputEvent<InputEvent.Key> { it.key == key }
 
 fun findLatestInputEvent(button: MouseButton? = null): InputEvent.MouseButton? =
-    findLatestInputEvent<InputEvent.MouseButton> { it.button == button }
+        findLatestInputEvent<InputEvent.MouseButton> { it.button == button }

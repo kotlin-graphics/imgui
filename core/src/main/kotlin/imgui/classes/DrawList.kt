@@ -362,7 +362,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         var thickness = thickness_
 
         val pointsCount = points.size
-        if (pointsCount < 2)
+        if (pointsCount < 2 || col hasnt COL32_A_MASK)
             return
 
         val closed = flags has DrawFlag.Closed
@@ -615,7 +615,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int) {
 
         val pointsCount = points.size
-        if (pointsCount < 3)
+        if (pointsCount < 3 || col hasnt COL32_A_MASK)
             return
 
         val uv = Vec2(_data.texUvWhitePixel)
