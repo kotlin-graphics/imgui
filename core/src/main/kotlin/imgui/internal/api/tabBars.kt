@@ -32,6 +32,9 @@ import kotlin.reflect.KMutableProperty0
 
 internal interface tabBars {
 
+    val currentTabBar: TabBar?
+        get() = g.currentTabBar
+
     /** ~ beginTabBarEx */
     fun TabBar.beginEx(bb: Rect, flags_: TabBarFlags): Boolean {
 
@@ -76,6 +79,7 @@ internal interface tabBars {
         itemSpacingY = g.style.itemSpacing.y
         framePadding put g.style.framePadding
         tabsActiveCount = 0
+        lastTabItemIdx = -1
         beginCount = 1
 
         // Layout
@@ -96,6 +100,18 @@ internal interface tabBars {
     /** ~TabBarFindTabByID */
     infix fun TabBar.findTabByID(tabId: ID): TabItem? = if (tabId == 0) null else tabs.find { it.id == tabId }
 
+    /** ~TabBarFindTabByOrder */
+    infix fun TabBar.findTabByOrder(order: Int): TabItem? = tabs.getOrNull(order)
+
+    /** ~TabBarGetCurrentTab */
+    val TabBar.currentTab: TabItem?
+        get() = tabs.getOrNull(lastTabItemIdx)
+
+    // TabBarGetTabOrder
+    // TabBarGetTabName
+    // -> TabBar class
+
+    infix fun TabBar.getTabName(tab: TabItem): String = tabsNames[tab.nameOffset]
 
     /** The *TabId fields be already set by the docking system _before_ the actual TabItem was created, so we clear them regardless.
      *  ~ tabBarRemoveTab     */
@@ -122,7 +138,13 @@ internal interface tabBars {
                 selectedTabId = 0
             }
         } else // Actually select before expecting closure attempt (on an UnsavedDocument tab user is expect to e.g. show a popup)
-            if (visibleTabId != tab.id) nextSelectedTabId = tab.id
+            if (visibleTabId != tab.id)
+                queueFocus(tab)
+    }
+
+    /** ~TabBarQueueFocus */
+    infix fun TabBar.queueFocus(tab: TabItem) {
+        nextSelectedTabId = tab.id
     }
 
     /** ~TabBarQueueReorder */
@@ -281,9 +303,9 @@ internal interface tabBars {
         if (!isTabButton) {
             if (tabAppearing && this.flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
                 if (!tabBarAppearing || selectedTabId == 0)
-                    nextSelectedTabId = id  // New tabs gets activated
+                    queueFocus(tab)  // New tabs gets activated
             if (flags has TabItemFlag.SetSelected && selectedTabId != id) // _SetSelected can only be passed on explicit tab bar
-                nextSelectedTabId = id
+                queueFocus(tab)
         }
 
         // Lock visibility
@@ -340,7 +362,8 @@ internal interface tabBars {
         if (g.dragDropActive)
             buttonFlags /= ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered, held) = ImGui.buttonBehavior(bb, id, buttonFlags)
-        if (pressed && !isTabButton) nextSelectedTabId = id
+        if (pressed && !isTabButton)
+            queueFocus(tab)
 
         // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
         if (g.activeId != id)
@@ -386,9 +409,8 @@ internal interface tabBars {
 
         // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
         val hoveredUnblocked = ImGui.isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)
-        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || ImGui.isMouseReleased(MouseButton.Right)))
-            if (!isTabButton)
-                nextSelectedTabId = id
+        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || ImGui.isMouseReleased(MouseButton.Right)) && !isTabButton)
+            queueFocus(tab)
 
         if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton)
             flags /= TabItemFlag.NoCloseWithMiddleMouseButton

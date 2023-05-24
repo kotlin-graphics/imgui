@@ -54,6 +54,7 @@ interface tabBarsTabs {
         if (tabBar.beginCount > 1)
             window.dc.cursorPos put tabBar.backupCursorPos
 
+        tabBar.lastTabItemIdx = -1
         if (tabBar.flags hasnt TabBarFlag._DockNode)
             popID()
 

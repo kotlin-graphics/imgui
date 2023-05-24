@@ -507,7 +507,7 @@ class TabItem {
     /** BeginTabItem() order, used to re-order tabs after toggling ImGuiTabBarFlags_Reorderable */
     var beginOrder = -1
 
-    /** Index only used during TabBarLayout() */
+    /** Index only used during TabBarLayout(). Tabs gets reordered so 'Tabs[n].IndexDuringLayout == n' but may mismatch during additions. */
     var indexDuringLayout = -1
 
     /** Marked as closed by SetTabItemClosed() */
