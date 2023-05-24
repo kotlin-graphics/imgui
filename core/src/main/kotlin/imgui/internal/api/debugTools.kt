@@ -9,6 +9,7 @@ import imgui.ImGui.beginTooltip
 import imgui.ImGui.boundSettings
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
+import imgui.ImGui.checkbox
 import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
@@ -225,9 +226,11 @@ internal interface debugTools {
             withID(font) {
                 StyleEditor.debugNodeFont(font)
             }
-        treeNode("Atlas texture", "Atlas texture (${atlas.texWidth}x${atlas.texHeight} pixels)") {
-            val tintCol = Vec4(1f)
-            val borderCol = Vec4(1f, 1f, 1f, 0.5f)
+        treeNode("Font Atlas", "Font Atlas (${atlas.texWidth}x${atlas.texHeight} pixels)") {
+            val cfg = g.debugMetricsConfig
+            checkbox("Tint with Text Color", cfg::showAtlasTintedWithTextColor) // Using text color ensure visibility of core atlas data, but will alter custom colored icons
+            val tintCol = if(cfg.showAtlasTintedWithTextColor) getStyleColorVec4(Col.Text) else Vec4(1f)
+            val borderCol = getStyleColorVec4(Col.Border)
             ImGui.image(atlas.texID, Vec2(atlas.texWidth, atlas.texHeight), Vec2(), Vec2(1), tintCol, borderCol)
         }
     }

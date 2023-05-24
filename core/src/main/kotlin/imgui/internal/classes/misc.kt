@@ -234,6 +234,7 @@ class MetricsConfig {
     var showTablesRects = false
     var showDrawCmdMesh = true
     var showDrawCmdBoundingBoxes = true
+    var showAtlasTintedWithTextColor = false
     var showWindowsRectsType = -1
     var showTablesRectsType = -1
 }

@@ -51,6 +51,7 @@ import imgui.ImGui.endTable
 import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
 import imgui.ImGui.getMouseDragDelta
+import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.image
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
@@ -625,6 +626,7 @@ object ShowDemoWindowWidgets {
 
     object Images {
         var pressedCount = 0
+        var useTextColorForTint = false
         operator fun invoke() {
             treeNode("Images") {
                 textWrapped(
@@ -650,12 +652,13 @@ object ShowDemoWindowWidgets {
                 val myTexSize = Vec2(io.fonts.texSize)
 
                 run {
+                    checkbox("Use Text Color for Tint", ::useTextColorForTint)
                     text("%.0fx%.0f", myTexSize.x, myTexSize.y)
                     val pos = cursorScreenPos
                     val uvMin = Vec2(0f)                 // Top-left
                     val uvMax = Vec2(1f)                 // Lower-right
-                    val tintCol = Vec4(1f)   // No tint
-                    val borderCol = Vec4(1f, 1f, 1f, 0.5f) // 50% opaque white
+                    val tintCol = if(useTextColorForTint) getStyleColorVec4(Col.Text) else Vec4(1f)   // No tint
+                    val borderCol = getStyleColorVec4(Col.Border)
                     image(myTexId, Vec2(myTexSize.x, myTexSize.y), uvMin, uvMax, tintCol, borderCol)
                     if (isItemHovered())
                         tooltip {
