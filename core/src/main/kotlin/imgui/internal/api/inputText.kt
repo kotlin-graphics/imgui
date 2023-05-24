@@ -471,7 +471,14 @@ internal interface inputText {
 
                 Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
                 Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
-                Key.Delete.isPressed && !isReadOnly && !isCut -> state.onKeyPressed(K.DELETE or kMask)
+                Key.Delete.isPressed && !isReadOnly && !isCut -> {
+                    if (!state.hasSelection) {
+                        // OSX doesn't seem to have Super+Delete to delete until end-of-line, so we don't emulate that (as opposed to Super+Backspace)
+                        if (isWordmoveKeyDown)
+                            state.onKeyPressed(K.WORDRIGHT or K.SHIFT)
+                    }
+                    state.onKeyPressed(K.DELETE or kMask)
+                }
                 Key.Backspace.isPressed && !isReadOnly -> {
                     if (!state.hasSelection)
                         if (isWordmoveKeyDown)
