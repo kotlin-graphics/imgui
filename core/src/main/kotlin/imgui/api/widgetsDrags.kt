@@ -356,8 +356,17 @@ inline fun <reified N> drag(label: String,
                             min: N? = null,
                             max: N? = null,
                             format_: String? = null,
-                            flags: SliderFlags = none)
-        : Boolean where N : Number, N : Comparable<N> = numberOps<N>().drag(label, pData, vSpeed, min, max, format_, flags)
+                            flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
+        ImGui.drag(label, pData, vSpeed, min, max, format_, flags)
+
+inline fun <reified N> ImGui.drag(label: String,
+                                  pData: KMutableProperty0<N>,
+                                  vSpeed: Float = 1f,
+                                  min: N? = null,
+                                  max: N? = null,
+                                  format_: String? = null,
+                                  flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
+        numberOps<N>().drag(label, pData, vSpeed, min, max, format_, flags)
 
 /** Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget,
  *  p_min and p_max are optional.
@@ -370,8 +379,21 @@ inline fun <reified N> dragN(label: String,
                              max: N? = null,
                              format: String? = null,
                              flags: SliderFlags = none,
-                             properties: (Int) -> KMutableProperty0<N>)
-        : Boolean where N : Number, N : Comparable<N> =
+                             properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
+        ImGui.dragN(label, components, vSpeed, min, max, format, flags, properties)
+
+/** Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget,
+ *  p_min and p_max are optional.
+ *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand
+ *  how to use this function directly. */
+inline fun <reified N> ImGui.dragN(label: String,
+                                   components: Int,
+                                   vSpeed: Float = 1f,
+                                   min: N? = null,
+                                   max: N? = null,
+                                   format: String? = null,
+                                   flags: SliderFlags = none,
+                                   properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
         numberOps<N>().dragN(label, components, vSpeed, min, max, format, flags, properties)
 
 inline fun <N> NumberOps<N>.dragN(label: String,
@@ -381,6 +403,5 @@ inline fun <N> NumberOps<N>.dragN(label: String,
                                   max: N? = null,
                                   format: String? = null,
                                   flags: SliderFlags = none,
-                                  properties: (Int) -> KMutableProperty0<N>)
-        : Boolean where N : Number, N : Comparable<N> =
+                                  properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
         widgetN(label, components) { i -> drag("", properties(i), vSpeed, min, max, format, flags) }

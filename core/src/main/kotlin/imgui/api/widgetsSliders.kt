@@ -215,10 +215,17 @@ interface widgetsSliders {
 }
 
 inline fun <reified N> slider(label: String, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
+        ImGui.slider(label, pData, min, max, format_, flags)
+
+inline fun <reified N> ImGui.slider(label: String, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
         numberOps<N>().slider(label, pData, min, max, format_, flags)
 
 /** Add multiple sliders on 1 line for compact edition of multiple components */
 inline fun <reified N> sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
+        ImGui.sliderN(label, components, min, max, format, flags, properties)
+
+/** Add multiple sliders on 1 line for compact edition of multiple components */
+inline fun <reified N> ImGui.sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
         numberOps<N>().sliderN(label, components, min, max, format, flags, properties)
 
 inline fun <N> NumberOps<N>.sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
@@ -227,4 +234,6 @@ inline fun <N> NumberOps<N>.sliderN(label: String, components: Int, min: N, max:
 }
 
 inline fun <reified N> vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
+        ImGui.vSlider(label, size, pData, min, max, format_, flags)
+inline fun <reified N> ImGui.vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
         numberOps<N>().vSlider(label, size, pData, min, max, format_, flags)

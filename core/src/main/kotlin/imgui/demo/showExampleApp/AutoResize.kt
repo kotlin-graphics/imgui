@@ -2,7 +2,6 @@ package imgui.demo.showExampleApp
 
 import imgui.ImGui.begin
 import imgui.ImGui.end
-import imgui.ImGui.slider
 import imgui.ImGui.text
 import imgui.api.slider
 import imgui.mutablePropertyAt

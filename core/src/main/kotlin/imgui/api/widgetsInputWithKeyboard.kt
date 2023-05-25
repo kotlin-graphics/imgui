@@ -41,10 +41,8 @@ import imgui.internal.sections.ButtonFlag as Bf
 interface widgetsInputWithKeyboard {
 
     /** String overload */
-    fun inputText(
-            label: String, pString: KMutableProperty0<String>, flags: InputTextSingleFlags = none,
-            callback: InputTextCallback? = null, userData: Any? = null
-    ): Boolean {
+    fun inputText(label: String, pString: KMutableProperty0<String>, flags: InputTextSingleFlags = none,
+                  callback: InputTextCallback? = null, userData: Any? = null): Boolean {
         val buf = pString.get().toByteArray()
         return inputText(label, buf, flags, callback, userData).also {
             pString.set(buf.cStr)
@@ -52,16 +50,12 @@ interface widgetsInputWithKeyboard {
     }
 
     /** String overload */
-    fun inputText(
-            label: String, buf: String, flags: InputTextSingleFlags = none,
-            callback: InputTextCallback? = null, userData: Any? = null
-    ): Boolean =
-        inputText(label, buf.toByteArray(), flags, callback, userData)
+    fun inputText(label: String, buf: String, flags: InputTextSingleFlags = none,
+                  callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+            inputText(label, buf.toByteArray(), flags, callback, userData)
 
-    fun inputText(
-            label: String, buf: StringBuilder, flags: InputTextSingleFlags = none,
-            callback: InputTextCallback? = null, userData: Any? = null
-    ): Boolean {
+    fun inputText(label: String, buf: StringBuilder, flags: InputTextSingleFlags = none,
+                  callback: InputTextCallback? = null, userData: Any? = null): Boolean {
         val array = buf.toString().toByteArray()
         return inputText(label, array, flags, callback, userData).also {
             buf.clear()
@@ -69,34 +63,26 @@ interface widgetsInputWithKeyboard {
         }
     }
 
-    fun inputText(
-            label: String, buf: ByteArray, flags: InputTextSingleFlags = none,
-            callback: InputTextCallback? = null, userData: Any? = null
-    ): Boolean = inputTextEx(label, null, buf, Vec2(), flags, callback, userData)
+    fun inputText(label: String, buf: ByteArray, flags: InputTextSingleFlags = none,
+                  callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+            inputTextEx(label, null, buf, Vec2(), flags, callback, userData)
 
     /** String overload */
-    fun inputTextMultiline(
-            label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextSingleFlags = none,
-            callback: InputTextCallback? = null, userData: Any? = null
-    ): Boolean =
-        inputTextEx(label, null, buf.toByteArray(), size, flags or Itf._Multiline, callback, userData)
+    fun inputTextMultiline(label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextSingleFlags = none,
+                           callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+            inputTextEx(label, null, buf.toByteArray(), size, flags or Itf._Multiline, callback, userData)
 
-    fun inputTextMultiline(
-            label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextSingleFlags = none,
-            callback: InputTextCallback? = null, userData: Any? = null
-    ): Boolean =
-        inputTextEx(label, null, buf, size, flags or Itf._Multiline, callback, userData)
+    fun inputTextMultiline(label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextSingleFlags = none,
+                           callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+            inputTextEx(label, null, buf, size, flags or Itf._Multiline, callback, userData)
 
     /** String overload */
-    fun inputTextWithHint(
-            label: String, hint: String, buf: String, flags: InputTextSingleFlags = none,
-            callback: InputTextCallback? = null, userData: Any? = null
-    ): Boolean = inputTextWithHint(label, hint, buf.toByteArray(), flags)
+    fun inputTextWithHint(label: String, hint: String, buf: String, flags: InputTextSingleFlags = none,
+                          callback: InputTextCallback? = null, userData: Any? = null): Boolean = inputTextWithHint(label, hint, buf.toByteArray(), flags)
 
     /** call InputTextMultiline() or InputTextEx() manually if you need multi-line + hint. */
-    fun inputTextWithHint(label: String, hint: String, buf: ByteArray, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean {
-        return inputTextEx(label, hint, buf, Vec2(), flags, callback, userData)
-    }
+    fun inputTextWithHint(label: String, hint: String, buf: ByteArray, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+            inputTextEx(label, hint, buf, Vec2(), flags, callback, userData)
 
     fun input(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f", flags: InputTextSingleFlags = none): Boolean =
             input(label, v mutablePropertyAt 0, step, stepFast, format, flags)
@@ -212,10 +198,19 @@ interface widgetsInputWithKeyboard {
 
 }
 
-inline fun <reified N> input(label: String, pData: KMutableProperty0<N>, step: N? = null, stepFast: N? = null, format_: String? = null, flags_: InputTextSingleFlags = none): Boolean where N : Number, N : Comparable<N> = numberOps<N>().input(label, pData, step, stepFast, format_, flags_)
+inline fun <reified N> input(label: String, pData: KMutableProperty0<N>, step: N? = null, stepFast: N? = null, format_: String? = null, flags_: InputTextSingleFlags = none): Boolean where N : Number, N : Comparable<N> =
+        ImGui.input(label, pData, step, stepFast, format_, flags_)
 
-inline fun <reified N> inputN(label: String, components: Int, step: N? = null, stepFast: N? = null, format: String? = null, flags: InputTextSingleFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> = numberOps<N>().inputN(label, components, step, stepFast, format, flags, properties)
+inline fun <reified N> ImGui.input(label: String, pData: KMutableProperty0<N>, step: N? = null, stepFast: N? = null, format_: String? = null, flags_: InputTextSingleFlags = none): Boolean where N : Number, N : Comparable<N> =
+        numberOps<N>().input(label, pData, step, stepFast, format_, flags_)
 
-inline fun <N> NumberOps<N>.inputN(label: String, components: Int, step: N? = null, stepFast: N? = null, format: String? = null, flags: InputTextSingleFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> = widgetN(label, components) { i ->
-    input("", properties(i), step, stepFast, format, flags)
-}
+inline fun <reified N> inputN(label: String, components: Int, step: N? = null, stepFast: N? = null, format: String? = null, flags: InputTextSingleFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
+        ImGui.inputN(label, components, step, stepFast, format, flags, properties)
+
+inline fun <reified N> ImGui.inputN(label: String, components: Int, step: N? = null, stepFast: N? = null, format: String? = null, flags: InputTextSingleFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
+        numberOps<N>().inputN(label, components, step, stepFast, format, flags, properties)
+
+inline fun <N> NumberOps<N>.inputN(label: String, components: Int, step: N? = null, stepFast: N? = null, format: String? = null, flags: InputTextSingleFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
+        widgetN(label, components) { i ->
+            input("", properties(i), step, stepFast, format, flags)
+        }

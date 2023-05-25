@@ -616,6 +616,12 @@ internal interface widgetsLowLevelBehaviors {
     }
 }
 
-inline fun <reified N> dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> = numberFpOps<N, Nothing>().dragBehavior(id, pV, vSpeed, min, max, format, flags)
+inline fun <reified N> dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> =
+        ImGui.dragBehavior(id, pV, vSpeed, min, max, format, flags)
+inline fun <reified N> ImGui.dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> =
+        numberFpOps<N, Nothing>().dragBehavior(id, pV, vSpeed, min, max, format, flags)
 
-inline fun <reified N> sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = numberFpOps<N, Nothing>().sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
+inline fun <reified N> sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
+        ImGui.sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
+inline fun <reified N> ImGui.sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
+        numberFpOps<N, Nothing>().sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
