@@ -544,7 +544,8 @@ class ImplGL3 : GLInterface {
 
             var hasClipOrigin = false
             // Query vendor to enable glBufferSubData kludge
-            var useBufferSubData =  Platform.get() == Platform.WINDOWS && glGetString(GL_VENDOR)?.startsWith("Intel") ?: false // #if !defined(IMGUI_IMPL_OPENGL_ES2)
+            // [JVM] we have to go `lazy` because at the initialization there are still no GL caps and `glGetString` will fail
+            val useBufferSubData by lazy { Platform.get() == Platform.WINDOWS && glGetString(GL_VENDOR)?.startsWith("Intel") ?: false }// #if !defined(IMGUI_IMPL_OPENGL_ES2)
         }
 
         // b7686a88e950f95250c1e88e301bef1ebca22523
