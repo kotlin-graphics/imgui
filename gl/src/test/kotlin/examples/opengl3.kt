@@ -25,6 +25,14 @@ lateinit var gAppWindow: GlWindow
 lateinit var implGlfw: ImplGlfw
 lateinit var implGl3: ImplGL3
 
+// Our state
+// (we use static, which essentially makes the variable globals, as a convenience to keep the example code easy to follow)
+var showDemoWindow = true
+var showAnotherWindow = false
+var clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
+var f = 0f
+var counter = 0
+
 // Main code
 fun main() {
 
@@ -100,10 +108,66 @@ fun main() {
     // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
     // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
 
-    //  [JVM] Main loop
-    // This automatically also polls events, swaps buffers and gives a MemoryStack instance for the i-th frame
+    // Main loop
+    // [JVM] This automatically also polls events, swaps buffers and gives a MemoryStack instance for the i-th frame
     gAppWindow.loop {
-        mainLoopStep()
+
+        // Start the Dear ImGui frame
+        implGl3.newFrame()
+        implGlfw.newFrame()
+
+        ImGui.newFrame()
+
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if (showDemoWindow)
+            ImGui.showDemoWindow(::showDemoWindow)
+
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+        run {
+
+            ImGui.begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
+
+//                if(comboFilter("my combofilter", buf, hints, s) )
+//                    println("picking occured")
+
+            ImGui.text("This is some useful text.")                // Display some text (you can use a format strings too)
+            ImGui.checkbox("Demo Window", ::showDemoWindow)             // Edit bools storing our window open/close state
+            ImGui.checkbox("Another Window", ::showAnotherWindow)
+
+            ImGui.slider("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui.colorEdit3("clear color", clearColor)           // Edit 3 floats representing a color
+
+            if (ImGui.button("Button"))                           // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++
+
+            ImGui.text("counter = $counter")
+
+            ImGui.text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / ImGui.io.framerate, ImGui.io.framerate)
+
+            ImGui.end()
+
+            // 3. Show another simple window.
+            if (showAnotherWindow) {
+                // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+                ImGui.begin("Another Window", ::showAnotherWindow)
+                ImGui.text("Hello from another window!")
+                button("Close Me") { //  this takes advantage of functional programming and pass directly a lambda as last parameter
+                    showAnotherWindow = false
+                }
+                ImGui.end()
+            }
+        }
+
+        // Rendering
+        ImGui.render()
+        glViewport(gAppWindow.framebufferSize)
+        glClearColor(clearColor.x * clearColor.w, clearColor.y * clearColor.w, clearColor.z * clearColor.w, clearColor.w)
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        implGl3.renderDrawData(ImGui.drawData!!)
+
+        if (DEBUG)
+            checkError("mainLoop")
     }
 
     implGl3.shutdown()
@@ -113,72 +177,4 @@ fun main() {
     GL.destroy() // TODO -> uno
     gAppWindow.destroy()
     glfw.terminate()
-}
-
-// Our state
-// (we use static, which essentially makes the variable globals, as a convenience to keep the example code easy to follow)
-var showDemoWindow = true
-var showAnotherWindow = false
-var clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
-var f = 0f
-var counter = 0
-
-fun mainLoopStep() {
-
-    // Start the Dear ImGui frame
-    implGl3.newFrame()
-    implGlfw.newFrame()
-
-    ImGui.newFrame()
-
-    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    if (showDemoWindow)
-        ImGui.showDemoWindow(::showDemoWindow)
-
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-    run {
-
-        ImGui.begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
-
-//                if(comboFilter("my combofilter", buf, hints, s) )
-//                    println("picking occured")
-
-        ImGui.text("This is some useful text.")                // Display some text (you can use a format strings too)
-        ImGui.checkbox("Demo Window", ::showDemoWindow)             // Edit bools storing our window open/close state
-        ImGui.checkbox("Another Window", ::showAnotherWindow)
-
-        ImGui.slider("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui.colorEdit3("clear color", clearColor)           // Edit 3 floats representing a color
-
-        if (ImGui.button("Button"))                           // Buttons return true when clicked (most widgets return true when edited/activated)
-            counter++
-
-        ImGui.text("counter = $counter")
-
-        ImGui.text("Application average %.3f ms/frame (%.1f FPS)", 1_000f / ImGui.io.framerate, ImGui.io.framerate)
-
-        ImGui.end()
-
-        // 3. Show another simple window.
-        if (showAnotherWindow) {
-            // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui.begin("Another Window", ::showAnotherWindow)
-            ImGui.text("Hello from another window!")
-            button("Close Me") { //  this takes advantage of functional programming and pass directly a lambda as last parameter
-                showAnotherWindow = false
-            }
-            ImGui.end()
-        }
-    }
-
-    // Rendering
-    ImGui.render()
-    glViewport(gAppWindow.framebufferSize)
-    glClearColor(clearColor.x * clearColor.w, clearColor.y * clearColor.w, clearColor.z * clearColor.w, clearColor.w)
-    glClear(GL_COLOR_BUFFER_BIT)
-
-    implGl3.renderDrawData(ImGui.drawData!!)
-
-    if (DEBUG)
-        checkError("mainLoop")
 }
