@@ -9,6 +9,7 @@ import imgui.MouseButton
 import imgui.api.g
 import imgui.div
 import imgui.internal.classes.Window
+import imgui.internal.hashData
 import imgui.internal.hashStr
 import imgui.internal.sections.*
 
@@ -148,6 +149,13 @@ internal interface basicAccessors {
         val id = hashStr(str, if (strEnd != -1) strEnd else 0, seed)
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType._String, str, strEnd)
+        return id
+    }
+
+    fun getIDWithSeed(n: Int, seed: ID): ID {
+        val id = hashData(n, seed)
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType.Int, n)
         return id
     }
 }

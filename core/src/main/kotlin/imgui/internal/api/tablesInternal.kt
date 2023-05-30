@@ -99,7 +99,7 @@ interface tablesInternal {
                 if (table.instanceDataExtra.size < instanceNo)
                     table.instanceDataExtra += TableInstanceData()
                 val instanceDesc = "##Instance$instanceNo"
-                getIDWithSeed(instanceDesc, instanceDesc.length, id)
+                getIDWithSeed(instanceNo, getIDWithSeed("##Instances", -1, id)) // Push "##Instance" followed by (int)instance_no in ID stack.
             }
             else -> id
         }
