@@ -5,6 +5,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.beginChildEx
 import imgui.ImGui.calcItemSize
+import imgui.ImGui.getIDWithSeed
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.isDoubleClicked
 import imgui.ImGui.itemSize
@@ -62,11 +63,7 @@ interface tablesInternal {
 
         // Acquire storage for the table
         val table = g.tables.getOrAddByKey(id)
-        val instanceNo = if (table.lastFrameActive != g.frameCount) 0 else table.instanceCurrent + 1
-        val instanceId: ID = id + instanceNo
         val tableLastFlags = table.flags
-        if (instanceNo > 0)
-            assert(table.columnsCount == columnsCount) { "BeginTable(): Cannot change columns count mid-frame while preserving same ID" }
 
         // Acquire temporary buffers
         val tableIdx = g.tables.getIndex(table).i
@@ -83,9 +80,9 @@ interface tablesInternal {
         flags = tableFixFlags(flags, outerWindow)
 
         // Initialize
+        val instanceNo = if (table.lastFrameActive != g.frameCount) 0 else table.instanceCurrent + 1
         table.id = id
         table.flags = flags
-        table.instanceCurrent = instanceNo
         table.lastFrameActive = g.frameCount
         table.outerWindow = outerWindow
         table.innerWindow = outerWindow
@@ -93,8 +90,21 @@ interface tablesInternal {
         table.isLayoutLocked = false
         table.innerWidth = innerWidth
         tempData.userOuterSize put outerSize
-        if (instanceNo > 0 && table.instanceDataExtra.size < instanceNo)
-            table.instanceDataExtra += TableInstanceData()
+
+        // Instance data (for instance 0, TableID == TableInstanceID)
+        table.instanceCurrent = instanceNo
+        val instanceId = when {
+            instanceNo > 0 -> {
+                assert(table.columnsCount == columnsCount) { "BeginTable(): Cannot change columns count mid-frame while preserving same ID" }
+                if (table.instanceDataExtra.size < instanceNo)
+                    table.instanceDataExtra += TableInstanceData()
+                val instanceDesc = "##Instance$instanceNo"
+                getIDWithSeed(instanceDesc, instanceDesc.length, id)
+            }
+            else -> id
+        }
+        val tableInstance = table getInstanceData table.instanceCurrent
+        tableInstance.tableInstanceID = instanceId
 
         // When not using a child window, WorkRect.Max will grow as we append contents.
         if (useChildWindow) {
@@ -143,7 +153,9 @@ interface tablesInternal {
         }
 
         // Push a standardized ID for both child-using and not-child-using tables
-        pushOverrideID(instanceId)
+        pushOverrideID(id)
+        if (instanceNo > 0)
+            pushOverrideID(instanceId) // FIXME: Somehow this is not resolved by stack-tool, even tho GetIDWithSeed() submitted the symbol.
 
         // Backup a copy of host window members we will modify
         val innerWindow = table.innerWindow!!
@@ -1133,7 +1145,7 @@ interface tablesInternal {
                     name = "<Unknown>"
 
                 // Make sure we can't hide the last active column
-                var menuItemActive = otherColumn.flags?.hasnt(TableColumnFlag.NoHide) == true
+                var menuItemActive = otherColumn.flags.hasnt(TableColumnFlag.NoHide) == true
                 if (otherColumn.isUserEnabled && columnsEnabledCount <= 1)
                     menuItemActive = false
                 if (ImGui.menuItem(name, "", otherColumn.isUserEnabled, menuItemActive))
@@ -1370,6 +1382,9 @@ interface tablesInternal {
 
     /** ~TableGetInstanceData */
     infix fun Table.getInstanceData(instanceNo: Int): TableInstanceData = if (instanceNo == 0) instanceDataFirst else instanceDataExtra[instanceNo - 1]
+
+    /** ~TableGetInstanceID */
+    infix fun Table.getInstanceID(instanceNo: Int): ID = getInstanceData(instanceNo).tableInstanceID
 
     /** ~TableSortSpecsSanitize */
     fun Table.sortSpecsSanitize() {
@@ -1787,7 +1802,8 @@ interface tablesInternal {
      *  ~TableGetColumnResizeID */
     fun Table.getColumnResizeID(columnN: Int, instanceNo: Int = 0): ID {
         assert(columnN in 0 until columnsCount)
-        return id + 1 + instanceNo * columnsCount + columnN
+        val instanceId = getInstanceID(instanceNo)
+        return instanceId + 1 + columnN // FIXME: #6140: still not ideal
     }
 
     /** Maximum column content width given current layout. Use column->MinX so this value on a per-column basis.

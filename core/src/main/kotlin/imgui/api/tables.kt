@@ -223,8 +223,10 @@ interface tables {
         }
 
         // Pop from id stack
-        assert(innerWindow.idStack.last() == table.id + table.instanceCurrent) { "Mismatching PushID/PopID!" }
+        assert(innerWindow.idStack.last() == tableInstance.tableInstanceID) { "Mismatching PushID/PopID!" }
         assert(outerWindow.dc.itemWidthStack.size >= tempData.hostBackupItemWidthStackSize) { "Too many PopItemWidth!" }
+        if (table.instanceCurrent > 0)
+            popID()
         popID()
 
         // Restore window data that we modified
@@ -504,10 +506,9 @@ interface tables {
                 continue
 
             // Push an id to allow unnamed labels (generally accidental, but let's behave nicely with them)
-            // - in your own code you may omit the PushID/PopID all-together, provided you know they won't collide
-            // - table->InstanceCurrent is only >0 when we use multiple BeginTable/EndTable calls with same identifier.
+            // In your own code you may omit the PushID/PopID all-together, provided you know they won't collide.
             val name = if (tableGetColumnFlags(columnN) has Tcf.NoHeaderLabel) "" else tableGetColumnName(columnN)!!
-            pushID(table.instanceCurrent * table.columnsCount + columnN)
+            pushID(columnN)
             tableHeader(name)
             popID()
         }
