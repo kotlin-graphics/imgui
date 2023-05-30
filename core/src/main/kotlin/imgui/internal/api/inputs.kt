@@ -61,8 +61,7 @@ internal interface inputs {
 
     /** ~GetKeyData */
     val Key.data: KeyData
-        get() =
-            // Special storage location for mods
+        get() = // Special storage location for mods
             g.io.keysData[convertSingleModFlagToKey().index]
 
     // ImGuiMod_Shortcut is translated to either Ctrl or Super.

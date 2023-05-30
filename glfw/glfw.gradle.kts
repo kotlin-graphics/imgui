@@ -19,7 +19,7 @@ dependencies {
 
     implementation(projects.core)
 
-    api("kotlin.graphics:uno:0.7.19")
+    api("kotlin.graphics:uno:0.7.21")
     lwjgl { implementation(glfw, opengl, remotery) }
 
     testImplementation("io.kotest:kotest-runner-junit5:5.5.5")

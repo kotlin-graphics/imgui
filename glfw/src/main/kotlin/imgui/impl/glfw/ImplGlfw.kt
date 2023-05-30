@@ -25,7 +25,7 @@ enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
 // TODO chain previously installed callbacks
 // TODO GLFW_HAS_NEW_CURSORS and similar
 
-// GLFW callbacks (installer)
+// GLFW callbacks install
 // - When calling Init with 'install_callbacks=true': ImGui_ImplGlfw_InstallCallbacks() is called. GLFW callbacks will be installed for you. They will chain-call user's previously installed callbacks, if any.
 // - When calling Init with 'install_callbacks=false': GLFW callbacks won't be installed. You will need to call individual function yourself from your own GLFW callbacks.
 class ImplGlfw @JvmOverloads constructor(
@@ -157,7 +157,7 @@ class ImplGlfw @JvmOverloads constructor(
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
             window.cursor = GlfwCursor(data.mouseCursors[imguiCursor.i].takeIf { it != NULL }
-                                               ?: data.mouseCursors[MouseCursor.Arrow.i])
+                    ?: data.mouseCursors[MouseCursor.Arrow.i])
             window.cursorMode = CursorMode.Normal
         }
     }
@@ -239,13 +239,13 @@ class ImplGlfw @JvmOverloads constructor(
         //        IM_ASSERT(bd->InstalledCallbacks == false && "Callbacks already installed!");
         //        IM_ASSERT(bd->Window == window);
 
-        window.focusCB = windowFocusCallback
-        window.cursorEnterCB = cursorEnterCallback
-        window.cursorPosCB = cursorPosCallback
-        window.mouseButtonCB = mouseButtonCallback
-        window.scrollCB = scrollCallback
-        window.keyCB = keyCallback
-        window.charCB = charCallback
+        window.focusCB = windowFocusCB
+        window.cursorEnterCB = cursorEnterCB
+        window.cursorPosCB = cursorPosCB
+        window.mouseButtonCB = mouseButtonCB
+        window.scrollCB = scrollCB
+        window.keyCB = keyCB
+        window.charCB = charCB
         // TODO monitor callback
 
         //        bd->PrevUserCallbackWindowFocus = glfwSetWindowFocusCallback(window, ImGui_ImplGlfw_WindowFocusCallback);
@@ -294,11 +294,10 @@ class ImplGlfw @JvmOverloads constructor(
         fun newFrame() = instance.newFrame()
         fun shutdown() = instance.shutdown()
 
-        val mouseButtonCallback: MouseButtonCB = { _, button: Int, action: Int, mods: Int ->
+        val mouseButtonCB: MouseButtonCB = { wnd: GlfwWindow, button: Int, action: Int, mods: Int ->
 
-            //            ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
-            //            if (bd->PrevUserCallbackMousebutton != NULL && window == bd->Window)
-            //            bd->PrevUserCallbackMousebutton(window, button, action, mods);
+            if (shouldChainCallback(wnd))
+                data.prevUserCBMousebutton?.invoke(wnd, button, action, mods)
 
             updateKeyModifiers()
             if (button >= 0 && button < MouseButton.COUNT)
@@ -316,14 +315,31 @@ class ImplGlfw @JvmOverloads constructor(
             io.addKeyEvent(Key.Mod_Super, (glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS))
         }
 
-        val scrollCallback: ScrollCB = { _, offset: Vec2d ->
+        // GFLW callbacks options:
+        // - Set 'chain_for_all_windows=true' to enable chaining callbacks for all windows (including secondary viewports created by backends or by user)
+        // Set to 'true' to enable chaining installed callbacks for all windows (including secondary viewports created by backends or by user.
+        // This is 'false' by default meaning we only chain callbacks for the main viewport.
+        // We cannot set this to 'true' by default because user callbacks code may be not testing the 'window' parameter of their callback.
+        // If you set this to 'true' your user callback code will need to make sure you are testing the 'window' parameter.
+        fun setCallbacksChainForAllWindows(chainForAllWindows: Boolean) {
+            data.callbacksChainForAllWindows = chainForAllWindows
+        }
+
+        fun shouldChainCallback(window: GlfwWindow): Boolean = if (data.callbacksChainForAllWindows) true else window == data.window
+
+        // GLFW callbacks (individual callbacks to call yourself if you didn't install callbacks)
+
+        val scrollCB: ScrollCB = { wnd: GlfwWindow, offset: Vec2d ->
+            if (shouldChainCallback(wnd))
+                data.prevUserCBScroll?.invoke(wnd, offset)
+
             io.addMouseWheelEvent(offset.x.f, offset.y.f)
         }
 
-        val keyCallback: KeyCB = { _, keycode: uno.glfw.Key, scancode: Int, action: InputAction, mods: Int ->
+        val keyCB: KeyCB = { wnd, keycode: uno.glfw.Key, scancode: Int, action: InputAction, mods: Int ->
 
-            //            if (bd->PrevUserCallbackKey != NULL && window == bd->Window)
-            //            bd->PrevUserCallbackKey(window, keycode, scancode, action, mods);
+            if (shouldChainCallback(wnd))
+                data.prevUserCBKey?.invoke(wnd, keycode, scancode, action, mods)
 
             if (action == InputAction.Press || action == InputAction.Release) {
 
@@ -335,13 +351,19 @@ class ImplGlfw @JvmOverloads constructor(
             }
         }
 
-        val charCallback: CharCB = { _, c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
+        val charCB: CharCB = { wnd, c: Int ->
+            if (shouldChainCallback(wnd))
+                data.prevUserCBChar?.invoke(wnd, c)
 
+            if (!imeInProgress) // [JVM]
+                io.addInputCharacter(c.c) }
+
+        // Since 1.84
         // Workaround: X11 seems to send spurious Leave/Enter events which would make us lose our position,
         // so we back it up and restore on Leave/Enter (see https://github.com/ocornut/imgui/issues/4984)
-        val cursorEnterCallback: CursorEnterCB = { _, entered ->
-            //            if (bd->PrevUserCallbackCursorEnter != NULL && window == bd->Window)
-            //            bd->PrevUserCallbackCursorEnter(window, entered);
+        val cursorEnterCB: CursorEnterCB = { wnd, entered ->
+            if (shouldChainCallback(wnd))
+                data.prevUserCBCursorEnter?.invoke(wnd, entered)
 
             if (glfwGetInputMode(data.window.handle, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
                 if (entered) {
@@ -354,17 +376,18 @@ class ImplGlfw @JvmOverloads constructor(
                 }
         }
 
-        val windowFocusCallback: WindowFocusCB = { _, focused ->
-            //            if (bd->PrevUserCallbackWindowFocus != NULL && window == bd->Window)
-            //            bd->PrevUserCallbackWindowFocus(window, focused);
+        // Since 1.84
+        val windowFocusCB: WindowFocusCB = { wnd, focused ->
+            if (shouldChainCallback(wnd))
+                data.prevUserCBWindowFocus?.invoke(wnd, focused)
 
             io.addFocusEvent(focused)
         }
 
-        val cursorPosCallback: CursorPosCB = { _, pos ->
-            //            ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
-            //            if (bd->PrevUserCallbackCursorPos != NULL && window == bd->Window)
-            //            bd->PrevUserCallbackCursorPos(window, x, y);
+        // Since 1.87
+        val cursorPosCB: CursorPosCB = { wnd, pos ->
+            if (shouldChainCallback(wnd))
+                data.prevUserCBCursorPos?.invoke(wnd, pos)
 
             if (glfwGetInputMode(data.window.handle, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
 
@@ -390,12 +413,17 @@ class ImplGlfw @JvmOverloads constructor(
             val mouseCursors = LongArray/*<GlfwCursor>*/(MouseCursor.COUNT)
             val lastValidMousePos = Vec2()
             var installedCallbacks = false
+            var callbacksChainForAllWindows = false
 
             // Chain GLFW callbacks: our callbacks will call the user's previously installed callbacks, if any.
-            //            GLFWmousebuttonfun      PrevUserCallbackMousebutton;
-            //            GLFWscrollfun           PrevUserCallbackScroll;
-            //            GLFWkeyfun              PrevUserCallbackKey;
-            //            GLFWcharfun             PrevUserCallbackChar;
+            var prevUserCBWindowFocus: WindowFocusCB? = null
+            var prevUserCBCursorPos: CursorPosCB? = null
+            var prevUserCBCursorEnter: CursorEnterCB? = null
+            var prevUserCBMousebutton: MouseButtonCB? = null
+            var prevUserCBScroll: ScrollCB? = null
+            var prevUserCBKey: KeyCB? = null
+            var prevUserCBChar: CharCB? = null
+            var prevUserCBMonitor: GlfwMonitorFun? = null
         }
 
         val uno.glfw.Key.imguiKey: Key

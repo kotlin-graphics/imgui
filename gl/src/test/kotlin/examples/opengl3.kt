@@ -164,7 +164,7 @@ fun mainLoopStep() {
             // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             ImGui.begin("Another Window", ::showAnotherWindow)
             ImGui.text("Hello from another window!")
-            button("Close Me") { //  this takes advantage of functional programming and pass directly a lambda as last parameter:
+            button("Close Me") { //  this takes advantage of functional programming and pass directly a lambda as last parameter
                 showAnotherWindow = false
             }
             ImGui.end()

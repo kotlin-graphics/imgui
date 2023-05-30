@@ -22,7 +22,7 @@ dependencies {
     implementation(kotlin("reflect"))
     testImplementation(kotlin("test"))
 
-    api("kotlin.graphics:uno-core:0.7.19")
+    api("kotlin.graphics:uno-core:0.7.21")
     lwjgl { implementation(jemalloc, stb) }
 
     // Temporarily use a commit-hash for the version until the "is checks for equality" change is released

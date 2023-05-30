@@ -21,7 +21,7 @@ dependencies {
     implementation(projects.core)
     implementation(projects.glfw)
 
-    api("kotlin.graphics:uno:0.7.19")
+    api("kotlin.graphics:uno:0.7.21")
     lwjgl { implementation(jemalloc, glfw, opengl, remotery, stb) }
 
     testImplementation("com.github.ajalt:mordant:1.2.1")
