@@ -521,7 +521,7 @@ internal interface debugTools {
         text += "  { "
         for (tabN in 0 until (tabBar.tabs.size min 3)) {
             val tab = tabBar.tabs[tabN]
-            text += (if (tabN > 0) ", " else "") + "'" + if (tab.nameOffset != -1) tabBar.getTabName(tab) else "???" + "'"
+            text += (if (tabN > 0) ", " else "") + "'" + tabBar.getTabName(tab) + "'"
         }
         text += if (tabBar.tabs.size > 3) " ... }" else " } "
         if (!isActive)
@@ -546,8 +546,7 @@ internal interface debugTools {
                     tabBar.queueReorder(tab, +1)
                 sameLine()
                 val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
-                val name = if (tab.nameOffset != -1) tabBar.getTabName(tab) else "???"
-                text("%02d$c Tab 0x%08X '$name' Offset: %.2f, Width: %.2f/%.2f", tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
+                text("%02d$c Tab 0x%08X '${tabBar.getTabName(tab)}' Offset: %.2f, Width: %.2f/%.2f", tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
                 popID()
             }
             treePop()

@@ -88,6 +88,11 @@ interface main {
         g.framerateSecPerFrameCount = (g.framerateSecPerFrameCount + 1) min g.framerateSecPerFrame.size
         io.framerate = if (g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrameCount.f) else Float.MAX_VALUE
 
+        // Process input queue (trickle as many events as possible), turn events into writes to IO structure
+        g.inputEventsTrail.clear()
+        updateInputEvents(g.io.configInputTrickleEventQueue)
+
+        // Update viewports (after processing input queue, so io.MouseHoveredViewport is set)
         updateViewportsNewFrame()
 
         // Setup current font and draw list shared data
@@ -185,10 +190,6 @@ interface main {
         // Close popups on focus lost (currently wip/opt-in)
         //if (g.IO.AppFocusLost)
         //    ClosePopupsExceptModals();
-
-        // Process input queue (trickle as many events as possible)
-        g.inputEventsTrail.clear()
-        updateInputEvents(g.io.configInputTrickleEventQueue)
 
         // Update keyboard input state
         updateKeyboardInputs()

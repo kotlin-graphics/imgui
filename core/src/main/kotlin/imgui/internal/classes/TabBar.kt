@@ -95,6 +95,8 @@ class TabBar {
     /** ~TabBarGetTabName */
     val TabItem.name: String
         get() {
+            if (nameOffset == -1)
+                return "N/A"
             assert(nameOffset in tabsNames.indices)
             return tabsNames[nameOffset]
         }

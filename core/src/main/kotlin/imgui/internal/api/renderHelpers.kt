@@ -11,6 +11,7 @@ import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.getColorU32
+import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.style
 import imgui.api.g
@@ -155,7 +156,7 @@ internal interface renderHelpers {
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndEllipsis, textSize, Vec2())
             val ellipsisPos = floor(Vec2(posMin.x + textSizeClippedX, posMin.y))
             if (ellipsisPos.x + ellipsisWidth <= ellipsisMaxX)
-                for (i in 0 ..< font.ellipsisCharCount) {
+                for (i in 0..<font.ellipsisCharCount) {
                     font.renderChar(drawList, fontSize, ellipsisPos, Col.Text.u32, font.ellipsisChar)
                     ellipsisPos.x += font.ellipsisCharStep * fontScale
                 }
@@ -193,8 +194,8 @@ internal interface renderHelpers {
      * FIXME: uses ImGui::GetColorU32
      * [JVM] safe passing Vec2 instances */
     fun renderColorRectWithAlphaCheckerboard(
-        drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
-        gridOff: Vec2, rounding: Float = 0f, flags_: DrawFlags = none
+            drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
+            gridOff: Vec2, rounding: Float = 0f, flags_: DrawFlags = none
     ) {
         val flags = when {
             flags_ hasnt DrawFlag.RoundCornersMask -> DrawFlag.RoundCornersDefault
@@ -267,8 +268,8 @@ internal interface renderHelpers {
             if (!fullyVisible)
                 window.drawList.pushClipRect(displayRect) // check order here down
             window.drawList.addRect(
-                displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
-                Col.NavHighlight.u32, rounding, thickness = THICKNESS
+                    displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
+                    Col.NavHighlight.u32, rounding, thickness = THICKNESS
             )
             if (!fullyVisible)
                 window.drawList.popClipRect()
@@ -294,23 +295,26 @@ internal interface renderHelpers {
 
     fun renderMouseCursor(basePos: Vec2, baseScale: Float, mouseCursor: MouseCursor, colFill: Int, colBorder: Int, colShadow: Int) {
         //        IM_ASSERT(mouseCursor > ImGuiMouseCursor_None && mouseCursor < ImGuiMouseCursor_COUNT);
+        val fontAtlas = g.drawListSharedData.font!!.containerAtlas
         for (viewport in g.viewports) {
-            val drawList = viewport.foregroundDrawList
-            val fontAtlas = drawList._data.font!!.containerAtlas
+            // We scale cursor with current viewport/monitor, however Windows 10 for its own hardware cursor seems to be using a different scale factor.
             val offset = Vec2()
             val size = Vec2()
             val uv = Array(4) { Vec2() }
-            if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
-                val pos = basePos - offset
-                val scale = baseScale
-                val texId = fontAtlas.texID
-                drawList.pushTextureID(texId)
-                drawList.addImage(texId, pos + Vec2(1, 0) * scale, pos + (Vec2(1, 0) + size) * scale, uv[2], uv[3], colShadow)
-                drawList.addImage(texId, pos + Vec2(2, 0) * scale, pos + (Vec2(2, 0) + size) * scale, uv[2], uv[3], colShadow)
-                drawList.addImage(texId, pos, pos + size * scale, uv[2], uv[3], colBorder)
-                drawList.addImage(texId, pos, pos + size * scale, uv[0], uv[1], colFill)
-                drawList.popTextureID()
-            }
+            if (!fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv))
+                continue
+            val pos = basePos - offset
+            val scale = baseScale
+            if (!viewport.mainRect.overlaps(Rect(pos, pos + (size + 2) * scale)))
+                continue
+            val drawList = viewport.foregroundDrawList
+            val texId = fontAtlas.texID
+            drawList.pushTextureID(texId)
+            drawList.addImage(texId, pos + Vec2(1, 0) * scale, pos + (Vec2(1, 0) + size) * scale, uv[2], uv[3], colShadow)
+            drawList.addImage(texId, pos + Vec2(2, 0) * scale, pos + (Vec2(2, 0) + size) * scale, uv[2], uv[3], colShadow)
+            drawList.addImage(texId, pos, pos + size * scale, uv[2], uv[3], colBorder)
+            drawList.addImage(texId, pos, pos + size * scale, uv[0], uv[1], colFill)
+            drawList.popTextureID()
         }
     }
 
@@ -429,20 +433,20 @@ internal interface renderHelpers {
         val fillU = inner.min.y > outer.min.y
         val fillD = inner.max.y < outer.max.y
         if (fillL) addRectFilled(
-            Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
-            DrawFlag.RoundCornersNone or (if (fillU) none else DrawFlag.RoundCornersTopLeft) or if (fillD) none else DrawFlag.RoundCornersBottomLeft
+                Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
+                DrawFlag.RoundCornersNone or (if (fillU) none else DrawFlag.RoundCornersTopLeft) or if (fillD) none else DrawFlag.RoundCornersBottomLeft
         )
         if (fillR) addRectFilled(
-            Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
-            DrawFlag.RoundCornersNone or (if (fillU) none else DrawFlag.RoundCornersTopRight) or if (fillD) none else DrawFlag.RoundCornersBottomRight
+                Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
+                DrawFlag.RoundCornersNone or (if (fillU) none else DrawFlag.RoundCornersTopRight) or if (fillD) none else DrawFlag.RoundCornersBottomRight
         )
         if (fillU) addRectFilled(
-            Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
-            DrawFlag.RoundCornersNone or (if (fillL) none else DrawFlag.RoundCornersTopLeft) or if (fillR) none else DrawFlag.RoundCornersTopRight
+                Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
+                DrawFlag.RoundCornersNone or (if (fillL) none else DrawFlag.RoundCornersTopLeft) or if (fillR) none else DrawFlag.RoundCornersTopRight
         )
         if (fillD) addRectFilled(
-            Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
-            DrawFlag.RoundCornersNone or (if (fillL) none else DrawFlag.RoundCornersBottomLeft) or if (fillR) none else DrawFlag.RoundCornersBottomRight
+                Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
+                DrawFlag.RoundCornersNone or (if (fillL) none else DrawFlag.RoundCornersBottomLeft) or if (fillR) none else DrawFlag.RoundCornersBottomRight
         )
         if (fillL && fillU) addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft)
         if (fillR && fillU) addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight)

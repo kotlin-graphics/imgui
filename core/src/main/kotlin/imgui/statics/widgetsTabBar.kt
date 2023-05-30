@@ -188,12 +188,16 @@ fun TabBar.layout() {
         for (tabN in 0 until section.tabCount) {
             val tab = tabs[sectionTabIndex + tabN]
             tab.offset = tabOffset
+            tab.nameOffset = -1
             tabOffset += tab.width + if (tabN < section.tabCount - 1) g.style.itemInnerSpacing.x else 0f
         }
         widthAllTabs += (section.width + section.spacing) max 0f
         tabOffset += section.spacing
         sectionTabIndex += section.tabCount
     }
+
+    // Clear name buffers
+    tabsNames.clear()
 
     // If we have lost the selected tab, select the next most recently active one
     if (!foundSelectedTabID) selectedTabId = 0
@@ -226,9 +230,6 @@ fun TabBar.layout() {
 
     scrollingRectMinX = barRect.min.x + sections[0].width + sections[0].spacing
     scrollingRectMaxX = barRect.max.x - sections[2].width - sections[1].spacing
-
-    // Clear name buffers
-    if (flags hasnt TabBarFlag._DockNode) tabsNames.clear()
 
     // Actual layout in host window (we don't do it in BeginTabBar() so as not to waste an extra frame)
     val window = g.currentWindow!!

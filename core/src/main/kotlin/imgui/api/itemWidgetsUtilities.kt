@@ -57,7 +57,7 @@ interface itemWidgetsUtilities {
                 return false
 
             // Special handling for calling after Begin() which represent the title bar or tab.
-            // When the window is collapsed (SkipItems==true) that last item will never be overwritten so we need to detect the case.
+            // When the window is skipped/collapsed (SkipItems==true) that last item will never be overwritten so we need to detect the case.
             if (g.lastItemData.id == window.moveId && window.writeAccessed)
                 return false
         }
