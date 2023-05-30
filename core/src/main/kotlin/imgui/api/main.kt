@@ -1,6 +1,7 @@
 package imgui.api
 
 import glm_.f
+import glm_.i
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
@@ -35,6 +36,7 @@ import imgui.internal.DrawData
 import imgui.internal.classes.Rect
 import imgui.internal.sections.DrawListFlags
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
+import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
 import imgui.static.*
 import imgui.statics.*
 import org.lwjgl.system.Platform
@@ -297,9 +299,11 @@ interface main {
         errorCheckEndFrameSanityChecks()
 
         // Notify Platform/OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-        if (io.setPlatformImeDataFn != null && g.platformImeData != g.platformImeDataPrev) {
+        val imeData = g.platformImeData
+        if (io.setPlatformImeDataFn != null && imeData != g.platformImeDataPrev) {
             //            if (DEBUG)
             // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
+            IMGUI_DEBUG_LOG_IO("Calling io.SetPlatformImeDataFn(): WantVisible: ${imeData.wantVisible.i}, InputPos (%.2f,%.2f)", imeData.inputPos.x, imeData.inputPos.y)
             g.io.setPlatformImeDataFn!!(mainViewport, g.platformImeData)
         }
 
