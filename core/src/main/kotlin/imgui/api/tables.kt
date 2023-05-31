@@ -1,7 +1,5 @@
 package imgui.api
 
-import glm_.has
-import glm_.hasnt
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
@@ -47,6 +45,8 @@ import imgui.ImGui.tableGetHoveredColumn
 import imgui.ImGui.tableOpenContextMenu
 import imgui.ImGui.tableSetColumnSortDirection
 import imgui.ImGui.updateLayout
+import imgui.TableColumnFlag
+import imgui.TableFlag
 import imgui.classes.TableSortSpecs
 import imgui.internal.classes.*
 import imgui.internal.floor
@@ -86,8 +86,8 @@ interface tables {
 
     /** Read about "TABLE SIZING" at the top of this file. */
     fun beginTable(
-            strId: String, columns: Int, flags: TableFlags = none,
-            outerSize: Vec2 = Vec2(), innerWidth: Float = 0f
+        strId: String, columns: Int, flags: TableFlags = none,
+        outerSize: Vec2 = Vec2(), innerWidth: Float = 0f
     ): Boolean {
         val id = getID(strId)
         return beginTableEx(strId, id, columns, flags, outerSize, innerWidth)
@@ -148,7 +148,8 @@ interface tables {
             val inner = table.innerWindow!!
             var maxPosX = inner.dc.cursorMaxPos.x
             if (table.rightMostEnabledColumn != -1)
-                maxPosX = maxPosX max (table.columns[table.rightMostEnabledColumn].workMaxX + table.cellPaddingX + table.outerPaddingX - outerPaddingForBorder)
+                maxPosX =
+                    maxPosX max (table.columns[table.rightMostEnabledColumn].workMaxX + table.cellPaddingX + table.outerPaddingX - outerPaddingForBorder)
             if (table.resizedColumn != -1)
                 maxPosX = maxPosX max table.resizeLockMinContentsX2
             inner.dc.cursorMaxPos.x = maxPosX
@@ -190,16 +191,20 @@ interface tables {
         for (columnN in 0 until table.columnsCount)
             if (table.enabledMaskByIndex testBit columnN) {
                 val column = table.columns[columnN]
-                val columnWidthRequest = if (column.flags has Tcf.WidthFixed && column.flags hasnt Tcf.NoResize) column.widthRequest else table getColumnWidthAuto column
+                val columnWidthRequest =
+                    if (column.flags has Tcf.WidthFixed && column.flags hasnt Tcf.NoResize) column.widthRequest else table getColumnWidthAuto column
                 if (column.flags has Tcf.WidthFixed)
                     autoFitWidthForFixed += columnWidthRequest
                 else
                     autoFitWidthForStretched += columnWidthRequest
                 if (column.flags has Tcf.WidthStretch && column.flags hasnt Tcf.NoResize)
-                    autoFitWidthForStretchedMin = autoFitWidthForStretchedMin max (columnWidthRequest / (column.stretchWeight / table.columnsStretchSumWeights))
+                    autoFitWidthForStretchedMin =
+                        autoFitWidthForStretchedMin max (columnWidthRequest / (column.stretchWeight / table.columnsStretchSumWeights))
             }
-        val widthSpacings = table.outerPaddingX * 2f + (table.cellSpacingX1 + table.cellSpacingX2) * (table.columnsEnabledCount - 1)
-        table.columnsAutoFitWidth = widthSpacings + (table.cellPaddingX * 2f) * table.columnsEnabledCount + autoFitWidthForFixed + autoFitWidthForStretched max autoFitWidthForStretchedMin
+        val widthSpacings =
+            table.outerPaddingX * 2f + (table.cellSpacingX1 + table.cellSpacingX2) * (table.columnsEnabledCount - 1)
+        table.columnsAutoFitWidth =
+            widthSpacings + (table.cellPaddingX * 2f) * table.columnsEnabledCount + autoFitWidthForFixed + autoFitWidthForStretched max autoFitWidthForStretchedMin
 
         // Update scroll
         if (table.flags hasnt Tf.ScrollX && innerWindow !== outerWindow)
@@ -260,13 +265,16 @@ interface tables {
             outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth)
         } else if (tempData.userOuterSize.x <= 0f) {
             val decorationSize = if (table.flags has Tf.ScrollX) innerWindow.scrollbarSizes.x else 0f
-            outerWindow.dc.idealMaxPos.x = outerWindow.dc.idealMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth + decorationSize - tempData.userOuterSize.x)
-            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.max.x min table.outerRect.min.x + table.columnsAutoFitWidth)
+            outerWindow.dc.idealMaxPos.x =
+                outerWindow.dc.idealMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth + decorationSize - tempData.userOuterSize.x)
+            outerWindow.dc.cursorMaxPos.x =
+                backupOuterMaxPos.x max (table.outerRect.max.x min table.outerRect.min.x + table.columnsAutoFitWidth)
         } else
             outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max table.outerRect.max.x
         if (tempData.userOuterSize.y <= 0f) {
             val decorationSize = if (table.flags has Tf.ScrollY) innerWindow.scrollbarSizes.y else 0f
-            outerWindow.dc.idealMaxPos.y = outerWindow.dc.idealMaxPos.y max (innerContentMaxY + decorationSize - tempData.userOuterSize.y)
+            outerWindow.dc.idealMaxPos.y =
+                outerWindow.dc.idealMaxPos.y max (innerContentMaxY + decorationSize - tempData.userOuterSize.y)
             outerWindow.dc.cursorMaxPos.y = backupOuterMaxPos.y max (table.outerRect.max.y min innerContentMaxY)
         } else
         // OuterRect.Max.y may already have been pushed downward from the initial value (unless ImGuiTableFlags_NoHostExtendY is set)
@@ -372,7 +380,13 @@ interface tables {
 
     /** See "COLUMN SIZING POLICIES" comments at the top of this file
      *  If (init_width_or_weight <= 0.0f) it is ignored */
-    fun tableSetupColumn(label: String?, flags: TableColumnSetupFlags = none, initWidthOrWeight: Float = 0f, userId: ID = 0) {
+    fun tableSetupColumn(
+        label: String?,
+        flags_: TableColumnFlags = none,
+        initWidthOrWeight: Float = 0f,
+        userId: ID = 0
+    ) {
+        var flags = flags_
         val table = g.currentTable
         check(table != null) { "Need to call TableSetupColumn() after BeginTable()!" }
         assert(!table.isLayoutLocked) { "Need to call call TableSetupColumn() before first row!" }
@@ -389,20 +403,15 @@ interface tables {
         if (table.isDefaultSizingPolicy && flags hasnt Tcf.WidthMask && table.flags hasnt Tf.ScrollX)
             assert(initWidthOrWeight <= 0f) { "Can only specify width/weight if sizing policy is set explicitly in either Table or Column." }
 
-        val flags = flags.let {
-            var flags = it
-            // When passing a width automatically enforce WidthFixed policy
-            // (whereas TableSetupColumnFlags would default to WidthAuto if table is not Resizable)
-            if (flags hasnt Tcf.WidthMask && initWidthOrWeight > 0f)
-                (table.flags and Tf._SizingMask).let { sizing ->
-                    if (sizing == Tf.SizingFixedFit || sizing == Tf.SizingFixedSame)
-                        flags /= Tcf.WidthFixed
-                }
+        // When passing a width automatically enforce WidthFixed policy
+        // (whereas TableSetupColumnFlags would default to WidthAuto if table is not Resizable)
+        if (flags hasnt TableColumnFlag.WidthMask && initWidthOrWeight > 0f)
+            if ((table.flags and TableFlag._SizingMask) == TableFlag.SizingFixedFit || (table.flags and TableFlag._SizingMask) == TableFlag.SizingFixedSame)
+                flags /= TableColumnFlag.WidthFixed
 
-            table.setupColumnFlags(column, flags)
-            column.userID = userId
-            column.flags
-        }
+        table.setupColumnFlags(column, flags)
+        column.userID = userId
+        flags = column.flags
 
         // Initialize defaults
         column.initStretchWeightOrWidth = initWidthOrWeight
@@ -424,7 +433,8 @@ interface tables {
                 column.isUserEnabledNextFrame = false
             }
             if (flags has Tcf.DefaultSort && table.settingsLoadedFlags hasnt Tf.Sortable) {
-                column.sortOrder = 0 // Multiple columns using _DefaultSort will be reassigned unique SortOrder values when building the sort specs.
+                column.sortOrder =
+                    0 // Multiple columns using _DefaultSort will be reassigned unique SortOrder values when building the sort specs.
                 column.sortDirection = when {
                     column.flags has Tcf.PreferSortDescending -> SortDirection.Descending
                     else -> SortDirection.Ascending
@@ -454,7 +464,8 @@ interface tables {
         table.freezeColumnsCount = if (table.innerWindow!!.scroll.x != 0f) table.freezeColumnsRequest else 0
         table.freezeRowsRequest = if (table.flags has Tf.ScrollY) rows else 0
         table.freezeRowsCount = if (table.innerWindow!!.scroll.y != 0f) table.freezeRowsRequest else 0
-        table.isUnfrozenRows = table.freezeRowsCount == 0 // Make sure this is set before TableUpdateLayout() so ImGuiListClipper can benefit from it.b
+        table.isUnfrozenRows =
+            table.freezeRowsCount == 0 // Make sure this is set before TableUpdateLayout() so ImGuiListClipper can benefit from it.b
 
 
         // Ensure frozen columns are ordered in their section. We still allow multiple frozen columns to be reordered.
@@ -465,7 +476,8 @@ interface tables {
                 table.apply {
                     //                    ImSwap(table->Columns[table->DisplayOrderToIndex[order_n]].DisplayOrder, table->Columns[table->DisplayOrderToIndex[column_n]].DisplayOrder)
                     var order = this.columns[displayOrderToIndex[orderN]].displayOrder
-                    this.columns[displayOrderToIndex[orderN]].displayOrder = this.columns[displayOrderToIndex[columnN]].displayOrder
+                    this.columns[displayOrderToIndex[orderN]].displayOrder =
+                        this.columns[displayOrderToIndex[columnN]].displayOrder
                     this.columns[displayOrderToIndex[columnN]].displayOrder = order
                     //                    ImSwap(table->DisplayOrderToIndex[order_n], table->DisplayOrderToIndex[column_n])
                     order = displayOrderToIndex[orderN]
@@ -568,9 +580,15 @@ interface tables {
         column.contentMaxXHeadersIdeal = column.contentMaxXHeadersIdeal max maxPosX
 
         // Keep header highlighted when context menu is open.
-        val selected = table.isContextPopupOpen && table.contextPopupColumn == columnN && table.instanceInteracted == table.instanceCurrent
+        val selected =
+            table.isContextPopupOpen && table.contextPopupColumn == columnN && table.instanceInteracted == table.instanceCurrent
         val id = window.getID(label)
-        val bb = Rect(cellR.min.x, cellR.min.y, cellR.max.x, cellR.max.y max (cellR.min.y + labelHeight + g.style.cellPadding.y * 2f))
+        val bb = Rect(
+            cellR.min.x,
+            cellR.min.y,
+            cellR.max.x,
+            cellR.max.y max (cellR.min.y + labelHeight + g.style.cellPadding.y * 2f)
+        )
         itemSize(Vec2(0f, labelHeight)) // Don't declare unclipped width, it'll be fed ContentMaxPosHeadersIdeal
         if (!itemAdd(bb, id))
             return
@@ -628,7 +646,12 @@ interface tables {
                     popStyleColor()
                     x += wSortText
                 }
-                window.drawList.renderArrow(Vec2(x, y), Col.Text.u32, if (column.sortDirection == SortDirection.Ascending) Dir.Up else Dir.Down, ARROW_SCALE)
+                window.drawList.renderArrow(
+                    Vec2(x, y),
+                    Col.Text.u32,
+                    if (column.sortDirection == SortDirection.Ascending) Dir.Up else Dir.Down,
+                    ARROW_SCALE
+                )
             }
 
             // Handle clicking on column header to adjust Sort Order
@@ -642,7 +665,16 @@ interface tables {
         // be merged into a single draw call.
         //window->DrawList->AddCircleFilled(ImVec2(ellipsis_max, label_pos.y), 40, IM_COL32_WHITE);
         val posMax = Vec2(ellipsisMax, labelPos.y + labelHeight + g.style.framePadding.y)
-        renderTextEllipsis(window.drawList, labelPos, posMax, ellipsisMax, ellipsisMax, label.toByteArray(), labelEnd, labelSize)
+        renderTextEllipsis(
+            window.drawList,
+            labelPos,
+            posMax,
+            ellipsisMax,
+            ellipsisMax,
+            label.toByteArray(),
+            labelEnd,
+            labelSize
+        )
 
         val textClipped = labelSize.x > (ellipsisMax - labelPos.x)
         if (textClipped && hovered && g.activeId == 0 && isItemHovered(HoveredFlag.DelayNormal))
@@ -761,6 +793,7 @@ interface tables {
                 cellData.bgColor = color
                 cellData.column = columnN
             }
+
             TableBgTarget.RowBg0, TableBgTarget.RowBg1 -> {
                 if (table.rowPosY1 > table.innerClipRect.max.y) // Discard
                     return
@@ -768,6 +801,7 @@ interface tables {
                 val bgIdx = if (target == TableBgTarget.RowBg1) 1 else 0
                 table.rowBgColor[bgIdx] = color
             }
+
             else -> assert(false)
         }
     }
