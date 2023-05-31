@@ -871,12 +871,12 @@ interface tablesInternal {
             ImGui.endPopup()
         }
 
-        // [Part 13] Sanitize and build sort specs before we have a change to use them for display.
+        // [Part 12] Sanitize and build sort specs before we have a change to use them for display.
         // This path will only be exercised when sort specs are modified before header rows (e.g. init or visibility change)
         if (isSortSpecsDirty && flags has Tf.Sortable)
             sortSpecsBuild()
 
-        // [Part 14] Setup inner window decoration size (for scrolling / nav tracking to properly take account of frozen rows/columns)
+        // [Part 13] Setup inner window decoration size (for scrolling / nav tracking to properly take account of frozen rows/columns)
         if (freezeColumnsRequest > 0)
             innerWindow!!.decoInnerSizeX1 = columns[displayOrderToIndex[freezeColumnsRequest - 1]].maxX - outerRect.min.x
         if (freezeRowsRequest > 0)

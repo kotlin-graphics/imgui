@@ -7,6 +7,7 @@ import imgui.Col
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
+import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.popStyleColor
@@ -16,6 +17,7 @@ import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.separatorTextEx
 import imgui.ImGui.style
 import imgui.ImGui.textEx
 import imgui.dsl
@@ -122,5 +124,21 @@ interface widgetsText {
         val textCol = Col.Text.u32
         window.drawList.renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, g.fontSize * 0.5f), textCol)
         renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, 0f), text, false)
+    }
+
+    // currently: formatted text with an horizontal line
+    fun separatorText(label: String) {
+
+        val window = currentWindow
+        if (window.skipItems)
+            return
+
+        // The SeparatorText() vs SeparatorTextEx() distinction is designed to be considerate that we may want:
+        // - allow headers to be draggable items (would require a stable ID + a noticeable highlight)
+        // - this high-level entry point to allow formatting? (may require ID separate from formatted string)
+        // - because of this we probably can't turn 'const char* label' into 'const char* fmt, ...'
+        // Otherwise, we can decide that users wanting to drag this would layout a dedicated drag-item,
+        // and then we can turn this into a format function.
+        separatorTextEx(0, label, findRenderedTextEnd(label), 0f)
     }
 }

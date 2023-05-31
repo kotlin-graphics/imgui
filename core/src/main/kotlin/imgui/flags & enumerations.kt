@@ -1750,7 +1750,16 @@ enum class StyleVar {
     ButtonTextAlign,
 
     /** vec2  */
-    SelectableTextAlign;
+    SelectableTextAlign,
+
+    /** float */
+    SeparatorTextBorderSize,
+
+    /** vec2 */
+    SeparatorTextAlign,
+
+    /** vec2 */
+    SeparatorTextPadding;
 
     @JvmField
     val i = ordinal

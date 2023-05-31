@@ -24,6 +24,7 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
+import imgui.ImGui.separatorText
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.showDebugLogWindow
@@ -211,7 +212,7 @@ object ExampleApp {
         collapsingHeader("Configuration") {
 
             treeNode("Configuration##2") {
-
+                separatorText("General")
                 checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard)
                 sameLine(); helpMarker("Enable keyboard controls.")
                 checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad)
@@ -232,6 +233,10 @@ object ExampleApp {
                 sameLine(); helpMarker("Instruct backend to not alter mouse cursor shape and visibility.")
                 checkbox("io.ConfigInputTrickleEventQueue", io::configInputTrickleEventQueue)
                 sameLine(); helpMarker("Enable input queue trickling: some types of events submitted during the same frame (e.g. button down + up) will be spread over multiple frames, improving interactions with low framerates.")
+                checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
+                sameLine(); helpMarker("Instruct Dear ImGui to render a mouse cursor itself. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+
+                separatorText("Widgets")
                 checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
                 sameLine(); helpMarker("Enable blinking cursor (optional as some users consider it to be distracting).")
                 checkbox("io.ConfigInputTextEnterKeepActive", io::configInputTextEnterKeepActive)
@@ -242,10 +247,8 @@ object ExampleApp {
                 sameLine(); helpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
                 checkbox("io.configWindowsMoveFromTitleBarOnly", io::configWindowsMoveFromTitleBarOnly)
                 checkbox("io.ConfigMacOSXBehaviors", io::configMacOSXBehaviors)
-                checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
-                sameLine(); helpMarker("Instruct Dear ImGui to render a mouse cursor itself. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
                 text("Also see Style->Rendering for rendering options.")
-                separator()
+                spacing()
             }
             treeNode("Backend Flags") {
                 helpMarker(
@@ -261,13 +264,13 @@ object ExampleApp {
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors)
                 checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos)
                 checkboxFlags("io.BackendFlags: RendererHasVtxOffset", backendFlags, BackendFlag.RendererHasVtxOffset)
-                separator()
+                spacing()
             }
 
             treeNode("Style") {
                 helpMarker("The same contents can be accessed in 'Tools->Style Editor' or by calling the ShowStyleEditor() function.")
                 StyleEditor()
-                separator()
+                spacing()
             }
 
             treeNode("Capture/Logging") {

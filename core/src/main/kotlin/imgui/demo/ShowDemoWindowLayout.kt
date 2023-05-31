@@ -64,6 +64,7 @@ import imgui.ImGui.scrollX
 import imgui.ImGui.scrollY
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.separatorText
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowContentSize
 import imgui.ImGui.setScrollFromPosX
@@ -285,6 +286,8 @@ object ShowDemoWindowLayout {
 
             treeNode("Child Windows") {
 
+                separatorText("Child windows")
+
                 helpMarker("Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window.")
                 checkbox("Disable Mouse Wheel", ::disableMouseWheel)
                 checkbox("Disable Menu", ::disableMenu)
@@ -330,7 +333,7 @@ object ShowDemoWindowLayout {
                     }
                 }
 
-                separator()
+                separatorText("Misc/Advanced")
 
                 // Demonstrate a few extra things
                 // - Changing ImGuiCol_ChildBg (which is transparent black in default styles)

@@ -70,7 +70,7 @@ class Style {
     var itemInnerSpacing = Vec2(4)
 
     /** Padding within a table cell */
-    val cellPadding = Vec2(4,2)
+    val cellPadding = Vec2(4, 2)
 
     /** Expand reactive bounding box for touch-based system where touch position is not accurate enough. Unfortunately
      *  we don't sort widgets so priority on overlap will always be given to the first widget. So don't grow this too much!   */
@@ -114,6 +114,15 @@ class Style {
 
     /** Alignment of selectable text. Defaults to (0.0f, 0.0f) (top-left aligned). It's generally important to keep this left-aligned if you want to lay multiple items on a same line. */
     var selectableTextAlign = Vec2()
+
+    /** Thickkness of border in SeparatorText() */
+    var separatorTextBorderSize = 3f
+
+    /** Alignment of text within the separator. Defaults to (0.0f, 0.5f) (left aligned, center). */
+    val separatorTextAlign = Vec2(0f, 0.5f)
+
+    /** Horizontal offset of text from each edge of the separator + spacing on other axis. Generally small values. .y is recommended to be == FramePadding.y. */
+    val separatorTextPadding = Vec2(20f, 3f)
 
     /** Window position are clamped to be visible within the display area or monitors by at least this amount.
      *  Only applies to regular windows.    */
@@ -242,7 +251,8 @@ class Style {
         grabRounding = floor(grabRounding * scaleFactor)
         logSliderDeadzone = floor(logSliderDeadzone * scaleFactor)
         tabRounding = floor(tabRounding * scaleFactor)
-        tabMinWidthForCloseButton = if(tabMinWidthForCloseButton != Float.MAX_VALUE) floor(tabMinWidthForCloseButton * scaleFactor) else Float.MAX_VALUE
+        tabMinWidthForCloseButton = if (tabMinWidthForCloseButton != Float.MAX_VALUE) floor(tabMinWidthForCloseButton * scaleFactor) else Float.MAX_VALUE
+        separatorTextPadding put floor(separatorTextPadding * scaleFactor)
         displayWindowPadding = floor(displayWindowPadding * scaleFactor)
         displaySafeAreaPadding = floor(displaySafeAreaPadding * scaleFactor)
         mouseCursorScale = floor(mouseCursorScale * scaleFactor)

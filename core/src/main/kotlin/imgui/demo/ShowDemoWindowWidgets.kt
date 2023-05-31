@@ -97,6 +97,7 @@ import imgui.ImGui.resetMouseDragDelta
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.separatorText
 import imgui.ImGui.setColorEditOptions
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setItemDefaultFocus
@@ -281,7 +282,10 @@ object ShowDemoWindowWidgets {
 
         operator fun invoke() {
             treeNode("Basic") {
-                if (button("Button")) clicked++
+                separatorText("General")
+
+                if (button("Button"))
+                    clicked++
                 if (clicked has 1) {
                     sameLine()
                     text("Thanks for clicking me!")
@@ -354,6 +358,8 @@ object ShowDemoWindowWidgets {
                 }
                 labelText("label", "Value")
 
+                separatorText("Inputs")
+
                 run {
                     // To wire InputText() with std::string or any other custom string type,
                     // see the "Text Input > Resize Callback" section of this demo, and the misc/cpp/imgui_stdlib.h file.
@@ -387,6 +393,9 @@ object ShowDemoWindowWidgets {
 
                     input3("input float3", vec4)
                 }
+
+                separatorText("Drags")
+
                 run {
                     drag("drag int", ::i1, 1f)
                     sameLine(); helpMarker("""
@@ -399,6 +408,9 @@ object ShowDemoWindowWidgets {
                     drag("drag float", ::f2, 0.005f)
                     drag("drag small float", ::f3, 0.0001f, 0f, 0f, "%.06f ns")
                 }
+
+                separatorText("Sliders")
+
                 run {
                     slider("slider int", ::i3, -1, 3)
                     sameLine(); helpMarker("CTRL+click to input value.")
@@ -416,6 +428,8 @@ object ShowDemoWindowWidgets {
                     slider("slider enum", ::elem, 0, Element.values().lastIndex, elemName)
                     sameLine(); helpMarker("Using the format string parameter to display a name instead of the underlying integer.")
                 }
+
+                separatorText("Selectors/Pickers")
 
                 run {
                     colorEdit3("color 1", col1)
@@ -1210,9 +1224,9 @@ object ShowDemoWindowWidgets {
                 }
 
                 // Use functions to generate output
-                // FIXME: This is rather awkward because current plot API only pass in indices.
+                // FIXME: This is actually VERY awkward because current plot API only pass in indices.
                 // We probably want an API passing floats and user provide sample rate/count.
-                separator()
+                separatorText("Functions")
                 withItemWidth(fontSize * 8) { combo("func", ::funcType, "Sin\u0000Saw\u0000") }
                 sameLine()
                 slider("Sample count", ::displayCount, 1, 400)
@@ -1259,6 +1273,7 @@ object ShowDemoWindowWidgets {
         operator fun invoke() {
             treeNode("Color/Picker Widgets") {
 
+                separatorText("Options")
                 checkbox("With Alpha Preview", ::alphaPreview)
                 checkbox("With Half Alpha Preview", ::alphaHalfPreview)
                 checkbox("With Drag and Drop", ::dragAndDrop)
@@ -1270,6 +1285,7 @@ object ShowDemoWindowWidgets {
                 else if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview
                 if (!optionsMenu) miscFlags = miscFlags or Cef.NoOptions
 
+                separatorText("Inline color editor")
                 text("Color widget:")
                 sameLine(); helpMarker("""
                 Click on the color square to open a color picker.                
@@ -1347,7 +1363,7 @@ object ShowDemoWindowWidgets {
                 checkbox("ImGuiColorEditFlags_NoBorder", ::noBorder)
                 colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else none, Vec2(80))
 
-                text("Color picker:")
+                separatorText("Color picker")
                 checkbox("With Alpha", ::alpha)
                 checkbox("With Alpha Bar", ::alphaBar)
                 checkbox("With Side Preview", ::sidePreview)
@@ -1553,7 +1569,7 @@ object ShowDemoWindowWidgets {
             treeNode("Data Types") {
 
                 val dragSpeed = 0.2f
-                text("Drags:")
+                separatorText("Drags")
                 checkbox("Clamp integers to 0..50", ::dragClamp)
                 sameLine(); helpMarker(
                 """As with every widget in dear imgui, we never modify values unless there is a user interaction.
@@ -1572,7 +1588,7 @@ object ShowDemoWindowWidgets {
                 drag("drag double", ::f64_v, 0.0005f, f64_zero, null, "%.10f grams")
                 drag("drag double log",  ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", SliderFlag.Logarithmic)
 
-                text("Sliders")
+                separatorText("Sliders")
                 slider("slider s8 full", ::s8_v, s8_min, s8_max, "%d")
                 slider("slider u8 full", ::u8_v, u8_min, u8_max, "%d")
                 slider("slider s16 full", ::s16_v, s16_min, s16_max, "%d")
@@ -1597,7 +1613,7 @@ object ShowDemoWindowWidgets {
                 slider("slider double low log", ::f64_v, f64_zero, f64_one, "%.10f", SliderFlag.Logarithmic)
                 slider("slider double high",  ::f64_v, f64_lo_a, f64_hi_a, "%e grams")
 
-                text("Sliders (reverse)")
+                separatorText("Sliders (reverse)")
                 slider("slider s8 reverse", ::s8_v, s8_max, s8_min, "%d")
                 slider("slider u8 reverse", ::u8_v, u8_max, u8_min, "%d") // [JVM] %u -> %d
                 slider("slider s32 reverse", ::s32_v, s32_fifty, s32_zero, "%d")
@@ -1605,7 +1621,7 @@ object ShowDemoWindowWidgets {
                 slider("slider s64 reverse", ::s64_v, s64_fifty, s64_zero, "%d") // [JVM] %I64d -> %d
                 slider("slider u64 reverse", ::u64_v, u64_fifty, u64_zero, "%d ms") // [JVM] %I64u -> %d
 
-                text("Inputs")
+                separatorText("Inputs")
                 checkbox("Show step buttons", ::inputsStep)
                 input("input s8", ::s8_v, s8_one.takeIf { inputsStep }, null, "%d")
                 input("input u8", ::u8_v, u8_one.takeIf { inputsStep }, null, "%d")
@@ -1630,22 +1646,23 @@ object ShowDemoWindowWidgets {
         operator fun invoke() {
             treeNode("Multi-component Widgets") {
 
+                separatorText("2-wide")
                 input2("input float2", vec4f)
                 drag2("drag float2", vec4f, 0.01f, 0f, 1f)
                 slider2("slider float2", vec4f, 0f, 1f)
                 input2("input int2", vec4i)
                 drag2("drag int2", vec4i, 1f, 0, 255)
                 slider2("slider int2", vec4i, 0, 255)
-                spacing()
 
+                separatorText("3-wide")
                 input3("input float3", vec4f)
                 drag3("drag float3", vec4f, 0.01f, 0.0f, 1.0f)
                 slider3("slider float3", vec4f, 0.0f, 1.0f)
                 input3("input int3", vec4i)
                 drag3("drag int3", vec4i, 1f, 0, 255)
                 slider3("slider int3", vec4i, 0, 255)
-                spacing()
 
+                separatorText("4-wide")
                 input4("input float4", vec4f)
                 drag4("drag float4", vec4f, 0.01f, 0.0f, 1.0f)
                 slider4("slider float4", vec4f, 0.0f, 1.0f)

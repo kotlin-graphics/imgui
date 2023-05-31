@@ -77,6 +77,7 @@ object MenuFile {
 
         menu("Disabled", false) { assert(false) { "Disabled" } }
         menuItem("Checked", selected = true)
+        separator()
         menuItem("Quit", "Alt+F4")
     }
 }

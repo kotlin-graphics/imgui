@@ -24,6 +24,7 @@ import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.separatorText
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowPos
@@ -104,8 +105,7 @@ object ShowDemoWindowPopups {
                 sameLine()
                 textEx(names.getOrElse(selectedFish) { "<None>" })
                 popup("my_select_popup") {
-                    text("Aquarium")
-                    separator()
+                    separatorText("Aquarium")
                     names.forEachIndexed { i, n -> if (selectable(n)) selectedFish = i }
                 }
 
@@ -252,7 +252,7 @@ object ShowDemoWindowPopups {
 
                 popupModal("Delete?", null, Wf.AlwaysAutoResize) {
 
-                    text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n")
+                    text("All those beautiful files will be deleted.\nThis operation cannot be undone!")
                     separator()
 
                     //static int unused_i = 0;

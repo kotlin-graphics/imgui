@@ -32,6 +32,7 @@ import imgui.ImGui.pushFont
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
+import imgui.ImGui.separatorText
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setWindowFontScale
@@ -137,7 +138,8 @@ object StyleEditor {
         if (beginTabBar("##tabs")) {
 
             if (beginTabItem("Sizes")) {
-                text("Main")
+
+                separatorText("Main")
                 slider2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
                 slider2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
                 slider2("CellPadding", style.cellPadding, 0f, 20f, "%.0f")
@@ -147,13 +149,15 @@ object StyleEditor {
                 slider("IndentSpacing", style::indentSpacing, 0f, 30f, "%.0f")
                 slider("ScrollbarSize", style::scrollbarSize, 1f, 20f, "%.0f")
                 slider("GrabMinSize", style::grabMinSize, 1f, 20f, "%.0f")
-                text("Borders")
+
+                separatorText("Borders")
                 slider("WindowBorderSize", style::windowBorderSize, 0f, 1f, "%.0f")
                 slider("ChildBorderSize", style::childBorderSize, 0f, 1f, "%.0f")
                 slider("PopupBorderSize", style::popupBorderSize, 0f, 1f, "%.0f")
                 slider("FrameBorderSize", style::frameBorderSize, 0f, 1f, "%.0f")
                 slider("TabBorderSize", style::tabBorderSize, 0f, 1f, "%.0f")
-                text("Rounding")
+
+                separatorText("Rounding")
                 slider("WindowRounding", style::windowRounding, 0f, 12f, "%.0f")
                 slider("ChildRounding", style::childRounding, 0f, 12f, "%.0f")
                 slider("FrameRounding", style::frameRounding, 0f, 12f, "%.0f")
@@ -161,7 +165,8 @@ object StyleEditor {
                 slider("ScrollbarRounding", style::scrollbarRounding, 0f, 12f, "%.0f")
                 slider("GrabRounding", style::grabRounding, 0f, 12f, "%.0f")
                 slider("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
-                text("Alignment")
+
+                separatorText("Alignment")
                 slider2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
                 run {
                     val sideRef = (style.windowMenuButtonPosition.i + 1).mutableReference
@@ -180,10 +185,14 @@ object StyleEditor {
                 sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")
                 slider2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f")
                 sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
-                text("Safe Area Padding")
-                sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
-                slider2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
+
+                slider("SeparatorTextBorderSize", style::separatorTextBorderSize, 0f, 10f, "%.0f")
+                slider2("SeparatorTextAlign", style.separatorTextAlign, 0f, 1f, "%.2f")
+                slider2("SeparatorTextPadding", style.separatorTextPadding, 0f, 40f, "%0.f")
                 slider("LogSliderDeadzone", style::logSliderDeadzone, 0f, 12f, "%.0f")
+
+                separatorText("Misc")
+                slider2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f"); sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
                 endTabItem()
             }
 

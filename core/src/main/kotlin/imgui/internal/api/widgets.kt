@@ -16,6 +16,7 @@ import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
+import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.logText
 import imgui.ImGui.popColumnsBackground
 import imgui.ImGui.pushColumnsBackground
@@ -24,11 +25,13 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
+import imgui.ImGui.renderTextEllipsis
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -244,7 +247,9 @@ internal interface widgets {
     }
 
     /** Horizontal/vertical separating line
-     *  Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator. */
+     *  Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator.
+     *
+     *  FIXME: Surprisingly, this seemingly simple widget is adjacent to MANY different legacy/tricky layout issues. */
     fun separatorEx(flags: SeparatorFlags) {
 
         val window = currentWindow
@@ -252,18 +257,17 @@ internal interface widgets {
 
         assert((flags and (SeparatorFlag.Horizontal or SeparatorFlag.Vertical)).isPowerOfTwo) { "Check that only 1 option is selected" }
 
-        val thicknessDraw = 1f
-        val thicknessLayout = 0f
+        val thickness = 1f // Cannot use g.Style.SeparatorTextSize yet for various reasons.
         if (flags has SeparatorFlag.Vertical) {
-            // Vertical separator, for menu bars (use current line height). Not exposed because it is misleading and it doesn't have an effect on regular layout.
+            // Vertical separator, for menu bars (use current line height).
             val y1 = window.dc.cursorPos.y
             val y2 = window.dc.cursorPos.y + window.dc.currLineSize.y
-            val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + thicknessDraw, y2))
-            itemSize(Vec2(thicknessLayout, 0f))
+            val bb = Rect(Vec2(window.dc.cursorPos.x, y1), Vec2(window.dc.cursorPos.x + thickness, y2))
+            itemSize(Vec2(thickness, 0f))
             if (!itemAdd(bb, 0))
                 return
             // Draw
-            window.drawList.addLine(Vec2(bb.min.x, bb.min.y), Vec2(bb.min.x, bb.max.y), Col.Separator.u32)
+            window.drawList.addRectFilled(bb.min, bb.max, Col.Separator.u32)
             if (g.logEnabled)
                 logText(" |")
 
@@ -288,12 +292,13 @@ internal interface widgets {
 
             // We don't provide our width to the layout so that it doesn't get feed back into AutoFit
             // FIXME: This prevents ->CursorMaxPos based bounding box evaluation from working (e.g. TableEndCell)
-            val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + thicknessDraw))
-            itemSize(Vec2(0f, thicknessLayout))
+            val thicknessForLayout = if (thickness == 1f) 0f else thickness // FIXME: See 1.70/1.71 Separator() change: makes legacy 1-px separator not affect layout yet. Should change.
+            val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + thickness))
+            itemSize(Vec2(0f, thicknessForLayout))
             val itemVisible = itemAdd(bb, 0)
             if (itemVisible) {
                 // Draw
-                window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
+                window.drawList.addRectFilled(bb.min, bb.max, Col.Separator.u32)
                 if (g.logEnabled) {
                     logRenderedText(bb.min, "--------------------------------")
                 }
@@ -302,6 +307,53 @@ internal interface widgets {
                 popColumnsBackground()
                 it.lineMinY = window.dc.cursorPos.y
             }
+        }
+    }
+
+    fun separatorTextEx(id: ID, label: String, labelEnd: Int, extraW: Float) = separatorTextEx(id, label.toByteArray(), labelEnd, extraW)
+    fun separatorTextEx(id: ID, label: ByteArray, labelEnd: Int, extraW: Float) {
+
+        val window = g.currentWindow!!
+        val style = g.style
+
+        val labelSize = calcTextSize(label, 0, labelEnd, false)
+        val pos = window.dc.cursorPos // [JVM] attention, same instance
+        val padding = style.separatorTextPadding
+
+        val separatorThickness = style.separatorTextBorderSize
+        val minSize = Vec2(labelSize.x + extraW + padding.x * 2f, (labelSize.y + padding.y * 2f) max separatorThickness)
+        val bb = Rect(pos, Vec2(window.workRect.max.x, pos.y + minSize.y))
+        val textBaselineY = floor((bb.height - labelSize.y) * style.separatorTextAlign.y + 0.99999f) //ImMax(padding.y, ImFloor((style.SeparatorTextSize - label_size.y) * 0.5f));
+        itemSize(minSize, textBaselineY)
+        if (!itemAdd(bb, id))
+            return
+
+        val sep1X1 = pos.x
+        val sep2X2 = bb.max.x
+        val sepsY = floor((bb.min.y + bb.max.y) * 0.5f + 0.99999f)
+
+        val labelAvailW = 0f max (sep2X2 - sep1X1 - padding.x * 2f)
+        val labelPos = Vec2(pos.x + padding.x + 0f max ((labelAvailW - labelSize.x - extraW) * style.separatorTextAlign.x), pos.y + textBaselineY) // FIXME-ALIGN
+
+        // This allows using SameLine() to position something in the 'extra_w'
+        window.dc.cursorPosPrevLine.x = labelPos.x + labelSize.x
+
+        val separatorCol = Col.Separator.u32
+        if (labelSize.x > 0f) {
+            val sep1X2 = labelPos.x - style.itemSpacing.x
+            val sep2X1 = labelPos.x + labelSize.x + extraW + style.itemSpacing.x
+            if (sep1X2 > sep1X1 && separatorThickness > 0f)
+                window.drawList.addLine(Vec2(sep1X1, sepsY), Vec2(sep1X2, sepsY), separatorCol, separatorThickness)
+            if (sep2X2 > sep2X1 && separatorThickness > 0f)
+                window.drawList.addLine(Vec2(sep2X1, sepsY), Vec2(sep2X2, sepsY), separatorCol, separatorThickness)
+            if (g.logEnabled)
+                logSetNextTextDecoration("---", "")
+            renderTextEllipsis(window.drawList, labelPos, Vec2(bb.max.x, bb.max.y + style.itemSpacing.y), bb.max.x, bb.max.x, label, labelEnd, labelSize)
+        } else {
+            if (g.logEnabled)
+                logText("---")
+            if (separatorThickness > 0f)
+                window.drawList.addLine(Vec2(sep1X1, sepsY), Vec2(sep2X2, sepsY), separatorCol, separatorThickness)
         }
     }
 

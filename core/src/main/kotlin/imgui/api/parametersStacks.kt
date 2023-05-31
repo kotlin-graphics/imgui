@@ -74,101 +74,140 @@ interface parametersStacks {
                     it.floats[0] = style.alpha
                     style.alpha = value as Float
                 }
+
                 StyleVar.DisabledAlpha -> {
                     it.floats[0] = style.disabledAlpha
                     style.disabledAlpha = value as Float
                 }
+
                 StyleVar.WindowPadding -> {
                     style.windowPadding to it.floats
                     style.windowPadding put value as Vec2
                 }
+
                 StyleVar.WindowRounding -> {
                     it.floats[0] = style.windowRounding
                     style.windowRounding = value as Float
                 }
+
                 StyleVar.WindowBorderSize -> {
                     it.floats[0] = style.windowBorderSize
                     style.windowBorderSize = value as Float
                 }
+
                 StyleVar.WindowMinSize -> {
                     style.windowMinSize to it.floats
                     style.windowMinSize put value as Vec2
                 }
+
                 StyleVar.WindowTitleAlign -> {
                     style.windowTitleAlign to it.floats
                     style.windowTitleAlign put value as Vec2
                 }
+
                 StyleVar.ChildRounding -> {
                     it.floats[0] = style.childRounding
                     style.childRounding = value as Float
                 }
+
                 StyleVar.ChildBorderSize -> {
                     it.floats[0] = style.childBorderSize
                     style.childBorderSize = value as Float
                 }
+
                 StyleVar.PopupRounding -> {
                     it.floats[0] = style.popupRounding
                     style.popupRounding = value as Float
                 }
+
                 StyleVar.PopupBorderSize -> {
                     it.floats[0] = style.popupBorderSize
                     style.popupBorderSize = value as Float
                 }
+
                 StyleVar.FramePadding -> {
                     style.framePadding to it.floats
                     style.framePadding put value as Vec2
                 }
+
                 StyleVar.FrameRounding -> {
                     it.floats[0] = style.frameRounding
                     style.frameRounding = value as Float
                 }
+
                 StyleVar.FrameBorderSize -> {
                     it.floats[0] = style.frameBorderSize
                     style.frameBorderSize = value as Float
                 }
+
                 StyleVar.ItemSpacing -> {
                     style.itemSpacing to it.floats
                     style.itemSpacing put value as Vec2
                 }
+
                 StyleVar.ItemInnerSpacing -> {
                     style.itemInnerSpacing to it.floats
                     style.itemInnerSpacing put value as Vec2
                 }
+
                 StyleVar.IndentSpacing -> {
                     it.floats[0] = style.indentSpacing
                     style.indentSpacing = value as Float
                 }
+
                 StyleVar.CellPadding -> {
                     style.cellPadding to it.floats
                     style.cellPadding put value as Vec2
                 }
+
                 StyleVar.ScrollbarSize -> {
                     it.floats[0] = style.scrollbarSize
                     style.scrollbarSize = value as Float
                 }
+
                 StyleVar.ScrollbarRounding -> {
                     it.floats[0] = style.scrollbarRounding
                     style.scrollbarRounding = value as Float
                 }
+
                 StyleVar.GrabMinSize -> {
                     it.floats[0] = style.grabMinSize
                     style.grabMinSize = value as Float
                 }
+
                 StyleVar.GrabRounding -> {
                     it.floats[0] = style.grabRounding
                     style.grabRounding = value as Float
                 }
+
                 StyleVar.TabRounding -> {
                     it.floats[0] = style.tabRounding
                     style.tabRounding = value as Float
                 }
+
                 StyleVar.ButtonTextAlign -> {
                     style.buttonTextAlign to it.floats
                     style.buttonTextAlign put value as Vec2
                 }
+
                 StyleVar.SelectableTextAlign -> {
                     style.selectableTextAlign to it.floats
                     style.selectableTextAlign put value as Vec2
+                }
+
+                StyleVar.SeparatorTextBorderSize -> {
+                    it.floats[0] = style.separatorTextBorderSize
+                    style.separatorTextBorderSize = value as Float
+                }
+
+                StyleVar.SeparatorTextAlign -> {
+                    style.separatorTextAlign to it.floats
+                    style.separatorTextAlign put value as Vec2
+                }
+
+                StyleVar.SeparatorTextPadding -> {
+                    style.separatorTextPadding to it.floats
+                    style.separatorTextPadding put value as Vec2
                 }
             }
         })
@@ -177,7 +216,7 @@ interface parametersStacks {
     fun popStyleVar(count_: Int = 1) {
         var count = count_
         if (g.styleVarStack.size < count) {
-            System.err.println( "Calling PopStyleVar() too many times: stack underflow.")
+            System.err.println("Calling PopStyleVar() too many times: stack underflow.")
             count = g.styleVarStack.size
         }
         repeat(count) {
@@ -208,6 +247,9 @@ interface parametersStacks {
                 StyleVar.TabRounding -> style.tabRounding = backup.floats[0]
                 StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
                 StyleVar.SelectableTextAlign -> style.selectableTextAlign put backup.floats
+                StyleVar.SeparatorTextBorderSize -> style.separatorTextBorderSize = backup.floats[0]
+                StyleVar.SeparatorTextAlign -> style.separatorTextAlign put backup.floats
+                StyleVar.SeparatorTextPadding -> style.separatorTextPadding put backup.floats
             }
         }
     }
