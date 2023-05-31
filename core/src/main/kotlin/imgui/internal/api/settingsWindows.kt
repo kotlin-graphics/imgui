@@ -1,10 +1,14 @@
 package imgui.internal.api
 
 import imgui.IMGUI_DEBUG_INI_SETTINGS
+import imgui.ImGui.findWindowByName
+import imgui.WindowFlag
 import imgui.api.g
+import imgui.div
 import imgui.internal.classes.Window
 import imgui.internal.hashStr
 import imgui.internal.sections.WindowSettings
+import imgui.statics.initOrLoadWindowSettings
 
 // Settings - Windows
 interface settingsWindows {
@@ -32,5 +36,17 @@ interface settingsWindows {
         if (window.settingsOffset != -1)
             return g.settingsWindows[window.settingsOffset]
         return findWindowSettingsByName(window.name) // Actual search executed once, so at this point we don't mind the redundant hashing.
+    }
+
+    // This will revert window to its initial state, including enabling the ImGuiCond_FirstUseEver/ImGuiCond_Once conditions once more.
+    fun clearWindowSettings(name: String) {
+        //IMGUI_DEBUG_LOG("ClearWindowSettings('%s')\n", name);
+        val window = findWindowByName(name)
+        if (window != null) {
+            window.flags /= WindowFlag.NoSavedSettings
+            initOrLoadWindowSettings(window, null)
+        }
+        val settings = window?.let { findWindowSettingsByWindow(window) } ?: findWindowSettingsByName(name)
+        settings?.wantDelete = true
     }
 }

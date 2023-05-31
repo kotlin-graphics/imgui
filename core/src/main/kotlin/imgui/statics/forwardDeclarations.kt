@@ -11,6 +11,7 @@ import imgui.ImGui.findWindowSettingsByName
 import imgui.ImGui.findWindowSettingsByWindow
 import imgui.ImGui.io
 import imgui.ImGui.style
+import imgui.WindowFlag
 import imgui.api.g
 import imgui.classes.Context
 import imgui.classes.DrawList
@@ -123,41 +124,56 @@ fun updateWindowInFocusOrderList(window: Window, justCreated: Boolean, newFlags:
     window.isExplicitChild = newIsExplicitChild
 }
 
-fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
+fun initOrLoadWindowSettings(window: Window, settings: WindowSettings?) {
 
-    //IMGUI_DEBUG_LOG("CreateNewWindow '%s', flags = 0x%08X\n", name, flags);
+    // Initial window state with e.g. default/arbitrary window position
+    // Use SetNextWindowPos() with the appropriate condition flag to change the initial position of a window.
+    val main_viewport = ImGui.mainViewport
+    window.pos = main_viewport.pos + 60
+    window.setWindowCollapsedAllowFlags = Cond.Always / Cond.Once / Cond.FirstUseEver / Cond.Appearing
+    window.setWindowSizeAllowFlags = window.setWindowCollapsedAllowFlags
+    window.setWindowPosAllowFlags = window.setWindowSizeAllowFlags
 
-    // Create window the first time
-    this.flags = flags
-    g.windowsById[id] = this
-
-    // Default/arbitrary window position. Use SetNextWindowPos() with the appropriate condition flag to change the initial position of a window.
-    pos put (ImGui.mainViewport.pos + 60f)
-
-    // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
-    if (flags hasnt Wf.NoSavedSettings) {
-        findWindowSettingsByWindow(this)?.let { settings ->
-            //  Retrieve settings from .ini file
-            settingsOffset = g.settingsWindows.indexOf(settings)
-            setConditionAllowFlags(Cond.FirstUseEver, false)
-            applySettings(settings)
-        }
+    if (settings != null) {
+        window.setConditionAllowFlags(Cond.FirstUseEver, false)
+        window applySettings settings
     }
-    dc.cursorStartPos put pos; dc.cursorMaxPos put pos; dc.idealMaxPos put pos // So first call to CalcWindowContentSizes() doesn't return crazy values
+    window.dc.cursorStartPos put window.pos; window.dc.cursorMaxPos put window.pos; window.dc.idealMaxPos put window.pos // So first call to CalcWindowContentSizes() doesn't return crazy values
 
-    if (flags has Wf.AlwaysAutoResize) {
-        autoFitFrames put 2
-        autoFitOnlyGrows = false
+    if (window.flags hasnt WindowFlag.AlwaysAutoResize) {
+        window.autoFitFrames put 2
+        window.autoFitOnlyGrows = false
     } else {
-        if (this.size.x <= 0f) autoFitFrames.x = 2
-        if (this.size.y <= 0f) autoFitFrames.y = 2
-        autoFitOnlyGrows = autoFitFrames.x > 0 || autoFitFrames.y > 0
+        if (window.size.x <= 0f)
+            window.autoFitFrames.x = 2
+        if (window.size.y <= 0f)
+            window.autoFitFrames.y = 2
+        window.autoFitOnlyGrows = window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0
+    }
+}
+
+fun createNewWindow(name: String, flags: WindowFlags): Window {
+    // Create window the first time
+    //IMGUI_DEBUG_LOG("CreateNewWindow '%s', flags = 0x%08X\n", name, flags);
+    val window = Window(g, name)
+    window.flags = flags
+    g.windowsById[window.id] = window
+
+    var settings: WindowSettings? = null
+    if (flags hasnt WindowFlag.NoSavedSettings) {
+        settings = findWindowSettingsByWindow(window)
+        if (settings != null)
+            window.settingsOffset = g.settingsWindows.indexOf(settings)
     }
 
-    if (flags has Wf.NoBringToFrontOnFocus)
-        g.windows.add(0, this) // Quite slow but rare and only once
+    initOrLoadWindowSettings(window, settings)
+
+    if (flags has WindowFlag.NoBringToFrontOnFocus)
+        g.windows.add(0, window) // Quite slow but rare and only once
     else
-        g.windows += this
+        g.windows += window
+
+    return window
 }
 
 // Helper to snap on edges when aiming at an item very close to the edge,
@@ -298,19 +314,23 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
         settings.size put window.sizeFull
 
         settings.collapsed = window.collapsed
+        settings.wantDelete = true
     }
 
     // Write to text buffer
-    for (setting in g.settingsWindows)
-    // all numeric fields to ints to have full c++ compatibility
+    for (setting in g.settingsWindows) {
+        // all numeric fields to ints to have full c++ compatibility
+        if (setting.wantDelete)
+            continue
         buf += """
-            [${handler.typeName}][${setting.name}]
-            Pos=${setting.pos.x.i},${setting.pos.y.i}
-            Size=${setting.size.x.i},${setting.size.y.i}
-            Collapsed=${setting.collapsed.i}
-            
-            
-            """.trimIndent() // [JVM] prefer trimIndent over trimMargin to preserve the last line
+                [${handler.typeName}][${setting.name}]
+                Pos=${setting.pos.x.i},${setting.pos.y.i}
+                Size=${setting.size.x.i},${setting.size.y.i}
+                Collapsed=${setting.collapsed.i}
+                
+                
+                """.trimIndent() // [JVM] prefer trimIndent over trimMargin to preserve the last line
+    }
 }
 
 //-----------------------------------------------------------------------------

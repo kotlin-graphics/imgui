@@ -22,7 +22,9 @@ import java.util.*
 import kotlin.math.max
 import imgui.WindowFlag as Wf
 
-/** Storage for one window */
+/** Storage for one window
+ *
+ *  ImGuiWindow is mostly a dumb struct. It merely has a constructor and a few helper methods */
 class Window(var context: Context,
              /** Window name, owned by the window. */
              var name: String) {

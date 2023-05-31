@@ -16,8 +16,8 @@ class WindowSettings(val name: String = "") {
     var pos = Vec2()
     var size = Vec2()
     var collapsed = false
-    /** Set when loaded from .ini data (to enable merging/loading .ini data into an already running context) */
-    var wantApply = false
+    var wantApply = false // Set when loaded from .ini data (to enable merging/loading .ini data into an already running context)
+    var wantDelete = false // Set to invalidate/delete the settings entry
 
     fun clear() {
         id = hashStr(name)

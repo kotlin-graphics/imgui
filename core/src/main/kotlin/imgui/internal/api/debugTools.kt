@@ -755,12 +755,14 @@ internal interface debugTools {
     }
 
     fun debugNodeWindowSettings(settings: WindowSettings) {
-        val pX = settings.pos.x
-        val pY = settings.pos.y
-        val sX = settings.size.x
-        val sY = settings.size.y
+        if (settings.wantDelete)
+            beginDisabled()
+        val (pX, pY) = settings.pos
+        val (sX, sY) = settings.size
         val collapsed = settings.collapsed.i
         text("0x%08X \"${settings.name}\" Pos ($pX,$pY) Size ($sX,$sY) Collapsed=$collapsed", settings.id)
+        if (settings.wantDelete)
+            endDisabled()
     }
 
     fun debugNodeWindowsList(windows: List<Window>, label: String) {
