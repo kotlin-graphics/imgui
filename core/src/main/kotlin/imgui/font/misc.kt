@@ -37,8 +37,7 @@ class FontConfig {
     var glyphExtraSpacing = Vec2()
     /** Offset all glyphs from this font input. */
     var glyphOffset = Vec2()
-    /** Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated
-     *  list). THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE.    */
+    /** THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE. Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated list) */
     var glyphRanges = arrayOf<IntRange>()
     /** Minimum AdvanceX for glyphs, set Min to align font icons, set both Min/Max to enforce mono-space font */
     var glyphMinAdvanceX = 0f

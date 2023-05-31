@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package imgui.font
 
 import com.livefront.sealedenum.GenSealedEnum
@@ -631,8 +633,12 @@ class FontAtlas {
             // Measure highest codepoints
             val dstTmp = dstTmpArray[srcTmp.dstIndex]
             srcTmp.srcRanges = cfg.glyphRanges.takeIf { it.isNotEmpty() } ?: glyphRanges.default
-            for (srcRange in srcTmp.srcRanges)
+            for (srcRange in srcTmp.srcRanges) {
+                // Check for valid range. This may also help detect *some* dangling pointers, because a common
+                // user error is to setup ImFontConfig::GlyphRanges with a pointer to data that isn't persistent.
+                assert(srcRange.first <= srcRange.last)
                 srcTmp.glyphsHighest = srcTmp.glyphsHighest max srcRange.last
+            }
             dstTmp.srcCount++
             dstTmp.glyphsHighest = dstTmp.glyphsHighest max srcTmp.glyphsHighest
         }
