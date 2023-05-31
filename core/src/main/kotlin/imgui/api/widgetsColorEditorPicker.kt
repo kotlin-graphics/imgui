@@ -65,6 +65,7 @@ import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
+import imgui.api.widgetsColorEditorPicker.Companion.colorEditRestoreH
 import imgui.api.widgetsColorEditorPicker.Companion.colorEditRestoreHS
 import imgui.api.widgetsColorEditorPicker.Companion.fmtTableFloat
 import imgui.api.widgetsColorEditorPicker.Companion.fmtTableInt
@@ -174,6 +175,14 @@ interface widgetsColorEditorPicker {
             renderArrowPointingAt(Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32(255, 255, 255, alpha8))
         }
 
+        fun colorEditRestoreH(col: Vec4, pH: MutableProperty<Float>) {
+            assert(g.colorEditCurrentID != 0)
+            if (g.colorEditSavedID != g.colorEditCurrentID || g.colorEditSavedColor != floatsToU32(col[0], col[1], col[2], 0f))
+                return
+            var H by pH
+            H = g.colorEditSavedHue
+        }
+
         /** ColorEdit supports RGB and HSV inputs. In case of RGB input resulting color may have undefined hue and/or saturation.
          *  Since widget displays both RGB and HSV values we must preserve hue and saturation to prevent these values resetting. */
         fun colorEditRestoreHS(rgb: Vec3, hsv: Vec3) = colorEditRestoreHS(rgb.r, rgb.g, rgb.b, hsv.x, hsv.y, hsv.z, hsv::put)
@@ -192,23 +201,19 @@ interface widgetsColorEditorPicker {
 
         /** ColorEdit supports RGB and HSV inputs. In case of RGB input resulting color may have undefined hue and/or saturation.
          *  Since widget displays both RGB and HSV values we must preserve hue and saturation to prevent these values resetting. */
-        fun colorEditRestoreHS(x: Float, y: Float, z: Float, h: Float, s: Float, v: Float, hsvSetter: Vec3Setter) {
-            var h = h
-            var s = s
-            // This check is optional. Suppose we have two color widgets side by side, both widgets display different colors, but both colors have hue and/or saturation undefined.
-            // With color check: hue/saturation is preserved in one widget. Editing color in one widget would reset hue/saturation in another one.
-            // Without color check: common hue/saturation would be displayed in all widgets that have hue/saturation undefined.
-            // g.ColorEditLastColor is stored as ImU32 RGB value: this essentially gives us color equality check with reduced precision.
-            // Tiny external color changes would not be detected and this check would still pass. This is OK, since we only restore hue/saturation _only_ if they are undefined,
-            // therefore this change flipping hue/saturation from undefined to a very tiny value would still be represented in color picker.
-            if (g.colorEditLastColor != floatsToU32(x, y, z, 0f)) return
+        fun colorEditRestoreHS(x: Float, y: Float, z: Float, h_: Float, s_: Float, v: Float, hsvSetter: Vec3Setter) {
+            assert(g.colorEditCurrentID != 0)
+            var h = h_
+            var s = s_
+            if (g.colorEditSavedID != g.colorEditCurrentID || g.colorEditSavedColor != floatsToU32(x, y, z, 0f))
+                return
 
             // When s == 0, h is undefined.
             // When h == 1 it wraps around to 0.
-            if (s == 0f || (h == 0f && g.colorEditLastHue == 1f)) h = g.colorEditLastHue
+            if (s == 0f || (h == 0f && g.colorEditSavedHue == 1f)) h = g.colorEditSavedHue
 
             // When v == 0, s is undefined.
-            if (v == 0f) s = g.colorEditLastSat
+            if (v == 0f) s = g.colorEditSavedSat
             hsvSetter(h, s, v)
         }
     }
@@ -227,6 +232,9 @@ inline fun colorEdit4(label: String, x: Float, y: Float, z: Float, w: Float, fla
 
     beginGroup()
     pushID(label)
+    val setCurrentColorEditId = g.colorEditCurrentID == 0
+    if (setCurrentColorEditId)
+        g.colorEditCurrentID = window.idStack.last()
 
     var flags = flags_
 
@@ -253,7 +261,7 @@ inline fun colorEdit4(label: String, x: Float, y: Float, z: Float, w: Float, fla
     val f = Vec4(x, y, z, if (alpha) w else 1f)
     if (flags has Cef.InputHSV && flags has Cef.DisplayRGB) f.hsvToRGB()
     else if (flags has Cef.InputRGB && flags has Cef.DisplayHSV) {
-        // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
+        // Hue is lost when converting from grayscale rgb (saturation=0). Restore it.
         f.rgbToHSV()
         colorEditRestoreHS(x, y, z, f)
     }
@@ -350,14 +358,18 @@ inline fun colorEdit4(label: String, x: Float, y: Float, z: Float, w: Float, fla
     if (valueChanged && pickerActiveWindow == null) {
         if (!valueChangedAsFloat) for (n in 0..3) f[n] = i[n] / 255f
         if (flags has Cef.DisplayHSV && flags has Cef.InputRGB) {
-            g.colorEditLastHue = f[0]
-            g.colorEditLastSat = f[1]
+            g.colorEditSavedHue = f[0]
+            g.colorEditSavedSat = f[1]
             f.hsvToRGB()
-            g.colorEditLastColor = floatsToU32(f[0], f[1], f[2], 0f)
+            g.colorEditSavedID = g.colorEditCurrentID
+            g.colorEditSavedColor = floatsToU32(f[0], f[1], f[2], 0f)
         }
         if (flags has Cef.DisplayRGB && flags has Cef.InputHSV) f.rgbToHSV()
         f.into(colSetter, if (alpha) f.w else w)
     }
+
+    if (setCurrentColorEditId)
+        g.colorEditCurrentID = 0
     popID()
     endGroup()
 
@@ -423,6 +435,9 @@ fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = none, refCol
     g.nextItemData.clearFlags()
 
     pushID(label)
+    val setCurrentColorEditId = g.colorEditCurrentID == 0
+    if (setCurrentColorEditId)
+        g.colorEditCurrentID = window.idStack.last()
     beginGroup()
 
     var flags = flags_
@@ -466,7 +481,7 @@ fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = none, refCol
     val hsv = Vec3(col)
     val rgb = Vec3(col)
     if (flags has Cef.InputRGB) {
-        // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
+        // Hue is lost when converting from grayscale rgb (saturation=0). Restore it.
         colorConvertRGBtoHSV(rgb, hsv)
         colorEditRestoreHS(rgb, hsv)
     } else if (flags has Cef.InputHSV) colorConvertHSVtoRGB(hsv, rgb)
@@ -518,7 +533,9 @@ fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = none, refCol
             V = 1f - saturate((io.mousePos.y - pickerPos.y) / (svPickerSize - 1))
 
             // Greatly reduces hue jitter and reset to 0 when hue == 255 and color is rapidly modified using SV square.
-            if (g.colorEditLastColor == Vec4(col[0], col[1], col[2], 0f).u32) H = g.colorEditLastHue
+            colorEditRestoreH(col, H.mutableReference) // Greatly reduces hue jitter and reset to 0 when hue == 255 and color is rapidly modified using SV square.
+            if (g.colorEditSavedColor == Vec4(col[0], col[1], col[2], 0f).u32)
+                H = g.colorEditSavedHue
             valueChangedSv = true; valueChanged = true
         }
         if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context", PopupFlag.MouseButtonRight)
@@ -575,9 +592,10 @@ fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = none, refCol
     // Convert back color to RGB
     if (valueChangedH || valueChangedSv) if (flags has Cef.InputRGB) {
         colorConvertHSVtoRGB(H, S, V, col)
-        g.colorEditLastHue = H
-        g.colorEditLastSat = S
-        g.colorEditLastColor = floatsToU32(col.x, col.y, col.z, 0f)
+        g.colorEditSavedHue = H
+        g.colorEditSavedSat = S
+        g.colorEditSavedID = g.colorEditCurrentID
+        g.colorEditSavedColor = floatsToU32(col.x, col.y, col.z, 0f)
     } else if (flags has Cef.InputHSV) {
         col[0] = H
         col[1] = S
@@ -734,6 +752,8 @@ fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = none, refCol
     if (valueChanged && g.lastItemData.id != 0) // In case of ID collision, the second EndGroup() won't catch g.ActiveId
         markItemEdited(g.lastItemData.id)
 
+    if (setCurrentColorEditId)
+        g.colorEditCurrentID = 0
     popID()
 
     return valueChanged

@@ -534,13 +534,19 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Store user options for color edit widgets   */
     var colorEditOptions: ColorEditFlags = ColorEditFlag.DefaultOptions
 
+    /** Set temporarily while inside of the parent-most ColorEdit4/ColorPicker4 (because they call each others). */
+    var colorEditCurrentID: ID = 0
+
+    /** ID we are saving/restoring HS for */
+    var colorEditSavedID: ID = 0
+
     /** Backup of last Hue associated to LastColor, so we can restore Hue in lossy RGB<>HSV round trips */
-    var colorEditLastHue = 0f
+    var colorEditSavedHue = 0f
 
     /** Backup of last Saturation associated to LastColor, so we can restore Saturation in lossy RGB<>HSV round trips */
-    var colorEditLastSat = 0f
+    var colorEditSavedSat = 0f
 
-    var colorEditLastColor = 0
+    var colorEditSavedColor = 0
 
     /** Initial/reference color at the time of opening the color picker. */
     val colorPickerRef = Vec4()
