@@ -26,6 +26,7 @@ internal interface settings {
 
     // MarkIniSettingsDirty(ImGuiWindow* window) -> Window class
 
+    // Clear all settings (windows, tables, docking etc.)
     fun clearIniSettings() {
         g.settingsIniData = ""
         for (handler in g.settingsHandlers)
@@ -45,9 +46,18 @@ internal interface settings {
         }
     }
 
-    fun findWindowSettings(id: ID): WindowSettings? = g.settingsWindows.find { it.id == id }
+    // This is called once per window .ini entry + once per newly instanciated window.
+    fun findWindowSettingsByName(name: String): WindowSettings? {
+        val id = hashStr(name)
+        return g.settingsWindows.find { it.id == id }
+    }
 
-    fun findOrCreateWindowSettings(name: String): WindowSettings = findWindowSettings(hashStr(name)) ?: createNewWindowSettings(name)
+    // This is faster if you are holding on a Window already as we don't need to perform a search.
+    fun findWindowSettingsByWindow(window: Window): WindowSettings? {
+        if (window.settingsOffset != -1)
+            return g.settingsWindows[window.settingsOffset]
+        return findWindowSettingsByName(window.name) // Actual search executed once, so at this point we don't mind the redundant hashing.
+    }
 
     fun addSettingsHandler(handler: SettingsHandler) {
         assert(findSettingsHandler(handler.typeName) == null)

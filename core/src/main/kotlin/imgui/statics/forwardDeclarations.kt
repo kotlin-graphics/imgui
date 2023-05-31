@@ -6,9 +6,9 @@ import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
-import imgui.ImGui.findOrCreateWindowSettings
 import imgui.ImGui.findWindowByID
-import imgui.ImGui.findWindowSettings
+import imgui.ImGui.findWindowSettingsByName
+import imgui.ImGui.findWindowSettingsByWindow
 import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
@@ -17,6 +17,7 @@ import imgui.classes.DrawList
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.floor
+import imgui.internal.hashStr
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.SettingsHandler
 import imgui.internal.sections.WindowSettings
@@ -135,7 +136,7 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
     if (flags hasnt Wf.NoSavedSettings) {
-        findWindowSettings(id)?.let { settings ->
+        findWindowSettingsByWindow(this)?.let { settings ->
             //  Retrieve settings from .ini file
             settingsOffset = g.settingsWindows.indexOf(settings)
             setConditionAllowFlags(Cond.FirstUseEver, false)
@@ -252,9 +253,10 @@ fun windowSettingsHandler_ClearAll(ctx: Context, handler: SettingsHandler) {
 }
 
 fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandler, name: String): WindowSettings {
-    val settings = findOrCreateWindowSettings(name)
-    val id = settings.id
-    settings.clear() // Clear existing if recycling previous entry
+    val id = hashStr(name)
+    val settings = findWindowSettingsByName(name)
+            ?.apply { clear() } // Clear existing if recycling previous entry
+            ?: WindowSettings()
     settings.id = id
     settings.wantApply = true
     return settings
@@ -288,11 +290,8 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
         if (window.flags has Wf.NoSavedSettings)
             continue
 
-        val settings = when {
-            window.settingsOffset != -1 -> g.settingsWindows[window.settingsOffset]
-            else -> findWindowSettings(window.id) ?: createNewWindowSettings(window.name).also {
-                window.settingsOffset = g.settingsWindows.indexOf(it)
-            }
+        val settings = findWindowSettingsByWindow(window) ?: createNewWindowSettings(window.name).also {
+            window.settingsOffset = g.settingsWindows.indexOf(it)
         }
         assert(settings.id == window.id)
         settings.pos put window.pos
