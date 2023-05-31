@@ -7,7 +7,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
 import imgui.ImGui.findWindowByID
-import imgui.ImGui.findWindowSettingsByName
+import imgui.ImGui.findWindowSettingsByID
 import imgui.ImGui.findWindowSettingsByWindow
 import imgui.ImGui.io
 import imgui.ImGui.style
@@ -270,7 +270,7 @@ fun windowSettingsHandler_ClearAll(ctx: Context, handler: SettingsHandler) {
 
 fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandler, name: String): WindowSettings {
     val id = hashStr(name)
-    val settings = findWindowSettingsByName(name)
+    val settings = findWindowSettingsByID(id)
             ?.apply { clear() } // Clear existing if recycling previous entry
             ?: WindowSettings()
     settings.id = id
