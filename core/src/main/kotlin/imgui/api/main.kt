@@ -225,7 +225,7 @@ interface main {
         g.wantCaptureMouseNextFrame = -1
 
         // Platform IME data: reset for the frame
-        g.platformImeData = PlatformImeData(g.platformImeData) // OS Input Method Editor showing on top-left of our window by default
+        g.platformImeDataPrev = g.platformImeData // OS Input Method Editor showing on top-left of our window by default
         g.platformImeData.wantVisible = false
 
         // Mouse wheel scrolling, scale
@@ -300,7 +300,7 @@ interface main {
 
         // Notify Platform/OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         val imeData = g.platformImeData
-        if (io.setPlatformImeDataFn != null && imeData != g.platformImeDataPrev) {
+        if (io.setPlatformImeDataFn != null && imeData !== g.platformImeDataPrev) {
             //            if (DEBUG)
             // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
             IMGUI_DEBUG_LOG_IO("Calling io.SetPlatformImeDataFn(): WantVisible: ${imeData.wantVisible.i}, InputPos (%.2f,%.2f)", imeData.inputPos.x, imeData.inputPos.y)
