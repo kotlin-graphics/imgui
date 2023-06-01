@@ -9,8 +9,7 @@ import imgui.internal.hashStr
  *
  *  Because we never destroy or rename ImGuiWindowSettings, we can store the names in a separate buffer easily.
  *  [JVM] We prefer keeping the `name` variable
- *
- *  ~ CreateNewWindowSettings */
+ */
 class WindowSettings(val name: String = "") {
     var id: ID = hashStr(name)
     var pos = Vec2()
@@ -25,6 +24,7 @@ class WindowSettings(val name: String = "") {
         size put 0f
         collapsed = false
         wantApply = false
+        wantDelete = false
     }
 }
 

@@ -52,8 +52,6 @@ interface settingsIniUtilities {
                         val name = line.substring(firstCloseBracket + 2, line.lastIndex)
                         entryHandler = findSettingsHandler(type)
                         entryData = entryHandler?.readOpenFn?.invoke(g, entryHandler, name)
-//                        val typeHash = hash(type)
-//                        settings = findWindowSettings(typeHash) ?: createNewWindowSettings(name)
                     }
                 } else if (entryHandler != null && entryData != null)
                 // Let type handler parse the line

@@ -128,8 +128,8 @@ fun initOrLoadWindowSettings(window: Window, settings: WindowSettings?) {
 
     // Initial window state with e.g. default/arbitrary window position
     // Use SetNextWindowPos() with the appropriate condition flag to change the initial position of a window.
-    val main_viewport = ImGui.mainViewport
-    window.pos = main_viewport.pos + 60
+    val mainViewport = ImGui.mainViewport
+    window.pos = mainViewport.pos + 60
     window.setWindowCollapsedAllowFlags = Cond.Always / Cond.Once / Cond.FirstUseEver / Cond.Appearing
     window.setWindowSizeAllowFlags = window.setWindowCollapsedAllowFlags
     window.setWindowPosAllowFlags = window.setWindowSizeAllowFlags
@@ -272,7 +272,7 @@ fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandle
     val id = hashStr(name)
     val settings = findWindowSettingsByID(id)
             ?.apply { clear() } // Clear existing if recycling previous entry
-            ?: WindowSettings()
+            ?: createNewWindowSettings(name)
     settings.id = id
     settings.wantApply = true
     return settings
