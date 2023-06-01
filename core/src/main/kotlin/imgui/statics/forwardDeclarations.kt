@@ -140,7 +140,7 @@ fun initOrLoadWindowSettings(window: Window, settings: WindowSettings?) {
     }
     window.dc.cursorStartPos put window.pos; window.dc.cursorMaxPos put window.pos; window.dc.idealMaxPos put window.pos // So first call to CalcWindowContentSizes() doesn't return crazy values
 
-    if (window.flags hasnt WindowFlag.AlwaysAutoResize) {
+    if (window.flags has WindowFlag.AlwaysAutoResize) {
         window.autoFitFrames put 2
         window.autoFitOnlyGrows = false
     } else {

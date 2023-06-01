@@ -168,8 +168,9 @@ interface windows {
         var windowSizeYsetByApi = false
         if (g.nextWindowData.flags has NextWindowDataFlag.HasPos) {
             windowPosSetByApi = window.setWindowPosAllowFlags has g.nextWindowData.posCond
-            if (windowPosSetByApi && g.nextWindowData.posPivotVal.lengthSqr > 0.00001f) {/*  May be processed on the next frame if this is our first frame and we are measuring size
-                    FIXME: Look into removing the branch so everything can go through this same code path for consistency.  */
+            if (windowPosSetByApi && g.nextWindowData.posPivotVal.lengthSqr > 0.00001f) {
+                // May be processed on the next frame if this is our first frame and we are measuring size
+                // FIXME: Look into removing the branch so everything can go through this same code path for consistency.
                 window.setWindowPosVal put g.nextWindowData.posVal
                 window.setWindowPosPivot put g.nextWindowData.posPivotVal
                 window.setWindowPosAllowFlags = window.setWindowPosAllowFlags wo (Cond.Once or Cond.FirstUseEver or Cond.Appearing)
@@ -241,9 +242,8 @@ interface windows {
             if (windowJustCreated && (!windowSizeXsetByApi || !windowSizeYsetByApi))
                 window.hiddenFramesCannotSkipItems = 1
 
-            /*  Hide popup/tooltip window when re-opening while we measure size (because we recycle the windows)
-                We reset Size/SizeContents for reappearing popups/tooltips early in this function,
-                so further code won't be tempted to use the old size.             */
+            // Hide popup/tooltip window when re-opening while we measure size (because we recycle the windows)
+            // We reset Size/ContentSize for reappearing popups/tooltips early in this function, so further code won't be tempted to use the old size.
             if (windowJustActivatedByUser && flags has (Wf._Popup or Wf._Tooltip)) {
                 window.hiddenFramesCannotSkipItems = 1
                 if (flags has Wf.AlwaysAutoResize) {
@@ -329,13 +329,11 @@ interface windows {
                 // Auto-fit may only grow window during the first few frames
                 // We still process initial auto-fit on collapsed windows to get a window width, but otherwise don't honor ImGuiWindowFlags_AlwaysAutoResize when collapsed.
                 if (!windowSizeXsetByApi && window.autoFitFrames.x > 0) {
-                    window.sizeFull.x =
-                        if (window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
+                    window.sizeFull.x = if (window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
                     useCurrentSizeForScrollbarX = true
                 }
                 if (!windowSizeYsetByApi && window.autoFitFrames.y > 0) {
-                    window.sizeFull.y =
-                        if (window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
+                    window.sizeFull.y = if (window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
                     useCurrentSizeForScrollbarY = true
                 }
                 if (!window.collapsed) window.markIniSettingsDirty()
