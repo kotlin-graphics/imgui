@@ -101,6 +101,7 @@ interface tablesInternal {
                 val instanceDesc = "##Instance$instanceNo"
                 getIDWithSeed(instanceNo, getIDWithSeed("##Instances", -1, id)) // Push "##Instance" followed by (int)instance_no in ID stack.
             }
+
             else -> id
         }
         val tableInstance = table getInstanceData table.instanceCurrent
@@ -1726,10 +1727,6 @@ interface tablesInternal {
         window.workRect.max.x = column.workMaxX
         window.dc.itemWidth = column.itemWidth
 
-        // To allow ImGuiListClipper to function we propagate our row height
-        if (!column.isEnabled)
-            window.dc.cursorPos.y = window.dc.cursorPos.y max rowPosY2
-
         window.skipItems = column.isSkipItems
         if (column.isSkipItems) {
             g.lastItemData.id = 0
@@ -1763,7 +1760,8 @@ interface tablesInternal {
             else -> if (isUnfrozenRows) column::contentMaxXUnfrozen else column::contentMaxXFrozen
         }
         maxPosX.set(maxPosX() max window.dc.cursorMaxPos.x)
-        rowPosY2 = rowPosY2 max (window.dc.cursorMaxPos.y + cellPaddingY)
+        if (column.isEnabled)
+            rowPosY2 = rowPosY2 max (window.dc.cursorMaxPos.y + cellPaddingY)
         column.itemWidth = window.dc.itemWidth
 
         // Propagate text baseline for the entire row
