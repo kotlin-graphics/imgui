@@ -211,10 +211,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Queue a new key down/up event for analog values (e.g. ImGuiKey_Gamepad_ values). Dead-zones should be handled by the backend. */
     fun addKeyAnalogEvent(key: Key, down: Boolean, analogValue: Float) {
         //if (e->Down) { IMGUI_DEBUG_LOG_IO("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
+        val g = ctx!!
         if (key == Key.None || !appAcceptingEvents)
             return
 
-        assert(g.io === this) { "Can only add events to current context." }
         assert(key.isNamedOrMod) { "Backend needs to pass a valid ImGuiKey_ constant . 0..511 values are legacy native key codes which are not accepted by this API." }
         assert(!key.isAlias) { "Backend cannot submit ImGuiKey_MouseXXX values they are automatically inferred from AddMouseXXX() events ." }
         assert(key != Key.Mod_Shortcut) { "We could easily support the translation here but it seems saner to not accept it(TestEngine perform a translation itself)" }
@@ -237,7 +237,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Queue a mouse position update. Use -FLT_MAX,-FLT_MAX to signify no mouse (e.g. app not focused and not hovered) */
     fun addMousePosEvent(x: Float, y: Float) {
-        assert(g.io === this) { "Can only add events to current context." }
+        val g = ctx!!
         if (!appAcceptingEvents)
             return
 
@@ -255,7 +255,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Queue a mouse button change */
     fun addMouseButtonEvent(mouseButton: MouseButton, down: Boolean) {
-        assert(g.io === this) { "Can only add events to current context." }
+        val g = ctx!!
         if (!appAcceptingEvents)
             return
 
@@ -272,7 +272,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      *
      *  Queue a mouse wheel event (some mouse/API may only have a Y component) */
     fun addMouseWheelEvent(wheelX: Float, wheelY: Float) {
-        assert(g.io === this) { "Can only add events to current context." }
+        val g = ctx!!
 
         // Filter duplicate (unlike most events, wheel values are relative and easy to filter)
         if (!appAcceptingEvents || (wheelX == 0f && wheelY == 0f))
@@ -283,9 +283,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Queue a gain/loss of focus for the application (generally based on OS/platform focus of your window) */
     fun addFocusEvent(focused: Boolean) {
-        // We intentionally overwrite this and process in NewFrame(), in order to give a chance
-        // to multi-viewports backends to queue AddFocusEvent(false),AddFocusEvent(true) in same frame.
-        assert(g.io === this) { "Can only add events to current context." }
+        val g = ctx!!
 
         // Filter duplicate
         val latestEvent = findLatestInputEvent<InputEvent.AppFocused>()
@@ -302,7 +300,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      * - with glfw you can get those from the callback set in glfwSetCharCallback()
      * - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
     fun addInputCharacter(c: Char) {
-        assert(g.io === this) { "Can only add events to current context." }
+        val g = ctx!!
         if (c == NUL || !appAcceptingEvents)
             return
 
@@ -442,6 +440,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
     // [Internal] Dear ImGui will maintain those fields. Forward compatibility not guaranteed!
     //------------------------------------------------------------------
+
+    /** Parent UI context (needs to be set explicitly by parent). */
+    var ctx: Context? = null
 
     // Main Input State
     // (this block used to be written by backend, since 1.87 it is best to NOT write to those directly, call the AddXXX functions above instead)

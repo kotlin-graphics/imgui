@@ -15,7 +15,7 @@ import uno.kotlin.NUL
 /** Internal state of the currently focused/edited text input box
  *  For a given item ID, access with ImGui::GetInputTextState() */
 class InputTextState(
-    /** parent dear imgui context */
+    /** parent UI context (needs to be set explicitly by parent).t */
     val ctx: Context) {
 
     /** widget id owning the text state */

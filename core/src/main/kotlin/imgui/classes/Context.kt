@@ -31,7 +31,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Io.Fonts-> is owned by the ImGuiContext and will be destructed along with it.   */
     var fontAtlasOwnedByContext = sharedFontAtlas == null
 
-    var io = IO(sharedFontAtlas)
+    var io = IO(sharedFontAtlas).apply { ctx = this@Context }
 
     /** Input events which will be tricked/written into IO structure. */
     val inputEventsQueue = ArrayList<InputEvent>()
