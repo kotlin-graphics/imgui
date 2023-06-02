@@ -906,17 +906,15 @@ fun navProcessItem() {
         } else if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt If.Disabled) {
             val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
 
-            if (!isTabbing) {
-                if (navScoreItem(result))
-                    navApplyItemToResult(result)
+            if (navScoreItem(result))
+                navApplyItemToResult(result)
 
-                // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
-                val VISIBLE_RATIO = 0.7f
-                if (g.navMoveFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
-                    if (clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) - clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
-                        if (navScoreItem(g.navMoveResultLocalVisible))
-                            navApplyItemToResult(g.navMoveResultLocalVisible)
-            }
+            // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
+            val VISIBLE_RATIO = 0.7f
+            if (g.navMoveFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
+                if (clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) - clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
+                    if (navScoreItem(g.navMoveResultLocalVisible))
+                        navApplyItemToResult(g.navMoveResultLocalVisible)
         }
     }
 

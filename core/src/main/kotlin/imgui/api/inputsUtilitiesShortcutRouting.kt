@@ -70,7 +70,7 @@ interface inputsUtilitiesShortcutRouting {
     //   As such, it could be called TrySetXXX or SubmitXXX, or the Submit and Test operations should be separate.)
     // - Using 'owner_id == ImGuiKeyOwner_Any/0': auto-assign an owner based on current focus scope (each window has its focus scope by default)
     // - Using 'owner_id == ImGuiKeyOwner_None': allows disabling/locking a shortcut.
-    fun setShortcutRouting(keyChord: KeyChord, ownerId: ID, flags_: InputFlags): Boolean {
+    fun setShortcutRouting(keyChord: KeyChord, ownerId: ID = 0, flags_: InputFlags = none): Boolean {
 
         var flags = flags_
         if (flags hasnt InputFlag.RouteMask)

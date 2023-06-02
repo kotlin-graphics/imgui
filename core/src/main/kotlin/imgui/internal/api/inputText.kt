@@ -44,6 +44,7 @@ import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
 import imgui.ImGui.setOwner
 import imgui.ImGui.setScrollY
+import imgui.ImGui.setShortcutRouting
 import imgui.ImGui.shortcut
 import imgui.ImGui.style
 import imgui.api.g
@@ -259,7 +260,7 @@ internal interface inputText {
             if (isOsx)
                 Key.Mod_Alt.setOwner(id)
             if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out as we will use the \t character.
-                Key.Tab.setOwner(id)
+                setShortcutRouting(Key.Tab, id)
         }
 
         // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped), clear id immediately (don't wait until the end of the function)
@@ -379,9 +380,7 @@ internal interface inputText {
 
             // We expect backends to emit a Tab key but some also emit a Tab character which we ignore (#2467, #1336)
             // (For Tab and Enter: Win32/SFML/Allegro are sending both keys and chars, GLFW and SDL are only sending keys. For Space they all send all threes)
-            val ignoreCharInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
-            // Insert TAB
-            if (flags has Itf.AllowTabInput && Key.Tab.isPressed && !ignoreCharInputs && !io.keyShift && !isReadOnly) {
+            if (flags has Itf.AllowTabInput && shortcut(Key.Tab, id) && !isReadOnly) {
                 val charRef = '\t'.mutableReference
                 val char by charRef
                 if (inputTextFilterCharacter(charRef, flags, callback, callbackUserData, InputSource.Keyboard)) {
@@ -391,6 +390,7 @@ internal interface inputText {
 
             // Process regular text input (before we check for Return because using some IME will effectively send a Return?)
             // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
+            val ignoreCharInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
             if (io.inputQueueCharacters.isNotEmpty()) {
                 if (!ignoreCharInputs && !isReadOnly && !inputRequestedByNav) for (n in io.inputQueueCharacters.indices) {
                     // Insert character if they pass filtering
@@ -629,7 +629,7 @@ internal interface inputText {
                     var eventFlag: InputTextFlags = none
                     var eventKey: Key = Key.None
                     when {
-                        flags has Itf.CallbackCompletion && Key.Tab.isPressed -> {
+                        flags has Itf.CallbackCompletion && shortcut(Key.Tab, id) -> {
                             eventFlag = Itf.CallbackCompletion
                             eventKey = Key.Tab
                         }
