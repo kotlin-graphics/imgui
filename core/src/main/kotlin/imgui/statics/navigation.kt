@@ -532,15 +532,20 @@ fun navUpdateCreateMoveRequest() {
     }
 
     // When using gamepad, we project the reference nav bounding box into window visible area.
-    // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad all movements are relative
-    // (can't focus a visible object like we can with the mouse).
+    // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling,
+    // since with gamepad all movements are relative (can't focus a visible object like we can with the mouse).
     if (g.navMoveSubmitted && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main && window != null) { // && (g.NavMoveFlags & ImGuiNavMoveFlags_Forwarded))
         val clampX = g.navMoveFlags hasnt (NavMoveFlag.LoopX or NavMoveFlag.WrapX)
         val clampY = g.navMoveFlags hasnt (NavMoveFlag.LoopY or NavMoveFlag.WrapY)
         val innerRectRel = window rectAbsToRel Rect(window.innerRect.min - 1, window.innerRect.max + 1)
+
+        // Take account of changing scroll to handle triggering a new move request on a scrolling frame. (#6171)
+        // Otherwise 'inner_rect_rel' would be off on the move result frame.
+        innerRectRel translate (window.calcNextScrollFromScrollTargetAndClamp() - window.scroll)
+
         if ((clampX || clampY) && window.navRectRel[g.navLayer] !in innerRectRel) {
 
-            //IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel for gamepad move")
+            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel for gamepad move")
             val padX = innerRectRel.width min (window.calcFontSize() * 0.5f)
             val padY = innerRectRel.height min (window.calcFontSize() * 0.5f) // Terrible approximation for the intent of starting navigation from first fully visible ite
             innerRectRel.min.x = if (clampX) (innerRectRel.min.x + padX) else -Float.MAX_VALUE
