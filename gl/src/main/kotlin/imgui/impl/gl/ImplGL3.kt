@@ -333,7 +333,8 @@ class ImplGL3 : GLInterface {
         data.vao = GlVertexArray.gen(); glCall("glGenVertexArrays")
 
         // Restore modified GL state
-        glUseProgram(lastProgram)
+        // This "glIsProgram()" check is required because if the program is "pending deletion" at the time of binding backup, it will have been deleted by now and will cause an OpenGL error. See #6220.
+        if (glIsProgram(lastProgram)) glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
