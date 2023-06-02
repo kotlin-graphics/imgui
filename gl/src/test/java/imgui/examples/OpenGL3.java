@@ -10,6 +10,7 @@ import imgui.ImGui;
 import imgui.MutableReference;
 import imgui.classes.Context;
 import imgui.classes.IO;
+import imgui.font.FontGlyphRangesBuilder;
 import imgui.impl.gl.ImplGL3;
 import imgui.impl.glfw.ImplGlfw;
 import org.lwjgl.glfw.GLFW;
@@ -27,6 +28,7 @@ import static gln.GlnKt.glViewport;
 import static imgui.ImguiKt.DEBUG;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
+import imgui.font.glyphRanges;
 
 public class OpenGL3 {
 

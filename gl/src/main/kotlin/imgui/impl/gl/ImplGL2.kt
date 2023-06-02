@@ -1,5 +1,6 @@
 package imgui.impl.gl
 
+import glm_.L
 import glm_.d
 import glm_.f
 import glm_.i
@@ -153,7 +154,7 @@ class ImplGL2 : GLInterface {
                     glScissor(clipMin.x.i, (fbHeight.f - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i)
 
                     // Bind texture, Draw
-                    glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
+                    glBindTexture(GL_TEXTURE_2D, cmd.texID!!.i)
                     glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset + cmd.idxOffset)
                 }
             }
@@ -199,7 +200,7 @@ class ImplGL2 : GLInterface {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
 
         // Store our identifier
-        ImGui.io.fonts.texID = data.fontTexture[0]
+        ImGui.io.fonts.texID = data.fontTexture[0].L
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)

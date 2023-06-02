@@ -235,7 +235,7 @@ class ImplGL3 : GLInterface {
                     glScissor(clipMin.x.i, (fbHeight.f - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i); glCall("glScissor")
 
                     // Bind texture, Draw
-                    glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
+                    glBindTexture(GL_TEXTURE_2D, cmd.texID!!.i)
                     if (OPENGL_MAY_HAVE_VTX_OFFSET && data.glVersion >= 320) {
                         glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset); glCall("glDrawElementsBaseVertex")
                     } else {
@@ -292,7 +292,7 @@ class ImplGL3 : GLInterface {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels); glCall("glTexImage2D")
 
         // Store our identifier
-        io.fonts.texID = data.fontTexture[0]
+        io.fonts.texID = data.fontTexture[0].L
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture); glCall("glBindTexture")
