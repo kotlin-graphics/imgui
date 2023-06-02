@@ -4,12 +4,14 @@ import glm_.f
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginTable
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.checkboxFlags
 import imgui.ImGui.end
+import imgui.ImGui.endDisabled
 import imgui.ImGui.endTable
 import imgui.ImGui.fontSize
 import imgui.ImGui.io
@@ -248,6 +250,15 @@ object ExampleApp {
                 checkbox("io.configWindowsMoveFromTitleBarOnly", io::configWindowsMoveFromTitleBarOnly)
                 checkbox("io.ConfigMacOSXBehaviors", io::configMacOSXBehaviors)
                 text("Also see Style->Rendering for rendering options.")
+
+                separatorText("Debug")
+                beginDisabled()
+                checkbox("io.ConfigDebugBeginReturnValueOnce", io::configDebugBeginReturnValueOnce) // .
+                endDisabled()
+                sameLine(); helpMarker("First calls to Begin()/BeginChild() will return false.\n\nTHIS OPTION IS DISABLED because it needs to be set at application boot-time to make sense. Showing the disabled option is a way to make this feature easier to discover")
+                checkbox("io.ConfigDebugBeginReturnValueLoop", io::configDebugBeginReturnValueLoop)
+                sameLine(); helpMarker("Some calls to Begin()/BeginChild() will return false.\n\nWill cycle through window depths then repeat. Windows should be flickering while running.")
+
                 spacing()
             }
             treeNode("Backend Flags") {

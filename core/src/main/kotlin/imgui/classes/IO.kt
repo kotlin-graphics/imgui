@@ -148,8 +148,23 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Timer (in seconds) to free transient windows/tables memory buffers when unused. Set to -1.0f to disable. */
     var configMemoryCompactTimer = 60f
 
+
+    // Debug options
+
+    // - tools to test correct Begin/End and BeginChild/EndChild behaviors.
+    // - presently Begn()/End() and BeginChild()EndChild() needs to ALWAYS be called in tandem, regardless of return value of BeginXXX()
+    //   this is inconsistent with other BeginXXX functions and create confusion for many users.
+    // - we expect to update the API eventually. In the meanwhile we provided tools to facilitate checking user-code behavior.
+
+    /** First-time calls to Begin()/BeginChild() will return false. NEEDS TO BE SET AT APPLICATION BOOT TIME if you don't want to miss windows. */
+    var configDebugBeginReturnValueOnce = false
+
+    /** Some calls to Begin()/BeginChild() will return false. Will cycle through window depths then repeat. Suggested use: add "io.ConfigDebugBeginReturnValue = io.KeyShift" in your main loop then occasionally press SHIFT. Windows should be flickering while running. */
+    var configDebugBeginReturnValueLoop = false
+
     //------------------------------------------------------------------
-    // User Functions
+    // Platform Functions
+    // (the imgui_impl_xxxx backend files are setting those up for you)
     //------------------------------------------------------------------
 
     // Optional: Platform/Renderer backend name (informational only! will be displayed in About Window)

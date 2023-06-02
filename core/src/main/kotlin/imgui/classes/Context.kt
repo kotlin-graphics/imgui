@@ -672,6 +672,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** For DebugLocateItemOnHover(). This is used together with DebugLocateId which is in a hot/cached spot above. */
     var debugLocateFrames = 0
 
+    /** Cycle between 0..9 then wrap around. */
+    var debugBeginReturnValueCullDepth = -1
+
     /** Item picker is active (started with DebugStartItemPicker()) */
     var debugItemPickerActive = false
 
