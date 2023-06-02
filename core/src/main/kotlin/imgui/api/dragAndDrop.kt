@@ -223,16 +223,18 @@ interface dragAndDrop {
         assert(payload.dataFrameCount != -1) { "Forgot to call EndDragDropTarget() ?" }
         if (type.isNotEmpty() && !payload.isDataType(type)) return null
 
-        /*  Accept smallest drag target bounding box, this allows us to nest drag targets conveniently without ordering constraints.
-            NB: We currently accept NULL id as target. However, overlapping targets requires a unique ID to function!         */
+        // Accept smallest drag target bounding box, this allows us to nest drag targets conveniently without ordering constraints.
+        // NB: We currently accept NULL id as target. However, overlapping targets requires a unique ID to function!
         val wasAcceptedPreviously = g.dragDropAcceptIdPrev == g.dragDropTargetId
         val r = Rect(g.dragDropTargetRect)
         val rSurface = r.width * r.height
-        if (rSurface <= g.dragDropAcceptIdCurrRectSurface) {
-            g.dragDropAcceptFlags = flags
-            g.dragDropAcceptIdCurr = g.dragDropTargetId
-            g.dragDropAcceptIdCurrRectSurface = rSurface
-        }
+        if (rSurface > g.dragDropAcceptIdCurrRectSurface)
+            return null
+
+        g.dragDropAcceptFlags = flags
+        g.dragDropAcceptIdCurr = g.dragDropTargetId
+        g.dragDropAcceptIdCurrRectSurface = rSurface
+        //IMGUI_DEBUG_LOG("AcceptDragDropPayload(): %08X: accept\n", g.DragDropTargetId);
 
         // Render default drop visuals
         payload.preview = wasAcceptedPreviously
@@ -241,22 +243,27 @@ interface dragAndDrop {
             window.drawList.addRect(r.min - 3.5f, r.max + 3.5f, Col.DragDropTarget.u32, thickness = 2f)
 
         g.dragDropAcceptFrameCount = g.frameCount
-        // For extern drag sources affecting os window focus, it's easier to just test !isMouseDown() instead of isMouseReleased()
+        // For extern drag sources affecting OS window focus, it's easier to just test !isMouseDown() instead of isMouseReleased()
         payload.delivery = wasAcceptedPreviously && !g.dragDropMouseButton.isDown
-        if (!payload.delivery && flags hasnt Ddf.AcceptBeforeDelivery) return null
+        if (!payload.delivery && flags hasnt Ddf.AcceptBeforeDelivery)
+            return null
 
+        //IMGUI_DEBUG_LOG("AcceptDragDropPayload(): %08X: return payload\n", g.DragDropTargetId);
         return payload
     }
 
-    /** We don't really use/need this now, but added it for the sake of consistency and because we might need it later.
-     *  Only call EndDragDropTarget() if BeginDragDropTarget() returns true!    */
+    /** Only call EndDragDropTarget() if BeginDragDropTarget() returns true!    */
     fun endDragDropTarget() {
         assert(g.dragDropActive)
         assert(g.dragDropWithinTarget)
         g.dragDropWithinTarget = false
+
+        // Clear drag and drop state payload right after delivery
+        if (g.dragDropPayload.delivery)
+            clearDragDrop()
     }
 
     /** ~GetDragDropPayload */
     val dragDropPayload: Payload?
-        get() = if(g.dragDropActive && g.dragDropPayload.dataFrameCount != -1) g.dragDropPayload else null
+        get() = if (g.dragDropActive && g.dragDropPayload.dataFrameCount != -1) g.dragDropPayload else null
 }
