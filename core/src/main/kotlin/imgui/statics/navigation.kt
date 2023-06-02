@@ -57,6 +57,7 @@ import imgui.internal.classes.InputFlag
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
+import imgui.internal.sections.ItemFlag
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -588,8 +589,11 @@ fun navUpdateCreateTabbingRequest() {
     // (this is ALWAYS ENABLED, regardless of ImGuiConfigFlags_NavEnableKeyboard flag!)
     // Initially this was designed to use counters and modulo arithmetic, but that could not work with unsubmitted items (list clipper). Instead we use a strategy close to other move requests.
     // See NavProcessItemForTabbingRequest() for a description of the various forward/backward tabbing cases with and without wrapping.
-    //// FIXME: We use (g.ActiveId == 0) but (g.NavDisableHighlight == false) might be righter once we can tab through anything
-    g.navTabbingDir = if (g.io.keyShift) -1 else if (g.activeId == 0) 0 else +1
+    val navKeyboardActive = g.io.configFlags has ConfigFlag.NavEnableKeyboard
+    g.navTabbingDir = if (g.io.keyShift) -1 else when {
+        navKeyboardActive -> if (g.navDisableHighlight && g.activeId == 0) 0 else +1
+        else -> if (g.activeId == 0) 0 else +1
+    }
     val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
     val clipDir = if (g.navTabbingDir < 0) Dir.Up else Dir.Down
     navMoveRequestSubmit(Dir.None, clipDir, NavMoveFlag.Tabbing, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
@@ -896,14 +900,12 @@ fun navProcessItem() {
 
     // Process Move Request (scoring for navigation)
     // FIXME-NAV: Consider policy for double scoring (scoring from NavScoringRect + scoring from a rect wrapped according to current wrapping policy)
-    if (g.navMoveScoringItems) {
+    if (g.navMoveScoringItems && itemFlags hasnt ItemFlag.Disabled) {
 
-        val isTabStop = itemFlags has If.Inputable && itemFlags hasnt (If.NoTabStop or If.Disabled)
         val isTabbing = g.navMoveFlags has NavMoveFlag.Tabbing
-        if (isTabbing) {
-            if (isTabStop || g.navMoveFlags has NavMoveFlag.FocusApi)
-                navProcessItemForTabbingRequest(id)
-        } else if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt If.Disabled) {
+        if (isTabbing)
+            navProcessItemForTabbingRequest(id, itemFlags, g.navMoveFlags)
+        else if (g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) {
             val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
 
             if (navScoreItem(result))
@@ -936,14 +938,26 @@ fun navProcessItem() {
 // - Case 3: tab forward wrap:    set result to first eligible item (preemptively), on ref id set counter, on next frame if counter hasn't elapsed store result. // FIXME-TABBING: Could be done as a next-frame forwarded request
 // - Case 4: tab backward:        store all results, on ref id pick prev, stop storing
 // - Case 5: tab backward wrap:   store all results, on ref id if no result keep storing until last // FIXME-TABBING: Could be done as next-frame forwarded requested
-fun navProcessItemForTabbingRequest(id: ID) {
+fun navProcessItemForTabbingRequest(id: ID, itemFlags: ItemFlags, moveFlags: NavMoveFlags) {
+
+    if (moveFlags hasnt NavMoveFlag.FocusApi)
+        if (g.navLayer != g.currentWindow!!.dc.navLayerCurrent)
+            return
+
+    // - Can always land on an item when using API call.
+    // - Tabbing with _NavEnableKeyboard (space/enter/arrows): goes through every item.
+    // - Tabbing without _NavEnableKeyboard: goes through inputable items only.
+    val canStop = when {
+        moveFlags has NavMoveFlag.FocusApi -> true
+        else -> itemFlags hasnt ItemFlag.NoTabStop && (g.io.configFlags has ConfigFlag.NavEnableKeyboard || itemFlags has ItemFlag.Inputable)
+    }
     // Always store in NavMoveResultLocal (unlike directional request which uses NavMoveResultOther on sibling/flattened windows)
     val result = g.navMoveResultLocal
     if (g.navTabbingDir == +1) {
         // Tab Forward or SetKeyboardFocusHere() with >= 0
-        if (g.navTabbingResultFirst.id == 0)
+        if (canStop && g.navTabbingResultFirst.id == 0)
             navApplyItemToResult(g.navTabbingResultFirst)
-        if (--g.navTabbingCounter == 0)
+        if (canStop && g.navTabbingCounter > 0 && --g.navTabbingCounter == 0)
             navMoveRequestResolveWithLastItem(result)
         else if (g.navId == id)
             g.navTabbingCounter = 1
@@ -954,12 +968,15 @@ fun navProcessItemForTabbingRequest(id: ID) {
                 g.navMoveScoringItems = false
                 navUpdateAnyRequestFlag()
             }
-        } else
+        } else if (canStop)
+        // Keep applying until reaching NavId
             navApplyItemToResult(result)
-    } else if (g.navTabbingDir == 0)
-    // Tab Init
-        if (g.navTabbingResultFirst.id == 0)
-            navMoveRequestResolveWithLastItem(g.navTabbingResultFirst)
+    } else if (g.navTabbingDir == 0) {
+        if (canStop && g.navId == id)
+            navMoveRequestResolveWithLastItem(result)
+        if (canStop && g.navTabbingResultFirst.id == 0) // Tab init
+            navApplyItemToResult(g.navTabbingResultFirst)
+    }
 }
 
 fun navCalcPreferredRefPos(): Vec2 {

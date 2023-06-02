@@ -1493,7 +1493,7 @@ typealias ConfigFlags = Flag<ConfigFlag>
  *
  *  Flags: for io.ConfigFlags   */
 sealed class ConfigFlag(override val i: Int) : FlagBase<ConfigFlag>() {
-    /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.AddKeyEvent() calls. */
+    /** Master keyboard navigation enable flag. Enable full Tabbing + directional arrows + space/enter to activate. */
     object NavEnableKeyboard : ConfigFlag(1 shl 0)
 
     /** Master gamepad navigation enable flag. This is mostly to instruct your imgui backend to fill io.NavInputs[].

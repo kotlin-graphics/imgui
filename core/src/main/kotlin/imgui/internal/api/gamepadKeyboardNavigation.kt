@@ -118,7 +118,7 @@ internal interface gamepadKeyboardNavigation {
         var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else if (g.navMoveResultOther.id != 0) g.navMoveResultOther else null
 
         // Tabbing forward wrap
-        if (g.navMoveFlags has NavMoveFlag.Tabbing)
+        if (g.navMoveFlags has NavMoveFlag.Tabbing && result == null)
             if ((g.navTabbingCounter == 1 || g.navTabbingDir == 0) && g.navTabbingResultFirst.id != 0)
                 result = g.navTabbingResultFirst
 
