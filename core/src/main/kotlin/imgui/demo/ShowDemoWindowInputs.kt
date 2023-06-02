@@ -20,8 +20,8 @@ import imgui.ImGui.isDown
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.popAllowKeyboardFocus
-import imgui.ImGui.pushAllowKeyboardFocus
+import imgui.ImGui.popTabStop
+import imgui.ImGui.pushTabStop
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setKeyboardFocusHere
@@ -186,10 +186,10 @@ object ShowDemoWindowInputs {
                 inputText("1", buf)
                 inputText("2", buf)
                 inputText("3", buf)
-                pushAllowKeyboardFocus(false)
+                pushTabStop(false)
                 inputText("4 (tab skip)", buf)
                 sameLine(); helpMarker("Item won't be cycled through when using TAB or Shift+Tab.")
-                popAllowKeyboardFocus()
+                popTabStop()
                 inputText("5", buf)
             }
         }
@@ -214,12 +214,12 @@ object ShowDemoWindowInputs {
                 inputText("2", buf)
                 if (isItemActive) hasFocus = 2
 
-                pushAllowKeyboardFocus(false)
+                pushTabStop(false)
                 if (focus3) setKeyboardFocusHere()
                 inputText("3 (tab skip)", buf)
                 if (isItemActive) hasFocus = 3
                 sameLine(); helpMarker("Item won't be cycled through when using TAB or Shift+Tab.")
-                popAllowKeyboardFocus()
+                popTabStop()
 
                 text("Item with focus: ${if (hasFocus != 0) "$hasFocus" else "<none>"}")
 

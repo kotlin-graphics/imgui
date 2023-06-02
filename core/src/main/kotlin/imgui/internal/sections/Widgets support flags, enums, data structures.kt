@@ -23,7 +23,7 @@ typealias ItemFlags = Flag<ItemFlag>
  *  This is going to be exposed in imgui.h when stabilized enough. */
 sealed class ItemFlag(override val i: Int) : FlagBase<ItemFlag>() {
     // Controlled by user
-    /** Disable keyboard tabbing (FIXME: should merge with _NoNav) */
+    /** Disable keyboard tabbing. This is a "lighter" version of ImGuiItemFlags_NoNav. */
     object NoTabStop : ItemFlag(1 shl 0)  // false
 
     /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
@@ -32,7 +32,7 @@ sealed class ItemFlag(override val i: Int) : FlagBase<ItemFlag>() {
     /** Disable interactions but doesn't affect visuals. See BeginDisabled()/EndDisabled(). See github.com/ocornut/imgui/issues/211 */
     object Disabled : ItemFlag(1 shl 2)  // false
 
-    /** Disable keyboard/gamepad directional navigation (FIXME: should merge with _NoTabStop) */
+    /** Disable any form of focusing (keyboard/gamepad directional navigation and SetKeyboardFocusHere() calls) */
     object NoNav : ItemFlag(1 shl 3)  // false
 
     /** Disable item being a candidate for default focus (e.g. used by title bar items) */

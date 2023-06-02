@@ -3,9 +3,9 @@ package imgui.api
 import imgui.ImGui.button
 import imgui.ImGui.clipboardText
 import imgui.ImGui.logBegin
-import imgui.ImGui.popAllowKeyboardFocus
+import imgui.ImGui.popTabStop
 import imgui.ImGui.popID
-import imgui.ImGui.pushAllowKeyboardFocus
+import imgui.ImGui.pushTabStop
 import imgui.ImGui.pushID
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
@@ -77,10 +77,10 @@ interface loggingCapture {
         val logToTty = button("Log To TTY"); sameLine()
         val logToFile = button("Log To File"); sameLine()
         val logToClipboard = button("Log To Clipboard"); sameLine()
-        pushAllowKeyboardFocus(false)
+        pushTabStop(false)
         setNextItemWidth(80f)
         slider("Default Depth", g::logDepthToExpandDefault, 0, 9)
-        popAllowKeyboardFocus()
+        popTabStop()
         popID()
 
         // Start logging at the end of the function so that the buttons don't appear in the log

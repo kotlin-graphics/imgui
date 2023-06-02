@@ -170,9 +170,9 @@ public class Jdsl {
     }
 
     public static void withAllowKeyboardFocus(boolean allowKeyboardFocus, Runnable block) {
-        imgui.pushAllowKeyboardFocus(allowKeyboardFocus);
+        imgui.pushTabStop(allowKeyboardFocus);
         block.run();
-        imgui.popAllowKeyboardFocus();
+        imgui.popTabStop();
     }
 
     public static void withButtonRepeat(boolean repeat, Runnable block) {

@@ -51,7 +51,7 @@ import imgui.ImGui.imageButton
 import imgui.ImGui.indent
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.menuItem
-import imgui.ImGui.popAllowKeyboardFocus
+import imgui.ImGui.popTabStop
 import imgui.ImGui.popButtonRepeat
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
@@ -60,7 +60,7 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
-import imgui.ImGui.pushAllowKeyboardFocus
+import imgui.ImGui.pushTabStop
 import imgui.ImGui.pushButtonRepeat
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushFont
@@ -200,9 +200,9 @@ object dsl {
     }
 
     inline fun withAllowKeyboardFocus(allowKeyboardFocus: Boolean, block: () -> Unit) {
-        pushAllowKeyboardFocus(allowKeyboardFocus)
+        pushTabStop(allowKeyboardFocus)
         block()
-        popAllowKeyboardFocus()
+        popTabStop()
     }
 
     inline fun <R> withButtonRepeat(repeat: Boolean, block: () -> R): R {
