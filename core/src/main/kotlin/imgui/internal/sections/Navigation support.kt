@@ -14,10 +14,10 @@ typealias ActivateFlags = Flag<ActivateFlag>
 
 sealed class ActivateFlag : FlagBase<ActivateFlag>() {
 
-    /** Favor activation that requires keyboard text input (e.g. for Slider/Drag). Default if keyboard is available. */
+    /** Favor activation that requires keyboard text input (e.g. for Slider/Drag). Default for Enter key. */
     object PreferInput : ActivateFlag()
 
-    /** Favor activation for tweaking with arrows or gamepad (e.g. for Slider/Drag). Default if keyboard is not available. */
+    /** Favor activation for tweaking with arrows or gamepad (e.g. for Slider/Drag). Default for Space key and if keyboard is not used. */
     object PreferTweak : ActivateFlag()
 
     /** Request widget to preserve state if it can (e.g. InputText will try to preserve cursor/selection) */

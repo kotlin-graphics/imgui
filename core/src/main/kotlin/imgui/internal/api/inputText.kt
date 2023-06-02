@@ -169,7 +169,7 @@ internal interface inputText {
         var state = getInputTextState(id)
 
         val inputRequestedByTabbing = itemStatusFlags has ItemStatusFlag.FocusedByTabbing
-        val inputRequestedByNav = g.activeId != id && (g.navActivateInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.Keyboard))
+        val inputRequestedByNav = g.activeId != id && (g.navActivateId == id && (g.navActivateFlags has ActivateFlag.PreferInput || g.navInputSource == InputSource.Keyboard))
 
         val userClicked = hovered && io.mouseClicked[0]
         val userScrollFinish = isMultiline && state != null && g.activeId == 0 && g.activeIdPreviousFrame == drawWindow getScrollbarID Axis.Y
@@ -480,6 +480,7 @@ internal interface inputText {
                     }
                     state onKeyPressed (K.DELETE or kMask)
                 }
+
                 Key.Backspace.isPressed && !isReadOnly -> {
                     if (!state.hasSelection)
                         if (isWordmoveKeyDown)
@@ -914,7 +915,7 @@ internal interface inputText {
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, 0,
-                                            bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
+                        bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
             }
 
             // Draw blinking cursor
@@ -923,7 +924,7 @@ internal interface inputText {
                 val cursorIsVisible = !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
                 val cursorScreenPos = floor(drawPos + cursorOffset - drawScroll)
                 val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f,
-                                            cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
+                        cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
                 if (cursorIsVisible && cursorScreenRect overlaps clipRect)
                     drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
@@ -949,7 +950,7 @@ internal interface inputText {
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, 0, bufDisplayEnd,
-                                            0f, clipRect.takeUnless { isMultiline })
+                        0f, clipRect.takeUnless { isMultiline })
             }
         }
 

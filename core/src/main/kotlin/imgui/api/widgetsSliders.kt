@@ -18,6 +18,7 @@ import imgui.ImGui.tempInputScalar
 import imgui.ImGui.vSlider
 import imgui.internal.api.widgetN
 import imgui.internal.classes.Rect
+import imgui.internal.sections.ActivateFlag
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
@@ -101,11 +102,11 @@ interface widgetsSliders {
             // Tabbing or CTRL-clicking on Slider turns it into an input box
             val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
             val clicked = hovered && MouseButton.Left.isClicked(id)
-            val makeActive = inputRequestedByTabbing || clicked || g.navActivateId == id || g.navActivateInputId == id
+            val makeActive = inputRequestedByTabbing || clicked || g.navActivateId == id
             if (makeActive && clicked)
                 Key.MouseLeft.setOwner(id)
             if (makeActive && tempInputAllowed)
-                if (inputRequestedByTabbing || (clicked && g.io.keyCtrl) || g.navActivateInputId == id)
+                if (inputRequestedByTabbing || (clicked && g.io.keyCtrl) || (g.navActivateId == id && g.navActivateFlags has ActivateFlag.PreferInput))
                     tempInputIsActive = true
 
             if (makeActive && !tempInputIsActive) {
@@ -176,7 +177,7 @@ interface widgetsSliders {
 
         val hovered = ImGui.itemHoverable(frameBb, id)
         val clicked = hovered && MouseButton.Left.isClicked(id)
-        if (clicked || g.navActivateId == id || g.navActivateInputId == id) {
+        if (clicked || g.navActivateId == id) {
             if (clicked)
                 Key.MouseLeft.setOwner(id)
             ImGui.setActiveID(id, window)

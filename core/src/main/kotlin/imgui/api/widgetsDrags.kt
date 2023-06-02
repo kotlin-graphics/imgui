@@ -291,16 +291,16 @@ interface widgetsDrags {
             val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
             val clicked = hovered && MouseButton.Left.isClicked(id)
             val doubleClicked = hovered && g.io.mouseClickedCount[0] == 2 && Key.MouseLeft testOwner id
-            val makeActive = inputRequestedByTabbing || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id
+            val makeActive = inputRequestedByTabbing || clicked || doubleClicked || g.navActivateId == id
             if (makeActive && (clicked || doubleClicked)) Key.MouseLeft.setOwner(id)
             if (makeActive && tempInputAllowed)
-                if (inputRequestedByTabbing || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navActivateInputId == id)
+                if (inputRequestedByTabbing || (clicked && ImGui.io.keyCtrl) || doubleClicked || (g.navActivateId == id && g.navActivateFlags has ActivateFlag.PreferInput))
                     tempInputIsActive = true
 
             // (Optional) simple click (without moving) turns Drag into an InputText
             if (io.configDragClickToInputText && tempInputAllowed && !tempInputIsActive)
                 if (g.activeId == id && hovered && io.mouseReleased[0] && !isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
-                    g.navActivateId = id; g.navActivateInputId = id
+                    g.navActivateId = id
                     tempInputIsActive = true
                 }
 

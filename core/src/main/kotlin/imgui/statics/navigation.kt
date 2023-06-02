@@ -124,7 +124,7 @@ fun navUpdate() {
     navUpdateCancelRequest()
 
     // Process manual activation request
-    g.navActivateId = 0; g.navActivateDownId = 0; g.navActivatePressedId = 0; g.navActivateInputId = 0
+    g.navActivateId = 0; g.navActivateDownId = 0; g.navActivatePressedId = 0
     g.navActivateFlags = none
     if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
         val activateDown = (navKeyboardActive && Key.Space.isDown) || (navGamepadActive && Key._NavGamepadActivate.isDown)
@@ -136,12 +136,12 @@ fun navUpdate() {
             g.navActivateFlags = ActivateFlag.PreferTweak
         }
         if ((g.activeId == 0 || g.activeId == g.navId) && inputPressed) {
-            g.navActivateInputId = g.navId
+            g.navActivateId = g.navId
             g.navActivateFlags = ActivateFlag.PreferInput
         }
-        if ((g.activeId == 0 || g.activeId == g.navId) && activateDown)
+        if ((g.activeId == 0 || g.activeId == g.navId) && (activateDown || inputDown))
             g.navActivateDownId = g.navId
-        if ((g.activeId == 0 || g.activeId == g.navId) && activatePressed)
+        if ((g.activeId == 0 || g.activeId == g.navId) && (activatePressed || inputPressed))
             g.navActivatePressedId = g.navId
     }
     g.navWindow?.let { if (it.flags has Wf.NoNavInputs) g.navDisableHighlight = true }
@@ -151,10 +151,7 @@ fun navUpdate() {
     // Process programmatic activation request
     // FIXME-NAV: Those should eventually be queued (unlike focus they don't cancel each others)
     if (g.navNextActivateId != 0) {
-        if (g.navNextActivateFlags has ActivateFlag.PreferInput)
-            g.navActivateInputId = g.navNextActivateId
-        else
-            g.navActivateId = g.navNextActivateId; g.navActivateDownId = g.navNextActivateId; g.navActivatePressedId = g.navNextActivateId
+        g.navActivateId = g.navNextActivateId; g.navActivateDownId = g.navNextActivateId; g.navActivatePressedId = g.navNextActivateId
         g.navActivateFlags = g.navNextActivateFlags
     }
     g.navNextActivateId = 0
@@ -288,7 +285,7 @@ fun navUpdateWindowing() {
             val sharedMods = a and b and Key.Mod_Mask
             assert(sharedMods.isNotEmpty) { "Next / Prev shortcut currently needs a shared modifier to \"hold\", otherwise Prev actions would keep cycling between two windows." }
             g.navWindowingHighlightAlpha =
-                g.navWindowingHighlightAlpha max saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f) // 1.0f
+                    g.navWindowingHighlightAlpha max saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f) // 1.0f
             if (keyboardNextWindow || keyboardPrevWindow)
                 navUpdateWindowingHighlightWindow(if (keyboardNextWindow) -1 else +1)
             else if (sharedMods !in io.keyMods)
@@ -374,9 +371,9 @@ fun navUpdateWindowing() {
         // Move to parent menu if necessary
         var newNavWindow = navWindow
         while (newNavWindow!!.parentWindow != null
-            && newNavWindow.dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu)
-            && newNavWindow.flags has Wf._ChildWindow
-            && newNavWindow.flags hasnt (Wf._Popup or Wf._ChildMenu))
+                && newNavWindow.dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu)
+                && newNavWindow.flags has Wf._ChildWindow
+                && newNavWindow.flags hasnt (Wf._Popup or Wf._ChildMenu))
             newNavWindow = newNavWindow.parentWindow
         if (newNavWindow !== navWindow) {
             val oldNavWindow = navWindow
@@ -413,7 +410,7 @@ fun navUpdateWindowingOverlay() {
     setNextWindowPos(viewport.center, Cond.Always, Vec2(0.5f))
     pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
     val flags =
-        Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
+            Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
     begin("###NavWindowingList", null, flags)
     for (n in g.windowsFocusOrder.lastIndex downTo 0) {
         val window = g.windowsFocusOrder[n]
@@ -629,13 +626,13 @@ fun navUpdatePageUpPageDown(): Float {
         if (Key.PageUp isPressed true) {
             navScoringRectOffsetY = -pageOffsetY
             g.navMoveDir =
-                Dir.Down // Because our scoring rect is offset up, we request the down direction (so we can always land on the last item)
+                    Dir.Down // Because our scoring rect is offset up, we request the down direction (so we can always land on the last item)
             g.navMoveClipDir = Dir.Up
             g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
         } else if (Key.PageDown isPressed true) {
             navScoringRectOffsetY = +pageOffsetY
             g.navMoveDir =
-                Dir.Up // Because our scoring rect is offset down, we request the up direction (so we can always land on the last item)
+                    Dir.Up // Because our scoring rect is offset down, we request the up direction (so we can always land on the last item)
             g.navMoveClipDir = Dir.Down
             g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
         } else if (homePressed) {
@@ -763,9 +760,9 @@ fun navScoreItem(result: NavItemData): Boolean {
     var dbX = navScoreItemDistInterval(cand.min.x, cand.max.x, curr.min.x, curr.max.x)
     // Scale down on Y to keep using box-distance for vertically touching items
     val dbY = navScoreItemDistInterval(
-        lerp(cand.min.y, cand.max.y, 0.2f), lerp(cand.min.y, cand.max.y, 0.8f),
-        lerp(curr.min.y, curr.max.y, 0.2f), lerp(curr.min.y, curr.max.y, 0.8f)
-                                      )
+            lerp(cand.min.y, cand.max.y, 0.2f), lerp(cand.min.y, cand.max.y, 0.8f),
+            lerp(curr.min.y, curr.max.y, 0.2f), lerp(curr.min.y, curr.max.y, 0.8f)
+    )
     if (dbY != 0f && dbX != 0f)
         dbX = dbX / 1000f + if (dbX > 0f) 1f else -1f
     val distBox = abs(dbX) + abs(dbY)
@@ -801,8 +798,8 @@ fun navScoreItem(result: NavItemData): Boolean {
     if (IMGUI_DEBUG_NAV_SCORING)
         if (isMouseHoveringRect(cand)) {
             val buf =
-                "dbox (%.2f,%.2f->%.4f)\ndcen (%.2f,%.2f->%.4f)\nd (%.2f,%.2f->%.4f)\nnav WENS${g.navMoveDir}, quadrant WENS$quadrant"
-                        .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial).toByteArray()
+                    "dbox (%.2f,%.2f->%.4f)\ndcen (%.2f,%.2f->%.4f)\nd (%.2f,%.2f->%.4f)\nnav WENS${g.navMoveDir}, quadrant WENS$quadrant"
+                            .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial).toByteArray()
             getForegroundDrawList(window).apply {
                 addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
                 addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
@@ -979,7 +976,7 @@ fun navCalcPreferredRefPos(): Vec2 {
             rectRel translate (window.scroll - nextScroll)
         }
         val pos = Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width),
-                       rectRel.max.y - min(style.framePadding.y, rectRel.height))
+                rectRel.max.y - min(style.framePadding.y, rectRel.height))
         val viewport = mainViewport
         floor(glm.clamp(pos, viewport.pos, viewport.pos + viewport.size)) // ImFloor() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
     }
@@ -1042,6 +1039,7 @@ fun navClampRectToVisibleAreaForMoveDir(moveDir: Dir, r: Rect, clipRect: Rect) =
         r.min.y = glm.clamp(r.min.y, clipRect.min.y, clipRect.max.y)
         r.max.y = glm.clamp(r.max.y, clipRect.min.y, clipRect.max.y)
     }
+
     else -> { // FIXME: PageUp/PageDown are leaving move_dir == None
         r.min.x = glm.clamp(r.min.x, clipRect.min.x, clipRect.max.x)
         r.max.x = glm.clamp(r.max.x, clipRect.min.x, clipRect.max.x)

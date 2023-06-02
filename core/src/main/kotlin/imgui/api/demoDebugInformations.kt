@@ -518,7 +518,7 @@ interface demoDebugInformations {
                 debugLocateItemOnHover(g.navId)
                 text("NavInputSource: ${g.navInputSource}")
                 text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
-                text("NavActivateId/DownId/PressedId/InputId: %08X/%08X/%08X/%08X", g.navActivateId, g.navActivateDownId, g.navActivatePressedId, g.navActivateInputId)
+                text("NavActivateId/DownId/PressedId: %08X/%08X/%08X/%08X", g.navActivateId, g.navActivateDownId, g.navActivatePressedId)
                 text("NavActivateFlags: %04X", g.navActivateFlags)
                 text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
                 text("NavFocusScopeId = 0x%08X", g.navFocusScopeId)

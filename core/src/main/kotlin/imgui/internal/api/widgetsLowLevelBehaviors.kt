@@ -247,10 +247,11 @@ internal interface widgetsLowLevelBehaviors {
             val navActivatedByCode = g.navActivateId == id
             var navActivatedByInputs = g.navActivatePressedId == id
             if (!navActivatedByInputs && flags has Bf.Repeat) {
-                // Avoid pressing both keys from triggering double amount of repeat events
+                // Avoid pressing multiple keys from triggering excessive amount of repeat events
                 val key1 = Key.Space.data
-                val key2 = Key._NavGamepadActivate.data
-                val t1 = key1.downDuration max key2.downDuration
+                val key2 = Key.Enter.data
+                val key3 = Key._NavGamepadActivate.data
+                val t1 = (key1.downDuration max key2.downDuration) max key3.downDuration
                 navActivatedByInputs = calcTypematicRepeatAmount(t1 - g.io.deltaTime, t1, g.io.keyRepeatDelay, g.io.keyRepeatRate) > 0
             }
             if (navActivatedByCode || navActivatedByInputs) {
