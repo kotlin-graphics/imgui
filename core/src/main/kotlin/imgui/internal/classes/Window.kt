@@ -25,9 +25,11 @@ import imgui.WindowFlag as Wf
 /** Storage for one window
  *
  *  ImGuiWindow is mostly a dumb struct. It merely has a constructor and a few helper methods */
-class Window(var context: Context,
-             /** Window name, owned by the window. */
-             var name: String) {
+class Window(
+        /** Parent UI context (needs to be set explicitly by parent). */
+        val ctx: Context,
+        /** Window name, owned by the window. */
+        var name: String) {
 
     /** == ImHashStr(Name) */
     val id: ID = hashStr(name)
@@ -265,7 +267,7 @@ class Window(var context: Context,
 
     /** == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer) */
     var drawList = drawListInst.apply {
-        _data = context.drawListSharedData
+        _data = ctx.drawListSharedData
         _ownerName = name
     }
 
@@ -312,6 +314,7 @@ class Window(var context: Context,
     fun getID(strID: String, end: Int = 0): ID {
         val seed: ID = idStack.last()
         val id: ID = hashStr(strID, end, seed)
+        val g = ctx
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType._String, strID, end)
         return id
@@ -321,6 +324,7 @@ class Window(var context: Context,
     fun getID(ptrID: Any): ID {
         val seed: ID = idStack.last()
         val id: ID = hashData(System.identityHashCode(ptrID), seed)
+        val g = ctx
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType._Pointer, ptrID)
         return id
@@ -331,6 +335,7 @@ class Window(var context: Context,
         if (intPtr >= ptrId.size) increase()
         val seed: ID = idStack.last()
         val id = hashData(System.identityHashCode(ptrId[intPtr.i]), seed)
+        val g = ctx
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType.Long, intPtr) // TODO check me
         return id
@@ -339,6 +344,7 @@ class Window(var context: Context,
     fun getID(n: Int): ID {
         val seed = idStack.last()
         val id = hashData(n, seed)
+        val g = ctx
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType.Int, n)
         return id
@@ -360,6 +366,7 @@ class Window(var context: Context,
     fun rect(): Rect = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
 
     fun calcFontSize(): Float {
+        val g = ctx
         var scale = g.fontBaseSize * fontWindowScale
         parentWindow?.let { scale *= it.fontWindowScale }
         return scale
@@ -368,13 +375,13 @@ class Window(var context: Context,
     val titleBarHeight: Float
         get() = when {
             flags has Wf.NoTitleBar -> 0f
-            else -> calcFontSize() + style.framePadding.y * 2f
+            else -> calcFontSize() + ctx.style.framePadding.y * 2f
         }
 
     fun titleBarRect(): Rect = Rect(pos, Vec2(pos.x + sizeFull.x, pos.y + titleBarHeight))
     val menuBarHeight: Float
         get() = when {
-            flags has Wf.MenuBar -> dc.menuBarOffset.y + calcFontSize() + style.framePadding.y * 2f
+            flags has Wf.MenuBar -> dc.menuBarOffset.y + calcFontSize() + ctx.style.framePadding.y * 2f
             else -> 0f
         }
 
@@ -519,9 +526,9 @@ class Window(var context: Context,
             newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x
             newSize.y = if (cr.min.y >= 0 && cr.max.y >= 0) glm.clamp(newSize.y, cr.min.y, cr.max.y) else sizeFull.y
             g.nextWindowData.sizeCallback?.invoke(SizeCallbackData(userData = g.nextWindowData.sizeCallbackUserData,
-                pos = Vec2(this@Window.pos),
-                currentSize = sizeFull,
-                desiredSize = newSize))
+                    pos = Vec2(this@Window.pos),
+                    currentSize = sizeFull,
+                    desiredSize = newSize))
             newSize.x = floor(newSize.x)
             newSize.y = floor(newSize.y)
         }
@@ -573,19 +580,19 @@ class Window(var context: Context,
         class ResizeGripDef(val cornerPosN: Vec2, val innerDir: Vec2, val angleMin12: Int, val angleMax12: Int)
 
         val resizeGripDef = arrayOf(
-            ResizeGripDef(Vec2(1, 1), Vec2(-1, -1), 0, 3),  // Lower-right
-            ResizeGripDef(Vec2(0, 1), Vec2(+1, -1), 3, 6),  // Lower-left
-            ResizeGripDef(Vec2(0, 0), Vec2(+1, +1), 6, 9),  // Upper-left (Unused)
-            ResizeGripDef(Vec2(1, 0), Vec2(-1, +1), 9, 12)) // Upper-right (Unused)
+                ResizeGripDef(Vec2(1, 1), Vec2(-1, -1), 0, 3),  // Lower-right
+                ResizeGripDef(Vec2(0, 1), Vec2(+1, -1), 3, 6),  // Lower-left
+                ResizeGripDef(Vec2(0, 0), Vec2(+1, +1), 6, 9),  // Upper-left (Unused)
+                ResizeGripDef(Vec2(1, 0), Vec2(-1, +1), 9, 12)) // Upper-right (Unused)
 
         /** Data for resizing from borders */
         class ResizeBorderDef(val innerDir: Vec2, val segmentN1: Vec2, val segmentN2: Vec2, val outerAngle: Float)
 
         val resizeBorderDef = arrayOf(
-            ResizeBorderDef(Vec2(+1, 0), Vec2(0, 1), Vec2(0, 0), glm.πf * 1.0f),  // Left
-            ResizeBorderDef(Vec2(-1, 0), Vec2(1, 0), Vec2(1, 1), glm.πf * 0.0f), // Right
-            ResizeBorderDef(Vec2(0, +1), Vec2(0, 0), Vec2(1, 0), glm.πf * 1.5f), // Up
-            ResizeBorderDef(Vec2(0, -1), Vec2(1, 1), Vec2(0, 1), glm.πf * 0.5f)) // Down
+                ResizeBorderDef(Vec2(+1, 0), Vec2(0, 1), Vec2(0, 0), glm.πf * 1.0f),  // Left
+                ResizeBorderDef(Vec2(-1, 0), Vec2(1, 0), Vec2(1, 1), glm.πf * 0.0f), // Right
+                ResizeBorderDef(Vec2(0, +1), Vec2(0, 0), Vec2(1, 0), glm.πf * 1.5f), // Up
+                ResizeBorderDef(Vec2(0, -1), Vec2(1, 1), Vec2(0, 1), glm.πf * 0.5f)) // Down
 
         fun getCombinedRootWindow(window_: Window, popupHierarchy: Boolean): Window {
             var window = window_

@@ -649,7 +649,7 @@ internal interface inputText {
                     }
 
                     if (eventFlag.isNotEmpty) {
-                        val cbData = InputTextCallbackData()
+                        val cbData = InputTextCallbackData(g)
                         cbData.eventFlag = eventFlag
                         cbData.flags = flags
                         cbData.userData = callbackUserData
@@ -725,7 +725,7 @@ internal interface inputText {
             // without any storage on user's side.
             assert(applyNewTextLength >= 0)
             if (isResizable) {
-                val callbackData = InputTextCallbackData().also {
+                val callbackData = InputTextCallbackData(g).also {
                     it.eventFlag = Itf.CallbackResize
                     it.flags = flags
                     it.buf = buf

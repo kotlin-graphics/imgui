@@ -346,7 +346,8 @@ class WindowStackData {
         var sizeOfDisabledStack = 0
 
         /** Save current stack sizes for later compare */
-        fun setToCurrentState() {
+        fun setToCurrentState(ctx: Context) {
+            val g = ctx
             val window = g.currentWindow!!
             sizeOfIDStack = window.idStack.size
             sizeOfColorStack = g.colorStack.size
@@ -360,8 +361,8 @@ class WindowStackData {
         }
 
         /** Compare to detect usage errors */
-        fun compareWithCurrentState() {
-
+        fun compareWithCurrentState(ctx: Context) {
+            val g = ctx
             val window = g.currentWindow!!
 
             // Window stacks

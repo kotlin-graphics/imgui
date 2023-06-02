@@ -20,7 +20,9 @@ import kotlin.math.max
  *
  *  Helper functions for text manipulation.
  *  Use those function to benefit from the CallbackResize behaviors. Calling those function reset the selection. */
-class InputTextCallbackData {
+class InputTextCallbackData(
+        /** Parent UI context */
+        val ctx: Context) {
 
     /** One ImGuiInputTextFlags_Callback*    // Read-only */
     var eventFlag: InputTextFlags = none
@@ -100,6 +102,7 @@ class InputTextCallbackData {
             if (!isResizable) return
 
             // Contrary to STB_TEXTEDIT_INSERTCHARS() this is working in the UTF8 buffer, hence the mildly similar code (until we remove the U16 buffer altogether!)
+            val g = ctx
             val editState = g.inputTextState
             assert(editState.id != 0 && g.activeId == editState.id)
             assert(buf === editState.textA)

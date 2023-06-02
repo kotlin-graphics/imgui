@@ -5,6 +5,7 @@ import imgui.Dir
 import imgui.ImGui.endRow
 import imgui.ImGui.rectRelToAbs
 import imgui.api.g
+import imgui.api.gImGui
 import imgui.clamp
 import imgui.has
 import imgui.internal.isAboveGuaranteedIntegerPrecision
@@ -36,6 +37,9 @@ import imgui.internal.sections.NavMoveFlag
  *  - The clipper also handles various subtleties related to keyboard/gamepad navigation, wrapping etc. */
 class ListClipper {
 
+    /** Parent UI context */
+    var ctx: Context = gImGui
+
     var displayStart = 0
     var displayEnd = 0
     val display
@@ -52,6 +56,7 @@ class ListClipper {
 
     fun begin(itemsCount: Int, itemsHeight: Float = -1f) {
 
+        val g = ctx
         val window = g.currentWindow!!
         IMGUI_DEBUG_LOG_CLIPPER("Clipper: Begin($itemsCount,%.2f) in '${window.name}'", itemsHeight)
 
@@ -79,6 +84,7 @@ class ListClipper {
     /** Automatically called on the last call of Step() that returns false. */
     fun end() {
 
+        val g = ctx
         (tempData as? ListClipperData)?.let { data ->
             // In theory here we should assert that we are already at the right position, but it seems saner to just seek at the end and not assert/crash the user.
             IMGUI_DEBUG_LOG_CLIPPER("Clipper: End() in '${g.currentWindow!!.name}'")
@@ -110,6 +116,7 @@ class ListClipper {
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those items.  */
     fun step(): Boolean {
+        val g = ctx
         val needItemsHeight = itemsHeight <= 0f
         var ret = stepInternal()
         if (ret && displayStart == displayEnd)
@@ -129,6 +136,7 @@ class ListClipper {
 
     private fun stepInternal(): Boolean {
 
+        val g = ctx
         val window = g.currentWindow!!
         val data = tempData as ListClipperData
 

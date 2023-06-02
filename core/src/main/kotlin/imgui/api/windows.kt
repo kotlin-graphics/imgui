@@ -136,7 +136,7 @@ interface windows {
         val windowStackData = WindowStackData()
         windowStackData.window = window
         windowStackData.parentLastItemDataBackup put g.lastItemData
-        windowStackData.stackSizesOnBegin.setToCurrentState()
+        windowStackData.stackSizesOnBegin.setToCurrentState(g)
         g.currentWindowStack += windowStackData
         if (flags has Wf._ChildMenu)
             g.beginMenuCount++
@@ -784,7 +784,7 @@ interface windows {
             g.beginMenuCount--
         if (window.flags has Wf._Popup)
             g.beginPopupStack.pop()
-        g.currentWindowStack.last().stackSizesOnBegin.compareWithCurrentState()
+        g.currentWindowStack.last().stackSizesOnBegin.compareWithCurrentState(g)
         g.currentWindowStack.pop()
         setCurrentWindow(g.currentWindowStack.lastOrNull()?.window)
     }

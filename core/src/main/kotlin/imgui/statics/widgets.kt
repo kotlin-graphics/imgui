@@ -114,7 +114,7 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
     // Custom callback filter
     if (flags has InputTextFlag.CallbackCharFilter) {
         callback!! //callback is non-null from all calling functions
-        val itcd = InputTextCallbackData()
+        val itcd = InputTextCallbackData(g)
         itcd.eventFlag = InputTextFlag.CallbackCharFilter
         itcd.eventChar = c
         itcd.flags = flags
