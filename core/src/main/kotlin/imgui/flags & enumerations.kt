@@ -1113,6 +1113,7 @@ typealias KeyChord = Flag<Key>
 // All our named keys are >= 512. Keys value 0 to 511 are left unused as legacy native/opaque key values (< 1.87).
 // Since >= 1.89 we increased typing (went from int to enum), some legacy code may need a cast to ImGuiKey.
 // Read details about the 1.87 and 1.89 transition : https://github.com/ocornut/imgui/issues/4921
+// Note that "Keys" related to physical keys and are not the same concept as input "Characters", the later are submitted via io.AddInputCharacter().
 
 /** A key identifier (ImGui-side enum) */
 sealed class Key(private val int: Int? = null) : FlagBase<Key>() {

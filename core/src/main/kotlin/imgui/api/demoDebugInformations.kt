@@ -398,7 +398,7 @@ interface demoDebugInformations {
         treeNode("Inputs") {
             text("KEYBOARD/GAMEPAD/MOUSE KEYS")
             // We iterate both legacy native range and named ImGuiKey ranges, which is a little odd but this allows displaying the data for old/new backends.
-            // User code should never have to go through such hoops: old code may use native keycodes, new code may use ImGuiKey codes.
+            // User code should never have to go through such hoops! You can generally iterate between ImGuiKey_NamedKey_BEGIN and ImGuiKey_NamedKey_END.
             indent {
                 //                #ifdef IMGUI_DISABLE_OBSOLETE_KEYIO
                 //                    struct funcs { static bool IsLegacyNativeDupe(ImGuiKey) { return false; } };
