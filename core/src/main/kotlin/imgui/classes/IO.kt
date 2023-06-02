@@ -206,6 +206,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         it.configMemoryCompactTimer = configMemoryCompactTimer; it.backendPlatformName = backendPlatformName; it.backendPlatformUserData = backendPlatformUserData
         it.backendRendererUserData = backendRendererUserData; it.backendLanguageUserData = backendLanguageUserData; it.getClipboardTextFn = getClipboardTextFn
         it.setClipboardTextFn = setClipboardTextFn; it.clipboardUserData = clipboardUserData /*it.setPlatformImeDataFn = setPlatformImeDataFn*/
+        it.ctx = ctx; /*it.mousePos put mousePos; repeat(5) { i -> it.mouseDown[i] = mouseDown[i] }; it.mouseWheel = mouseWheelH
+        it.mouseWheelH = mouseWheelH; it.keyCtrl = keyCtrl; it.keyShift = keyShift; it.keyAlt = keyAlt; it.keySuper = keySuper;
+        repeat(NavInput.COUNT) { i -> it.navInputs[i] = navInputs[i] }; it.keyMods = keyMods; repeat(Key.COUNT) {i -> it.keysData[i]}*/
     }
 
     //------------------------------------------------------------------
