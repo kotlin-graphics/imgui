@@ -4,10 +4,12 @@ package examples
 import glm_.vec4.Vec4
 import gln.checkError
 import gln.glViewport
+import imgui.ConfigFlag
 import imgui.DEBUG
 import imgui.ImGui
 import imgui.api.slider
 import imgui.classes.Context
+import imgui.div
 import imgui.dsl.button
 import imgui.impl.gl.ImplGL3
 import imgui.impl.glfw.ImplGlfw
@@ -71,8 +73,8 @@ fun main() {
     // Setup Dear ImGui context
     val ctx = Context()
     val io = ctx.io
-//    io.configFlags /= ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
-//    io.configFlags /= ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
+    io.configFlags /= ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
+    io.configFlags /= ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
 
     // Setup Dear ImGui style
     ImGui.styleColorsDark()
