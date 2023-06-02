@@ -987,7 +987,7 @@ internal interface inputText {
         if (valueChanged && flags hasnt Itf._NoMarkEdited)
             markItemEdited(id)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags / ItemStatusFlag.Inputable)
         return when {
             flags has Itf.EnterReturnsTrue -> validated
             else -> valueChanged

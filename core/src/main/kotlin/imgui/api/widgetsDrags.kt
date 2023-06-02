@@ -315,13 +315,7 @@ interface widgetsDrags {
         if (tempInputIsActive) {
             // Only clamp CTRL+Click input when ImGuiSliderFlags_AlwaysClamp is set
             val isClampInput = flags has SliderFlag.AlwaysClamp && (min == null || max == null || min < max)
-            return tempInputScalar(frameBb,
-                    id,
-                    label,
-                    pData,
-                    format,
-                    min.takeIf { isClampInput },
-                    max.takeIf { isClampInput })
+            return tempInputScalar(frameBb, id, label, pData, format, min.takeIf { isClampInput }, max.takeIf { isClampInput })
         }
 
         // Draw frame
@@ -345,7 +339,7 @@ interface widgetsDrags {
         if (labelSize.x > 0f)
             ImGui.renderText(Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y), label)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags / if(tempInputAllowed) ItemStatusFlag.Inputable else none)
         return valueChanged
     }
 }

@@ -29,6 +29,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textEx
 import imgui.internal.api.widgetN
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
+import imgui.internal.sections.ItemStatusFlag
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -159,7 +160,7 @@ interface widgetsInputWithKeyboard {
             setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
             if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
                 valueChanged = pData.applyFromText(buf.cStr, format)
-            IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label, g.lastItemData.statusFlags)
+            IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label, g.lastItemData.statusFlags / ItemStatusFlag.Inputable)
 
             // Step buttons
             val backupFramePadding = Vec2(style.framePadding)

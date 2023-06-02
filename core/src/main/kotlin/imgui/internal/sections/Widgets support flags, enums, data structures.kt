@@ -97,16 +97,24 @@ sealed class ItemStatusFlag(override val i: Int) : FlagBase<ItemStatusFlag>() {
     /** [WIP] Set when item is overlapping the current clipping rectangle (Used internally. Please don't use yet: API/system will change as we refactor Itemadd()). */
     object Visible : ItemStatusFlag(1 shl 9)
 
+    // Additional status + semantic for ImGuiTestEngine
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
     //  [imgui-test only]
 
     /** Item is an openable (e.g. TreeNode) */
     object Openable : ItemStatusFlag(1 shl 20)
+
+    /** Opened status */
     object Opened : ItemStatusFlag(1 shl 21)
 
     /** Item is a checkable (e.g. CheckBox, MenuItem) */
     object Checkable : ItemStatusFlag(1 shl 22)
+
+    /** Checked status */
     object Checked : ItemStatusFlag(1 shl 23)
+
+    /** Item is a text-inputable (e.g. InputText, SliderXXX, DragXXX) */
+    object Inputable : ItemStatusFlag(1 shl 24)
 
     @GenSealedEnum
     companion object

@@ -152,7 +152,7 @@ interface widgetsSliders {
             ImGui.renderText(pos, label)
         }
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags / if (tempInputAllowed) ItemStatusFlag.Inputable else none)
         return valueChanged
     }
 
@@ -230,10 +230,11 @@ inline fun <reified N> ImGui.sliderN(label: String, components: Int, min: N, max
 
 inline fun <N> NumberOps<N>.sliderN(label: String, components: Int, min: N, max: N, format: String? = null, flags: SliderFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
         widgetN(label, components) { i ->
-    slider("", properties(i), min, max, format, flags)
-}
+            slider("", properties(i), min, max, format, flags)
+        }
 
 inline fun <reified N> vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
         ImGui.vSlider(label, size, pData, min, max, format_, flags)
+
 inline fun <reified N> ImGui.vSlider(label: String, size: Vec2, pData: KMutableProperty0<N>, min: N, max: N, format_: String? = null, flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
         numberOps<N>().vSlider(label, size, pData, min, max, format_, flags)
