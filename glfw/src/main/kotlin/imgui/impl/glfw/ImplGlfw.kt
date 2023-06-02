@@ -87,7 +87,7 @@ class ImplGlfw @JvmOverloads constructor(
         data.mouseCursors[MouseCursor.NotAllowed.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
         data.mouseCursors[MouseCursor.NotAllowed.i] = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR)
 //        #if (GLFW_VERSION_COMBINED >= 3300) // Eat errors (see #5785)
-//            (void)glfwGetError(NULL);
+            glfw.error
         glfwSetErrorCallback(prevErrorCallback)
 
         // [JVM] Chain GLFW callbacks: our callbacks will be installed in parallel with any other already existing
