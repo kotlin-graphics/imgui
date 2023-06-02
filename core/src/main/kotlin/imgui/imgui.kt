@@ -204,6 +204,6 @@ object ImGui :
 
 
 @JvmField
-var DEBUG = true
+var DEBUG = false
 
 fun IM_DEBUG_BREAK() {}
