@@ -123,7 +123,7 @@ internal interface basicHelpersForWidgetCode {
         g.nextItemData.flags = none
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
-            IMGUI_TEST_ENGINE_ITEM_ADD(navBbArg ?: bb, id)
+            IMGUI_TEST_ENGINE_ITEM_ADD(id, Rect(g.lastItemData.navRect), g.lastItemData)
 
         // Clipping test
         // (FIXME: This is a modified copy of IsClippedEx() so we can reuse the is_rect_visible value)
@@ -210,11 +210,12 @@ internal interface basicHelpersForWidgetCode {
     }
 
     // This is also inlined in ItemAdd()
-    // Note: if ImGuiItemStatusFlags_HasDisplayRect is set, user needs to set window->DC.LastItemDisplayRect!
+    // Note: if ImGuiItemStatusFlags_HasDisplayRect is set, user needs to set g.LastItemData.DisplayRect.
     fun setLastItemData(itemId: ID, inFlags: ItemFlags, itemFlags: ItemStatusFlags, itemRect: Rect) {
         g.lastItemData.id = itemId
         g.lastItemData.inFlags = inFlags
         g.lastItemData.statusFlags = itemFlags
+        g.lastItemData.navRect put itemRect
         g.lastItemData.rect put itemRect
     }
 

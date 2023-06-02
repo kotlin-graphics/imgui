@@ -139,8 +139,10 @@ internal interface widgetsLowLevelBehaviors {
         if (flattenHoveredChildren)
             g.hoveredWindow = window
 
-        if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && g.lastItemData.id != id)
-            IMGUI_TEST_ENGINE_ITEM_ADD(bb, id)
+        if (IMGUI_ENABLE_TEST_ENGINE)
+        // Alternate registration spot, for when caller didn't use ItemAdd()
+            if (id != 0 && g.lastItemData.id != id)
+                IMGUI_TEST_ENGINE_ITEM_ADD(id, bb, null)
 
         var pressed = false
         var hovered = itemHoverable(bb, id)
@@ -216,7 +218,7 @@ internal interface widgetsLowLevelBehaviors {
                 if (flags has Bf.PressedOnRelease)
                     if (mouseButtonReleased != MouseButton.None) {
                         val hasRepeatedAtLeastOnce =
-                            flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased.i] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
+                                flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased.i] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
                         if (!hasRepeatedAtLeastOnce)
                             pressed = true
                         if (flags hasnt Bf.NoNavFocus)
@@ -291,6 +293,7 @@ internal interface widgetsLowLevelBehaviors {
         }
         return booleanArrayOf(pressed, hovered, held)
     }
+
     fun <N> NumberOps<N>.dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> {
         if (g.activeId == id)
         // Those are the things we can do easily outside the DragBehaviorT<> template, saves code generation.
@@ -387,7 +390,7 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = none, label: String): Boolean =
-        treeNodeBehavior(id, flags, label.toByteArray())
+            treeNodeBehavior(id, flags, label.toByteArray())
 
     fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = none, label: ByteArray, labelEnd_: Int = -1): Boolean {
 
@@ -407,10 +410,10 @@ internal interface widgetsLowLevelBehaviors {
         // We vertically grow up to current line height up the typical widget height.
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
         val frameBb = Rect(
-            x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
-            y1 = window.dc.cursorPos.y,
-            x2 = window.workRect.max.x,
-            y2 = window.dc.cursorPos.y + frameHeight)
+                x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
+                y1 = window.dc.cursorPos.y,
+                x2 = window.workRect.max.x,
+                y2 = window.dc.cursorPos.y + frameHeight)
         if (displayFrame) {
             // Framed header expand a little outside the default padding, to the edge of InnerClipRect
             // (FIXME: May remove this at some point and make InnerClipRect align with WindowPadding.x instead of WindowPadding.x*0.5f)
@@ -618,10 +621,12 @@ internal interface widgetsLowLevelBehaviors {
 
 inline fun <reified N> dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> =
         ImGui.dragBehavior(id, pV, vSpeed, min, max, format, flags)
+
 inline fun <reified N> ImGui.dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> =
         numberFpOps<N, Nothing>().dragBehavior(id, pV, vSpeed, min, max, format, flags)
 
 inline fun <reified N> sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
         ImGui.sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
+
 inline fun <reified N> ImGui.sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
         numberFpOps<N, Nothing>().sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
