@@ -337,14 +337,14 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
 // Platform dependent default implementations
 //-----------------------------------------------------------------------------
 
-val getClipboardTextFn_DefaultImpl: (userData: Any?) -> String? = {
+val getClipboardTextFn_DefaultImpl: (userDataCtx: Any?) -> String? = {
     // Create a Clipboard object using getSystemClipboard() method
     val clipboard = Toolkit.getDefaultToolkit().systemClipboard
     // Get data stored in the clipboard that is in the form of a string (text)
     clipboard.getData(DataFlavor.stringFlavor) as? String
 }
 
-val setClipboardTextFn_DefaultImpl: (userData: Any?, text: String) -> Unit = { _, text ->
+val setClipboardTextFn_DefaultImpl: (userDataCtx: Any?, text: String) -> Unit = { _, text ->
     val clipboard = Toolkit.getDefaultToolkit().systemClipboard
     clipboard.setContents(StringSelection(text), null)
 }

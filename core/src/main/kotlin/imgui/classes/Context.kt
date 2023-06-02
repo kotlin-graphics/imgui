@@ -17,6 +17,7 @@ import imgui.internal.classes.*
 import imgui.internal.hashStr
 import imgui.internal.sections.*
 import imgui.statics.*
+import org.lwjgl.system.Platform
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -577,7 +578,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var tooltipOverrideCount = 0
 
     /** If no custom clipboard handler is defined   */
-    var clipboardHandlerData = ""
+    // [JVM] useless
+//    var clipboardHandlerData = ""
 
     /** A list of menu IDs that were rendered at least once */
     val menusIdSubmittedThisFrame = ArrayList<ID>()
@@ -739,6 +741,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         // Setup default localization table
         localizeRegisterEntries(gLocalizationEntriesEnUS)
 
+        // Setup default platform clipboard/IME handlers.
+        g.io.getClipboardTextFn = getClipboardTextFn_DefaultImpl    // Platform dependent default implementations
+        g.io.setClipboardTextFn = setClipboardTextFn_DefaultImpl
+        g.io.clipboardUserData = g                          // Default implementation use the ImGuiContext as user data (ideally those would be arguments to the function)
+        if (Platform.get() == Platform.WINDOWS)
+            g.io.setPlatformImeDataFn = setPlatformImeDataFn_DefaultImpl
+
         // Create default viewport
         val viewport = ViewportP()
         g.viewports += viewport
@@ -809,7 +818,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         tablesTempData.clear()
         drawChannelsTempMergeBuffer.clear() // TODO check if this needs proper deallocation
 
-        clipboardHandlerData = ""
+//        clipboardHandlerData = ""
         menusIdSubmittedThisFrame.clear()
         inputTextState.textW = CharArray(0)
         inputTextState.initialTextA = ByteArray(0)
@@ -844,13 +853,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     companion object {
         // IMPORTANT: ###xxx suffixes must be same in ALL languages
         val gLocalizationEntriesEnUS = listOf(
-            LocEntry(LocKey.TableSizeOne, "Size column to fit###SizeOne"),
-            LocEntry(LocKey.TableSizeAllFit, "Size all columns to fit###SizeAll"),
-            LocEntry(LocKey.TableSizeAllDefault, "Size all columns to default###SizeAll"),
-            LocEntry(LocKey.TableResetOrder, "Reset order###ResetOrder"),
-            LocEntry(LocKey.WindowingMainMenuBar, "(Main menu bar)"),
-            LocEntry(LocKey.WindowingPopup, "(Popup)"),
-            LocEntry(LocKey.WindowingUntitled, "(Untitled)"))
+                LocEntry(LocKey.TableSizeOne, "Size column to fit###SizeOne"),
+                LocEntry(LocKey.TableSizeAllFit, "Size all columns to fit###SizeAll"),
+                LocEntry(LocKey.TableSizeAllDefault, "Size all columns to default###SizeAll"),
+                LocEntry(LocKey.TableResetOrder, "Reset order###ResetOrder"),
+                LocEntry(LocKey.WindowingMainMenuBar, "(Main menu bar)"),
+                LocEntry(LocKey.WindowingPopup, "(Popup)"),
+                LocEntry(LocKey.WindowingUntitled, "(Untitled)"))
     }
 }
 
@@ -865,9 +874,9 @@ enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePos
 
 /** Hook for extensions like ImGuiTestEngine */
 class ContextHook(
-    // A unique ID assigned by AddContextHook()
-    var hookId: ID = 0,
-    var type: ContextHookType = ContextHookType.NewFramePre,
-    var owner: ID = 0,
-    var callback: ContextHookCallback? = null,
-    var userData: Any? = null)
+        // A unique ID assigned by AddContextHook()
+        var hookId: ID = 0,
+        var type: ContextHookType = ContextHookType.NewFramePre,
+        var owner: ID = 0,
+        var callback: ContextHookCallback? = null,
+        var userData: Any? = null)

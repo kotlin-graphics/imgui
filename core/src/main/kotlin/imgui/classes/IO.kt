@@ -166,15 +166,17 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** User data for non C++ programming language backend */
     var backendLanguageUserData: Any? = null
 
+    // Platform Functions
+    // Note: Initialize() will setup default clipboard/ime handlers.
     // Optional: Access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
-    var getClipboardTextFn: ((userData: Any?) -> String?)? = getClipboardTextFn_DefaultImpl
-    var setClipboardTextFn: ((userData: Any?, text: String) -> Unit)? = setClipboardTextFn_DefaultImpl
+    var getClipboardTextFn: ((userDataCtx: Context?) -> String?)? = null
+    var setClipboardTextFn: ((userDataCtx: Context?, text: String) -> Unit)? = null
     var clipboardUserData: Any? = null
 
     // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
     // (default to use native imm32 api on Windows)
-    val setPlatformImeDataFn: ((viewport: Viewport, data: PlatformImeData) -> Unit)? = setPlatformImeDataFn_DefaultImpl.takeIf { Platform.get() == Platform.WINDOWS }
+    var setPlatformImeDataFn: ((viewport: Viewport, data: PlatformImeData) -> Unit)? = null
 
     // [JVM] copy function for backup
     fun copy() = IO().also {
