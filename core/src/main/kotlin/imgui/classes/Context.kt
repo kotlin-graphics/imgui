@@ -668,6 +668,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     val debugLogIndex = TextIndex()
 
+    var debugLogClipperAutoDisableFrames = 0
+
     /** For DebugLocateItemOnHover(). This is used together with DebugLocateId which is in a hot/cached spot above. */
     var debugLocateFrames = 0
 

@@ -10,6 +10,7 @@ import imgui.ImGui.begin
 import imgui.ImGui.callHooks
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
+import imgui.ImGui.debugLog
 import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.focusTopMostWindowUnderOne
@@ -33,6 +34,7 @@ import imgui.classes.IO
 import imgui.classes.Style
 import imgui.font.FontAtlas
 import imgui.internal.DrawData
+import imgui.internal.classes.DebugLogFlag
 import imgui.internal.classes.Rect
 import imgui.internal.sections.DrawListFlags
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
@@ -266,11 +268,16 @@ interface main {
         g.itemFlagsStack += none
         g.groupStack.clear()
 
-        // // [DEBUG] Update debug features
+        // [DEBUG] Update debug features
         updateDebugToolItemPicker()
         updateDebugToolStackQueries()
         if (g.debugLocateFrames > 0 && --g.debugLocateFrames == 0)
             g.debugLocateId = 0
+        if (g.debugLogClipperAutoDisableFrames > 0 && --g.debugLogClipperAutoDisableFrames == 0) {
+            debugLog("(Auto-disabled ImGuiDebugLogFlags_EventClipper to avoid spamming)")
+            g.debugLogFlags -= DebugLogFlag.EventClipper
+        }
+
 
         // Create implicit/fallback window - which we will only render it if the user has added something to it.
         // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
