@@ -420,9 +420,10 @@ object dsl {
     // Tooltips
 
     inline fun tooltip(block: () -> Unit) {
-        beginTooltip()
-        block()
-        endTooltip()
+        if (beginTooltip()) {
+            block()
+            endTooltip()
+        }
     }
 
 

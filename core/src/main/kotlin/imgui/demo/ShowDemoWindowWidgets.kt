@@ -340,8 +340,7 @@ object ShowDemoWindowWidgets {
 
                     sameLine()
                     smallButton("Fancy")
-                    if (isItemHovered()) {
-                        beginTooltip()
+                    if (isItemHovered() && beginTooltip()) {
                         text("I am a fancy tooltip")
                         plotLines("Curve", arr)
                         text("Sin(time) = " + ImGui.time.f.sin)

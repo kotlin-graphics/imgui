@@ -172,6 +172,12 @@ internal interface windows {
         hitTestHoleOffset put (pos - this.pos)
     }
 
+    /** ~SetWindowHiddendAndSkipItemsForCurrentFrame */
+    fun Window.setHiddendAndSkipItemsForCurrentFrame() {
+        hidden = true; skipItems = true
+        hiddenFramesCanSkipItems = 1
+    }
+
     /** ~WindowRectAbsToRel */
     infix fun Window.rectAbsToRel(r: Rect): Rect {
         val off = dc.cursorStartPos

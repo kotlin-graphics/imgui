@@ -958,8 +958,7 @@ interface demoDebugInformations {
          *  In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.txt)    */
         fun helpMarker(desc: String) {
             textDisabled("(?)")
-            if (isItemHovered(HoveredFlag.DelayShort)) {
-                beginTooltip()
+            if (isItemHovered(HoveredFlag.DelayShort) && beginTooltip()) {
                 pushTextWrapPos(fontSize * 35f)
                 textEx(desc)
                 popTextWrapPos()

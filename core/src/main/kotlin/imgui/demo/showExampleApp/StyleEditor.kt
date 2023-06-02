@@ -131,7 +131,7 @@ object StyleEditor {
         if (button("Revert Ref")) g.style = ref!!
         sameLine()
         helpMarker(
-            "Save/Revert in local non-persistent storage. Default Colors definition are not affected. " + "Use \"Export\" below to save them somewhere.")
+                "Save/Revert in local non-persistent storage. Default Colors definition are not affected. " + "Use \"Export\" below to save them somewhere.")
 
         separator()
 
@@ -206,8 +206,8 @@ object StyleEditor {
                         val col = style.colors[i]
                         val name = i.name
                         if (!outputOnlyModified || col != ref!!.colors[i]) logText(
-                            "colors[Col_$name]%s = Vec4(%.2f, %.2f, %.2f, %.2f)\n", " ".repeat(23 - name.length), col.x,
-                            col.y, col.z, col.w)
+                                "colors[Col_$name]%s = Vec4(%.2f, %.2f, %.2f, %.2f)\n", " ".repeat(23 - name.length), col.x,
+                                col.y, col.z, col.w)
                     }
                     logFinish()
                 }
@@ -232,8 +232,8 @@ object StyleEditor {
                 )
 
                 child(
-                    "#colors", Vec2(), true,
-                    Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened
+                        "#colors", Vec2(), true,
+                        Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened
                 ) {
                     withItemWidth(-160) {
                         for (i in 0 until Col.COUNT) {
@@ -297,8 +297,10 @@ object StyleEditor {
 
                 // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
                 drag("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 5f, "%.2f", SliderFlag.AlwaysClamp)
-                if (ImGui.isItemActive) {
+                val showSamples = ImGui.isItemActive
+                if (showSamples)
                     setNextWindowPos(ImGui.cursorScreenPos)
+                if (showSamples)
                     tooltip {
                         textUnformatted("(R = radius, N = number of segments)")
                         spacing()
@@ -330,7 +332,6 @@ object StyleEditor {
                             sameLine()
                         }
                     }
-                }
                 ImGui.sameLine()
                 helpMarker("When drawing circle primitives with \"num_segments == 0\" tesselation will be calculated automatically.")
 
@@ -350,8 +351,8 @@ object StyleEditor {
     fun debugNodeFont(font: Font) {
         val name = font.configData.getOrNull(0)?.name ?: ""
         val fontDetailsOpened = treeNode(font,
-            "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)",
-            font.fontSize)
+                "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)",
+                font.fontSize)
         sameLine(); smallButton("Set as default") { io.fontDefault = font }
         if (!fontDetailsOpened)
             return
@@ -380,8 +381,8 @@ object StyleEditor {
         for (c in 0 until font.configDataCount)
             font.configData.getOrNull(c)?.let {
                 bulletText(
-                    "Input $c: '${it.name}', Oversample: ${it.oversample}, PixelSnapH: ${it.pixelSnapH}, Offset: (%.1f,%.1f)",
-                    it.glyphOffset.x, it.glyphOffset.y)
+                        "Input $c: '${it.name}', Oversample: ${it.oversample}, PixelSnapH: ${it.pixelSnapH}, Offset: (%.1f,%.1f)",
+                        it.glyphOffset.x, it.glyphOffset.y)
             }
 
         // Display all glyphs of the fonts in separate pages of 256 characters
@@ -408,11 +409,10 @@ object StyleEditor {
                     val drawList = windowDrawList
                     for (n in 0 until 256) {
                         val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize + cellSpacing),
-                            basePos.y + (n / 16) * (cellSize + cellSpacing))
+                                basePos.y + (n / 16) * (cellSize + cellSpacing))
                         val cellP2 = Vec2(cellP1.x + cellSize, cellP1.y + cellSize)
                         val glyph = font.findGlyphNoFallback((base + n).c)
-                        drawList.addRect(cellP1, cellP2, COL32(255, 255, 255,
-                            if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
+                        drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
                         // available here and thus cannot easily generate a zero-terminated UTF-8 encoded string.
                         if (glyph != null) {
                             font.renderChar(drawList, cellSize, cellP1, Col.Text.u32, (base + n).c)

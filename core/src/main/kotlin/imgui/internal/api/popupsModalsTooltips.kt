@@ -16,6 +16,7 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isWithinBeginStackOf
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.setActiveID
+import imgui.ImGui.setHiddendAndSkipItemsForCurrentFrame
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
@@ -241,7 +242,7 @@ internal interface popupsModalsTooltips {
 
     /** Not exposed publicly as BeginTooltip() because bool parameters are evil. Let's see if other needs arise first.
      *  @param extraWindowFlags WindowFlag   */
-    fun beginTooltipEx(tooltipFlags_: TooltipFlags = none, extraWindowFlags: WindowFlags = none) {
+    fun beginTooltipEx(tooltipFlags_: TooltipFlags = none, extraWindowFlags: WindowFlags = none): Boolean {
         var tooltipFlags = tooltipFlags_
         if (g.dragDropWithinSource || g.dragDropWithinTarget) { // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
             // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
@@ -256,16 +257,22 @@ internal interface popupsModalsTooltips {
         }
 
         var windowName = "##Tooltip_%02d".format(g.tooltipOverrideCount)
-        if (tooltipFlags has TooltipFlag.OverridePreviousTooltip) findWindowByName(windowName)?.let {
-            if (it.active) { // Hide previous tooltip from being displayed. We can't easily "reset" the content of a window so we create a new one.
-                it.hidden = true
-                it.hiddenFramesCanSkipItems = 1 // FIXME: This may not be necessary?
+        if (tooltipFlags has TooltipFlag.OverridePreviousTooltip) findWindowByName(windowName)?.let { window ->
+            if (window.active) {
+                // Hide previous tooltip from being displayed. We can't easily "reset" the content of a window so we create a new one.
+                window.setHiddendAndSkipItemsForCurrentFrame()
                 windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
             }
         }
         val flags =
             Wf._Tooltip or Wf.NoMouseInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
         begin(windowName, null, flags or extraWindowFlags)
+        // 2023-03-09: Added bool return value to the API, but currently always returning true.
+        // If this ever returns false we need to update BeginDragDropSource() accordingly.
+        //if (!ret)
+        //    End();
+        //return ret;
+        return true
     }
 
     /** ~GetPopupAllowedExtentRect

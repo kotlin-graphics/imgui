@@ -13,8 +13,9 @@ import imgui.WindowFlag as Wf
 interface tooltips {
 
     /** begin/append a tooltip window. to create full-featured tooltip (with any kind of items). */
-    fun beginTooltip() = beginTooltipEx()
+    fun beginTooltip(): Boolean = beginTooltipEx()
 
+    /** only call EndTooltip() if BeginTooltip() returns true! */
     fun endTooltip() {
         assert(currentWindowRead!!.flags has Wf._Tooltip) { "Mismatched BeginTooltip()/EndTooltip() calls" }
         end()

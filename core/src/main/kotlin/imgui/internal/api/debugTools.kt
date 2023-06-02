@@ -480,8 +480,7 @@ internal interface debugTools {
                     if (glyph == null)
                         continue
                     font.renderChar(drawList, cellSize, cellP1, glyphCol, Char(base + n))
-                    if (isMouseHoveringRect(cellP1, cellP2)) {
-                        beginTooltip()
+                    if (isMouseHoveringRect(cellP1, cellP2) && beginTooltip()) {
                         debugNodeFontGlyph(font, glyph)
                         endTooltip()
                     }
@@ -568,8 +567,7 @@ internal interface debugTools {
         /** Avoid naming collision with imgui_demo.cpp's HelpMarker() for unity builds. */
         fun metricsHelpMarker(desc: String) {
             textDisabled("(?)")
-            if (isItemHovered(HoveredFlag.DelayShort)) {
-                beginTooltip()
+            if (isItemHovered(HoveredFlag.DelayShort) && beginTooltip()) {
                 pushTextWrapPos(fontSize * 35f)
                 textUnformatted(desc)
                 popTextWrapPos()

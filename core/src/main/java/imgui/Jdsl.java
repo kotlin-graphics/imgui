@@ -448,9 +448,10 @@ public class Jdsl {
     // Tooltips
 
     public static void tooltip(Runnable block) {
-        imgui.beginTooltip();
-        block.run();
-        imgui.endTooltip();
+        if (imgui.beginTooltip()) {
+            block.run();
+            imgui.endTooltip();
+        }
     }
 
 
