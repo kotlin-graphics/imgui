@@ -251,7 +251,11 @@ fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
 
 /** out buffer is `g.tempBuffer`
  *  @return  buffer length */
-fun formatStringToTempBuffer(fmt: String, vararg args: Any): Int = formatString(g.tempBuffer, fmt, *args)
+fun formatStringToTempBuffer(fmt: String, vararg args: Any): Int {
+    if (fmt == "%s") // Skip formatting when using "%s"
+        return args.joinToString().length
+    return formatString(g.tempBuffer, fmt, *args)
+}
 
 //fun formatStringToTempBufferV(buf: ByteArray, fmt: String, vararg args: Any = emptyArray()) IM_FMTLIST(3);
 
