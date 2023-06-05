@@ -192,11 +192,10 @@ object ShowDemoWindowWidgets {
 
         // Note: Because ImGui:: is a namespace you would typically add your own function into the namespace.
         // For example, you code may declare a function 'ImGui::InputText(const char* label, MyString* my_str)'
-        val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: InputTextSingleFlags) -> Boolean =
-            { label, myStr, size, flags ->
-                assert(flags hasnt Itf.CallbackResize)
-                inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
-            }
+        val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: InputTextSingleFlags) -> Boolean = { label, myStr, size, flags ->
+            assert(flags hasnt Itf.CallbackResize)
+            inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
+        }
     }
 
     var myStr = ByteArray(0)
@@ -445,7 +444,7 @@ object ShowDemoWindowWidgets {
                     // Using the _simplified_ one-liner Combo() api here
                     // See "Combo" section for examples of how to use the more flexible BeginCombo()/EndCombo() api.
 //                    IMGUI_DEMO_MARKER("Widgets/Basic/Combo");
-                    val items = listOf( "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK" )
+                    val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK")
                     combo("combo", ::itemCurrent1, items)
                     sameLine(); helpMarker("Using the simplified one-liner Combo API here.\nRefer to the \"Combo\" section below for an explanation of how to use the more flexible and general BeginCombo/EndCombo API.")
                 }
@@ -670,7 +669,7 @@ object ShowDemoWindowWidgets {
                     val pos = cursorScreenPos
                     val uvMin = Vec2(0f)                 // Top-left
                     val uvMax = Vec2(1f)                 // Lower-right
-                    val tintCol = if(useTextColorForTint) getStyleColorVec4(Col.Text) else Vec4(1f)   // No tint
+                    val tintCol = if (useTextColorForTint) getStyleColorVec4(Col.Text) else Vec4(1f)   // No tint
                     val borderCol = getStyleColorVec4(Col.Border)
                     image(myTexId, Vec2(myTexSize.x, myTexSize.y), uvMin, uvMax, tintCol, borderCol)
                     if (isItemHovered())
@@ -1792,6 +1791,7 @@ object ShowDemoWindowWidgets {
                                         names[n] = names[payloadN]
                                         names[payloadN] = ""
                                     }
+
                                     Mode.Swap -> {
                                         val tmp = names[n]
                                         names[n] = names[payloadN]

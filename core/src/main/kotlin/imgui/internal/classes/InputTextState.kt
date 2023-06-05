@@ -107,6 +107,10 @@ class InputTextState(
         stb.selectEnd = stb.cursor
     }
 
+    val cursorPos: Int get() = stb.cursor
+    val selectionStart: Int get() = stb.selectStart
+    val selectionEnd: Int get() = stb.selectEnd
+
     fun selectAll() {
         stb.selectStart = 0
         stb.selectEnd = curLenW

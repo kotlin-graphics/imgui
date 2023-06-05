@@ -137,7 +137,9 @@ fun inputTextCalcTextLenAndLineCount(text: ByteArray): Pair<Int, Int> {
     while (c != 0.b) { // We are only matching for \n so we can ignore UTF-8 decoding
         if (c == '\n'.b)
             lineCount++
-        c = text[s++]
+        if (s < text.lastIndex)
+            c = text[s++]
+        else break
     }
     s--
     if (text[s] != '\n'.b && text[s] != '\r'.b)
