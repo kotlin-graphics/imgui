@@ -576,7 +576,7 @@ fun textCountUtf8BytesFromStr(text: CharArray, textEnd: Int): Int = textCountUtf
 fun textCountUtf8BytesFromStr(text: CharArray, textBegin: Int, textEnd: Int): Int {
     var bytesCount = 0
     var t = textBegin
-    while (t < textEnd && text[t] != NUL) {
+    while (t < textBegin + textEnd && text[t] != NUL) {
         val c = text[t++].i
         if (c < 0x80)
             bytesCount++

@@ -293,7 +293,7 @@ sealed class InputTextFlag<out ITF : InputTextFlag<ITF>>(override val i: Int) : 
     /** Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the string to grow.
      *  Notify when the string wants to be resized (for string types which hold a cache of their Size).
      *  You will be provided a new BufSize in the callback and NEED to honor it. (see misc/cpp/imgui_stl.h for an example of using this) */
-    object CallbackResize : Single(1 shl 18)
+    object CallbackResize : Single(1 shl 18) // [JVM] be sure to modify the upstream source as well on resize!
 
     /** Callback on any edit (note that InputText() already returns true on edit, the callback is useful mainly to
      *  manipulate the underlying buffer while focus is active) */

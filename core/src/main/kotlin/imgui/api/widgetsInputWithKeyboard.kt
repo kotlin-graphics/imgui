@@ -42,8 +42,7 @@ import imgui.internal.sections.ButtonFlag as Bf
 interface widgetsInputWithKeyboard {
 
     /** String overload */
-    fun inputText(label: String, pString: KMutableProperty0<String>, flags: InputTextSingleFlags = none,
-                  callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+    fun inputText(label: String, pString: KMutableProperty0<String>, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean {
         val buf = pString.get().toByteArray()
         return inputText(label, buf, flags, callback, userData).also {
             pString.set(buf.cStr)
@@ -51,12 +50,10 @@ interface widgetsInputWithKeyboard {
     }
 
     /** String overload */
-    fun inputText(label: String, buf: String, flags: InputTextSingleFlags = none,
-                  callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+    fun inputText(label: String, buf: String, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputText(label, buf.toByteArray(), flags, callback, userData)
 
-    fun inputText(label: String, buf: StringBuilder, flags: InputTextSingleFlags = none,
-                  callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+    fun inputText(label: String, buf: StringBuilder, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean {
         val array = buf.toString().toByteArray()
         return inputText(label, array, flags, callback, userData).also {
             buf.clear()
@@ -64,22 +61,19 @@ interface widgetsInputWithKeyboard {
         }
     }
 
-    fun inputText(label: String, buf: ByteArray, flags: InputTextSingleFlags = none,
-                  callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+    fun inputText(label: String, buf: ByteArray, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputTextEx(label, null, buf, Vec2(), flags, callback, userData)
 
     /** String overload */
-    fun inputTextMultiline(label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextSingleFlags = none,
-                           callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+    fun inputTextMultiline(label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputTextEx(label, null, buf.toByteArray(), size, flags or Itf._Multiline, callback, userData)
 
-    fun inputTextMultiline(label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextSingleFlags = none,
-                           callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+    fun inputTextMultiline(label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputTextEx(label, null, buf, size, flags or Itf._Multiline, callback, userData)
 
     /** String overload */
-    fun inputTextWithHint(label: String, hint: String, buf: String, flags: InputTextSingleFlags = none,
-                          callback: InputTextCallback? = null, userData: Any? = null): Boolean = inputTextWithHint(label, hint, buf.toByteArray(), flags)
+    fun inputTextWithHint(label: String, hint: String, buf: String, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+        inputTextWithHint(label, hint, buf.toByteArray(), flags)
 
     /** call InputTextMultiline() or InputTextEx() manually if you need multi-line + hint. */
     fun inputTextWithHint(label: String, hint: String, buf: ByteArray, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
