@@ -42,7 +42,7 @@ class InputTextCallbackData(
     var eventChar = NUL
 
     /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
-    var eventKey: Key = Key.Tab
+    var eventKey: Key = Key.None
 
     /** Text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
     var buf = ByteArray(0)
