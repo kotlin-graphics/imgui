@@ -659,31 +659,14 @@ object te {
         val z = stringLen
         var i = 0
 
-        if (n == z) {
-            // if it's at the end, then find the last line -- simpler than trying to
-            // explicitly handle this case in the regular code
-            find.apply {
-                if (singleLine) {
-                    layoutRow(r, 0)
-                    y = 0f
-                    firstChar = 0
-                    length = z
-                    height = r.yMax - r.yMin
-                    x = r.x1
-                } else {
-                    y = 0f
-                    x = 0f
-                    height = 1f
-                    while (i < z) {
-                        layoutRow(r, i)
-                        prevStart = i
-                        i += r.numChars
-                    }
-                    firstChar = i
-                    length = 0
-                    prevFirst = prevStart
-                }
-            }
+        if (n == z && singleLine) {
+            // special case if it's at the end (may not be needed?)
+            layoutRow(r, 0)
+            find.y = 0f
+            find.firstChar = 0
+            find.length = z
+            find.height = r.yMax - r.yMin
+            find.x = r.x1
             return
         }
 
@@ -694,9 +677,13 @@ object te {
             layoutRow(r, i)
             if (n < i + r.numChars)
                 break
+            if (i + r.numChars == z && z > 0 && getChar(z - 1) != NEWLINE)  // [DEAR IMGUI] special handling for last line
+                break   // [DEAR IMGUI]
             prevStart = i
             i += r.numChars
             find.y += r.baselineYDelta
+            if (i == z) // [DEAR IMGUI]
+                break   // [DEAR IMGUI]
         }
 
         find.apply {
