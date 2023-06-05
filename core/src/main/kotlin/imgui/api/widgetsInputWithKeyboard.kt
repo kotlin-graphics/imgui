@@ -53,13 +53,8 @@ interface widgetsInputWithKeyboard {
     fun inputText(label: String, buf: String, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputText(label, buf.toByteArray(), flags, callback, userData)
 
-    fun inputText(label: String, buf: StringBuilder, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean {
-        val array = buf.toString().toByteArray()
-        return inputText(label, array, flags, callback, userData).also {
-            buf.clear()
-//            buf.append(array.)
-        }
-    }
+    fun inputText(label: String, buf: StringBuilder, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+        inputText(label, buf.toString(), flags, callback, userData)
 
     fun inputText(label: String, buf: ByteArray, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputTextEx(label, null, buf, Vec2(), flags, callback, userData)

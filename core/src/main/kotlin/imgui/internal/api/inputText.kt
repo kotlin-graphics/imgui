@@ -398,9 +398,8 @@ internal interface inputText {
                     val c by cRef
                     if (c == NUL || c == '\t') // Skip Tab, see above.
                         continue
-                    if (inputTextFilterCharacter(cRef, flags, callback, callbackUserData, InputSource.Keyboard)) {
+                    if (inputTextFilterCharacter(cRef, flags, callback, callbackUserData, InputSource.Keyboard))
                         state onKeyPressed c.i
-                    }
                 }
                 // Consume characters
                 io.inputQueueCharacters.clear()
