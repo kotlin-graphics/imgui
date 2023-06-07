@@ -77,7 +77,7 @@ import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.font.Font
-import imgui.internal.sections.OldColumnsFlags
+import imgui.internal.sections.OldColumnFlags
 import kotlin.reflect.KMutableProperty0
 
 /** twin brother of Jdsl */
@@ -518,7 +518,7 @@ object dsl {
 
     // Columns
 
-    inline fun columns(strId: String = "", columnsCount: Int, flags: OldColumnsFlags = none, block: () -> Unit) {
+    inline fun columns(strId: String = "", columnsCount: Int, flags: OldColumnFlags = none, block: () -> Unit) {
         beginColumns(strId, columnsCount, flags)
         block()
         endColumns()

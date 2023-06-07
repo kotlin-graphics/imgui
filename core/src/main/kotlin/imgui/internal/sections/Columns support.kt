@@ -14,7 +14,7 @@ import imgui.internal.classes.Rect
 //-----------------------------------------------------------------------------
 
 
-typealias OldColumnsFlags = Flag<OldColumnsFlag>
+typealias OldColumnFlags = Flag<OldColumnsFlag>
 
 /** Flags: for Columns(), BeginColumns() */
 sealed class OldColumnsFlag : FlagBase<OldColumnsFlag>() {
@@ -48,14 +48,14 @@ class OldColumnData {
     var offsetNormBeforeResize = 0f
 
     /** Not exposed */
-    var flags: OldColumnsFlags = none
+    var flags: OldColumnFlags = none
     var clipRect = Rect()
 }
 
 /** Storage data for a columns set for legacy Columns() api */
 class OldColumns {
     var id: ID = 0
-    var flags: OldColumnsFlags = none
+    var flags: OldColumnFlags = none
     var isFirstFrame = false
     var isBeingResized = false
     var current = 0

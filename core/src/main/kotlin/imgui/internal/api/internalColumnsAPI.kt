@@ -42,7 +42,7 @@ internal interface internalColumnsAPI {
     }
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
-    fun beginColumns(strId: String = "", columnsCount: Int, flags: OldColumnsFlags) {
+    fun beginColumns(strId: String = "", columnsCount: Int, flags: OldColumnFlags = none) {
 
         val window = currentWindow
 
@@ -229,7 +229,7 @@ internal interface internalColumnsAPI {
                 .also { popID() }
     }
 
-    fun Window.findOrCreateColumns(id: ID): OldColumns {
+    infix fun Window.findOrCreateColumns(id: ID): OldColumns {
 
         // We have few columns per window so for now we don't need bother much with turning this into a faster lookup.
         for (c in columnsStorage) if (c.id == id) return c

@@ -21,7 +21,7 @@ import imgui.hasnt
 import imgui.internal.floor
 import imgui.internal.lerp
 import imgui.internal.sections.OldColumns
-import imgui.internal.sections.OldColumnsFlags
+import imgui.internal.sections.OldColumnFlags
 import kotlin.math.max
 import kotlin.math.min
 import imgui.internal.sections.OldColumnsFlag as Cf
@@ -35,7 +35,7 @@ interface columns {
         val window = currentWindow
         assert(columnsCount >= 1)
 
-        val flags: OldColumnsFlags = if (border) none else Cf.NoBorder
+        val flags: OldColumnFlags = if (border) none else Cf.NoBorder
         //flags |= ImGuiOldColumnFlags_NoPreserveWidths; // NB: Legacy behavior
         window.dc.currentColumns?.let {
             if (it.count == columnsCount && it.flags == flags)
