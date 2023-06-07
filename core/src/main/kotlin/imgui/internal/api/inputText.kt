@@ -622,7 +622,7 @@ internal interface inputText {
 
 
                 // User callback
-                if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
+                if (flags has (Itf.CallbackCompletion / Itf.CallbackHistory / Itf.CallbackEdit / Itf.CallbackAlways)) {
                     callback!!
                     // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
                     var eventFlag: InputTextFlags = none
