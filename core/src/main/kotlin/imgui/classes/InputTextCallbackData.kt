@@ -22,7 +22,7 @@ import kotlin.math.max
  *  Use those function to benefit from the CallbackResize behaviors. Calling those function reset the selection. */
 class InputTextCallbackData(
         /** Parent UI context */
-        val ctx: Context) {
+        var ctx: Context) {
 
     /** One ImGuiInputTextFlags_Callback*    // Read-only */
     var eventFlag: InputTextFlags = none
@@ -118,6 +118,7 @@ class InputTextCallbackData(
                 buf[pos + newTextLen + i] = buf[pos + i]
         for (i in 0 until newTextLen)
             buf[pos + i] = newText[i]
+        buf[bufTextLen + newTextLen] = 0
 
         if (cursorPos >= pos)
             cursorPos += newTextLen

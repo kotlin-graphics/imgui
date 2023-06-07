@@ -648,63 +648,61 @@ internal interface inputText {
                     }
 
                     if (eventFlag.isNotEmpty) {
-                        val cbData = InputTextCallbackData(g)
-                        cbData.eventFlag = eventFlag
-                        cbData.flags = flags
-                        cbData.userData = callbackUserData
+                        val callbackData = InputTextCallbackData(g)
+                        callbackData.ctx = g
+                        callbackData.eventFlag = eventFlag
+                        callbackData.flags = flags
+                        callbackData.userData = callbackUserData
 
-                        var callbackData = if (isReadOnly) buf else state.textA
-                        cbData.eventKey = eventKey
-                        cbData.buf = callbackData
-                        cbData.bufTextLen = state.curLenA
-                        cbData.bufSize = state.bufCapacityA
-                        cbData.bufDirty = false
+                        var callbackBuf = if (isReadOnly) buf else state.textA
+                        callbackData.eventKey = eventKey
+                        callbackData.buf = callbackBuf
+                        callbackData.bufTextLen = state.curLenA
+                        callbackData.bufSize = state.bufCapacityA
+                        callbackData.bufDirty = false
 
                         // We have to convert from wchar-positions to UTF-8-positions, which can be pretty slow (an incentive to ditch the ImWchar buffer, see https://github.com/nothings/stb/issues/188)
                         val text = state.textW
-                        cbData.cursorPos = textCountUtf8BytesFromStr(text, state.stb.cursor)
-                        val utf8CursorPos = cbData.cursorPos
-                        cbData.selectionStart = textCountUtf8BytesFromStr(text, state.stb.selectStart)
-                        val utf8SelectionStart = cbData.selectionStart
-                        cbData.selectionEnd = textCountUtf8BytesFromStr(text, state.stb.selectEnd)
-                        val utf8SelectionEnd = cbData.selectionEnd
+                        val utf8CursorPos = textCountUtf8BytesFromStr(text, state.stb.cursor); callbackData.cursorPos = utf8CursorPos
+                        val utf8SelectionStart = textCountUtf8BytesFromStr(text, state.stb.selectStart); callbackData.selectionStart = utf8SelectionStart
+                        val utf8SelectionEnd = textCountUtf8BytesFromStr(text, state.stb.selectEnd); callbackData.selectionEnd = utf8SelectionEnd
 
                         // Call user code
-                        callback(cbData)
+                        callback(callbackData)
 
                         // Read back what user may have modified
-                        callbackData = if (isReadOnly) buf else state.textA // Pointer may have been invalidated by a resize callback
-                        assert(cbData.buf === callbackData) { "Invalid to modify those fields" }
-                        assert(cbData.bufSize == state.bufCapacityA)
-                        assert(cbData.flags == flags)
-                        val bufDirty = cbData.bufDirty
-                        if (cbData.cursorPos != utf8CursorPos || bufDirty) {
-                            state.stb.cursor = textCountCharsFromUtf8(cbData.buf, cbData.cursorPos)
+                        callbackBuf = if (isReadOnly) buf else state.textA // Pointer may have been invalidated by a resize callback
+                        assert(callbackData.buf === callbackBuf) { "Invalid to modify those fields" }
+                        assert(callbackData.bufSize == state.bufCapacityA)
+                        assert(callbackData.flags == flags)
+                        val bufDirty = callbackData.bufDirty
+                        if (callbackData.cursorPos != utf8CursorPos || bufDirty) {
+                            state.stb.cursor = textCountCharsFromUtf8(callbackData.buf, callbackData.cursorPos)
                             state.cursorFollow = true
                         }
-                        if (cbData.selectionStart != utf8SelectionStart || bufDirty)
+                        if (callbackData.selectionStart != utf8SelectionStart || bufDirty)
                             state.stb.selectStart = when {
-                                cbData.selectionStart == cbData.cursorPos -> state.stb.cursor
-                                else -> textCountCharsFromUtf8(cbData.buf, cbData.selectionStart)
+                                callbackData.selectionStart == callbackData.cursorPos -> state.stb.cursor
+                                else -> textCountCharsFromUtf8(callbackData.buf, callbackData.selectionStart)
                             }
-                        if (cbData.selectionEnd != utf8SelectionEnd || bufDirty)
+                        if (callbackData.selectionEnd != utf8SelectionEnd || bufDirty)
                             state.stb.selectEnd = when {
-                                cbData.selectionEnd == cbData.selectionStart -> state.stb.selectStart
-                                else -> textCountCharsFromUtf8(cbData.buf, cbData.selectionEnd)
+                                callbackData.selectionEnd == callbackData.selectionStart -> state.stb.selectStart
+                                else -> textCountCharsFromUtf8(callbackData.buf, callbackData.selectionEnd)
                             }
                         if (bufDirty) {
                             assert(flags hasnt Itf.ReadOnly)
-                            assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
-                            inputTextReconcileUndoStateAfterUserCallback(state, callbackData, callbackData.size) // FIXME: Move the rest of this block inside function and rename to InputTextReconcileStateAfterUserCallback() ?
-                            if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
-                                val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength) // Worse case scenario resize
+                            assert(callbackData.bufTextLen == callbackData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
+                            inputTextReconcileUndoStateAfterUserCallback(state, callbackBuf, callbackBuf.size) // FIXME: Move the rest of this block inside function and rename to InputTextReconcileStateAfterUserCallback() ?
+                            if ((callbackData.bufTextLen > backupCurrentTextLength) and isResizable) {
+                                val newSize = state.textW.size + (callbackData.bufTextLen - backupCurrentTextLength) // Worse case scenario resize
                                 if (state.textW.size < newSize)
                                     state.textW = CharArray(newSize)
                                 else if (state.textW.size > newSize)
                                     state.textW[newSize] = NUL
                             }
-                            state.curLenW = textStrFromUtf8(state.textW, cbData.buf)
-                            state.curLenA = cbData.bufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
+                            state.curLenW = textStrFromUtf8(state.textW, callbackData.buf)
+                            state.curLenA = callbackData.bufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
                             state.cursorAnimReset()
                         }
                     }
