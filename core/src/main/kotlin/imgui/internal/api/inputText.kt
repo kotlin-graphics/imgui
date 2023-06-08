@@ -75,6 +75,11 @@ import imgui.WindowFlag as Wf
 /** InputText */
 internal interface inputText {
 
+    // [JVM] since this is a very particular case, that's why we don't overload
+    fun inputTextEx(label: String, hint: String?, buf: ByteArray, sizeArg: Vec2, flags: InputTextFlags,
+                    callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean =
+        inputTextEx(label, hint, buf, buf.size, sizeArg, flags, callback, callbackUserData)
+
     /** InputTextEx
      *  - bufSize account for the zero-terminator, so a buf_size of 6 can hold "Hello" but not "Hello!".
      *    This is so we can easily call InputText() on static arrays using ARRAYSIZE() and to match
@@ -84,10 +89,11 @@ internal interface inputText {
      *  (FIXME: Rather confusing and messy function, among the worse part of our codebase, expecting to rewrite a V2 at some point.. Partly because we are
      *  doing UTF8 > U16 > UTF8 conversions on the go to easily internal interface with stb_textedit. Ideally should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
-    fun inputTextEx(label: String, hint: String?, buf_: ByteArray, sizeArg: Vec2, flags: InputTextFlags,
+    fun inputTextEx(label: String, hint: String?, buf_: ByteArray, bufSize_: Int = buf_.size, sizeArg: Vec2, flags: InputTextFlags,
                     callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean {
 
         var buf = buf_
+        var bufSize = bufSize_
 
         val window = currentWindow
         if (window.skipItems)
@@ -206,11 +212,11 @@ internal interface inputText {
 
             // Start edition
             state.id = id
-            if (state.textW.size < buf.size)
+            if (state.textW.size < bufSize)
             // [JVM] we don't need the +1 for the termination char
-                state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
-            else if (state.textW.size > buf.size)
-                state.textW[buf.size] = NUL
+                state.textW = CharArray(bufSize)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            else if (state.textW.size > bufSize)
+                state.textW[bufSize] = NUL
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
             state.curLenW = textStrFromUtf8(state.textW, buf, -1, bufEndRef)
             state.curLenA = bufEnd // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
@@ -280,10 +286,10 @@ internal interface inputText {
         // When read-only we always use the live data passed to the function
         // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
         if (isReadOnly && state != null && (renderCursor || renderSelection)) {
-            if (state.textW.size < buf.size)
-                state.textW = CharArray(buf.size)
-            else if (state.textW.size > buf.size)
-                state.textW[buf.size] = NUL
+            if (state.textW.size < bufSize)
+                state.textW = CharArray(bufSize)
+            else if (state.textW.size > bufSize)
+                state.textW[bufSize] = NUL
             state.curLenW = textStrFromUtf8(state.textW, buf, -1, bufEndRef)
             state.curLenA = bufEnd
             state.cursorClamp()
@@ -316,7 +322,7 @@ internal interface inputText {
             backupCurrentTextLength = state!!.curLenA
             state.apply {
                 edited = false
-                bufCapacityA = buf.size
+                bufCapacityA = bufSize
                 this.flags = flags
             }
             // Although we are active we don't prevent mouse from hovering other elements unless we are interacting right now with the widget.
@@ -535,7 +541,7 @@ internal interface inputText {
                     io.setClipboardTextFn?.let {
                         val ib = if (state.hasSelection) min(state.stb.selectStart, state.stb.selectEnd) else 0
                         val ie =
-                                if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
+                            if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
                         clipboardText = String(state.textW, ib, ie - ib)
                     }
                     if (isCut) {
@@ -603,10 +609,9 @@ internal interface inputText {
             // Apply ASCII value
             if (!isReadOnly) {
                 state.textAIsValid = true
-                if (state.textA.size < state.textW.size * 4)
-                    state.textA = ByteArray(state.textW.size * 4)
-                else if (state.textA.size > state.textW.size * 4)
-                    state.textA[state.textW.size * 4] = 0
+                // [JVM] ~resize
+                if (state.textA.size < state.textW.size * 4) state.textA = ByteArray(state.textW.size * 4)
+                else if (state.textA.size > state.textW.size * 4) state.textA[state.textW.size * 4] = 0
                 textStrToUtf8(state.textA, state.textW)
             }
 
@@ -727,25 +732,27 @@ internal interface inputText {
                     it.flags = flags
                     it.buf = buf
                     it.bufTextLen = applyNewTextLength
-                    it.bufSize = buf.size max applyNewTextLength
+                    it.bufSize = bufSize max applyNewTextLength
                     it.userData = callbackUserData
                 }
                 callback!!(callbackData)
                 buf = callbackData.buf
-                //                    buf_size = callback_data.BufSize; TODO?
-                applyNewTextLength = callbackData.bufTextLen min buf.size
-                assert(applyNewTextLength <= buf.size)
+                bufSize = callbackData.bufSize
+                applyNewTextLength = callbackData.bufTextLen min bufSize
+                assert(applyNewTextLength <= bufSize)
             }
             //IMGUI_DEBUG_PRINT("InputText(\"%s\"): apply_new_text length %d\n", label, apply_new_text_length);
 
             // If the underlying buffer resize was denied or not carried to the next frame, apply_new_text_length+1 may be >= buf_size.
-            System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min buf.size)
-            if (applyNewTextLength < buf.size) buf[applyNewTextLength] = 0
+            System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min bufSize)
+            // [JVM] we need to close the stream with the termination `0` if the valid content is smaller than the buffer size
+            if (applyNewTextLength < bufSize) buf[applyNewTextLength] = 0
             valueChanged = true
         }
 
         // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
-        if (clearActiveId && g.activeId == id) clearActiveID()
+        if (clearActiveId && g.activeId == id)
+            clearActiveID()
 
         // Render frame
         if (!isMultiline) {
@@ -912,7 +919,7 @@ internal interface inputText {
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, 0,
-                        bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
+                                            bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
             }
 
             // Draw blinking cursor
@@ -921,7 +928,7 @@ internal interface inputText {
                 val cursorIsVisible = !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
                 val cursorScreenPos = floor(drawPos + cursorOffset - drawScroll)
                 val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f,
-                        cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
+                                            cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
                 if (cursorIsVisible && cursorScreenRect overlaps clipRect)
                     drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
@@ -947,7 +954,7 @@ internal interface inputText {
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, 0, bufDisplayEnd,
-                        0f, clipRect.takeUnless { isMultiline })
+                                            0f, clipRect.takeUnless { isMultiline })
             }
         }
 

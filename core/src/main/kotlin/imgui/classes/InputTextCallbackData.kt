@@ -99,7 +99,8 @@ class InputTextCallbackData(
         val newTextLen = if (newTextEnd != -1) newTextEnd else newText.strlen()
         if (newTextLen + bufTextLen >= bufSize) {
 
-            if (!isResizable) return
+            if (!isResizable)
+                return
 
             // Contrary to STB_TEXTEDIT_INSERTCHARS() this is working in the UTF8 buffer, hence the mildly similar code (until we remove the U16 buffer altogether!)
             val g = ctx

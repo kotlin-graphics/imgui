@@ -56,6 +56,10 @@ interface widgetsInputWithKeyboard {
     fun inputText(label: String, buf: StringBuilder, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
         inputText(label, buf.toString(), flags, callback, userData)
 
+    // [JVM] since this is a very particular case, that's why we don't overload
+    fun inputText(label: String, buf: ByteArray, bufEnd: Int, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+            inputTextEx(label, null, buf, bufEnd, Vec2(), flags, callback, userData)
+
     fun inputText(label: String, buf: ByteArray, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputTextEx(label, null, buf, Vec2(), flags, callback, userData)
 

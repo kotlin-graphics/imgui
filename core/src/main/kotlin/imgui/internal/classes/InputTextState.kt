@@ -246,7 +246,7 @@ class InputTextState(
         assert(pos <= textLen)
 
         val newTextLenUtf8 = textCountUtf8BytesFromStr(newText, ptr, newTextLen)
-        if (!isResizable && newTextLenUtf8 + curLenA > bufCapacityA)
+        if (!isResizable && newTextLenUtf8 + curLenA + 1> bufCapacityA)
             return false
 
         // Grow internal buffer if needed
