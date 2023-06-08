@@ -364,33 +364,32 @@ fun navUpdateWindowing() {
     applyFocusWindow?.let { g.navWindowingTarget = null }
 
     // Apply menu/layer toggle
-    val navWindow = g.navWindow
-    if (applyToggleLayer && navWindow != null) {
+    if (applyToggleLayer && g.navWindow != null) {
 
         clearActiveID()
 
         // Move to parent menu if necessary
-        var newNavWindow = navWindow
+        var newNavWindow = g.navWindow
         while (newNavWindow!!.parentWindow != null
                 && newNavWindow.dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu)
                 && newNavWindow.flags has Wf._ChildWindow
                 && newNavWindow.flags hasnt (Wf._Popup or Wf._ChildMenu))
             newNavWindow = newNavWindow.parentWindow
-        if (newNavWindow !== navWindow) {
-            val oldNavWindow = navWindow
+        if (newNavWindow !== g.navWindow) {
+            val oldNavWindow = g.navWindow
             focusWindow(newNavWindow)
             newNavWindow.navLastChildNavWindow = oldNavWindow
         }
 
         // Toggle layer
         val newNavLayer = when {
-            navWindow.dc.navLayersActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
+            g.navWindow!!.dc.navLayersActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
             else -> NavLayer.Main
         }
         if (newNavLayer != g.navLayer) {
             // Reinitialize navigation when entering menu bar with the Alt key (FIXME: could be a properly of the layer?)
             if (newNavLayer == NavLayer.Menu)
-                navWindow.navLastIds[newNavLayer] = 0
+                g.navWindow!!.navLastIds[newNavLayer] = 0
             navRestoreLayer(newNavLayer)
             navRestoreHighlightAfterMove()
         }

@@ -95,7 +95,7 @@ import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.classes.ListClipper
 import imgui.classes.Style
-import imgui.demo.ExampleApp
+import imgui.demo.DemoWindow
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
 import imgui.dsl.listBox
@@ -153,7 +153,7 @@ interface demoDebugInformations {
     fun showDemoWindow(open: KMutableProperty0<Boolean>) {
         // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
         // Most functions would normally just crash if the context is missing.
-        ExampleApp(open)
+        DemoWindow(open)
     }
 
     /** create Metrics/Debugger window. display Dear ImGui internals: windows, draw commands, various internal state, etc. */

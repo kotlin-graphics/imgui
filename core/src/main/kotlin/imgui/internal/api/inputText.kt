@@ -157,8 +157,7 @@ internal interface inputText {
                 return false
             }
             drawWindow = g.currentWindow!!  // Child window
-            // This is to ensure that EndChild() will display a navigation highlight so we can "enter" into it.
-            drawWindow.dc.navLayersActiveMaskNext = drawWindow.dc.navLayersActiveMaskNext or (1 shl drawWindow.dc.navLayerCurrent)
+            drawWindow.dc.navLayersActiveMaskNext = drawWindow.dc.navLayersActiveMaskNext or (1 shl drawWindow.dc.navLayerCurrent) // This is to ensure that EndChild() will display a navigation highlight so we can "enter" into it.
             drawWindow.dc.cursorPos plusAssign style.framePadding
             innerSize.x -= drawWindow.scrollbarSizes.x
         } else {

@@ -136,8 +136,10 @@ interface widgetsSelectables {
 
         val wasSelected = selected
 
-        var (pressed, h, held) = buttonBehavior(bb, id, buttonFlags)
-        var hovered = h
+        val behaviour = buttonBehavior(bb, id, buttonFlags)
+        var pressed = behaviour[0]
+        val hovered = behaviour[1]
+        val held = behaviour[2]
 
         // Auto-select when moved into
         // - This will be more fully fleshed in the range-select branch

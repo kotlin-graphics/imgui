@@ -49,7 +49,10 @@ import imgui.dsl.window
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
-object ExampleApp {
+// Demonstrate most Dear ImGui features (this is big function!)
+// You may execute this function to experiment with the UI and understand what it does.
+// You may then search for keywords in the code when you are interested by a specific feature.
+object DemoWindow {
 
     object show {
         // Examples Apps (accessible from the "Examples" menu)
@@ -93,6 +96,10 @@ object ExampleApp {
 
     operator fun invoke(open_: KMutableProperty0<Boolean>?) {
 
+        // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
+        // Most functions would normally just crash if the context is missing.
+        check(ImGui.currentContext != null) { "Missing dear imgui context. Refer to examples app!" }
+
         var open = open_
 
         if (show.mainMenuBar) MainMenuBar()
@@ -123,17 +130,18 @@ object ExampleApp {
             }
 
         var windowFlags: WindowFlags = none
-        if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
-        if (noScrollbar) windowFlags = windowFlags or Wf.NoScrollbar
-        if (!noMenu) windowFlags = windowFlags or Wf.MenuBar
-        if (noMove) windowFlags = windowFlags or Wf.NoMove
-        if (noResize) windowFlags = windowFlags or Wf.NoResize
-        if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
-        if (noNav) windowFlags = windowFlags or Wf.NoNav
-        if (noBackground) windowFlags = windowFlags or Wf.NoBackground
-        if (noBringToFront) windowFlags = windowFlags or Wf.NoBringToFrontOnFocus
-        if (unsavedDocument) windowFlags = windowFlags or Wf.UnsavedDocument
+        if (noTitlebar) windowFlags /= Wf.NoTitleBar
+        if (noScrollbar) windowFlags /= Wf.NoScrollbar
+        if (!noMenu) windowFlags /= Wf.MenuBar
+        if (noMove) windowFlags /= Wf.NoMove
+        if (noResize) windowFlags /= Wf.NoResize
+        if (noCollapse) windowFlags /= Wf.NoCollapse
+        if (noNav) windowFlags /= Wf.NoNav
+        if (noBackground) windowFlags /= Wf.NoBackground
+        if (noBringToFront) windowFlags /= Wf.NoBringToFrontOnFocus
+        if (unsavedDocument) windowFlags /= Wf.UnsavedDocument
         if (noClose) open = null // Don't pass our bool* to Begin
+
         // We specify a default position/size in case there's no data in the .ini file.
         // We only do it to make the demo applications a little more welcoming, but typically this isn't required.
         val mainViewport = mainViewport
@@ -142,7 +150,8 @@ object ExampleApp {
 
         // Main body of the Demo window starts here.
         if (!begin("Dear ImGui Demo", open, windowFlags)) {
-            end()   // Early out if the window is collapsed, as an optimization.
+            // Early out if the window is collapsed, as an optimization.
+            end()
             return
         }
 
