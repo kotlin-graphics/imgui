@@ -91,7 +91,7 @@ internal interface gamepadKeyboardNavigation {
         navMoveRequestCancel()
         g.navMoveForwardToNextFrame = true
         g.navMoveDir = moveDir
-        g.navMoveDir = clipDir
+        g.navMoveClipDir = clipDir
         g.navMoveFlags = moveFlags or NavMoveFlag.Forwarded
         g.navMoveScrollFlags = scrollFlags
     }
@@ -142,6 +142,7 @@ internal interface gamepadKeyboardNavigation {
                 result = g.navMoveResultOther
         val window = result.window!!
         assert(g.navWindow != null)
+
         // Scroll to keep newly navigated item fully into view.
         if (g.navLayer == NavLayer.Main) {
             if (g.navMoveFlags has NavMoveFlag.ScrollToEdgeY) {

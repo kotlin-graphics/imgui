@@ -129,7 +129,7 @@ internal interface inputText {
         val bufEndRef = 0.mutableReference
         val bufEnd by bufEndRef
         val itemStatusFlags: ItemStatusFlags
-        lateinit var itemDataBackup: LastItemData
+        val itemDataBackup = LastItemData()
         if (isMultiline) {
             val backupPos = Vec2(window.dc.cursorPos)
             itemSize(totalBb, style.framePadding.y)
@@ -139,7 +139,7 @@ internal interface inputText {
                 return false
             }
             itemStatusFlags = g.lastItemData.statusFlags
-            itemDataBackup = g.lastItemData
+            itemDataBackup put g.lastItemData
             window.dc.cursorPos = backupPos
 
             // We reproduce the contents of BeginChildFrame() in order to provide 'label' so our window internal data are easier to read/debug.

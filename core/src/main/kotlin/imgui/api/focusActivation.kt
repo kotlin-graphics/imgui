@@ -8,6 +8,7 @@ import imgui.ImGui.navMoveRequestSubmit
 import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.scrollToRectEx
 import imgui.ImGui.setNavWindow
+import imgui.div
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.ScrollFlag
@@ -43,7 +44,7 @@ interface focusActivation {
      *  Use -1 to access previous widget.
      *
      *  Note: this will likely be called ActivateItem() once we rework our Focus/Activation system! */
-    fun setKeyboardFocusHere(offset: Int = 0) = with(currentWindow) {
+    fun setKeyboardFocusHere(offset: Int = 0) {
         val window = g.currentWindow!!
         assert(offset >= -1) { "-1 is allowed but not below" }
         IMGUI_DEBUG_LOG_ACTIVEID("SetKeyboardFocusHere($offset) in window \"${window.name}\"")
@@ -59,8 +60,8 @@ interface focusActivation {
 
         setNavWindow(window)
 
-        val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
-        navMoveRequestSubmit(Dir.None, if (offset < 0) Dir.Up else Dir.Down, NavMoveFlag.Tabbing or NavMoveFlag.FocusApi, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
+        val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX / ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX / ScrollFlag.KeepVisibleEdgeY
+        navMoveRequestSubmit(Dir.None, if (offset < 0) Dir.Up else Dir.Down, NavMoveFlag.Tabbing / NavMoveFlag.FocusApi, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
         if (offset == -1)
             navMoveRequestResolveWithLastItem(g.navMoveResultLocal)
         else {
