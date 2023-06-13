@@ -85,10 +85,8 @@ import imgui.TableRowFlag as Trf
 interface tables {
 
     /** Read about "TABLE SIZING" at the top of this file. */
-    fun beginTable(
-        strId: String, columns: Int, flags: TableFlags = none,
-        outerSize: Vec2 = Vec2(), innerWidth: Float = 0f
-    ): Boolean {
+    fun beginTable(strId: String, columns: Int, flags: TableFlags = none,
+                   outerSize: Vec2 = Vec2(), innerWidth: Float = 0f): Boolean {
         val id = getID(strId)
         return beginTableEx(strId, id, columns, flags, outerSize, innerWidth)
     }
@@ -380,12 +378,10 @@ interface tables {
 
     /** See "COLUMN SIZING POLICIES" comments at the top of this file
      *  If (init_width_or_weight <= 0.0f) it is ignored */
-    fun tableSetupColumn(
-        label: String?,
-        flags_: TableColumnFlags = none,
-        initWidthOrWeight: Float = 0f,
-        userId: ID = 0
-    ) {
+    fun tableSetupColumn(label: String?,
+                         flags_: TableColumnFlags = none,
+                         initWidthOrWeight: Float = 0f,
+                         userId: ID = 0) {
         var flags = flags_
         val table = g.currentTable
         check(table != null) { "Need to call TableSetupColumn() after BeginTable()!" }
@@ -527,7 +523,7 @@ interface tables {
 
         // Allow opening popup from the right-most section after the last column.
         val mousePos = ImGui.mousePos
-        if (MouseButton.of(1).isReleased && tableGetHoveredColumn() == columnsCount)
+        if (MouseButton.Right.isReleased && tableGetHoveredColumn() == columnsCount)
             if (mousePos.y >= rowY1 && mousePos.y < rowY1 + rowHeight)
                 tableOpenContextMenu(-1) // Will open a non-column-specific popup.
     }
@@ -580,15 +576,9 @@ interface tables {
         column.contentMaxXHeadersIdeal = column.contentMaxXHeadersIdeal max maxPosX
 
         // Keep header highlighted when context menu is open.
-        val selected =
-            table.isContextPopupOpen && table.contextPopupColumn == columnN && table.instanceInteracted == table.instanceCurrent
+        val selected = table.isContextPopupOpen && table.contextPopupColumn == columnN && table.instanceInteracted == table.instanceCurrent
         val id = window.getID(label)
-        val bb = Rect(
-            cellR.min.x,
-            cellR.min.y,
-            cellR.max.x,
-            cellR.max.y max (cellR.min.y + labelHeight + g.style.cellPadding.y * 2f)
-        )
+        val bb = Rect(cellR.min.x, cellR.min.y, cellR.max.x, cellR.max.y max (cellR.min.y + labelHeight + g.style.cellPadding.y * 2f))
         itemSize(Vec2(0f, labelHeight)) // Don't declare unclipped width, it'll be fed ContentMaxPosHeadersIdeal
         if (!itemAdd(bb, id))
             return
@@ -646,12 +636,7 @@ interface tables {
                     popStyleColor()
                     x += wSortText
                 }
-                window.drawList.renderArrow(
-                    Vec2(x, y),
-                    Col.Text.u32,
-                    if (column.sortDirection == SortDirection.Ascending) Dir.Up else Dir.Down,
-                    ARROW_SCALE
-                )
+                window.drawList.renderArrow(Vec2(x, y), Col.Text.u32, if (column.sortDirection == SortDirection.Ascending) Dir.Up else Dir.Down, ARROW_SCALE)
             }
 
             // Handle clicking on column header to adjust Sort Order
@@ -665,23 +650,13 @@ interface tables {
         // be merged into a single draw call.
         //window->DrawList->AddCircleFilled(ImVec2(ellipsis_max, label_pos.y), 40, IM_COL32_WHITE);
         val posMax = Vec2(ellipsisMax, labelPos.y + labelHeight + g.style.framePadding.y)
-        renderTextEllipsis(
-            window.drawList,
-            labelPos,
-            posMax,
-            ellipsisMax,
-            ellipsisMax,
-            label.toByteArray(),
-            labelEnd,
-            labelSize
-        )
-
+        renderTextEllipsis(window.drawList, labelPos, posMax, ellipsisMax, ellipsisMax, label.toByteArray(), labelEnd, labelSize)
         val textClipped = labelSize.x > (ellipsisMax - labelPos.x)
         if (textClipped && hovered && g.activeId == 0 && isItemHovered(HoveredFlag.DelayNormal))
             setTooltip(label.substring(0, labelEnd))
 
         // We don't use BeginPopupContextItem() because we want the popup to stay up even after the column is hidden
-        if (MouseButton.of(1).isReleased && isItemHovered())
+        if (MouseButton.Left.isReleased && isItemHovered())
             tableOpenContextMenu(columnN)
     }
 

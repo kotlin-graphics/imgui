@@ -1,17 +1,17 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package imgui.internal
 
 import glm_.asHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.ImGui.io
 import imgui.L
 import imgui.TextureID
 import imgui.classes.DrawList
 import imgui.logger
 import imgui.resize
 import kool.*
-import kool.indices
-import java.util.Stack
+import java.util.*
 import java.util.logging.Level
 
 /** ImDrawCallback: Draw callbacks for advanced uses [configurable type: override in imconfig.h]
@@ -95,11 +95,9 @@ typealias DrawIdx = Int
 /** Vertex layout
  *
  *  A single vertex (pos + uv + col = 20 bytes by default. Override layout with IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT) */
-class DrawVert(
-        var pos: Vec2 = Vec2(),
-        var uv: Vec2 = Vec2(),
-        var col: Int = 0,
-) {
+class DrawVert(var pos: Vec2 = Vec2(),
+               var uv: Vec2 = Vec2(),
+               var col: Int = 0) {
 
     companion object {
         val SIZE = 2 * Vec2.size + Int.BYTES
@@ -140,20 +138,9 @@ open class DrawCmdHeader {
  *  You can also use them to simulate drawing layers and submit primitives in a different order than how they will be
  *  rendered.   */
 class DrawChannel {
-
     val _cmdBuffer = Stack<DrawCmd>()
-    var _idxBuffer = IntBuffer(0)
-
-    fun memset0() {
-        _cmdBuffer.clear()
-        _idxBuffer.free()
-        _idxBuffer = IntBuffer(0)
-    }
-
-    fun resize0() {
-        _cmdBuffer.clear()
-        _idxBuffer.lim = 0
-    }
+    var _idxBuffer = Stack<DrawIdx>()
+    override fun toString(): String = "_CmdBuffer={Size=" + _cmdBuffer.size + "} _IdxBuffer={Size=" + _idxBuffer.size + "}"
 }
 
 //-----------------------------------------------------------------------------
@@ -178,14 +165,15 @@ class DrawListSplitter {
         _count = 1
     } // Do not clear Channels[] so our allocations are reused next frame
 
-    fun clearFreeMemory(destroy: Boolean = false) {
-        _channels.forEach {
-            //            if (i == _current)
-//                memset(&_Channels[i], 0, sizeof(_Channels[i]));  // Current channel is a copy of CmdBuffer/IdxBuffer, don't destruct again
-            it._cmdBuffer.clear()
-            it._idxBuffer.free()
-            if (!destroy)
-                it._idxBuffer = IntBuffer(0).also { i -> logger.log(Level.INFO, "idxBuffer adr = ${i.adr.L.asHexString}") }
+    fun clearFreeMemory() {
+        for (i in _channels.indices) {
+//            if (i == _current) {
+//                _channels[i]._cmdBuffer.fill 0, sizeof(_Channels[i]));  // Current channel is a copy of CmdBuffer/IdxBuffer, don't destruct again
+//            }
+            _channels[i]._cmdBuffer.clear()
+            _channels[i]._idxBuffer.clear()
+//            if (!destroy)
+//                it._idxBuffer = IntBuffer(0).also { i -> logger.log(Level.INFO, "idxBuffer adr = ${i.adr.L.asHexString}") }
         }
         _current = 0
         _count = 1
@@ -203,11 +191,13 @@ class DrawListSplitter {
         // Channels[] (24/32 bytes each) hold storage that we'll swap with draw_list->_CmdBuffer/_IdxBuffer
         // The content of Channels[0] at this point doesn't matter. We clear it to make state tidy in a debugger but we don't strictly need to.
         // When we switch to the next channel, we'll copy draw_list->_CmdBuffer/_IdxBuffer into Channels[0] and then Channels[1] into draw_list->CmdBuffer/_IdxBuffer
-        _channels[0].memset0()
-        for (i in 1 until channelsCount) {
-            if (i < oldChannelsCount)
-                _channels[i].resize0()
-        }
+        _channels[0]._cmdBuffer.clear()
+        _channels[0]._idxBuffer.clear()
+        for (i in 1 until channelsCount)
+            if (i < oldChannelsCount) {
+                _channels[0]._cmdBuffer.clear()
+                _channels[0]._idxBuffer.clear()
+            }
     }
 
     infix fun merge(drawList: DrawList) {
@@ -223,7 +213,7 @@ class DrawListSplitter {
         var newIdxBufferCount = 0
         var lastCmd = if (_count > 0 && drawList.cmdBuffer.isNotEmpty()) drawList.cmdBuffer.last() else null
         var idxOffset = lastCmd?.run { idxOffset + elemCount } ?: 0
-        for (i in 1 until _count) {
+        for (i in 1..<_count) {
 
             val ch = _channels[i]
             if (ch._cmdBuffer.lastOrNull()?.elemCount == 0 && ch._cmdBuffer.last().userCallback == null) // Equivalent of PopUnusedDrawCmd()
@@ -243,7 +233,7 @@ class DrawListSplitter {
             if (ch._cmdBuffer.isNotEmpty())
                 lastCmd = ch._cmdBuffer.last()
             newCmdBufferCount += ch._cmdBuffer.size
-            newIdxBufferCount += ch._idxBuffer.lim
+            newIdxBufferCount += ch._idxBuffer.size
             ch._cmdBuffer.forEach {
                 it.idxOffset = idxOffset
                 idxOffset += it.elemCount
@@ -285,14 +275,14 @@ class DrawListSplitter {
 
         // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
         _channels[_current]._cmdBuffer.clear()
-        _channels[_current]._cmdBuffer.addAll(drawList.cmdBuffer)
-        _channels[_current]._idxBuffer.free()
-        _channels[_current]._idxBuffer = imgui.IntBuffer(drawList.idxBuffer)
+        _channels[_current]._cmdBuffer += drawList.cmdBuffer
+        _channels[_current]._idxBuffer.clear()
+        for (i in drawList.idxBuffer) _channels[_current]._idxBuffer += i
         _current = idx
         drawList.cmdBuffer.clear()
-        drawList.cmdBuffer.addAll(_channels[idx]._cmdBuffer)
+        drawList.cmdBuffer += _channels[idx]._cmdBuffer
         drawList.idxBuffer.free()
-        drawList.idxBuffer = imgui.IntBuffer(_channels[idx]._idxBuffer)
+        drawList.idxBuffer = IntBuffer(_channels[idx]._idxBuffer.size) { _channels[idx]._idxBuffer[it] }
         drawList._idxWritePtr = drawList.idxBuffer.lim
 
         // If current command is used with different settings we need to add a new command

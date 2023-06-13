@@ -1012,7 +1012,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             idxOffset = idxBuffer.rem
         }
         assert(drawCmd.clipRect.x <= drawCmd.clipRect.z && drawCmd.clipRect.y <= drawCmd.clipRect.w)
-        cmdBuffer.add(drawCmd)
+        cmdBuffer += drawCmd
     }
 
     /** Create a clone of the CmdBuffer/IdxBuffer/VtxBuffer. */
@@ -1213,9 +1213,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         //        _splitter.clearFreeMemory(destroy)
     }
 
-    /** Pop trailing draw command (used before merging or presenting to user)
-     *  Note that this leaves the ImDrawList in a state unfit for further commands,
-     *  as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL */
+    // Pop trailing draw command (used before merging or presenting to user)
+    // Note that this leaves the ImDrawList in a state unfit for further commands, as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL
     fun _popUnusedDrawCmd() {
         while (cmdBuffer.isNotEmpty()) {
             val currCmd = cmdBuffer.last()

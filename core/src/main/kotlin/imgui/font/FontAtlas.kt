@@ -393,7 +393,7 @@ class FontAtlas {
 
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
-    var texID: TextureID = -1 // [JVM] for `NULL`
+    var texID: TextureID = 0
 
     /** Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have
      *  texture size restrictions you may want to increase texture width to decrease height.    */
@@ -596,7 +596,7 @@ class FontAtlas {
         buildInit()
 
         // Clear atlas
-        texID = -1 // [JVM] for `NULL`
+        texID = 0
         texSize put 0
         texUvScale put 0f
         texUvWhitePixel put 0f

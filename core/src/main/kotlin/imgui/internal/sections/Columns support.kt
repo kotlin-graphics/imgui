@@ -86,5 +86,5 @@ class OldColumns {
     val columns = ArrayList<OldColumnData>()
     val splitter = DrawListSplitter()
 
-    fun destroy() = splitter.clearFreeMemory(destroy = true)
+    fun destroy() = splitter.clearFreeMemory()
 }

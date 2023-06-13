@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package imgui.internal.api
 
 import glm_.*
@@ -1289,13 +1291,6 @@ interface tablesInternal {
             //            g.drawChannelsTempMergeBuffer.resize(splitter->_Count - LEADING_DRAW_CHANNELS) // Use shared temporary storage so the allocation gets amortized
             var dstTmp = 0 //~g.drawChannelsTempMergeBuffer.Data
 
-            fun memcpy(src: DrawChannel) {
-                val dst = g.drawChannelsTempMergeBuffer[dstTmp++]
-                for (cmd in src._cmdBuffer)
-                    dst._cmdBuffer += DrawCmd(cmd)
-                dst._idxBuffer = IntBuffer(src._idxBuffer)
-            }
-
             remainingMask.setBitRange(LEADING_DRAW_CHANNELS, splitter._count)
             remainingMask clearBit bg2DrawChannelUnfrozen
             assert(!hasFreezeV || bg2DrawChannelUnfrozen != TABLE_DRAW_CHANNEL_BG2_FROZEN)
@@ -1331,52 +1326,44 @@ interface tablesInternal {
                     remainingCount -= mergeGroup.channelsCount
                     for (n in remainingMask.indices)
                         remainingMask.storage[n] = remainingMask.storage[n] wo mergeGroup.channelsMask.storage[n]
-                    var n = 0
-                    while (n < splitter._count && mergeChannelsCount != 0) {
+                    for (n in 0..<splitter._count) {
+                        if (mergeChannelsCount == 0)
+                            break
                         // Copy + overwrite new clip rect
-                        if (!mergeGroup.channelsMask.testBit(n)) {
-                            n++
+                        if (!mergeGroup.channelsMask.testBit(n))
                             continue
-                        }
                         mergeGroup.channelsMask clearBit n
                         mergeChannelsCount--
 
                         val channel = splitter._channels[n]
                         assert(channel._cmdBuffer.size == 1 && mergeClipRect.contains(Rect(channel._cmdBuffer[0].clipRect)))
                         channel._cmdBuffer[0].clipRect = mergeClipRect.toVec4()
-                        //                        memcpy(dstTmp++, channel, sizeof(ImDrawChannel))
-                        g.drawChannelsTempMergeBuffer += channel
-                        dstTmp++
-                        n++
+//                        memcpy(dstTmp++, channel, sizeof(ImDrawChannel))
+                        g.drawChannelsTempMergeBuffer += channel; dstTmp++
                     }
                 }
 
                 // Make sure Bg2DrawChannelUnfrozen appears in the middle of our groups (whereas Bg0/Bg1 and Bg2 frozen are fixed to 0 and 1)
                 if (mergeGroupN == 1 && hasFreezeV) {
-                    //                    memcpy(dstTmp++, &splitter->_Channels[table->Bg1DrawChannelUnfrozen], sizeof(ImDrawChannel))
-                    g.drawChannelsTempMergeBuffer += splitter._channels[bg2DrawChannelUnfrozen]
-                    dstTmp++
+//                    memcpy(dstTmp++, & splitter->_Channels[table->Bg1DrawChannelUnfrozen], sizeof(ImDrawChannel))
+                    g.drawChannelsTempMergeBuffer += splitter._channels[bg2DrawChannelUnfrozen]; dstTmp++
                 }
             }
 
             // Append unmergeable channels that we didn't reorder at the end of the list
-            var n = 0
-            while (n < splitter._count && remainingCount != 0) {
-                if (!remainingMask.testBit(n)) {
-                    n++
+            for (n in 0..<splitter._count) {
+                if (remainingCount == 0)
+                    break
+                if (!remainingMask.testBit(n))
                     continue
-                }
                 val channel = splitter._channels[n]
-                g.drawChannelsTempMergeBuffer += channel
-                dstTmp++
+                g.drawChannelsTempMergeBuffer += channel; dstTmp++
                 remainingCount--
-                n++
             }
             assert(dstTmp == /*~g.drawChannelsTempMergeBuffer.Data */ g.drawChannelsTempMergeBuffer.size)
             //            memcpy(splitter._channels.Data + LEADING_DRAW_CHANNELS, g.DrawChannelsTempMergeBuffer.Data, (splitter->_Count - LEADING_DRAW_CHANNELS) * sizeof(ImDrawChannel))
             for (i in 0 until splitter._count - LEADING_DRAW_CHANNELS)
                 splitter._channels[LEADING_DRAW_CHANNELS + i] = g.drawChannelsTempMergeBuffer[i]
-
             g.drawChannelsTempMergeBuffer.clear() // [JVM]
         }
     }
