@@ -146,8 +146,7 @@ interface tables {
             val inner = table.innerWindow!!
             var maxPosX = inner.dc.cursorMaxPos.x
             if (table.rightMostEnabledColumn != -1)
-                maxPosX =
-                    maxPosX max (table.columns[table.rightMostEnabledColumn].workMaxX + table.cellPaddingX + table.outerPaddingX - outerPaddingForBorder)
+                maxPosX = maxPosX max (table.columns[table.rightMostEnabledColumn].workMaxX + table.cellPaddingX + table.outerPaddingX - outerPaddingForBorder)
             if (table.resizedColumn != -1)
                 maxPosX = maxPosX max table.resizeLockMinContentsX2
             inner.dc.cursorMaxPos.x = maxPosX
@@ -189,20 +188,16 @@ interface tables {
         for (columnN in 0 until table.columnsCount)
             if (table.enabledMaskByIndex testBit columnN) {
                 val column = table.columns[columnN]
-                val columnWidthRequest =
-                    if (column.flags has Tcf.WidthFixed && column.flags hasnt Tcf.NoResize) column.widthRequest else table getColumnWidthAuto column
+                val columnWidthRequest = if (column.flags has Tcf.WidthFixed && column.flags hasnt Tcf.NoResize) column.widthRequest else table getColumnWidthAuto column
                 if (column.flags has Tcf.WidthFixed)
                     autoFitWidthForFixed += columnWidthRequest
                 else
                     autoFitWidthForStretched += columnWidthRequest
-                if (column.flags has Tcf.WidthStretch && column.flags hasnt Tcf.NoResize)
-                    autoFitWidthForStretchedMin =
-                        autoFitWidthForStretchedMin max (columnWidthRequest / (column.stretchWeight / table.columnsStretchSumWeights))
+                if (column.flags has Tcf.WidthStretch && column.flags has Tcf.NoResize)
+                    autoFitWidthForStretchedMin = autoFitWidthForStretchedMin max (columnWidthRequest / (column.stretchWeight / table.columnsStretchSumWeights))
             }
-        val widthSpacings =
-            table.outerPaddingX * 2f + (table.cellSpacingX1 + table.cellSpacingX2) * (table.columnsEnabledCount - 1)
-        table.columnsAutoFitWidth =
-            widthSpacings + (table.cellPaddingX * 2f) * table.columnsEnabledCount + autoFitWidthForFixed + autoFitWidthForStretched max autoFitWidthForStretchedMin
+        val widthSpacings = table.outerPaddingX * 2f + (table.cellSpacingX1 + table.cellSpacingX2) * (table.columnsEnabledCount - 1)
+        table.columnsAutoFitWidth = widthSpacings + (table.cellPaddingX * 2f) * table.columnsEnabledCount + autoFitWidthForFixed + (autoFitWidthForStretched max autoFitWidthForStretchedMin)
 
         // Update scroll
         if (table.flags hasnt Tf.ScrollX && innerWindow !== outerWindow)
@@ -263,16 +258,13 @@ interface tables {
             outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth)
         } else if (tempData.userOuterSize.x <= 0f) {
             val decorationSize = if (table.flags has Tf.ScrollX) innerWindow.scrollbarSizes.x else 0f
-            outerWindow.dc.idealMaxPos.x =
-                outerWindow.dc.idealMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth + decorationSize - tempData.userOuterSize.x)
-            outerWindow.dc.cursorMaxPos.x =
-                backupOuterMaxPos.x max (table.outerRect.max.x min table.outerRect.min.x + table.columnsAutoFitWidth)
+            outerWindow.dc.idealMaxPos.x = outerWindow.dc.idealMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth + decorationSize - tempData.userOuterSize.x)
+            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.max.x min table.outerRect.min.x + table.columnsAutoFitWidth)
         } else
             outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max table.outerRect.max.x
         if (tempData.userOuterSize.y <= 0f) {
             val decorationSize = if (table.flags has Tf.ScrollY) innerWindow.scrollbarSizes.y else 0f
-            outerWindow.dc.idealMaxPos.y =
-                outerWindow.dc.idealMaxPos.y max (innerContentMaxY + decorationSize - tempData.userOuterSize.y)
+            outerWindow.dc.idealMaxPos.y = outerWindow.dc.idealMaxPos.y max (innerContentMaxY + decorationSize - tempData.userOuterSize.y)
             outerWindow.dc.cursorMaxPos.y = backupOuterMaxPos.y max (table.outerRect.max.y min innerContentMaxY)
         } else
         // OuterRect.Max.y may already have been pushed downward from the initial value (unless ImGuiTableFlags_NoHostExtendY is set)
@@ -429,8 +421,7 @@ interface tables {
                 column.isUserEnabledNextFrame = false
             }
             if (flags has Tcf.DefaultSort && table.settingsLoadedFlags hasnt Tf.Sortable) {
-                column.sortOrder =
-                    0 // Multiple columns using _DefaultSort will be reassigned unique SortOrder values when building the sort specs.
+                column.sortOrder = 0 // Multiple columns using _DefaultSort will be reassigned unique SortOrder values when building the sort specs.
                 column.sortDirection = when {
                     column.flags has Tcf.PreferSortDescending -> SortDirection.Descending
                     else -> SortDirection.Ascending
@@ -460,8 +451,7 @@ interface tables {
         table.freezeColumnsCount = if (table.innerWindow!!.scroll.x != 0f) table.freezeColumnsRequest else 0
         table.freezeRowsRequest = if (table.flags has Tf.ScrollY) rows else 0
         table.freezeRowsCount = if (table.innerWindow!!.scroll.y != 0f) table.freezeRowsRequest else 0
-        table.isUnfrozenRows =
-            table.freezeRowsCount == 0 // Make sure this is set before TableUpdateLayout() so ImGuiListClipper can benefit from it.b
+        table.isUnfrozenRows = table.freezeRowsCount == 0 // Make sure this is set before TableUpdateLayout() so ImGuiListClipper can benefit from it.b
 
 
         // Ensure frozen columns are ordered in their section. We still allow multiple frozen columns to be reordered.

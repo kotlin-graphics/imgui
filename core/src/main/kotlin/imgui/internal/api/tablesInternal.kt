@@ -100,7 +100,6 @@ interface tablesInternal {
                 assert(table.columnsCount == columnsCount) { "BeginTable(): Cannot change columns count mid-frame while preserving same ID" }
                 if (table.instanceDataExtra.size < instanceNo)
                     table.instanceDataExtra += TableInstanceData()
-                val instanceDesc = "##Instance$instanceNo"
                 getIDWithSeed(instanceNo, getIDWithSeed("##Instances", -1, id)) // Push "##Instance" followed by (int)instance_no in ID stack.
             }
 

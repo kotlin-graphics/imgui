@@ -195,8 +195,8 @@ class DrawListSplitter {
         _channels[0]._idxBuffer.clear()
         for (i in 1 until channelsCount)
             if (i < oldChannelsCount) {
-                _channels[0]._cmdBuffer.clear()
-                _channels[0]._idxBuffer.clear()
+                _channels[i]._cmdBuffer.clear()
+                _channels[i]._idxBuffer.clear()
             }
     }
 
