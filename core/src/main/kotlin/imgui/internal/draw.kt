@@ -203,7 +203,8 @@ class DrawListSplitter {
     infix fun merge(drawList: DrawList) {
 
         // Note that we never use or rely on _Channels.Size because it is merely a buffer that we never shrink back to 0 to keep all sub-buffers ready for use.
-        if (_count <= 1) return
+        if (_count <= 1) 
+            return
 
         setCurrentChannel(drawList, 0)
         drawList._popUnusedDrawCmd()

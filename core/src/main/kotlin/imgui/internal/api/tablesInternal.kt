@@ -149,9 +149,7 @@ interface tablesInternal {
         } else {
             // For non-scrolling tables, WorkRect == OuterRect == InnerRect.
             // But at this point we do NOT have a correct value for .Max.y (unless a height has been explicitly passed in). It will only be updated in EndTable().
-            table.workRect put outerRect
-            table.outerRect put outerRect
-            table.innerRect put outerRect
+            table.workRect put outerRect; table.outerRect put outerRect; table.innerRect put outerRect
         }
 
         // Push a standardized ID for both child-using and not-child-using tables
