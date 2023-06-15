@@ -336,7 +336,6 @@ interface tables {
 
         // Return whether the column is visible. User may choose to skip submitting items based on this return value,
         // however they shouldn't skip submitting for columns that may have the tallest contribution to row height.
-        val columnN = table.currentColumn
         return table.columns[table.currentColumn].isRequestOutput
     }
 

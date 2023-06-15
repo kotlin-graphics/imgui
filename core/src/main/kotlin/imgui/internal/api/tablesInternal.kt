@@ -246,10 +246,9 @@ interface tablesInternal {
             // Attempt to preserve width on column count change (#4046) TODO
             oldColumnsToPreserve = table.columns
             //            old_columns_raw_data = table->RawData
-            //            table->RawData = NULL;
+            table.rawData = false
         }
-        //        if (table->RawData == NULL)
-        if (table.columns.isEmpty()) {
+        if (!table.rawData) {
             table beginInitMemory columnsCount
             table.isInitializing = true
             table.isSettingsRequestLoad = true
@@ -341,6 +340,7 @@ interface tablesInternal {
         repeat(columnsCount) { columns += TableColumn() }
         displayOrderToIndex = IntArray(columnsCount)
         rowCellData = Array(columnsCount) { TableCellData() }
+        rawData = true
         enabledMaskByDisplayOrder = BitArray(columnsCount)
         enabledMaskByIndex = BitArray(columnsCount)
         visibleMaskByIndex = BitArray(columnsCount)
@@ -491,7 +491,7 @@ interface tablesInternal {
         var hasResizable = false
         var stretchSumWidthAuto = 0f
         var fixedMaxWidthAuto = 0f
-        for (orderN in 0 until columnsCount) {
+        for (orderN in 0..<columnsCount) {
             val columnN = displayOrderToIndex[orderN]
             if (columnN != orderN)
                 isDefaultDisplayOrder = false

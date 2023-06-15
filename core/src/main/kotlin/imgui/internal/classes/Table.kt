@@ -15,7 +15,7 @@ class Table {
     var flags: TableFlags = none
 
     /** Single allocation to hold Columns[], DisplayOrderToIndex[] and RowCellData[] */
-    //    var rawData: Any? = null
+    var rawData = false
 
     /** Transient data while table is active. Point within g.CurrentTableStack[] */
     var tempData: TableTempData? = null

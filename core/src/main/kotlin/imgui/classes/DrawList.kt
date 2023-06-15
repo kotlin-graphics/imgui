@@ -165,8 +165,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** JVM it's safe to pass directly Vec2 istances, they wont be modified */
     fun addLine(p1: Vec2, p2: Vec2, col: Int, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
-        pathLineTo(p1 + Vec2(0.5f))
-        pathLineTo(p2 + Vec2(0.5f))
+        pathLineTo(p1 + 0.5f)
+        pathLineTo(p2 + 0.5f)
         pathStroke(col, thickness = thickness)
     }
 
