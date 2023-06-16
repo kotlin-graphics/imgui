@@ -85,8 +85,7 @@ import imgui.TableRowFlag as Trf
 interface tables {
 
     /** Read about "TABLE SIZING" at the top of this file. */
-    fun beginTable(strId: String, columns: Int, flags: TableFlags = none,
-                   outerSize: Vec2 = Vec2(), innerWidth: Float = 0f): Boolean {
+    fun beginTable(strId: String, columns: Int, flags: TableFlags = none, outerSize: Vec2 = Vec2(), innerWidth: Float = 0f): Boolean {
         val id = getID(strId)
         return beginTableEx(strId, id, columns, flags, outerSize, innerWidth)
     }

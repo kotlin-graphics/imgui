@@ -226,9 +226,9 @@ class TableColumnSettings {
 
 /** This is designed to be stored in a single ImChunkStream (1 header followed by N ImGuiTableColumnSettings, etc.) */
 class TableSettings(
-        /** Set to 0 to invalidate/delete the setting */
-        var id: ID = 0,
-        var columnsCount: TableColumnIdx = 0) {
+    /** Set to 0 to invalidate/delete the setting */
+    var id: ID,
+    var columnsCount: TableColumnIdx = 0) {
 
     /** Indicate data we want to save using the Resizable/Reorderable/Sortable/Hideable flags (could be using its own flags..) */
     var saveFlags: TableFlags = none
@@ -247,6 +247,7 @@ class TableSettings(
     /** ~TableSettingsCreate */
     init {
         g.settingsTables += this
+        init(id, columnsCount, columnsCount)
     }
 
     /** ~TableSettingsInit */

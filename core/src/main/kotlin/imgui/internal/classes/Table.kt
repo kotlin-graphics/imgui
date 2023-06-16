@@ -5,6 +5,7 @@ import imgui.classes.TableColumnSortSpecs
 import imgui.classes.TableSortSpecs
 import imgui.internal.BitArray
 import imgui.internal.DrawListSplitter
+import unsigned.toUnsignedString
 
 
 /** FIXME-TABLE: more transient data could be stored in a stacked ImGuiTableTempData: e.g. SortSpecs, incoming RowData */
@@ -166,7 +167,7 @@ class Table {
     var instanceDataFirst = TableInstanceData()
     val instanceDataExtra = ArrayList<TableInstanceData>()  // FIXME-OPT: Using a small-vector pattern would be good.
 
-    lateinit var sortSpecsSingle: TableColumnSortSpecs
+    var sortSpecsSingle = TableColumnSortSpecs()
 
     val sortSpecsMulti = ArrayList<TableColumnSortSpecs>()     // FIXME-OPT: Using a small-vector pattern would be good.
 
@@ -290,4 +291,6 @@ class Table {
 
     /** Backup of InnerWindow->SkipItem at the end of BeginTable(), because we will overwrite InnerWindow->SkipItem on a per-column basis */
     var hostSkipItems = false
+
+    override fun toString() = "{ID=${id.toUnsignedString} Flags=$flags"
 }

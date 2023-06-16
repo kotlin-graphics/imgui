@@ -1,9 +1,6 @@
 package imgui.internal.api
 
-import glm_.bool
-import glm_.f
-import glm_.i
-import glm_.parseInt
+import glm_.*
 import imgui.*
 import imgui.ImGui.addSettingsHandler
 import imgui.ImGui.tableSettingsFindByID
@@ -113,13 +110,13 @@ interface tableSettings {
             // Note that fixed width where initial width was derived from auto-fit will always be saved as InitStretchWeightOrWidth will be 0.0f.
             // FIXME-TABLE: We don't have logic to easily compare SortOrder to DefaultSortOrder yet so it's always saved when present.
             if (widthOrWeight != column.initStretchWeightOrWidth)
-                settings.saveFlags = settings.saveFlags or TableFlag.Resizable
+                settings.saveFlags /= TableFlag.Resizable
             if (column.displayOrder != n)
-                settings.saveFlags = settings.saveFlags or TableFlag.Reorderable
+                settings.saveFlags /= TableFlag.Reorderable
             if (column.sortOrder != -1)
-                settings.saveFlags = settings.saveFlags or TableFlag.Sortable
+                settings.saveFlags /= TableFlag.Sortable
             if (column.isUserEnabled != column.flags hasnt TableColumnFlag.DefaultHide)
-                settings.saveFlags = settings.saveFlags or TableFlag.Hideable
+                settings.saveFlags /= TableFlag.Hideable
         }
         settings.saveFlags = settings.saveFlags and flags
         settings.refScale = if (saveRefScale) refScale else 0f
@@ -190,7 +187,7 @@ fun tableSettingsHandler_ApplyAll(ctx: Context, handler: SettingsHandler) {
 
 fun tableSettingsHandler_ReadOpen(ctx: Context, handler: SettingsHandler, name: String): TableSettings? {
     try {
-        val id: ID = name.substring(2, 2 + 8).parseInt(radix = 16)
+        val id: ID = name.substring(2, 2 + 8).parseLong(radix = 16).i // parseInt crashes for the negative ones
         val columnsCount = name.substringAfterLast(',').i
 
         val settings = tableSettingsFindByID(id)
@@ -217,43 +214,43 @@ fun tableSettingsHandler_ReadLine(ctx: Context, handler: SettingsHandler, entry:
     }
 
     // Column 0  Width=16 Sort=0v
-    val splits = line.split(Regex("\\s+"))
-    if (splits[0] == "Column") {
-        val columnN = splits[1].i
+    val split = line.split(Regex("\\s+"))
+    if (split[0] == "Column") {
+        val columnN = split[1].i
         if (columnN < 0 || columnN >= settings.columnsCount)
             return
         val column = settings.columnSettings[columnN]
         column.index = columnN
-        val s = splits[2]
+        var s = 2
         // "UserID=0x%08X"
-        if (s.startsWith("UserID=0x")) column.userID = s.substring(6 + 1 + 2).parseInt(radix = 16)
+        if (split[s].startsWith("UserID=0x")) column.userID = split[s++].substring(6 + 1 + 2).parseInt(radix = 16)
         // "Width=%d"
-        if (s.startsWith("Width=")) {
-            column.widthOrWeight = s.substring(5 + 1).i.f
+        if (s < split.size && split[s].startsWith("Width=")) {
+            column.widthOrWeight = split[s++].substring(5 + 1).i.f
             column.isStretch = false
-            settings.saveFlags = settings.saveFlags or TableFlag.Resizable
+            settings.saveFlags /= TableFlag.Resizable
         }
         // "Weight=%f"
-        if (s.startsWith("Weight=")) {
-            column.widthOrWeight = s.substring(6 + 1).f
+        if (s < split.size && split[s].startsWith("Weight=")) {
+            column.widthOrWeight = split[s++].substring(6 + 1).f
             column.isStretch = true
-            settings.saveFlags = settings.saveFlags or TableFlag.Resizable
+            settings.saveFlags /= TableFlag.Resizable
         }
         // "Visible=%d"
-        if (s.startsWith("Visible=")) {
-            column.isEnabled = s.substring(7 + 1).i.bool
-            settings.saveFlags = settings.saveFlags or TableFlag.Hideable
+        if (s < split.size && split[s].startsWith("Visible=")) {
+            column.isEnabled = split[s++].substring(7 + 1).i.bool
+            settings.saveFlags /= TableFlag.Hideable
         }
         // "Order=%d"
-        if (s.startsWith("Order=")) {
-            column.displayOrder = s.substring(5 + 1).i
-            settings.saveFlags = settings.saveFlags or TableFlag.Reorderable
+        if (s < split.size && split[s].startsWith("Order=")) {
+            column.displayOrder = split[s++].substring(5 + 1).i
+            settings.saveFlags /= TableFlag.Reorderable
         }
         // "Sort=%d%c"
-        if (s.startsWith("Sort=")) {
-            column.sortOrder = s[4 + 1].i
-            column.sortDirection = if (s[4 + 1 + 1] == '^') SortDirection.Descending else SortDirection.Ascending
-            settings.saveFlags = settings.saveFlags or TableFlag.Sortable
+        if (s < split.size && split[s].startsWith("Sort=")) {
+            column.sortOrder = split[s][4 + 1].i
+            column.sortDirection = if (split[s][4 + 1 + 1] == '^') SortDirection.Descending else SortDirection.Ascending
+            settings.saveFlags /= TableFlag.Sortable
         }
     }
 }
@@ -262,7 +259,7 @@ fun tableSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: S
     val g = ctx
     for (settings in g.settingsTables) {
 
-        if (settings.id != 0) // Skip ditched settings
+        if (settings.id == 0) // Skip ditched settings
             continue
 
         // TableSaveSettings() may clear some of those flags when we establish that the data can be stripped
@@ -276,7 +273,7 @@ fun tableSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: S
 
         buf += "[${handler.typeName}][0x%08X,${settings.columnsCount}]\n".format(settings.id)
         if (settings.refScale != 0f)
-            buf += "RefScale=${settings.refScale}\n" // TODO check %g http://www.cplusplus.com/reference/cstdio/printf/
+            buf += "RefScale=${settings.refScale.i}\n" // TODO check %g http://www.cplusplus.com/reference/cstdio/printf/
         for (columnN in 0 until settings.columnsCount) {
             val column = settings.columnSettings[columnN]
             // "Column 0  UserID=0x42AD2D21 Width=100 Visible=1 Order=0 Sort=0v"

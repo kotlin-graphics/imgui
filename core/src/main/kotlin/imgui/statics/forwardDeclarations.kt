@@ -314,7 +314,7 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
         settings.size put window.sizeFull
 
         settings.collapsed = window.collapsed
-        settings.wantDelete = true
+        settings.wantDelete = false
     }
 
     // Write to text buffer
