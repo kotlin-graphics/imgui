@@ -81,6 +81,7 @@ import imgui.dsl.useCombo
 import imgui.dsl.withID
 import imgui.dsl.withItemWidth
 import imgui.dsl.withTextWrapPos
+import kotlin.reflect.KMutableProperty0
 import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf
 import imgui.TableRowFlag as Trf
@@ -111,16 +112,15 @@ object ShowDemoWindowTables {
         EnumDesc(Tf.SizingStretchSame, "ImGuiTableFlags_SizingStretchSame", "Columns default to _WidthStretch with same weights.")
     )
 
-    @JvmName("editTableSizingFlags")
     /** Show a combo box with a choice of sizing policies */
-    fun editTableSizingFlags(flags: FlagArray<Tf>, ptr: Int) {
-        var flag by flags.mutablePropertyAt(ptr)
+    fun editTableSizingFlags(pFlags: KMutableProperty0<TableFlags>) {
+        var flag by pFlags
         val idx = policies.indexOfFirst { it.value == (flag and Tf._SizingMask) }
         val previewText = policies.getOrNull(idx)?.name?.substringAfter("ImGuiTableFlags") ?: ""
         useCombo("Sizing Policy", previewText) {
             for (n in policies.indices)
                 if (selectable(policies[n].name, idx == n))
-                    flag = (flag wo Tf._SizingMask) or policies[n].value
+                    flag = (flag wo Tf._SizingMask) / policies[n].value
         }
         sameLine()
         textDisabled("(?)")
@@ -768,7 +768,7 @@ object ShowDemoWindowTables {
 
         enum class ContentsType { ShowWidth, ShortText, LongText, Button, FillButton, InputText }
 
-        var flags = Tf.ScrollY or Tf.Borders or Tf.RowBg or Tf.Resizable
+        var flags = Tf.ScrollY / Tf.Borders / Tf.RowBg / Tf.Resizable
         var contentsType1 = ContentsType.ShowWidth
         var columnCount = 3
         val textBuf = ByteArray(32)
@@ -783,7 +783,7 @@ object ShowDemoWindowTables {
                 for (tableN in 0..3)
                     withID(tableN) {
                         setNextItemWidth(TEXT_BASE_WIDTH * 30)
-                        editTableSizingFlags(sizingPolicyFlags, tableN)
+                        editTableSizingFlags(sizingPolicyFlags mutablePropertyAt tableN)
 
                         // To make it easier to understand the different sizing policy,
                         // For each policy: we display one table where the columns have equal contents width, and one where the columns have different contents width.
@@ -813,9 +813,7 @@ object ShowDemoWindowTables {
                 pushingStyleCompact {
                     withID("Advanced") {
                         withItemWidth(TEXT_BASE_WIDTH * 30) {
-                            val f = flagArrayOf(flags)
-                            editTableSizingFlags(f, 0)
-                            flags = f[0]
+                            editTableSizingFlags(::flags)
                             val ordinalRef = contentsType1.ordinal.mutableReference
                             val ordinal by ordinalRef
                             combo("Contents", ordinalRef, "Show width\u0000Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
@@ -1533,8 +1531,8 @@ object ShowDemoWindowTables {
     }
 
     object Advanced {
-        var flags = Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.Sortable or Tf.SortMulti or Tf.RowBg or
-                Tf.Borders or Tf.NoBordersInBody or Tf.ScrollX or Tf.ScrollY or Tf.SizingFixedFit
+        var flags = Tf.Resizable / Tf.Reorderable / Tf.Hideable / Tf.Sortable / Tf.SortMulti / Tf.RowBg /
+                Tf.Borders / Tf.NoBordersInBody / Tf.ScrollX / Tf.ScrollY / Tf.SizingFixedFit
 
         enum class ContentsType { Text, Button, SmallButton, FillButton, Selectable, SelectableSpanRow }
 
@@ -1584,9 +1582,7 @@ object ShowDemoWindowTables {
                         }
 
                         treeNodeEx("Sizing:", Tnf.DefaultOpen) {
-                            val flags = flagArrayOf(flags)
-                            editTableSizingFlags(flags, 0)
-                            this.flags = flags[0]
+                            editTableSizingFlags(::flags)
                             sameLine(); helpMarker("In the Advanced demo we override the policy of each column so those table-wide settings have less effect that typical.")
                             checkboxFlags("ImGuiTableFlags_NoHostExtendX", this::flags, Tf.NoHostExtendX)
                             sameLine(); helpMarker("Make outer width auto-fit to columns, overriding outer_size.x value.\n\nOnly available when ScrollX/ScrollY are disabled and Stretch columns are not used.")

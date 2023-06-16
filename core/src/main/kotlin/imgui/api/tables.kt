@@ -645,7 +645,7 @@ interface tables {
             setTooltip(label.substring(0, labelEnd))
 
         // We don't use BeginPopupContextItem() because we want the popup to stay up even after the column is hidden
-        if (MouseButton.Left.isReleased && isItemHovered())
+        if (MouseButton.Right.isReleased && isItemHovered())
             tableOpenContextMenu(columnN)
     }
 

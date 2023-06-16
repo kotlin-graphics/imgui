@@ -1055,19 +1055,20 @@ enum class DataType(val imguiName: String) {
 // In reality, the JVM will optimize the comparisons since they're constant checks,
 // So there should be no performance difference in tight loops.
 // Also, a minifier like proguard deals with this very easily.
-inline fun <reified D> dataTypeOf(): DataType where D : Number, D : Comparable<D> {
-    return when(D::class) {
-        Float::class -> DataType.Float
-        Int::class -> DataType.Int
-        Byte::class -> DataType.Byte
-        Short::class -> DataType.Short
-        Long::class -> DataType.Long
-        Double::class -> DataType.Double
-        Ubyte::class -> DataType.Ubyte
-        Ushort::class -> DataType.Ushort
-        Uint::class -> DataType.Uint
-        Ulong::class -> DataType.Ulong
-        else -> throw Error("Unsupported data type ${D::class}")
+inline fun <reified D> dataTypeOf(): DataType where D : Number, D : Comparable<D> = when(D::class) {
+    Float::class -> DataType.Float
+    Int::class -> DataType.Int
+    Byte::class -> DataType.Byte
+    Short::class -> DataType.Short
+    Long::class -> DataType.Long
+    Double::class -> DataType.Double
+    Ubyte::class -> DataType.Ubyte
+    Ushort::class -> DataType.Ushort
+    Uint::class -> DataType.Uint
+    Ulong::class -> DataType.Ulong
+    else -> {
+        println("")
+        throw Error("Unsupported data type ${D::class}")
     }
 }
 
