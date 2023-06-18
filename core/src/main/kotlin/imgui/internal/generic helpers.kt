@@ -482,6 +482,7 @@ private val shifte = intArrayOf(0, 6, 4, 2, 0)
  *  Based on work of Christopher Wellons (https://github.com/skeeto/branchless-utf8)
  *  We handle UTF-8 decoding error by skipping forward.
  *
+ *  @param textEnd: [JVM] we use `-1` instead of nullability
  *  @return [JVM] [char: Int, bytes: Int]
  *
  *  ~ImTextCharFromUtf8 */
@@ -496,26 +497,22 @@ fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = -1): Pair<I
         end = begin + wanted // Max length, nulls will be taken into account.
 
     // Copy at most 'len' bytes, stop copying at 0 or past in_text_end.
-    val s = ByteArray(4)
-    s[0] = if (begin + 0 < end) text[begin + 0] else 0
-    s[1] = if (begin + 1 < end) text[begin + 1] else 0
-    s[2] = if (begin + 2 < end) text[begin + 2] else 0
-    s[3] = if (begin + 3 < end) text[begin + 3] else 0
+    val s = IntArray(4) { if (begin + it < end) text[begin + it].toUByte().toInt() else 0 }
 
     // Assume a four-byte character and load four bytes. Unused bits are shifted out.
-    var outChar = (s[0].i and masks[len]) shl 18
-    outChar = outChar or ((s[1].i and 0x3f) shl 12)
-    outChar = outChar or ((s[2].i and 0x3f) shl 6)
-    outChar = outChar or ((s[3].i and 0x3f) shl 0)
+    var outChar = (s[0] and masks[len]) shl 18
+    outChar = outChar or ((s[1] and 0x3f) shl 12)
+    outChar = outChar or ((s[2] and 0x3f) shl 6)
+    outChar = outChar or ((s[3] and 0x3f) shl 0)
     outChar = outChar ushr shiftc[len]
 
     // Accumulate the various error conditions.
     var e = (outChar < mins[len]).i shl 6 // non-canonical encoding
     e = e or (((outChar ushr 11) == 0x1b).i shl 7)  // surrogate half?
     e = e or ((outChar > UNICODE_CODEPOINT_MAX).i shl 8)  // out of range?
-    e = e or ((s[1].i and 0xc0) ushr 2)
-    e = e or ((s[2].i and 0xc0) ushr 4)
-    e = e or (s[3].i ushr 6)
+    e = e or ((s[1] and 0xc0) ushr 2)
+    e = e or ((s[2] and 0xc0) ushr 4)
+    e = e or (s[3] ushr 6)
     e = e xor 0x2a // top two bits of each tail byte correct?
     e = e ushr shifte[len]
 
@@ -524,7 +521,7 @@ fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = -1): Pair<I
         // One byte is consumed in case of invalid first byte of in_text.
         // All available bytes (at most `len` bytes) are consumed on incomplete/invalid second to last bytes.
         // Invalid or incomplete input may consume less bytes than wanted, therefore every byte has to be inspected in s.
-        wanted = min(wanted, s[0].bool.i + s[1].bool.i + s[2].bool.i + s[3].bool.i)
+        wanted = min(wanted, (s[0] != 0).i + (s[1] != 0).i + (s[2] != 0).i + (s[3] != 0).i)
         outChar = UNICODE_CODEPOINT_INVALID
     }
     return outChar to wanted

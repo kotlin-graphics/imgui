@@ -41,7 +41,7 @@ class FontGlyphRangesBuilder {
     fun addText(text: ByteArray, textEnd: Int? = null) {
         var p = 0
         while (p < (textEnd ?: text.size)) {
-            val (c, cLen) = textCharFromUtf8(text, p, textEnd ?: 0)
+            val (c, cLen) = textCharFromUtf8(text, p, textEnd ?: -1)
             p += cLen
             if (cLen == 0)
                 break

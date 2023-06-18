@@ -25,7 +25,11 @@ val g: Context
     get() = gImGui
 
 /** ~GetCurrentContext/SetCurrentContext */
-lateinit var gImGui: Context
-val gImGuiNullable: Context? get() = if(::gImGui.isInitialized) gImGui else null
+var gImGui: Context
+    get() = gImGuiNullable!!
+    set(value) {
+        gImGuiNullable = value
+    }
+var gImGuiNullable: Context? = null
 
 
