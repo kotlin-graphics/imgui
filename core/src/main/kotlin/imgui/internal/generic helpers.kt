@@ -379,7 +379,7 @@ fun textStrToUtf8(outBuf: ByteArray, text: CharArray): Int {
     var b = 0
     var t = 0
     while (b < outBuf.size && t < text.size && text[t] != NUL) {
-        val c = text[t++].i
+        val c = text[t++].code
         if (c < 0x80)
             outBuf[b++] = c.b
         else
@@ -404,9 +404,9 @@ fun textCharToUtf8Inline(buf: ByteArray, b: Int, c: Int): Int {
     }
     if (c < 0x10000) {
         if (buf.size < 3) return 0
-        buf[0] = (0xe0 + (c ushr 12)).b
-        buf[1] = (0x80 + ((c ushr 6) and 0x3f)).b
-        buf[2] = (0x80 + (c and 0x3f)).b
+        buf[b + 0] = (0xe0 + (c ushr 12)).b
+        buf[b + 1] = (0x80 + ((c ushr 6) and 0x3f)).b
+        buf[b + 2] = (0x80 + (c and 0x3f)).b
         return 3
     }
     if (c <= 0x10FFFF) {
@@ -497,7 +497,7 @@ fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = -1): Pair<I
         end = begin + wanted // Max length, nulls will be taken into account.
 
     // Copy at most 'len' bytes, stop copying at 0 or past in_text_end.
-    val s = IntArray(4) { if (begin + it < end) text[begin + it].toUByte().toInt() else 0 }
+    val s = IntArray(4) { if (begin + it < end && begin + it < text.size) text[begin + it].toUByte().toInt() else 0 }
 
     // Assume a four-byte character and load four bytes. Unused bits are shifted out.
     var outChar = (s[0] and masks[len]) shl 18
