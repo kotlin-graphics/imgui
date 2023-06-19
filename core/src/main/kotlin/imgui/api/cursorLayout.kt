@@ -38,8 +38,7 @@ interface cursorLayout {
             return
 
         // Those flags should eventually be overridable by the user
-        var flags: SeparatorFlags =
-            if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else SeparatorFlag.Horizontal
+        var flags: SeparatorFlags = if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else SeparatorFlag.Horizontal
         flags /= SeparatorFlag.SpanAllColumns // NB: this only applies to legacy Columns() api as they relied on Separator() a lot.
         separatorEx(flags)
     }

@@ -148,7 +148,8 @@ internal interface widgets {
     fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags_: ButtonFlags = none): Boolean {
 
         val window = currentWindow
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
@@ -174,12 +175,9 @@ internal interface widgets {
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
 
-        val renderTextPos = Rect(bb.min + style.framePadding, bb.max - style.framePadding)
         if (g.logEnabled)
-            logRenderedText(renderTextPos.min, "[")
-        renderTextClipped(renderTextPos.min, renderTextPos.max, label, labelSize, style.buttonTextAlign, bb)
-        if (g.logEnabled)
-            logRenderedText(renderTextPos.min, "]")
+            logSetNextTextDecoration("[", "]")
+        renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, labelSize, style.buttonTextAlign, bb)
 
         // Automatically close popups
         //if (pressed && !(flags & ImGuiButtonFlags_DontClosePopups) && (window->Flags & ImGuiWindowFlags_Popup))
@@ -299,9 +297,8 @@ internal interface widgets {
             if (itemVisible) {
                 // Draw
                 window.drawList.addRectFilled(bb.min, bb.max, Col.Separator.u32)
-                if (g.logEnabled) {
-                    logRenderedText(bb.min, "--------------------------------")
-                }
+                if (g.logEnabled)
+                    logRenderedText(bb.min, "--------------------------------\n")
             }
             columns?.let {
                 popColumnsBackground()

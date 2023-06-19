@@ -47,7 +47,8 @@ interface loggingCapture {
     /** stop logging (close file, etc.) */
     fun logFinish() {
 
-        if (!g.logEnabled) return
+        if (!g.logEnabled)
+            return
 
         logText("\n")
 
@@ -58,7 +59,7 @@ interface loggingCapture {
             LogType.Clipboard -> {
                 if (g.logBuffer.length > 1) { // TODO 1? maybe 0?
                     clipboardText = g.logBuffer.toString()
-                    g.logBuffer = StringBuilder()
+                    g.logBuffer.clear()
                 }
             }
             else -> error("Invalid log type")

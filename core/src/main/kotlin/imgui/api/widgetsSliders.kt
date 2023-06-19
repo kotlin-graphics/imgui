@@ -145,7 +145,8 @@ interface widgetsSliders {
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = pData().format(format)
-        if (g.logEnabled) logSetNextTextDecoration("{", "}")
+        if (g.logEnabled)
+            logSetNextTextDecoration("{", "}")
         ImGui.renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
 
         if (labelSize.x > 0f) {

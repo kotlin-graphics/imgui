@@ -7,6 +7,7 @@ import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.frameCount
 import imgui.ImGui.inputText
 import imgui.ImGui.setNextItemWidth
+import imgui.stb.te
 
 
 class Color {
@@ -194,12 +195,13 @@ class TextFilter(defaultFilter: String = "") {
         return valueChanged
     }
 
-    fun passFilter(text_: String?, textEnd: Int = -1): Boolean {
+    fun passFilter(text_: String?, textEnd_: Int = -1): Boolean {
 
         if (exc.isEmpty() && inc.isEmpty())
             return true
 
         var text = text_ ?: ""
+        val textEnd = if (textEnd_ == -1) text.length else textEnd_
         text = if (textEnd != text.length) text.substring(0, textEnd) else text
         if (exc.any { it in text }) return false
         if (inc.any { it in text }) return true
@@ -229,8 +231,9 @@ class TextFilter(defaultFilter: String = "") {
         inc.clear()
         exc.clear()
         countGrep = 0
-        inputBuf.cStr.split(",").map { it.trim() }.filter(String::isNotEmpty).forEach { f ->
-            if (f[0] == '-') exc += f
+        inputBuf.cStr.split(",").map(String::trim).filter(String::isNotEmpty).forEach { f ->
+            if (f[0] == '-')
+                exc += f.drop(1)
             else {
                 inc += f
                 countGrep++

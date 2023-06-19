@@ -12,6 +12,7 @@ import imgui.ImGui.isClippedEx
 import imgui.ImGui.isDoubleClicked
 import imgui.ImGui.itemSize
 import imgui.ImGui.loadSettings
+import imgui.ImGui.logRenderedText
 import imgui.ImGui.menuItem
 import imgui.ImGui.msg
 import imgui.ImGui.pushOverrideID
@@ -19,6 +20,7 @@ import imgui.ImGui.resetSettings
 import imgui.ImGui.setNextWindowContentSize
 import imgui.ImGui.setNextWindowScroll
 import imgui.api.g
+import imgui.api.gImGui
 import imgui.classes.TableColumnSortSpecs
 import imgui.internal.*
 import imgui.internal.classes.*
@@ -1565,6 +1567,10 @@ interface tablesInternal {
         if (currentColumn != -1)
             endCell()
 
+        // Logging
+        if (g.logEnabled)
+            logRenderedText(null, "|")
+
         // Position cursor at the bottom of our row so it can be used for e.g. clipping calculation. However it is
         // likely that the next call to TableBeginCell() will reposition the cursor to take account of vertical padding.
         window.dc.cursorPos.y = rowPosY2
@@ -1725,6 +1731,13 @@ interface tablesInternal {
             // FIXME-TABLE: Could avoid this if draw channel is dummy channel?
             ImGui.setWindowClipRectBeforeSetChannel(window, column.clipRect)
             drawSplitter.setCurrentChannel(window.drawList, column.drawChannelCurrent)
+        }
+
+        // Logging
+        val g = gImGui
+        if (g.logEnabled && !column.isSkipItems) {
+            logRenderedText(window.dc.cursorPos, "|")
+            g.logLinePosY = Float.MAX_VALUE
         }
     }
 

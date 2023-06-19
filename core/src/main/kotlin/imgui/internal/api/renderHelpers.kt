@@ -79,7 +79,7 @@ internal interface renderHelpers {
         val window = g.currentWindow!!
         renderTextClippedEx(window.drawList, posMin, posMax, text, textDisplayEnd, textSizeIfKnown, align, clipRect)
         if (g.logEnabled)
-            logRenderedText(posMax, text.cStr, textDisplayEnd)
+            logRenderedText(posMin, text.cStr, textDisplayEnd)
     }
 
     /** Default clipRect uses (pos_min,pos_max)

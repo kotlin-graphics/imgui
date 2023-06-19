@@ -125,12 +125,12 @@ interface widgetsMain {
             window.drawList.renderCheckMark(checkBb.min + pad, checkCol, squareSz - pad * 2f)
         }
 
-        val renderTextPos = Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y)
+        val labelPos = Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y)
 
         if (g.logEnabled)
-            logRenderedText(renderTextPos, if (mixedValue) "[~]" else if (v) "[x]" else "[ ]")
+            logRenderedText(labelPos, if (mixedValue) "[~]" else if (v) "[x]" else "[ ]")
         if (labelSize.x > 0f)
-            renderText(renderTextPos, label)
+            renderText(labelPos, label)
 
         val flags = ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else none
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or flags)
@@ -185,11 +185,11 @@ interface widgetsMain {
             window.drawList.addCircle(center, radius, Col.Border.u32, 16, style.frameBorderSize)
         }
 
-        val renderTextPos = Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y)
+        val labelPos = Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y)
         if (g.logEnabled)
-            logRenderedText(renderTextPos, if (active) "(x)" else "( )")
+            logRenderedText(labelPos, if (active) "(x)" else "( )")
         if (labelSize.x > 0f)
-            renderText(renderTextPos, label)
+            renderText(labelPos, label)
 
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return pressed
