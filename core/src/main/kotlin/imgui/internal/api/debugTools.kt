@@ -433,8 +433,8 @@ internal interface debugTools {
                     "(Glimmer of hope: the atlas system will be rewritten in the future to make scaling more flexible.)")
         text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
         val cStr = ByteArray(5)
-        text("Fallback character: '${textCharToUtf8(cStr, font.fallbackChar.code).cStr}' (U+%04X)", font.fallbackChar)
-        text("Ellipsis character: '${textCharToUtf8(cStr, font.ellipsisChar.code)}' (U+%04X)", font.ellipsisChar)
+        text("Fallback character: '${textCharToUtf8(cStr, font.fallbackChar)}' (U+%04X)", font.fallbackChar.code)
+        text("Ellipsis character: '${textCharToUtf8(cStr, font.ellipsisChar)}' (U+%04X)", font.ellipsisChar.code)
         val surfaceSqrt = sqrt(font.metricsTotalSurface.f).i
         text("Texture Area: about ${font.metricsTotalSurface} px ~${surfaceSqrt}x$surfaceSqrt px")
         for (configI in 0 until font.configDataCount)

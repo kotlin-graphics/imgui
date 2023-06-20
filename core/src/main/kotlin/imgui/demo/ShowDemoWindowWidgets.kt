@@ -223,6 +223,7 @@ object ShowDemoWindowWidgets {
         Text()
         Images()
         Combo()
+        ListBoxes()
         Selectables()
         `Text Input`()
         Tabs()

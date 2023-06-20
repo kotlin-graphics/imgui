@@ -255,7 +255,7 @@ val Char.isBlankW: Boolean
 // -----------------------------------------------------------------------------------------------------------------
 
 fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
-    val bytes = fmt.format(*args).toByteArray()
+    val bytes = fmt.format(*args.map { if (it is Flag<*>) it.i else it }.toTypedArray()).toByteArray()
     bytes.copyInto(buf) // TODO IndexOutOfBoundsException?
     return bytes.size.also { w -> buf[w] = 0 }
 }
@@ -379,53 +379,53 @@ fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
 // -----------------------------------------------------------------------------------------------------------------
 
 /* return out_buf */
-fun textCharToUtf8(outBuf: ByteArray, c: Int): ByteArray {
-    val count = textCharToUtf8Inline(outBuf, 5, c)
+fun textCharToUtf8(outBuf: ByteArray, c: Char): String {
+    val count = textCharToUtf8Inline(outBuf, size = 5, c = c.code)
     outBuf[count] = 0
-    return outBuf
+    return outBuf.cStr
 }
 
 /** return output UTF-8 bytes count */
 fun textStrToUtf8(outBuf: ByteArray, text: CharArray): Int {
-    var b = 0
+    var bufP = 0
     var t = 0
-    while (b < outBuf.size && t < text.size && text[t] != NUL) {
+    while (bufP < outBuf.size && t < text.size && text[t] != NUL) {
         val c = text[t++].code
         if (c < 0x80)
-            outBuf[b++] = c.b
+            outBuf[bufP++] = c.b
         else
-            b += textCharToUtf8Inline(outBuf, b, c)
+            bufP += textCharToUtf8Inline(outBuf, ptr = bufP, c = c)
     }
-    if (b < outBuf.size) outBuf[b] = 0
-    return b
+    if (bufP < outBuf.size) outBuf[bufP] = 0
+    return bufP
 }
 
 /** Based on stb_to_utf8() from github.com/nothings/stb/
  *  ~ImTextCharToUtf8   */
-fun textCharToUtf8Inline(buf: ByteArray, b: Int, c: Int): Int {
+fun textCharToUtf8Inline(buf: ByteArray, ptr: Int = 0, size: Int = buf.size, c: Int): Int {
     if (c < 0x80) {
-        buf[b + 0] = c.b
+        buf[ptr + 0] = c.b
         return 1
     }
     if (c < 0x800) {
-        if (buf.size < b + 2) return 0
-        buf[b + 0] = (0xc0 + (c ushr 6)).b
-        buf[b + 1] = (0x80 + (c and 0x3f)).b
+        if (size < ptr + 2) return 0
+        buf[ptr + 0] = (0xc0 + (c ushr 6)).b
+        buf[ptr + 1] = (0x80 + (c and 0x3f)).b
         return 2
     }
     if (c < 0x10000) {
-        if (buf.size < 3) return 0
-        buf[b + 0] = (0xe0 + (c ushr 12)).b
-        buf[b + 1] = (0x80 + ((c ushr 6) and 0x3f)).b
-        buf[b + 2] = (0x80 + (c and 0x3f)).b
+        if (size < 3) return 0
+        buf[ptr + 0] = (0xe0 + (c ushr 12)).b
+        buf[ptr + 1] = (0x80 + ((c ushr 6) and 0x3f)).b
+        buf[ptr + 2] = (0x80 + (c and 0x3f)).b
         return 3
     }
     if (c <= 0x10FFFF) {
-        if (buf.size < b + 4) return 0
-        buf[b + 0] = (0xf0 + (c ushr 18)).b
-        buf[b + 1] = (0x80 + ((c ushr 12) and 0x3f)).b
-        buf[b + 2] = (0x80 + ((c ushr 6) and 0x3f)).b
-        buf[b + 3] = (0x80 + (c and 0x3f)).b
+        if (size < ptr + 4) return 0
+        buf[ptr + 0] = (0xf0 + (c ushr 18)).b
+        buf[ptr + 1] = (0x80 + ((c ushr 12) and 0x3f)).b
+        buf[ptr + 2] = (0x80 + ((c ushr 6) and 0x3f)).b
+        buf[ptr + 3] = (0x80 + (c and 0x3f)).b
         return 4
     }
     // Invalid code point, the max unicode is 0x10FFFF

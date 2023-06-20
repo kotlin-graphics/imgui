@@ -24,6 +24,7 @@ import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
 import kool.getValue
 import kool.setValue
+import java.lang.Exception
 import kotlin.reflect.KMutableProperty0
 
 // Widgets: Regular Sliders
@@ -90,7 +91,8 @@ interface widgetsSliders {
 
         val tempInputAllowed = flags hasnt SliderFlag.NoInput
         ImGui.itemSize(totalBb, ImGui.style.framePadding.y)
-        if (!ImGui.itemAdd(totalBb, id, frameBb, if (tempInputAllowed) ItemFlag.Inputable else none)) return false
+        if (!ImGui.itemAdd(totalBb, id, frameBb, if (tempInputAllowed) ItemFlag.Inputable else none))
+            return false
 
         // Default format string when passing NULL
         val format = format_ ?: defaultFormat

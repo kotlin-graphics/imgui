@@ -185,7 +185,7 @@ object DemoWindow {
             //if (ImGui::MenuItem("MenuItem")) {} // You can also use MenuItem() inside a menu bar!
             menu("Tools") {
 
-                val hasDebugTools = IMGUI_DISABLE_DEBUG_TOOLS
+                val hasDebugTools = !IMGUI_DISABLE_DEBUG_TOOLS
 
                 menuItem("Metrics/Debugger", "", show::metrics, hasDebugTools)
                 menuItem("Debug Log", "", show::debugLog, hasDebugTools)

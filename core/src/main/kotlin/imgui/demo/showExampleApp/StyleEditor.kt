@@ -130,8 +130,7 @@ object StyleEditor {
         sameLine()
         if (button("Revert Ref")) g.style = ref!!
         sameLine()
-        helpMarker(
-                "Save/Revert in local non-persistent storage. Default Colors definition are not affected. " + "Use \"Export\" below to save them somewhere.")
+        helpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. " + "Use \"Export\" below to save them somewhere.")
 
         separator()
 
@@ -166,7 +165,7 @@ object StyleEditor {
                 slider("GrabRounding", style::grabRounding, 0f, 12f, "%.0f")
                 slider("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
 
-                separatorText("Alignment")
+                separatorText("Widgets")
                 slider2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
                 run {
                     val sideRef = (style.windowMenuButtonPosition.i + 1).mutableReference
@@ -185,10 +184,9 @@ object StyleEditor {
                 sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")
                 slider2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f")
                 sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
-
                 slider("SeparatorTextBorderSize", style::separatorTextBorderSize, 0f, 10f, "%.0f")
                 slider2("SeparatorTextAlign", style.separatorTextAlign, 0f, 1f, "%.2f")
-                slider2("SeparatorTextPadding", style.separatorTextPadding, 0f, 40f, "%0.f")
+                slider2("SeparatorTextPadding", style.separatorTextPadding, 0f, 40f, "%.0f")
                 slider("LogSliderDeadzone", style::logSliderDeadzone, 0f, 12f, "%.0f")
 
                 separatorText("Misc")
@@ -205,9 +203,8 @@ object StyleEditor {
                     for (i in Col.values()) {
                         val col = style.colors[i]
                         val name = i.name
-                        if (!outputOnlyModified || col != ref!!.colors[i]) logText(
-                                "colors[Col_$name]%s = Vec4(%.2f, %.2f, %.2f, %.2f)\n", " ".repeat(23 - name.length), col.x,
-                                col.y, col.z, col.w)
+                        if (!outputOnlyModified || col != ref!!.colors[i])
+                            logText("colors[Col_$name]%s = Vec4(%.2f, %.2f, %.2f, %.2f)\n", " ".repeat(23 - name.length), col.x, col.y, col.z, col.w)
                     }
                     logFinish()
                 }
@@ -222,19 +219,13 @@ object StyleEditor {
 
                 radioButton("Opaque", alphaFlags.isEmpty) { alphaFlags = none }; sameLine()
                 radioButton("Alpha", alphaFlags == Cef.AlphaPreview) { alphaFlags = Cef.AlphaPreview }; sameLine()
-                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf) {
-                    alphaFlags = Cef.AlphaPreviewHalf
-                }; sameLine()
+                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf) { alphaFlags = Cef.AlphaPreviewHalf }; sameLine()
                 helpMarker("""
                     In the color list:
                     Left-click on color square to open color picker,
-                    Right-click to open edit options menu.""".trimIndent()
-                )
+                    Right-click to open edit options menu.""".trimIndent())
 
-                child(
-                        "#colors", Vec2(), true,
-                        Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened
-                ) {
+                child("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
                     withItemWidth(-160) {
                         for (i in 0 until Col.COUNT) {
                             val name = Col.values()[i].name
@@ -314,7 +305,7 @@ object StyleEditor {
                             val segmentCount = drawList._calcCircleAutoSegmentCount(rad)
 
                             group {
-                                text("R: %.f\nN: ${drawList._calcCircleAutoSegmentCount(rad)}", rad)
+                                text("R: %.0f\nN: ${drawList._calcCircleAutoSegmentCount(rad)}", rad)
 
                                 val canvasWidth = minWidgetWidth max (rad * 2f)
                                 val offsetX = floor(canvasWidth * 0.5f)
@@ -350,9 +341,7 @@ object StyleEditor {
 
     fun debugNodeFont(font: Font) {
         val name = font.configData.getOrNull(0)?.name ?: ""
-        val fontDetailsOpened = treeNode(font,
-                "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)",
-                font.fontSize)
+        val fontDetailsOpened = treeNode(font, "Font \\\"$name\\\"\\n%.2f px ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
         sameLine(); smallButton("Set as default") { io.fontDefault = font }
         if (!fontDetailsOpened)
             return
@@ -374,15 +363,13 @@ object StyleEditor {
                         |(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)""".trimMargin())
         text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
         val cStr = ByteArray(5)
-        text("Fallback character: '${textCharToUtf8(cStr, font.fallbackChar.code)}' (U+%04X)", font.fallbackChar)
-        text("Ellipsis character: '${textCharToUtf8(cStr, font.ellipsisChar.code)}' (U+%04X)", font.ellipsisChar)
+        text("Fallback character: '${textCharToUtf8(cStr, font.fallbackChar)}' (U+%04X)", font.fallbackChar.code)
+        text("Ellipsis character: '${textCharToUtf8(cStr, font.ellipsisChar)}' (U+%04X)", font.ellipsisChar.code)
         val side = sqrt(font.metricsTotalSurface.f).i
         text("Texture Area: about ${font.metricsTotalSurface} px ~${side}x$side px")
         for (c in 0 until font.configDataCount)
             font.configData.getOrNull(c)?.let {
-                bulletText(
-                        "Input $c: '${it.name}', Oversample: ${it.oversample}, PixelSnapH: ${it.pixelSnapH}, Offset: (%.1f,%.1f)",
-                        it.glyphOffset.x, it.glyphOffset.y)
+                bulletText("Input $c: '${it.name}', Oversample: ${it.oversample}, PixelSnapH: ${it.pixelSnapH}, Offset: (%.1f,%.1f)", it.glyphOffset.x, it.glyphOffset.y)
             }
 
         // Display all glyphs of the fonts in separate pages of 256 characters
@@ -409,7 +396,7 @@ object StyleEditor {
                     val drawList = windowDrawList
                     for (n in 0 until 256) {
                         val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize + cellSpacing),
-                                basePos.y + (n / 16) * (cellSize + cellSpacing))
+                                          basePos.y + (n / 16) * (cellSize + cellSpacing))
                         val cellP2 = Vec2(cellP1.x + cellSize, cellP1.y + cellSize)
                         val glyph = font.findGlyphNoFallback((base + n).c)
                         drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
@@ -432,7 +419,7 @@ object StyleEditor {
                 }
                 base += 256
             }
-            treePop()
         }
+        treePop()
     }
 }

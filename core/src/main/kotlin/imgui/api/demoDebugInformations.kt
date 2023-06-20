@@ -264,7 +264,7 @@ interface demoDebugInformations {
                             for (columnN in 0 until table.columnsCount) {
                                 val r = Funcs.getTableRect(table, rectN, columnN)
                                 val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}"
-                                        .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                                    .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                                 selectable(buf)
                                 if (isItemHovered())
                                     foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
@@ -758,19 +758,16 @@ interface demoDebugInformations {
                 if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
                 if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
                 if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
-                if (io.configMemoryCompactTimer >= 0f) text("io.ConfigMemoryCompactTimer = %.1f",
-                                                            io.configMemoryCompactTimer)
+                if (io.configMemoryCompactTimer >= 0f) text("io.ConfigMemoryCompactTimer = %.1f", io.configMemoryCompactTimer)
                 text("io.backendFlags: 0x%08X", io.backendFlags)
                 if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
                 if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
                 if (io.backendFlags has BackendFlag.HasSetMousePos) text(" HasSetMousePos")
                 if (io.backendFlags has BackendFlag.RendererHasVtxOffset) text(" RendererHasVtxOffset") // @formatter:on
                 separator()
-                text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}",
-                     io.fonts.flags)
+                text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
                 text("io.displaySize: ${io.displaySize.x},${io.displaySize.y}")
-                text("io.displayFramebufferScale: %.2f,%.2f".format(io.displayFramebufferScale.x,
-                                                                    io.displayFramebufferScale.y))
+                text("io.displayFramebufferScale: %.2f,%.2f".format(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
                 separator()
                 text("style.windowPadding: %.2f,%.2f", style.windowPadding.x, style.windowPadding.y)
                 text("style.windowBorderSize: %.2f", style.windowBorderSize)
