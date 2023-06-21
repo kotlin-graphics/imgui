@@ -299,7 +299,7 @@ class ImplGlfw @JvmOverloads constructor(
             if (shouldChainCallback(wnd))
                 data.prevUserCBMousebutton?.invoke(wnd, button, action, mods)
 
-            updateKeyModifiers()
+            updateKeyModifiers(wnd)
             if (button >= 0 && button < MouseButton.COUNT)
                 io.addMouseButtonEvent(MouseButton of button, action == GLFW_PRESS)
         }
@@ -307,8 +307,8 @@ class ImplGlfw @JvmOverloads constructor(
         // X11 does not include current pressed/released modifier key in 'mods' flags submitted by GLFW
         // See https://github.com/ocornut/imgui/issues/6034 and https://github.com/glfw/glfw/issues/1630
 
-        fun updateKeyModifiers() {
-            val wnd = data.window.handle
+        fun updateKeyModifiers(window: GlfwWindow) {
+            val wnd = window.handle
             io.addKeyEvent(Key.Mod_Ctrl, (glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS))
             io.addKeyEvent(Key.Mod_Shift, (glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS))
             io.addKeyEvent(Key.Mod_Alt, (glfwGetKey(wnd, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS))
@@ -343,7 +343,7 @@ class ImplGlfw @JvmOverloads constructor(
 
             if (action == InputAction.Press || action == InputAction.Release) {
 
-                updateKeyModifiers()
+                updateKeyModifiers(wnd)
 
                 val imguiKey = keycode.imguiKey
                 io.addKeyEvent(imguiKey, action == InputAction.Press)
