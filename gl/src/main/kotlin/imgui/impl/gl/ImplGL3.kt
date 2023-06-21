@@ -47,12 +47,12 @@ class ImplGL3 : GLInterface {
         // Query for GL version (e.g. 320 for GL 3.2)
         var major = glGetInteger(GL_MAJOR_VERSION)
         var minor = glGetInteger(GL_MINOR_VERSION)
-        if (major == 0 && minor == 0) {
-            // Query GL_VERSION in desktop GL 2.x, the string will start with "<major>.<minor>"
-            val glVersion = glGetString(GL_VERSION)!!
-            major = glVersion.substringBefore('.').i
-            minor = glVersion.substringAfter('.').i
-        }
+        if (major == 0 && minor == 0)
+        // Query GL_VERSION in desktop GL 2.x, the string will start with "<major>.<minor>"
+            glGetString(GL_VERSION)?.let { glVersion ->
+                major = glVersion.substringBefore('.').i
+                minor = glVersion.substringAfter('.').i
+            }
         data.glVersion = when {
             !OPENGL_ES2 -> major * 100 + minor * 10
             else -> 200 // GLES 2
@@ -493,10 +493,12 @@ class ImplGL3 : GLInterface {
                     vertexShader = vertexShader_glsl_120
                     fragmentShader = fragmentShader_glsl_120
                 }
+
                 data.glslVersion >= 410 -> {
                     vertexShader = vertexShader_glsl_410_core
                     fragmentShader = fragmentShader_glsl_410_core
                 }
+
                 else -> {
                     vertexShader = vertexShader_glsl_130
                     fragmentShader = fragmentShader_glsl_130
@@ -544,6 +546,7 @@ class ImplGL3 : GLInterface {
             var indexBufferSize = 0L
 
             var hasClipOrigin = false
+
             // Query vendor to enable glBufferSubData kludge
             // [JVM] we have to go `lazy` because at the initialization there are still no GL caps and `glGetString` will fail
             val useBufferSubData by lazy { Platform.get() == Platform.WINDOWS && glGetString(GL_VENDOR)?.startsWith("Intel") ?: false }// #if !defined(IMGUI_IMPL_OPENGL_ES2)
