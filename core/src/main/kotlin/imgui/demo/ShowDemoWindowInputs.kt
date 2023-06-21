@@ -68,7 +68,6 @@ object ShowDemoWindowInputs {
                 for (key in Key.Named) {
                     if (!key.isDown)
                         continue
-                    sameLine(); text('"' + key.name + '"'); sameLine(); text("(%.02f)", key.data.downDuration)
                 }
                 val ctrl = if (io.keyCtrl) "CTRL " else ""
                 val shift = if (io.keyShift) "SHIFT " else ""
