@@ -26,7 +26,7 @@ object Fullscreen {
     operator fun invoke(pOpen: KMutableProperty0<Boolean>?) {
 
         // We demonstrate using the full viewport area or the work area (without menu-bars, task-bars etc.)
-        // Based on your use case you may want one of the other.
+        // Based on your use case you may want one or the other.
         val viewport = mainViewport
         setNextWindowPos(if(useWorkArea) viewport.workPos else viewport.pos)
         setNextWindowSize(if(useWorkArea) viewport.workSize else viewport.size)
