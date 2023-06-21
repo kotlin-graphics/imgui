@@ -8,7 +8,7 @@ import imgui.ImGui.data
 import imgui.ImGui.isAlias
 import imgui.ImGui.isGamepad
 import imgui.ImGui.isNamedOrMod
-import imgui.api.g
+import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.floorSigned
@@ -16,10 +16,6 @@ import imgui.internal.sections.InputEvent
 import imgui.internal.sections.InputSource
 import imgui.internal.textCharFromUtf8
 import imgui.statics.findLatestInputEvent
-import imgui.statics.getClipboardTextFn_DefaultImpl
-import imgui.statics.setClipboardTextFn_DefaultImpl
-import imgui.statics.setPlatformImeDataFn_DefaultImpl
-import org.lwjgl.system.Platform
 import uno.kotlin.NUL
 
 //-----------------------------------------------------------------------------
@@ -244,8 +240,11 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             backendUsingLegacyNavInputArray = false
 
         // Filter duplicate (in particular: key mods and gamepad analog values are commonly spammed)
-        val latestEvent = findLatestInputEvent(key)
+        val latestEvent = findLatestInputEvent(g, key)
+        val prevCtx = gImGui
+        ctx!!.setCurrent()
         val keyData = key.data
+        prevCtx.setCurrent()
         val latestKeyDown = latestEvent?.down ?: keyData.down
         val latestKeyAnalog = latestEvent?.analogValue ?: keyData.analogValue
         if (latestKeyDown == down && latestKeyAnalog == analogValue)
@@ -265,7 +264,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         val pos = Vec2(if (x > -Float.MAX_VALUE) floorSigned(x) else x, if (y > -Float.MAX_VALUE) floorSigned(y) else y)
 
         // Filter duplicate
-        val latestEvent = findLatestInputEvent<InputEvent.MousePos>()
+        val latestEvent = findLatestInputEvent<InputEvent.MousePos>(g)
         val latestPos = latestEvent?.let { Vec2(it.posX, it.posY) } ?: g.io.mousePos
         if (latestPos.x == pos.x && latestPos.y == pos.y)
             return
@@ -280,7 +279,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             return
 
         // Filter duplicate
-        val latestEvent = findLatestInputEvent(mouseButton)
+        val latestEvent = findLatestInputEvent(g, mouseButton)
         val latestButtonDown = latestEvent?.down ?: g.io.mouseDown[mouseButton.i]
         if (latestButtonDown == down)
             return
@@ -306,7 +305,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         val g = ctx!!
 
         // Filter duplicate
-        val latestEvent = findLatestInputEvent<InputEvent.AppFocused>()
+        val latestEvent = findLatestInputEvent<InputEvent.AppFocused>(g)
         val latestFocused = latestEvent?.focused ?: !g.io.appFocusLost
         if (latestFocused == focused)
             return

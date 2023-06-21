@@ -23,6 +23,7 @@ import imgui.ImGui.renderBullet
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.topMostAndVisiblePopupModal
 import imgui.api.g
+import imgui.classes.Context
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -598,11 +599,11 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
     g.navWindowingToggleLayer = false
 }
 
-inline fun <reified T : InputEvent> findLatestInputEvent(predicate: (T) -> Boolean = { true }): T? =
-        g.inputEventsQueue.asReversed().firstOrNull { it is T && predicate(it) } as T?
+inline fun <reified T : InputEvent> findLatestInputEvent(ctx: Context, predicate: (T) -> Boolean = { true }): T? =
+        ctx.inputEventsQueue.asReversed().firstOrNull { it is T && predicate(it) } as T?
 
-fun findLatestInputEvent(key: Key? = null): InputEvent.Key? =
-        findLatestInputEvent<InputEvent.Key> { it.key == key }
+fun findLatestInputEvent(ctx: Context, key: Key? = null): InputEvent.Key? =
+        findLatestInputEvent<InputEvent.Key>(ctx) { it.key == key }
 
-fun findLatestInputEvent(button: MouseButton? = null): InputEvent.MouseButton? =
-        findLatestInputEvent<InputEvent.MouseButton> { it.button == button }
+fun findLatestInputEvent(ctx: Context, button: MouseButton? = null): InputEvent.MouseButton? =
+        findLatestInputEvent<InputEvent.MouseButton>(ctx) { it.button == button }
