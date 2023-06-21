@@ -7,10 +7,10 @@ import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.data
+import imgui.ImGui.getOwnerData
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.mouseButtonToKey
-import imgui.ImGui.ownerData
 import imgui.ImGui.setPos
 import imgui.ImGui.setScrollX
 import imgui.ImGui.setScrollY
@@ -64,7 +64,7 @@ fun updateKeyboardInputs() {
     // Update keys/input owner (named keys only): one entry per key
     for (key in Key.Named) {
         val keyData = key.data
-        val ownerData = key.ownerData
+        val ownerData = g.keysOwnerData[key.ordinal]
         ownerData.ownerCurr = ownerData.ownerNext
         if (!keyData.down) // Important: ownership is released on the frame after a release. Ensure a 'MouseDown -> CloseWindow -> MouseUp' chain doesn't lead to someone else seeing the MouseUp.
             ownerData.ownerNext = KeyOwner_None
@@ -249,7 +249,7 @@ fun updateKeyRoutingTable(rt: KeyRoutingTable) {
 
             // Apply routing to owner if there's no owner already (RoutingCurr == None at this point)
             if (routingEntry.mods == g.io.keyMods) {
-                val ownerData = key.ownerData
+                val ownerData = key.getOwnerData(g)
                 if (ownerData.ownerCurr == KeyOwner_None)
                     ownerData.ownerCurr = routingEntry.routingCurr
             }

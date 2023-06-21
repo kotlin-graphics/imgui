@@ -5,6 +5,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
 import imgui.ImGui.data
+import imgui.ImGui.getData
 import imgui.ImGui.isAlias
 import imgui.ImGui.isGamepad
 import imgui.ImGui.isNamedOrMod
@@ -225,6 +226,12 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     }
 
     /** Queue a new key down/up event for analog values (e.g. ImGuiKey_Gamepad_ values). Dead-zones should be handled by the backend. */
+    // Queue a new key down/up event.
+    // - ImGuiKey key:       Translated key (as in, generally ImGuiKey_A matches the key end-user would use to emit an 'A' character)
+    // - bool down:          Is the key down? use false to signify a key release.
+    // - float analog_value: 0.0f..1.0f
+    // IMPORTANT: THIS FUNCTION AND OTHER "ADD" GRABS THE CONTEXT FROM OUR INSTANCE.
+    // WE NEED TO ENSURE THAT ALL FUNCTION CALLS ARE FULLFILLING THIS, WHICH IS WHY GetKeyData() HAS AN EXPLICIT CONTEXT.
     fun addKeyAnalogEvent(key: Key, down: Boolean, analogValue: Float) {
         //if (e->Down) { IMGUI_DEBUG_LOG_IO("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
         val g = ctx!!
@@ -241,10 +248,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
         // Filter duplicate (in particular: key mods and gamepad analog values are commonly spammed)
         val latestEvent = findLatestInputEvent(g, key)
-        val prevCtx = gImGui
-        ctx!!.setCurrent()
-        val keyData = key.data
-        prevCtx.setCurrent()
+        val keyData = key.getData(g)
         val latestKeyDown = latestEvent?.down ?: keyData.down
         val latestKeyAnalog = latestEvent?.analogValue ?: keyData.analogValue
         if (latestKeyDown == down && latestKeyAnalog == analogValue)

@@ -10,6 +10,8 @@ import imgui.ImGui.io
 import imgui.ImGui.isDown
 import imgui.ImGui.navMoveRequestCancel
 import imgui.api.g
+import imgui.api.gImGui
+import imgui.classes.Context
 import imgui.classes.KeyData
 import imgui.internal.classes.*
 import imgui.internal.sections.*
@@ -50,7 +52,7 @@ internal interface inputs {
         return keyChord wo Key.Mod_Shortcut or if (g.io.configMacOSXBehaviors) Key.Mod_Super else Key.Mod_Ctrl
     }
 
-    fun Key.convertSingleModFlagToKey(): Key = when (this) {
+    fun Key.convertSingleModFlagToKey(ctx: Context): Key = when (this) {
         Key.Mod_Ctrl -> Key.ReservedForModCtrl
         Key.Mod_Shift -> Key.ReservedForModShift
         Key.Mod_Alt -> Key.ReservedForModAlt
@@ -60,9 +62,19 @@ internal interface inputs {
     }
 
     /** ~GetKeyData */
+    fun Key.getData(ctx: Context): KeyData {
+        val g = ctx
+        val k =
+                // Special storage location for mods
+                if (this has Key.Mod_Mask)
+                    convertSingleModFlagToKey(g)
+                else this
+        return g.io.keysData[k.index]
+    }
+
     val Key.data: KeyData
-        get() = // Special storage location for mods
-            g.io.keysData[convertSingleModFlagToKey().index]
+        // Special storage location for mods
+        get() = getData(gImGui)
 
     // ImGuiMod_Shortcut is translated to either Ctrl or Super.
     fun getKeyChordName(keyChord_: KeyChord): String {
@@ -95,7 +107,7 @@ internal interface inputs {
 
     /** Return 2D vector representing the combination of four cardinal direction, with analog value support (for e.g. ImGuiKey_GamepadLStick* values). */
     fun getKeyMagnitude2d(keyLeft: Key, keyRight: Key, keyUp: Key, keyDown: Key) = Vec2(keyRight.data.analogValue - keyLeft.data.analogValue,
-                                                                                        keyDown.data.analogValue - keyUp.data.analogValue)
+            keyDown.data.analogValue - keyUp.data.analogValue)
 
     fun getNavTweakPressedAmount(axis: Axis): Float {
 
@@ -167,7 +179,7 @@ internal interface inputs {
                 return KeyOwner_None
             //
             //            val ownerData = ownerData(key);
-            val ownerId = ownerData.ownerCurr
+            val ownerId = getOwnerData(g).ownerCurr
 
             if (g.activeIdUsingAllKeyboardKeys && ownerId != g.activeId && ownerId != KeyOwner_Any)
                 if (this in Key.Keyboard)
@@ -188,7 +200,8 @@ internal interface inputs {
         assert(isNamedOrMod && (ownerId != KeyOwner_Any || flags has (InputFlag.LockThisFrame or InputFlag.LockUntilRelease))) { "Can only use _Any with _LockXXX flags(to eat a key away without an ID to retrieve it)" }
         assert((flags wo InputFlag.SupportedBySetKeyOwner).isEmpty) { "Passing flags not supported by this function !" }
 
-        val ownerData = ownerData
+        val g = gImGui
+        val ownerData = getOwnerData(g)
         ownerData.ownerCurr = ownerId; ownerData.ownerNext = ownerId
 
         // We cannot lock by default as it would likely break lots of legacy code.
@@ -230,7 +243,7 @@ internal interface inputs {
             if (this in Key.Keyboard)
                 return false
 
-        val ownerData = ownerData
+        val ownerData = getOwnerData(g)
         if (ownerId == KeyOwner_Any)
             return !ownerData.lockThisFrame
 
@@ -247,13 +260,14 @@ internal interface inputs {
         return true
     }
 
-    val Key.ownerData: KeyOwnerData
-        get() {
-            var key = this
-            if (key has Key.Mod_Mask)
-                key = key.convertSingleModFlagToKey()
-            return g.keysOwnerData[key.ordinal]
-        }
+
+    /** ~GetKeyOwnerData */
+    fun Key.getOwnerData(ctx: Context): KeyOwnerData {
+        var key = this
+        if (key has Key.Mod_Mask)
+            key = key.convertSingleModFlagToKey(ctx)
+        return ctx.keysOwnerData[key.ordinal]
+    }
 
 
     // [EXPERIMENTAL] High-Level: Input Access functions w/ support for Key/Input Ownership

@@ -47,6 +47,7 @@ import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getID
 import imgui.ImGui.getInstanceData
 import imgui.ImGui.getKeyChordName
+import imgui.ImGui.getOwnerData
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
@@ -60,7 +61,6 @@ import imgui.ImGui.isReleased
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
-import imgui.ImGui.ownerData
 import imgui.ImGui.popID
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushID
@@ -456,7 +456,7 @@ interface demoDebugInformations {
             indent {
                 listBox("##owners", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 6)) {
                     for (key in Key.Named) {
-                        val ownerData = key.ownerData
+                        val ownerData = key.getOwnerData(g)
                         if (ownerData.ownerCurr == KeyOwner_None)
                             continue
                         text("$key: 0x%08X${if (ownerData.lockUntilRelease) " LockUntilRelease" else if (ownerData.lockThisFrame) " LockThisFrame" else ""}", ownerData.ownerCurr)

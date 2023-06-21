@@ -54,7 +54,7 @@ interface inputsUtilitiesShortcutRouting {
         // Special storage location for mods
         var key = Key of (keyChord wo Key.Mod_Mask)
         if (key == Key.None)
-            key = (Key of mods).convertSingleModFlagToKey()
+            key = (Key of mods).convertSingleModFlagToKey(g)
 
         if (!key.isPressed(ownerId, flags and (InputFlag.Repeat or InputFlag.RepeatRateMask)))
             return false
@@ -123,7 +123,7 @@ interface inputsUtilitiesShortcutRouting {
         // [JVM] don't attempt finding a `Key` with mods, it might not exist and crash, keep it as an `Int`
         val mods = keyChord and Key.Mod_Mask
         if (key == Key.None)
-            key = key.convertSingleModFlagToKey()
+            key = (Key of mods).convertSingleModFlagToKey(g)
         //        IM_ASSERT(IsNamedKey(key))
 
         // Get (in the majority of case, the linked list will have one element so this should be 2 reads.
