@@ -525,6 +525,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var inputTextState = InputTextState(this)
 
+    val inputTextDeactivatedState = InputTextDeactivatedState()
+
     var inputTextPasswordFont = Font()
 
     /** Temporary text input when CTRL+clicking on a slider, etc.   */

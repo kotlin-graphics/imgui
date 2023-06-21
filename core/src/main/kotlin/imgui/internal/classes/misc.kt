@@ -5,7 +5,6 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.api.g
 import imgui.classes.Context
 import imgui.internal.*
 import imgui.internal.sections.*
@@ -290,19 +289,30 @@ data class NextItemData(
         var flags: NextItemDataFlags = none,
 
         /** Set by SetNextItemWidth() */
-    var width: Float = 0f,
+        var width: Float = 0f,
 
         /** Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging) */
-    var focusScopeId: ID = 0,
+        var focusScopeId: ID = 0,
 
         var openCond: Cond = Cond.None,
 
         /** Set by SetNextItemOpen() function. */
-    var openVal: Boolean = false) {
+        var openVal: Boolean = false) {
 
     /** Also cleared manually by ItemAdd()! */
     fun clearFlags() {
         flags = none
+    }
+}
+
+// Short term storage to backup text of a deactivating InputText() while another is stealing active id
+// Internal temporary state for deactivating InputText() instances.
+class InputTextDeactivatedState {
+    var id: ID = 0 // widget id owning the text state (which just got deactivated)
+    var textA = ByteArray(0) // text buffer
+    fun clearFreeMemory() {
+        id = 0
+        textA = ByteArray(0)
     }
 }
 
@@ -395,10 +405,10 @@ class ShrinkWidthItem(var index: Int = 0,
 }
 
 class PtrOrIndex(
-    /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
-    val ptr: TabBar?,
-    /** Usually index in a main pool. */
-    val index: PoolIdx) {
+        /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
+        val ptr: TabBar?,
+        /** Usually index in a main pool. */
+        val index: PoolIdx) {
 
     constructor(ptr: TabBar) : this(ptr, PoolIdx(-1))
 
@@ -428,23 +438,23 @@ class TextIndex {
 
 /* Storage for current popup stack  */
 class PopupData(
-    /** Set on OpenPopup()  */
-    var popupId: ID = 0,
-    /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
-    var window: Window? = null,
-    /** Set on OpenPopup(), a NavWindow that will be restored on popup close */
-    var backupNavWindow: Window? = null,
-    /** Resolved on BeginPopup(). Actually a ImGuiNavLayer type (declared down below), initialized to -1 which is not part of an enum, but serves well-enough as "not any of layers" value */
-    var parentNavLayer: Int = -1,
-    /** Set on OpenPopup()  */
-    var openFrameCount: Int = -1,
-    /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others
-     *  (e.g. inside menu bar vs loose menu items)    */
-    var openParentId: ID = 0,
-    /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
-    var openPopupPos: Vec2 = Vec2(),
-    /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
-    var openMousePos: Vec2 = Vec2())
+        /** Set on OpenPopup()  */
+        var popupId: ID = 0,
+        /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
+        var window: Window? = null,
+        /** Set on OpenPopup(), a NavWindow that will be restored on popup close */
+        var backupNavWindow: Window? = null,
+        /** Resolved on BeginPopup(). Actually a ImGuiNavLayer type (declared down below), initialized to -1 which is not part of an enum, but serves well-enough as "not any of layers" value */
+        var parentNavLayer: Int = -1,
+        /** Set on OpenPopup()  */
+        var openFrameCount: Int = -1,
+        /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others
+         *  (e.g. inside menu bar vs loose menu items)    */
+        var openParentId: ID = 0,
+        /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
+        var openPopupPos: Vec2 = Vec2(),
+        /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
+        var openMousePos: Vec2 = Vec2())
 
 
 /** Clear all settings data */
@@ -526,11 +536,11 @@ class TabItem {
  *  Honor constructor/destructor. Add/remove invalidate all pointers. Indexes have the same lifetime as the associated object. */
 @JvmInline
 value class PoolIdx(val i: Int) {
-  operator fun inc() = PoolIdx(i + 1)
-  operator fun dec() = PoolIdx(i - 1)
-  operator fun compareTo(other: PoolIdx): Int = i.compareTo(other.i)
-  operator fun compareTo(other: Int): Int = i.compareTo(other.i)
-  operator fun minus(int: Int) = PoolIdx(i - int)
+    operator fun inc() = PoolIdx(i + 1)
+    operator fun dec() = PoolIdx(i - 1)
+    operator fun compareTo(other: PoolIdx): Int = i.compareTo(other.i)
+    operator fun compareTo(other: Int): Int = i.compareTo(other.i)
+    operator fun minus(int: Int) = PoolIdx(i - int)
 }
 
 class TabBarPool {
@@ -547,7 +557,7 @@ class TabBarPool {
     operator fun get(n: PoolIdx): TabBar? = list.getOrNull(n.i)
     fun getIndex(p: TabBar): PoolIdx = PoolIdx(list.indexOf(p))
     fun getOrAddByKey(key: ID): TabBar = map[key]?.let { list[it.i] }
-        ?: add().also { map[key] = PoolIdx(list.lastIndex) }
+            ?: add().also { map[key] = PoolIdx(list.lastIndex) }
 
     operator fun contains(p: TabBar): Boolean = p in list
     fun clear() {

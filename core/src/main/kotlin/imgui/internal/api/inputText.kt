@@ -23,6 +23,7 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getScrollbarID
 import imgui.ImGui.io
+import imgui.ImGui.isItemDeactivatedAfterEdit
 import imgui.ImGui.isPressed
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
@@ -48,6 +49,7 @@ import imgui.ImGui.setShortcutRouting
 import imgui.ImGui.shortcut
 import imgui.ImGui.style
 import imgui.api.g
+import imgui.api.gImGui
 import imgui.classes.InputTextCallbackData
 import imgui.internal.*
 import imgui.internal.classes.InputFlag
@@ -78,7 +80,7 @@ internal interface inputText {
     // [JVM] since this is a very particular case, that's why we don't overload
     fun inputTextEx(label: String, hint: String?, buf: ByteArray, sizeArg: Vec2, flags: InputTextFlags,
                     callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean =
-        inputTextEx(label, hint, buf, buf.size, sizeArg, flags, callback, callbackUserData)
+            inputTextEx(label, hint, buf, buf.size, sizeArg, flags, callback, callbackUserData)
 
     /** InputTextEx
      *  - bufSize account for the zero-terminator, so a buf_size of 6 can hold "Hello" but not "Hello!".
@@ -192,6 +194,9 @@ internal interface inputText {
             // Access state even if we don't own it yet.
             state = g.inputTextState
             state.cursorAnimReset()
+
+            // Backup state of deactivating item so they'll have a chance to do a write to output buffer on the same frame they report IsItemDeactivatedAfterEdit (#4714)
+            inputTextDeactivateHook(state.id)
 
             // Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
@@ -540,7 +545,7 @@ internal interface inputText {
                     io.setClipboardTextFn?.let {
                         val ib = if (state.hasSelection) min(state.stb.selectStart, state.stb.selectEnd) else 0
                         val ie =
-                            if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
+                                if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
                         clipboardText = String(state.textW, ib, ie - ib)
                     }
                     if (isCut) {
@@ -595,6 +600,7 @@ internal interface inputText {
                     // Push records into the undo stack so we can CTRL+Z the revert operation itself
                     applyNewText = state.initialTextA
                     applyNewTextLength = state.initialTextA.size
+                    valueChanged = true
 
                     var wText = CharArray(0)
                     if (applyNewTextLength > 0) {
@@ -715,8 +721,20 @@ internal interface inputText {
                 if (!isReadOnly && state.textA strcmp buf != 0) {
                     applyNewText = state.textA
                     applyNewTextLength = state.curLenA
+                    valueChanged = true
                 }
             }
+        }
+
+        // Handle reapplying final data on deactivation (see InputTextDeactivateHook() for details)
+        if (g.inputTextDeactivatedState.id == id) {
+            if (g.activeId != id && isItemDeactivatedAfterEdit && !isReadOnly) {
+                applyNewText = g.inputTextDeactivatedState.textA
+                applyNewTextLength = g.inputTextDeactivatedState.textA.size
+                valueChanged /= !g.inputTextDeactivatedState.textA.contentEquals(buf)
+                //IMGUI_DEBUG_LOG("InputText(): apply Deactivated data for 0x%08X: \"%.*s\".\n", id, apply_new_text_length, apply_new_text);
+            }
+            g.inputTextDeactivatedState.id = 0
         }
 
         // Copy result to user buffer
@@ -746,7 +764,6 @@ internal interface inputText {
             System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min bufSize)
             // [JVM] we need to close the stream with the termination `0` if the valid content is smaller than the buffer size
             if (applyNewTextLength < bufSize) buf[applyNewTextLength] = 0
-            valueChanged = true
         }
 
         // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
@@ -918,7 +935,7 @@ internal interface inputText {
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, 0,
-                                            bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
+                        bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
             }
 
             // Draw blinking cursor
@@ -927,7 +944,7 @@ internal interface inputText {
                 val cursorIsVisible = !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
                 val cursorScreenPos = floor(drawPos + cursorOffset - drawScroll)
                 val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f,
-                                            cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
+                        cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
                 if (cursorIsVisible && cursorScreenRect overlaps clipRect)
                     drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
@@ -953,7 +970,7 @@ internal interface inputText {
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, 0, bufDisplayEnd,
-                                            0f, clipRect.takeUnless { isMultiline })
+                        0f, clipRect.takeUnless { isMultiline })
             }
         }
 
@@ -996,6 +1013,19 @@ internal interface inputText {
             flags has Itf.EnterReturnsTrue -> validated
             else -> valueChanged
         }
+    }
+
+    // As InputText() retain textual data and we currently provide a path for user to not retain it (via local variables)
+    // we need some form of hook to reapply data back to user buffer on deactivation frame. (#4714)
+    // It would be more desirable that we discourage users from taking advantage of the "user not retaining data" trick,
+    // but that more likely be attractive when we do have _NoLiveEdit flag available.
+    fun inputTextDeactivateHook(id: ID) {
+        val g = gImGui
+        val state = g.inputTextState
+        if (id == 0 || state.id != id)
+            return
+        g.inputTextDeactivatedState.id = state.id
+        g.inputTextDeactivatedState.textA = ByteArray(state.curLenA) { state.textA[it] }
     }
 
     /** Create text input in place of another active widget (e.g. used when doing a CTRL+Click on drag/slider widgets)
