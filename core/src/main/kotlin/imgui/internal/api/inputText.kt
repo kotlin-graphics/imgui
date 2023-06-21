@@ -185,7 +185,7 @@ internal interface inputText {
 
         var scrollY = if (isMultiline) drawWindow.scroll.y else Float.MAX_VALUE
 
-        val initChangedSpecs = state != null && state.stb.singleLine != !isMultiline
+        val initChangedSpecs = state != null && state.stb.singleLine != !isMultiline // state != NULL means its our state.
         val initMakeActive = userClicked || userScrollFinish || inputRequestedByNav || inputRequestedByTabbing
         val initState = initMakeActive || userScrollActive
         if ((initState && g.activeId != id) || initChangedSpecs) {

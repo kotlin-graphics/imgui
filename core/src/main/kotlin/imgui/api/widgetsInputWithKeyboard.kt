@@ -54,7 +54,7 @@ interface widgetsInputWithKeyboard {
             inputText(label, buf.toByteArray(), flags, callback, userData)
 
     fun inputText(label: String, buf: StringBuilder, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
-        inputText(label, buf.toString(), flags, callback, userData)
+            inputText(label, buf.toString(), flags, callback, userData)
 
     // [JVM] since this is a very particular case, that's why we don't overload
     fun inputText(label: String, buf: ByteArray, bufEnd: Int, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
@@ -72,7 +72,7 @@ interface widgetsInputWithKeyboard {
 
     /** String overload */
     fun inputTextWithHint(label: String, hint: String, buf: String, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
-        inputTextWithHint(label, hint, buf.toByteArray(), flags)
+            inputTextWithHint(label, hint, buf.toByteArray(), flags)
 
     /** call InputTextMultiline() or InputTextEx() manually if you need multi-line + hint. */
     fun inputTextWithHint(label: String, hint: String, buf: ByteArray, flags: InputTextSingleFlags = none, callback: InputTextCallback? = null, userData: Any? = null): Boolean =
@@ -145,7 +145,10 @@ interface widgetsInputWithKeyboard {
         flags /= Itf.AutoSelectAll or Itf._NoMarkEdited // We call MarkItemEdited() ourselves by comparing the actual data rather than the string.
 
         var valueChanged = false
-        if (step != null) {
+        if (step == null) {
+            if (inputText(label, buf, flags))
+                valueChanged = pData.applyFromText(buf.cStr, format)
+        } else {
             val buttonSize = frameHeight
 
             beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
@@ -183,7 +186,7 @@ interface widgetsInputWithKeyboard {
 
             popID()
             endGroup()
-        } else if (inputText(label, buf, flags)) valueChanged = pData.applyFromText(buf.cStr, format)
+        }
 
         if (valueChanged) markItemEdited(g.lastItemData.id)
 
