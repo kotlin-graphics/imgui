@@ -328,6 +328,8 @@ fun parseFormatTrimDecorations(fmt: String): String {
 // - stb_sprintf.h supports several new modifiers which format numbers in a way that also makes them incompatible atof/atoi.
 fun parseFormatSanitizeForPrinting(fmt: String): String = fmt.filter { it != '\'' && it != '$' && it != '_' } // Custom flags provided by stb_sprintf.h. POSIX 2008 also supports '.
 
+/** ~ImParseFormatSanitizeForScanning
+ *  - For scanning we need to remove all width and precision fields and flags "%+3.7f" -> "%f". BUT don't strip types like "%I64d" which includes digits. ! "%07I64d" -> "%I64d" */
 fun parseFormatSanitizeForScanning(fmt: String): String {
     val fmtEnd = parseFormatFindEnd(fmt)
     //    IM_UNUSED(fmt_out_size)
@@ -335,7 +337,7 @@ fun parseFormatSanitizeForScanning(fmt: String): String {
     var hasType = false
     val out = StringBuilder()
     for (c in fmt) {
-        if (!hasType && (c in '0'..'9' || c == '.'))
+        if (!hasType && (c in '0'..'9' || c == '.' || c == '+' || c == '#'))
             continue
         hasType = hasType || c in 'a'..'z' || c in 'A'..'Z' // Stop skipping digits
         if (c != '\'' && c != '$' && c != '_') // Custom flags provided by stb_sprintf.h. POSIX 2008 also supports '.
