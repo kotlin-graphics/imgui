@@ -259,7 +259,7 @@ internal interface widgetsLowLevelBehaviors {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
                 pressed = true
                 setActiveID(id, window)
-                g.activeIdSource = InputSource.Nav
+                g.activeIdSource = g.navInputSource
                 if (flags hasnt Bf.NoNavFocus)
                     setFocusID(id, window)
             }
@@ -288,7 +288,7 @@ internal interface widgetsLowLevelBehaviors {
                     clearActiveID()
                 }
                 if (flags hasnt Bf.NoNavFocus) g.navDisableHighlight = true
-            } else if (g.activeIdSource == InputSource.Nav)
+            } else if (g.activeIdSource == InputSource.Keyboard || g.activeIdSource == InputSource.Gamepad)
             // When activated using Nav, we hold on the ActiveID until activation button is released
                 if (g.navActivateDownId != id) clearActiveID()
             if (pressed) g.activeIdHasBeenPressedBefore = true
@@ -299,8 +299,10 @@ internal interface widgetsLowLevelBehaviors {
     fun <N> NumberOps<N>.dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> {
         if (g.activeId == id)
         // Those are the things we can do easily outside the DragBehaviorT<> template, saves code generation.
-            if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0]) clearActiveID()
-            else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated) clearActiveID()
+            if (g.activeIdSource == InputSource.Mouse && !g.io.mouseDown[0])
+                clearActiveID()
+            else if ((g.activeIdSource == InputSource.Keyboard || g.activeIdSource == InputSource.Gamepad) && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
+                clearActiveID()
 
         if (g.activeId != id) return false
         if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly) return false

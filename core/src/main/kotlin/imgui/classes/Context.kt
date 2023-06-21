@@ -179,7 +179,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var activeIdWindow: Window? = null
 
-    /** Activating with mouse or nav (gamepad/keyboard) */
+    /** Activating source: ImGuiInputSource_Mouse OR ImGuiInputSource_Keyboard OR ImGuiInputSource_Gamepad */
     var activeIdSource = InputSource.None
 
     var activeIdMouseButton = MouseButton.None
@@ -305,8 +305,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navNextActivateFlags: ActivateFlags = none
 
-    /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
-    var navInputSource = InputSource.None
+    /** Keyboard or Gamepad mode? THIS CAN ONLY BE ImGuiInputSource_Keyboard or ImGuiInputSource_Mouse  */
+    var navInputSource = InputSource.Keyboard
 
     /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
      *  may expose layers later. */

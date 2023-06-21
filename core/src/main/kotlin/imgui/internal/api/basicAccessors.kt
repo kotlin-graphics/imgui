@@ -62,10 +62,8 @@ internal interface basicAccessors {
         g.activeIdHasBeenEditedThisFrame = false
         if (id != 0) {
             g.activeIdIsAlive = id
-            g.activeIdSource = when (id) {
-                g.navActivateId, g.navJustMovedToId -> InputSource.Nav
-                else -> InputSource.Mouse
-            }
+            g.activeIdSource = if (g.navActivateId == id || g.navJustMovedToId == id) g.navInputSource else InputSource.Mouse
+            assert(g.activeIdSource != InputSource.None)
         }
 
         // Clear declaration of inputs claimed by the widget
@@ -92,7 +90,7 @@ internal interface basicAccessors {
         if (g.lastItemData.id == id)
             window.navRectRel[navLayer].put(window rectAbsToRel g.lastItemData.navRect)
 
-        if (g.activeIdSource == InputSource.Nav)
+        if (g.activeIdSource == InputSource.Keyboard || g.activeIdSource == InputSource.Gamepad)
             g.navDisableMouseHover = true
         else
             g.navDisableHighlight = true

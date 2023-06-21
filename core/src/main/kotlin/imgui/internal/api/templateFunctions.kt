@@ -193,7 +193,7 @@ internal interface templateFunctions {
             adjustDelta = io.mouseDelta[axis].fp
             if (io.keyAlt) adjustDelta *= 1f.fp / 100f.fp
             if (io.keyShift) adjustDelta *= 10f.fp
-        } else if (g.activeIdSource == InputSource.Nav) {
+        } else if (g.activeIdSource == InputSource.Keyboard || g.activeIdSource == InputSource.Gamepad) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
             val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
             val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
@@ -324,7 +324,7 @@ internal interface templateFunctions {
                 if (axis == Axis.Y) clickedT = 1f - clickedT
                 setNewValue = true
             }
-            else if (g.activeIdSource == InputSource.Nav) {
+            else if (g.activeIdSource == InputSource.Keyboard || g.activeIdSource == InputSource.Gamepad) {
 
                 if (g.activeIdIsJustActivated) {
                     g.sliderCurrentAccum = 0f // Reset any stored nav delta upon activation

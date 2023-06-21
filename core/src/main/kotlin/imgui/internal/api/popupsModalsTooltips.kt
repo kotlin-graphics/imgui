@@ -79,7 +79,7 @@ internal interface popupsModalsTooltips {
             focusWindow(childWindow)
             navInitWindow(childWindow, false)
             setActiveID(id + 1, childWindow) // Steal ActiveId with another arbitrary id so that key-press won't activate child item
-            g.activeIdSource = InputSource.Nav
+            g.activeIdSource = g.navInputSource
         }
 
         return ret

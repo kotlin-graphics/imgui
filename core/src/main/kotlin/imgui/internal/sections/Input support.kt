@@ -10,10 +10,7 @@ enum class InputSource {
     None, Mouse, Keyboard, Gamepad,
 
     /** Currently only used by InputText() */
-    Clipboard,
-
-    /** Stored in g.ActiveIdSource only */
-    Nav
+    Clipboard
 }
 
 // FIXME: Structures in the union below need to be declared as anonymous unions appears to be an extension?

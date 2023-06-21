@@ -487,7 +487,7 @@ interface demoDebugInformations {
         if (treeNode("Internal state")) {
 
             // [JVM] redundant
-            //            const char* input_source_names[] = { "None", "Mouse", "Keyboard", "Gamepad", "Nav", "Clipboard" }; IM_ASSERT(IM_ARRAYSIZE(input_source_names) == ImGuiInputSource_COUNT);
+            //            const char* input_source_names[] = { "None", "Mouse", "Keyboard", "Gamepad", "Clipboard" }; IM_ASSERT(IM_ARRAYSIZE(input_source_names) == ImGuiInputSource_COUNT);
 
             text("WINDOWING")
             indent {
