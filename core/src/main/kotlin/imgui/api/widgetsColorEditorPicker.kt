@@ -698,13 +698,10 @@ fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = none, refCol
         val trb = wheelCenter + trianglePb.rotate(cosHueAngle, sinHueAngle)
         val trc = wheelCenter + trianglePc.rotate(cosHueAngle, sinHueAngle)
         val uvWhite = fontTexUvWhitePixel
-        drawList.primReserve(6, 6)
+        drawList.primReserve(3, 3)
         drawList.primVtx(tra, uvWhite, hueColor32)
-        drawList.primVtx(trb, uvWhite, hueColor32)
-        drawList.primVtx(trc, uvWhite, colWhite)
-        drawList.primVtx(tra, uvWhite, 0)
         drawList.primVtx(trb, uvWhite, colBlack)
-        drawList.primVtx(trc, uvWhite, 0)
+        drawList.primVtx(trc, uvWhite, colWhite)
         drawList.addTriangle(tra, trb, trc, colMidgrey, 1.5f)
         svCursorPos put trc.lerp(tra, saturate(S)).lerp(trb, saturate(1 - V))
     } else if (flags has Cef.PickerHueBar) {
