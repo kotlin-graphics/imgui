@@ -35,14 +35,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var io = IO(sharedFontAtlas).apply { ctx = this@Context }
 
-    /** Input events which will be tricked/written into IO structure. */
-    val inputEventsQueue = ArrayList<InputEvent>()
-
-    /** Past input events processed in NewFrame(). This is to allow domain-specific application to access e.g mouse/pen trail. */
-    val inputEventsTrail = ArrayList<InputEvent>()
-
-    var inputEventsNextMouseSource: MouseSource = MouseSource.Mouse
-
     var style = Style()
 
     lateinit var font: Font
@@ -80,6 +72,18 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Test engine user data */
     var testEngine: Any? = null
+
+    // Inputs
+
+    /** Input events which will be tricked/written into IO structure. */
+    val inputEventsQueue = ArrayList<InputEvent>()
+
+    /** Past input events processed in NewFrame(). This is to allow domain-specific application to access e.g mouse/pen trail. */
+    val inputEventsTrail = ArrayList<InputEvent>()
+
+    var inputEventsNextMouseSource: MouseSource = MouseSource.Mouse
+
+    var inputEventsNextEventId = 1u
 
 
     // Windows state

@@ -255,7 +255,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             return
 
         // Add event
-        g.inputEventsQueue += InputEvent.Key(key, down, analogValue, if (key.isGamepad) InputSource.Gamepad else InputSource.Keyboard)
+        g.inputEventsQueue += InputEvent.Key(key, down, analogValue, if (key.isGamepad) InputSource.Gamepad else InputSource.Keyboard, g.inputEventsNextEventId++)
     }
 
     /** Queue a mouse position update. Use -FLT_MAX,-FLT_MAX to signify no mouse (e.g. app not focused and not hovered) */
@@ -273,7 +273,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (latestPos.x == pos.x && latestPos.y == pos.y)
             return
 
-        g.inputEventsQueue += InputEvent.MousePos(pos.x, pos.y, g.inputEventsNextMouseSource)
+        g.inputEventsQueue += InputEvent.MousePos(pos.x, pos.y, g.inputEventsNextMouseSource, g.inputEventsNextEventId++)
     }
 
     /** Queue a mouse button change */
@@ -288,7 +288,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (latestButtonDown == down)
             return
 
-        g.inputEventsQueue += InputEvent.MouseButton(mouseButton, down, g.inputEventsNextMouseSource)
+        g.inputEventsQueue += InputEvent.MouseButton(mouseButton, down, g.inputEventsNextMouseSource, g.inputEventsNextEventId++)
     }
 
     /** Queue a mouse wheel update. wheel_y<0: scroll down, wheel_y>0: scroll up, wheel_x<0: scroll right, wheel_x>0: scroll left.
@@ -301,7 +301,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (!appAcceptingEvents || (wheelX == 0f && wheelY == 0f))
             return
 
-        g.inputEventsQueue += InputEvent.MouseWheel(wheelX, wheelY, g.inputEventsNextMouseSource)
+        g.inputEventsQueue += InputEvent.MouseWheel(wheelX, wheelY, g.inputEventsNextMouseSource, g.inputEventsNextEventId++)
     }
 
     // Queue a mouse source change (Mouse/TouchScreen/Pen)
@@ -323,7 +323,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (latestFocused == focused)
             return
 
-        g.inputEventsQueue += InputEvent.AppFocused(focused)
+        g.inputEventsQueue += InputEvent.AppFocused(focused, g.inputEventsNextEventId++)
     }
 
     /** Queue a new character input
@@ -336,7 +336,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (c == NUL || !appAcceptingEvents)
             return
 
-        g.inputEventsQueue += InputEvent.Text(c)
+        g.inputEventsQueue += InputEvent.Text(c, g.inputEventsNextEventId++)
     }
 
     /** Queue a new character input from a UTF-16 character, it can be a surrogate

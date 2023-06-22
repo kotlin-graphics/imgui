@@ -14,38 +14,39 @@ enum class InputSource {
 // FIXME: Structures in the union below need to be declared as anonymous unions appears to be an extension?
 // Using ImVec2() would fail on Clang 'union member 'MousePos' has a non-trivial default constructor'
 
-sealed class InputEvent {
+sealed class InputEvent(val eventId: UInt) { // Unique, sequential increasing integer to identify an event (if you need to correlate them to other data).
+
     abstract val source: InputSource
     var addedByTestEngine = false
 
     class MousePos(val posX: Float,
                    val posY: Float,
-                   val mouseSource: MouseSource) : InputEvent() {
+                   val mouseSource: MouseSource, eventId: UInt) : InputEvent(eventId) {
         override val source: InputSource = InputSource.Mouse
     }
 
     class MouseWheel(val wheelX: Float,
                      val wheelY: Float,
-                     val mouseSource: MouseSource) : InputEvent() {
+                     val mouseSource: MouseSource, eventId: UInt) : InputEvent(eventId) {
         override val source: InputSource = InputSource.Mouse
     }
 
     class MouseButton(val button: imgui.MouseButton,
                       val down: Boolean,
-                      val mouseSource: MouseSource) : InputEvent() {
+                      val mouseSource: MouseSource, eventId: UInt) : InputEvent(eventId) {
         override val source: InputSource = InputSource.Mouse
     }
 
     class Key(val key: imgui.Key,
               val down: Boolean,
               val analogValue: Float,
-              override val source: InputSource = InputSource.Keyboard) : InputEvent()
+              override val source: InputSource = InputSource.Keyboard, eventId: UInt) : InputEvent(eventId)
 
-    class Text(val char: Char) : InputEvent() {
+    class Text(val char: Char, eventId: UInt) : InputEvent(eventId) {
         override val source: InputSource = InputSource.Keyboard
     }
 
-    class AppFocused(val focused: Boolean) : InputEvent() {
+    class AppFocused(val focused: Boolean, eventId: UInt) : InputEvent(eventId) {
         override val source: InputSource = InputSource.None
     }
 }
