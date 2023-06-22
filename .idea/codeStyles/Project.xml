@@ -1,0 +1,12 @@
+<component name="ProjectCodeStyleConfiguration">
+  <code_scheme name="Project" version="173">
+    <JetCodeStyleSettings>
+      <option name="LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY" value="false" />
+    </JetCodeStyleSettings>
+    <codeStyleSettings language="kotlin">
+      <option name="METHOD_ANNOTATION_WRAP" value="0" />
+      <option name="CLASS_ANNOTATION_WRAP" value="0" />
+      <option name="FIELD_ANNOTATION_WRAP" value="0" />
+    </codeStyleSettings>
+  </code_scheme>
+</component>

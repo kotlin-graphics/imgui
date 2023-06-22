@@ -65,6 +65,8 @@ internal interface newFrame {
                     //                    assert(button >= 0 && button < ImGuiMouseButton_COUNT)
                     if (trickleFastInputs && ((mouseButtonChanged has (1 shl button.i)) || mouseWheeled))
                         break
+                    if (trickleFastInputs && e.mouseSource == MouseSource.TouchScreen && mouseMoved) // #2702: TouchScreen have no initial hover.
+                        break
                     io.mouseDown[button.i] = e.down
                     io.mouseSource = e.mouseSource
                     mouseButtonChanged = mouseButtonChanged or (1 shl button.i)

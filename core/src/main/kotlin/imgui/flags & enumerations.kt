@@ -1379,7 +1379,7 @@ sealed class Key(private val int: Int? = null) : FlagBase<Key>() {
 // Historically we use "Mouse" terminology everywhere to indicate pointer data, e.g. MousePos, IsMousePressed(), io.AddMousePosEvent()
 // But that "Mouse" data can come from different source which occasionally may be useful for application to know about.
 // You can submit a change of pointer type using io.AddMouseSourceEvent().
-// -> enum ImGuiMouseSource      // Enum; A mouse input source identifier (Mouse, TouchPad, TouchScreen, Pen)
+// -> enum ImGuiMouseSource      // Enum; A mouse input source identifier (Mouse, TouchScreen, Pen)
 sealed class MouseSource : FlagBase<MouseSource>() {
 
     /** Input is coming from an actual mouse. */

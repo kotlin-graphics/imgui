@@ -494,7 +494,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mouse wheel Horizontal. >0 scrolls Left, <0 scrolls Right. Most users don't have a mouse with a horizontal wheel, may not be filled by all backends.  */
     var mouseWheelH = 0f
 
-    /** Mouse actual input peripheral (Mouse/TouchPad/TouchScreen/Pen). */
+    /** Mouse actual input peripheral (Mouse/TouchScreen/Pen). */
     var mouseSource: MouseSource = MouseSource.Mouse
 
     /** Keyboard modifier down: Control  */
