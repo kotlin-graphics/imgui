@@ -277,13 +277,13 @@ object DemoWindow {
                     Here we expose them as read-only fields to avoid breaking interactions with your backend.""".trimIndent()
                 )
 
-                // Make a local copy to avoid modifying actual backend flags.
-                // FIXME: We don't use BeginDisabled() to keep label bright, maybe we need a BeginReadonly() equivalent..
-                val backendFlags = flagArrayOf(io.backendFlags)
-                checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad)
-                checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors)
-                checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos)
-                checkboxFlags("io.BackendFlags: RendererHasVtxOffset", backendFlags, BackendFlag.RendererHasVtxOffset)
+                // FIXME: Maybe we need a BeginReadonly() equivalent to keep label bright?
+                beginDisabled()
+                checkboxFlags("io.BackendFlags: HasGamepad", io::backendFlags, BackendFlag.HasGamepad)
+                checkboxFlags("io.BackendFlags: HasMouseCursors", io::backendFlags, BackendFlag.HasMouseCursors)
+                checkboxFlags("io.BackendFlags: HasSetMousePos", io::backendFlags, BackendFlag.HasSetMousePos)
+                checkboxFlags("io.BackendFlags: RendererHasVtxOffset", io::backendFlags, BackendFlag.RendererHasVtxOffset)
+                endDisabled()
                 spacing()
             }
 

@@ -273,7 +273,10 @@ internal interface widgetsLowLevelBehaviors {
                     g.activeIdClickOffset = io.mousePos - bb.min
 
                 val mouseButton = g.activeIdMouseButton
-                if (mouseButton isDown testOwnerId)
+                if (mouseButton == MouseButton.None)
+                    // Fallback for the rare situation were g.ActiveId was set programmatically or from another widget (e.g. #6304).
+                    clearActiveID()
+                else if (mouseButton isDown testOwnerId)
                     held = true
                 else {
                     val releaseIn = hovered && flags has Bf.PressedOnClickRelease
