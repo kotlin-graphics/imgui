@@ -28,7 +28,7 @@ interface settingsWindows {
 
     // We don't provide a FindWindowSettingsByName() because Docking system doesn't always hold on names.
     // This is called once per window .ini entry + once per newly instanciated window.
-    fun findWindowSettingsByID(id: ID): WindowSettings? = g.settingsWindows.find { it.id == id }
+    fun findWindowSettingsByID(id: ID): WindowSettings? = g.settingsWindows.find { it.id == id && !it.wantDelete }
 
     // This is faster if you are holding on a Window already as we don't need to perform a search.
     fun findWindowSettingsByWindow(window: Window): WindowSettings? {
