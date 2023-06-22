@@ -4,6 +4,7 @@ import glm_.glm
 import glm_.max
 import imgui.*
 import imgui.classes.Context
+import imgui.internal.charIsBlankW
 import imgui.internal.isBlankW
 import imgui.internal.textCountUtf8BytesFromStr
 import imgui.static.inputTextCalcTextSizeW
@@ -15,8 +16,8 @@ import uno.kotlin.NUL
 /** Internal state of the currently focused/edited text input box
  *  For a given item ID, access with ImGui::GetInputTextState() */
 class InputTextState(
-    /** parent UI context (needs to be set explicitly by parent).t */
-    val ctx: Context) {
+        /** parent UI context (needs to be set explicitly by parent).t */
+        val ctx: Context) {
 
     /** widget id owning the text state */
     var id: ID = 0
@@ -166,21 +167,32 @@ class InputTextState(
     /** ~is_separator */
     val Char.isSeparator: Boolean
         get() = let { c ->
-            isBlankW || c == ',' || c == ';' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '|' || c == '\n' || c == '\r'
+            isBlankW || c == ',' || c == ';' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '|' || c == '\n' || c == '\r' || c == '.' || c == '!'
         }
 
     /** ~is_word_boundary_from_right */
-    infix fun isWordBoundaryFromRight(idx: Int): Boolean = when {
-        flags has InputTextFlag.Password -> false
-        idx > 0 -> textW[idx - 1].isSeparator && !textW[idx].isSeparator
-        else -> true
+    infix fun isWordBoundaryFromRight(idx: Int): Boolean {
+        // When ImGuiInputTextFlags_Password is set, we don't want actions such as CTRL+Arrow to leak the fact that underlying data are blanks or separators.
+        if (flags has InputTextFlag.Password || idx <= 0)
+            return false
+
+        val prevWhite = charIsBlankW(textW[idx - 1].code)
+        val prevSepar = textW[idx - 1].isSeparator
+        val currWhite = charIsBlankW(textW[idx].code)
+        val currSepar = textW[idx].isSeparator
+        return ((prevWhite || prevSepar) && !(currSepar || currWhite)) || (currSepar && !prevSepar)
     }
 
     /** ~is_word_boundary_from_left */
-    infix fun isWordBoundaryFromLeft(idx: Int): Boolean = when {
-        flags has InputTextFlag.Password -> false
-        idx > 0 -> !textW[idx - 1].isSeparator && textW[idx].isSeparator
-        else -> true
+    infix fun isWordBoundaryFromLeft(idx: Int): Boolean {
+        if (flags has InputTextFlag.Password || idx <= 0)
+            return false
+
+        val prevWhite = charIsBlankW(textW[idx].code)
+        val prev_separ = textW[idx].isSeparator
+        val curr_white = charIsBlankW(textW[idx - 1].code)
+        val curr_separ = textW[idx - 1].isSeparator
+        return ((prevWhite) && !(curr_separ || curr_white)) || (curr_separ && !prev_separ)
     }
 
     /** ~STB_TEXTEDIT_MOVEWORDRIGHT_MAC */
@@ -246,7 +258,7 @@ class InputTextState(
         assert(pos <= textLen)
 
         val newTextLenUtf8 = textCountUtf8BytesFromStr(newText, ptr, newTextLen)
-        if (!isResizable && newTextLenUtf8 + curLenA + 1> bufCapacityA)
+        if (!isResizable && newTextLenUtf8 + curLenA + 1 > bufCapacityA)
             return false
 
         // Grow internal buffer if needed
