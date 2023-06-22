@@ -410,7 +410,7 @@ class Window(
     // sparse static methods
 
     /** ~IsWindowContentHoverable */
-    infix fun isContentHoverable(flags: HoveredFlags): Boolean { // An active popup disable hovering on other windows (apart from its own children)
+    fun isContentHoverable(flags: HoveredFlags = none): Boolean { // An active popup disable hovering on other windows (apart from its own children)
         // FIXME-OPT: This could be cached/stored within the window.
         val focusedRootWindow = g.navWindow?.rootWindow ?: return true
         if (focusedRootWindow.wasActive && focusedRootWindow !== rootWindow) {

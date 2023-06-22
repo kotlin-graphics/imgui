@@ -199,6 +199,8 @@ internal interface basicHelpersForWidgetCode {
         return !g.navDisableMouseHover
     }
 
+    // IsWindowContentHoverable -> Window class
+
     // FIXME: This is inlined/duplicated in ItemAdd()
     fun isClippedEx(bb: Rect, id: ID): Boolean {
         val window = g.currentWindow!!

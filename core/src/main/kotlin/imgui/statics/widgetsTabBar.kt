@@ -6,7 +6,10 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.findTabByID
+import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.processReorder
+import imgui.ImGui.setOwner
+import imgui.ImGui.testOwner
 import imgui.api.g
 import imgui.internal.classes.*
 import imgui.internal.floor
@@ -16,6 +19,9 @@ import imgui.internal.sections.ButtonFlag
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+
+// Scrolling happens only in the central section (leading/trailing sections are not scrolling)
+infix fun TabBar.calcScrollableWidth(sections: Array<TabBarSection>): Float = barRect.width - sections[0].width - sections[2].width - sections[1].spacing
 
 /** This is called only once a frame before by the first call to ItemTab()
  *  The reason we're not calling it in BeginTabBar() is to leave a chance to the user to call the SetTabItemClosed() functions.
@@ -211,9 +217,21 @@ fun TabBar.layout() {
     visibleTabId = selectedTabId
     visibleTabWasSubmitted = false
 
-    // Update scrolling
+    // Apply request requests
     if (scrollToTabID != 0)
         scrollToTab(scrollToTabID, sections)
+    else if (flags has TabBarFlag.FittingPolicyScroll && isMouseHoveringRect(barRect.min, barRect.max, true) && g.currentWindow.isContentHoverable) {
+        val wheel = if (g.io.mouseWheelRequestAxisSwap) g.io.mouseWheel else g.io.mouseWheelH
+        val wheelKey = if (g.io.mouseWheelRequestAxisSwap) Key.MouseWheelY else Key.MouseWheelX
+        if (wheelKey.testOwner(id) && wheel != 0f) {
+            val scrollStep = wheel * calcScrollableWidth(sections) / 3f
+            scrollingTargetDistToVisibility = 0f
+            scrollingTarget = scrollClamp(scrollingTarget - scrollStep)
+        }
+        wheelKey.setOwner(id)
+    }
+
+    // Update scrolling
     scrollingAnim = scrollClamp(scrollingAnim)
     scrollingTarget = scrollClamp(scrollingTarget)
     if (scrollingAnim != scrollingTarget) { // Scrolling speed adjust itself so we can always reach our target in 1/3 seconds.
@@ -272,8 +290,7 @@ fun TabBar.scrollToTab(tabId: ID, sections: Array<TabBarSection>) {
     val order = tab.order
 
     // Scrolling happens only in the central section (leading/trailing sections are not scrolling)
-    // FIXME: This is all confusing.
-    val scrollableWidth = barRect.width - sections[0].width - sections[2].width - sections[1].spacing
+    val scrollableWidth = calcScrollableWidth(sections)
 
     // We make all tabs positions all relative Sections[0].Width to make code simpler
     val tabX1 = tab.offset - sections[0].width + if (order > sections[0].tabCount - 1) -margin else 0f
