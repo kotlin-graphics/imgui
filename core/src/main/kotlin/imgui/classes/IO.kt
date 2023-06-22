@@ -542,6 +542,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Track if button was clicked inside a dear imgui window. */
     val mouseDownOwnedUnlessPopupClose = BooleanArray(5)
 
+    /** On a non-Mac system, holding SHIFT requests WheelY to perform the equivalent of a WheelX event. On a Mac system this is already enforced by the system. */
+    var mouseWheelRequestAxisSwap = false
+
     /** Duration the mouse button has been down (0.0f == just clicked)  */
     val mouseDownDuration = FloatArray(5) { -1f }
 

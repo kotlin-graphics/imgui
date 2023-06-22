@@ -78,10 +78,16 @@ fun updateMouseInputs() {
 
     with(io) {
 
+        // Mouse Wheel swapping flag
+        // As a standard behavior holding SHIFT while using Vertical Mouse Wheel triggers Horizontal scroll instead
+        // - We avoid doing it on OSX as it the OS input layer handles this already.
+        // - FIXME: However this means when running on OSX over Emscripten, Shift+WheelY will incur two swapping (1 in OS, 1 here), canceling the feature.
+        // - FIXME: When we can distinguish e.g. touchpad scroll events from mouse ones, we'll set this accordingly based on input source.
+        mouseWheelRequestAxisSwap = keyShift && !configMacOSXBehaviors
+
         // Round mouse position to avoid spreading non-rounded position (e.g. UpdateManualResize doesn't support them well)
-        if (isMousePosValid(mousePos)) {
+        if (isMousePosValid(mousePos))
             mousePos put floorSigned(mousePos); g.mouseLastValidPos put mousePos
-        }
 
         // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component) we cancel out movement in MouseDelta
         if (isMousePosValid(mousePos) && isMousePosValid(mousePosPrev))
@@ -181,14 +187,9 @@ fun updateMouseWheel() {
         return
 
     // Mouse wheel scrolling
-    // As a standard behavior holding SHIFT while using Vertical Mouse Wheel triggers Horizontal scroll instead
-    // - We avoid doing it on OSX as it the OS input layer handles this already.
-    // - However this means when running on OSX over Emcripten, Shift+WheelY will incur two swappings (1 in OS, 1 here), cancelling the feature.
-    val swapAxis = g.io.keyShift && !g.io.configMacOSXBehaviors
-    if (swapAxis) {
-        wheel.x = wheel.y
-        wheel.y = 0f
-    }
+    // Read about io.MouseWheelRequestAxisSwap and its issue on Mac+Emscripten in UpdateMouseInputs()
+    if (g.io.mouseWheelRequestAxisSwap)
+        wheel.put(wheel.y, 0f)
 
     // Maintain a rough average of moving magnitude on both axises
     // FIXME: should by based on wall clock time rather than frame-counter
