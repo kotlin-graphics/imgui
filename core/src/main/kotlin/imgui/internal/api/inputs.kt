@@ -210,6 +210,16 @@ internal interface inputs {
         ownerData.lockThisFrame = flags has InputFlag.LockThisFrame || ownerData.lockUntilRelease
     }
 
+    // Rarely used helper
+    fun KeyChord.setOwners(ownerId: ID, flags: InputFlags = none) {
+        if (has(Key.Mod_Ctrl)) Key.Mod_Ctrl.setOwner(ownerId, flags)
+        if (has(Key.Mod_Shift)) Key.Mod_Shift.setOwner(ownerId, flags)
+        if (has(Key.Mod_Alt)) Key.Mod_Alt.setOwner(ownerId, flags)
+        if (has(Key.Mod_Super)) Key.Mod_Super.setOwner(ownerId, flags)
+        if (has(Key.Mod_Shortcut)) Key.Mod_Shortcut.setOwner(ownerId, flags)
+        if (wo(Key.Mod_Mask).isNotEmpty) (Key of (this wo Key.Mod_Mask)).setOwner(ownerId, flags)
+    }
+
     // This is more or less equivalent to:
     //   if (IsItemHovered() || IsItemActive())
     //       SetKeyOwner(key, GetItemID());

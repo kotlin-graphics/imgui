@@ -44,6 +44,7 @@ import imgui.ImGui.setNavID
 import imgui.ImGui.setNavWindow
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
+import imgui.ImGui.setOwners
 import imgui.ImGui.setPos
 import imgui.ImGui.setScrollX
 import imgui.ImGui.setScrollY
@@ -235,10 +236,11 @@ fun navUpdateWindowing() {
             g.navWindowingTargetAnim = null
     }
     // Start CTRL+TAB or Square+L/R window selection
+    val ownerId = hashStr("###NavUpdateWindowing")
     val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
     val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
-    val keyboardNextWindow = allowWindowing && g.configNavWindowingKeyNext.isNotEmpty && shortcut(g.configNavWindowingKeyNext, KeyOwner_None, InputFlag.Repeat or InputFlag.RouteAlways)
-    val keyboardPrevWindow = allowWindowing && g.configNavWindowingKeyPrev.isNotEmpty && shortcut(g.configNavWindowingKeyPrev, KeyOwner_None, InputFlag.Repeat or InputFlag.RouteAlways)
+    val keyboardNextWindow = allowWindowing && g.configNavWindowingKeyNext.isNotEmpty && shortcut(g.configNavWindowingKeyNext, ownerId, InputFlag.Repeat / InputFlag.RouteAlways)
+    val keyboardPrevWindow = allowWindowing && g.configNavWindowingKeyPrev.isNotEmpty && shortcut(g.configNavWindowingKeyPrev, ownerId, InputFlag.Repeat / InputFlag.RouteAlways)
     val startWindowingWithGamepad = allowWindowing && navGamepadActive && g.navWindowingTarget == null && Key._NavGamepadMenu.isPressed(0)
     val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && (keyboardNextWindow || keyboardPrevWindow) // Note: enabled even without NavEnableKeyboard!
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
@@ -248,6 +250,10 @@ fun navUpdateWindowing() {
             g.navWindowingAccumDeltaPos put 0f; g.navWindowingAccumDeltaSize put 0f
             g.navWindowingToggleLayer = startWindowingWithGamepad // Gamepad starts toggling layer
             g.navInputSource = if (startWindowingWithKeyboard) InputSource.Keyboard else InputSource.Gamepad
+
+            // Register ownership of our mods. Using ImGuiInputFlags_RouteGlobalHigh in the Shortcut() calls instead would probably be correct but may have more side-effects.
+            if (keyboardNextWindow || keyboardPrevWindow)
+                ((g.configNavWindowingKeyNext / g.configNavWindowingKeyPrev) and Key.Mod_Mask).setOwners(ownerId)
         }
 
     // Gamepad update
