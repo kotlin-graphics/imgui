@@ -349,7 +349,10 @@ internal interface renderHelpers {
         addTriangleFilled(center + a, center + b, center + c, col)
     }
 
-    fun DrawList.renderBullet(pos: Vec2, col: Int) = addCircleFilled(pos, _data.fontSize * 0.2f, col, 8)
+    fun DrawList.renderBullet(pos: Vec2, col: Int) {
+        // FIXME-OPT: This should be baked in font.
+        addCircleFilled(pos, _data.fontSize * 0.2f, col, 8)
+    }
 
     @Deprecated("placeholder: pos gets modified!")
     fun DrawList.renderCheckMark(pos: Vec2, col: Int, sz_: Float) {

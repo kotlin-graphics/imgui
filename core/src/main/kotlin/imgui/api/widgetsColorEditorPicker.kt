@@ -688,7 +688,7 @@ fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = none, refCol
         val sinHueAngle = glm.sin(H * 2f * glm.PIf)
         val hueCursorPos = Vec2(wheelCenter.x + cosHueAngle * (wheelRInner + wheelROuter) * 0.5f, wheelCenter.y + sinHueAngle * (wheelRInner + wheelROuter) * 0.5f)
         val hueCursorRad = wheelThickness * if (valueChangedH) 0.65f else 0.55f
-        val hueCursorSegments = glm.clamp((hueCursorRad / 1.4f).i, 9, 32)
+        val hueCursorSegments = drawList._calcCircleAutoSegmentCount(hueCursorRad) // Lock segment count so the +1 one matches others.
         drawList.addCircleFilled(hueCursorPos, hueCursorRad, hueColor32, hueCursorSegments)
         drawList.addCircle(hueCursorPos, hueCursorRad + 1, colMidgrey, hueCursorSegments)
         drawList.addCircle(hueCursorPos, hueCursorRad, colWhite, hueCursorSegments)
@@ -726,9 +726,10 @@ fun colorPicker4(label: String, col: Vec4, flags_: ColorEditFlags = none, refCol
 
     // Render cursor/preview circle (clamp S/V within 0..1 range because floating points colors may lead HSV values to be out of range)
     val svCursorRad = if (valueChangedSv) 10f else 6f
-    drawList.addCircleFilled(svCursorPos, svCursorRad, userCol32StripedOfAlpha, 12)
-    drawList.addCircle(svCursorPos, svCursorRad + 1, colMidgrey, 12)
-    drawList.addCircle(svCursorPos, svCursorRad, colWhite, 12)
+    val svCursorSegments = drawList._calcCircleAutoSegmentCount(svCursorRad) // Lock segment count so the +1 one matches others.
+    drawList.addCircleFilled(svCursorPos, svCursorRad, userCol32StripedOfAlpha, svCursorSegments)
+    drawList.addCircle(svCursorPos, svCursorRad + 1, colMidgrey, svCursorSegments)
+    drawList.addCircle(svCursorPos, svCursorRad, colWhite, svCursorSegments)
 
     // Render alpha bar
     if (alphaBar) {

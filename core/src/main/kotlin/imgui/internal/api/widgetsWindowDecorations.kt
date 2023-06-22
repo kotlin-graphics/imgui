@@ -44,7 +44,7 @@ internal interface widgetsWindowDecorations {
         val center = Vec2(bb.center)
         if (hovered) {
             val col = if (held) Col.ButtonActive else Col.ButtonHovered
-            window.drawList.addCircleFilled(center, 2f max (g.fontSize * 0.5f + 1f), col.u32, 12)
+            window.drawList.addCircleFilled(center, 2f max (g.fontSize * 0.5f + 1f), col.u32)
         }
 
         val crossExtent = g.fontSize * 0.5f * 0.7071f - 1f
@@ -66,7 +66,7 @@ internal interface widgetsWindowDecorations {
         val bgCol = if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
         val textCol = Col.Text
         if (hovered || held)
-            window.drawList.addCircleFilled(bb.center/* + Vec2(0.0f, -0.5f)*/, g.fontSize * 0.5f + 1f, bgCol.u32, 12)
+            window.drawList.addCircleFilled(bb.center/* + Vec2(0.0f, -0.5f)*/, g.fontSize * 0.5f + 1f, bgCol.u32)
         window.drawList.renderArrow(bb.min + ImGui.style.framePadding, textCol.u32, if (window.collapsed) Dir.Right else Dir.Down, 1f)
 
         // Switch to moving the window after mouse is moved beyond the initial drag threshold

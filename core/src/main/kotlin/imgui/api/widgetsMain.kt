@@ -174,15 +174,16 @@ interface widgetsMain {
 
         renderNavHighlight(totalBb, id)
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
-        window.drawList.addCircleFilled(center, radius, col.u32, 16)
+        val numSegment = window.drawList._calcCircleAutoSegmentCount(radius)
+        window.drawList.addCircleFilled(center, radius, col.u32, numSegment)
         if (active) {
             val pad = 1f max floor(squareSz / 6f)
-            window.drawList.addCircleFilled(center, radius - pad, Col.CheckMark.u32, 16)
+            window.drawList.addCircleFilled(center, radius - pad, Col.CheckMark.u32)
         }
 
         if (style.frameBorderSize > 0f) {
-            window.drawList.addCircle(center + Vec2(1), radius, Col.BorderShadow.u32, 16, style.frameBorderSize)
-            window.drawList.addCircle(center, radius, Col.Border.u32, 16, style.frameBorderSize)
+            window.drawList.addCircle(center + Vec2(1), radius, Col.BorderShadow.u32, numSegment, style.frameBorderSize)
+            window.drawList.addCircle(center, radius, Col.Border.u32, numSegment, style.frameBorderSize)
         }
 
         val labelPos = Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y)
