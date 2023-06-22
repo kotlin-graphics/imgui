@@ -82,9 +82,11 @@ internal interface renderHelpers {
             logRenderedText(posMin, text.cStr, textDisplayEnd)
     }
 
-    /** Default clipRect uses (pos_min,pos_max)
-     *  Handle clipping on CPU immediately (vs typically let the GPU clip the triangles that are overlapping the clipping
-     *  rectangle edges)    */
+    // Default clip_rect uses (pos_min,pos_max)
+    // Handle clipping on CPU immediately (vs typically let the GPU clip the triangles that are overlapping the clipping rectangle edges)
+    // FIXME-OPT: Since we have or calculate text_size we could coarse clip whole block immediately, especally for text above draw_list->DrawList.
+    // Effectively as this is called from widget doing their own coarse clipping it's not very valuable presently. Next time function will take
+    // better advantage of the render function taking size into account for coarse clipping.
     fun renderTextClippedEx(drawList: DrawList, posMin: Vec2, posMax: Vec2, text: ByteArray, textDisplayEnd: Int = -1,
                             textSizeIfKnown: Vec2? = null, align: Vec2 = Vec2(), clipRect: Rect? = null) {
 
