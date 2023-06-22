@@ -39,6 +39,7 @@ value class FlagArray<F : Flag<F>> private constructor(private val array: IntArr
     constructor(flags: Array<out Flag<F>>) : this(IntArray(flags.size) {
         flags[it].i
     })
+
     // constructor from size
     constructor(size: Int) : this(IntArray(size))
 
@@ -47,9 +48,11 @@ value class FlagArray<F : Flag<F>> private constructor(private val array: IntArr
         @JvmName("of")
         @JvmStatic
         fun <F : Flag<F>> of(flag: Flag<F>): FlagArray<F> = FlagArray(flag)
+
         @JvmName("of")
         @JvmStatic
         fun <F : Flag<F>> of(vararg flags: Flag<F>): FlagArray<F> = FlagArray(flags)
+
         @JvmName("of")
         @JvmStatic
         fun <F : Flag<F>> of(size: Int): FlagArray<F> = FlagArray(size)
@@ -57,15 +60,18 @@ value class FlagArray<F : Flag<F>> private constructor(private val array: IntArr
         @JvmName("get")
         @JvmStatic
         fun <F : Flag<F>> get(flagArray: FlagArray<F>, index: Int): Flag<F> = flagArray[index]
+
         @JvmName("set")
         @JvmStatic
         fun <F : Flag<F>> set(flagArray: FlagArray<F>, index: Int, value: Flag<F>) {
             flagArray[index] = value
         }
+
         @JvmName("iterator")
         @JvmStatic
         fun <F : Flag<F>> iterator(flagArray: FlagArray<F>): Iterator<Flag<F>> = flagArray.iterator()
     }
+
     operator fun get(index: Int): Flag<F> = Flags(array[index])
     operator fun set(index: Int, value: Flag<F>) {
         array[index] = value.i
@@ -73,12 +79,14 @@ value class FlagArray<F : Flag<F>> private constructor(private val array: IntArr
 
     val size: Int get() = array.size
     operator fun iterator(): Iterator<Flag<F>> = array.iterator().asSequence().map { Flags<F>(it) }.iterator()
+
     /**
      * Returns the range of valid indices for the array.
      */
     val indices: IntRange
         get() = IntRange(0, size - 1)
 }
+
 /**
  * Creates a new array of the specified [size], where each element is calculated by calling the specified
  * [init] function.
@@ -424,7 +432,7 @@ sealed class PopupFlag(override val i: Int) : FlagBase<PopupFlag>() {
 }
 
 val PopupFlags.mouseButton: MouseButton
-    get() = when(this) {
+    get() = when (this) {
         PopupFlag.MouseButtonLeft -> MouseButton.Left
         PopupFlag.MouseButtonRight -> MouseButton.Right
         PopupFlag.MouseButtonMiddle -> MouseButton.Middle
@@ -1055,7 +1063,7 @@ enum class DataType(val imguiName: String) {
 // In reality, the JVM will optimize the comparisons since they're constant checks,
 // So there should be no performance difference in tight loops.
 // Also, a minifier like proguard deals with this very easily.
-inline fun <reified D> dataTypeOf(): DataType where D : Number, D : Comparable<D> = when(D::class) {
+inline fun <reified D> dataTypeOf(): DataType where D : Number, D : Comparable<D> = when (D::class) {
     Float::class -> DataType.Float
     Int::class -> DataType.Int
     Byte::class -> DataType.Byte
@@ -1255,51 +1263,37 @@ sealed class Key(private val int: Int? = null) : FlagBase<Key>() {
     object GamepadStart : Key()          // Menu (Xbox)          + (Switch)      Start/Options (PS)  // --
 
     object GamepadBack : Key()           // View (Xbox)          - (Switch)      Share (PS)          // --
-    object GamepadFaceLeft :
-        Key()       // X (Xbox)             Y (Switch)      Square (PS)         // -> ImGuiNavInput_Menu
+    object GamepadFaceLeft : Key()       // X (Xbox)             Y (Switch)      Square (PS)         // -> ImGuiNavInput_Menu
 
-    object GamepadFaceRight :
-        Key()      // B (Xbox)             A (Switch)      Circle (PS)         // -> ImGuiNavInput_Cancel
+    object GamepadFaceRight : Key()      // B (Xbox)             A (Switch)      Circle (PS)         // -> ImGuiNavInput_Cancel
 
-    object GamepadFaceUp :
-        Key()         // Y (Xbox)             X (Switch)      Triangle (PS)       // -> ImGuiNavInput_Input
+    object GamepadFaceUp : Key()         // Y (Xbox)             X (Switch)      Triangle (PS)       // -> ImGuiNavInput_Input
 
-    object GamepadFaceDown :
-        Key()       // A (Xbox)             B (Switch)      Cross (PS)          // -> ImGuiNavInput_Activate
+    object GamepadFaceDown : Key()       // A (Xbox)             B (Switch)      Cross (PS)          // -> ImGuiNavInput_Activate
 
-    object GamepadDpadLeft :
-        Key()       // D-pad Left                                               // -> ImGuiNavInput_DpadLeft
+    object GamepadDpadLeft : Key()       // D-pad Left                                               // -> ImGuiNavInput_DpadLeft
 
-    object GamepadDpadRight :
-        Key()      // D-pad Right                                              // -> ImGuiNavInput_DpadRight
+    object GamepadDpadRight : Key()      // D-pad Right                                              // -> ImGuiNavInput_DpadRight
 
-    object GamepadDpadUp :
-        Key()         // D-pad Up                                                 // -> ImGuiNavInput_DpadUp
+    object GamepadDpadUp : Key()         // D-pad Up                                                 // -> ImGuiNavInput_DpadUp
 
-    object GamepadDpadDown :
-        Key()       // D-pad Down                                               // -> ImGuiNavInput_DpadDown
+    object GamepadDpadDown : Key()       // D-pad Down                                               // -> ImGuiNavInput_DpadDown
 
-    object GamepadL1 :
-        Key()             // L Bumper (Xbox)      L (Switch)      L1 (PS)             // -> ImGuiNavInput_FocusPrev + ImGuiNavInput_TweakSlow
+    object GamepadL1 : Key()             // L Bumper (Xbox)      L (Switch)      L1 (PS)             // -> ImGuiNavInput_FocusPrev + ImGuiNavInput_TweakSlow
 
-    object GamepadR1 :
-        Key()             // R Bumper (Xbox)      R (Switch)      R1 (PS)             // -> ImGuiNavInput_FocusNext + ImGuiNavInput_TweakFast
+    object GamepadR1 : Key()             // R Bumper (Xbox)      R (Switch)      R1 (PS)             // -> ImGuiNavInput_FocusNext + ImGuiNavInput_TweakFast
 
     object GamepadL2 : Key()             // L Trigger (Xbox)     ZL (Switch)     L2 (PS) [Analog]
     object GamepadR2 : Key()             // R Trigger (Xbox)     ZR (Switch)     R2 (PS) [Analog]
     object GamepadL3 : Key()             // L Thumbstick (Xbox)  L3 (Switch)     L3 (PS)
     object GamepadR3 : Key()             // R Thumbstick (Xbox)  R3 (Switch)     R3 (PS)
-    object GamepadLStickLeft :
-        Key()     // [Analog]                                                 // -> ImGuiNavInput_LStickLeft
+    object GamepadLStickLeft : Key()     // [Analog]                                                 // -> ImGuiNavInput_LStickLeft
 
-    object GamepadLStickRight :
-        Key()    // [Analog]                                                 // -> ImGuiNavInput_LStickRight
+    object GamepadLStickRight : Key()    // [Analog]                                                 // -> ImGuiNavInput_LStickRight
 
-    object GamepadLStickUp :
-        Key()       // [Analog]                                                 // -> ImGuiNavInput_LStickUp
+    object GamepadLStickUp : Key()       // [Analog]                                                 // -> ImGuiNavInput_LStickUp
 
-    object GamepadLStickDown :
-        Key()     // [Analog]                                                 // -> ImGuiNavInput_LStickDown
+    object GamepadLStickDown : Key()     // [Analog]                                                 // -> ImGuiNavInput_LStickDown
 
     object GamepadRStickLeft : Key()     // [Analog]
     object GamepadRStickRight : Key()    // [Analog]
@@ -1378,6 +1372,30 @@ sealed class Key(private val int: Int? = null) : FlagBase<Key>() {
         internal val _NavGamepadCancel get() = GamepadFaceRight
         internal val _NavGamepadMenu get() = GamepadFaceLeft
         internal val _NavGamepadInput get() = GamepadFaceUp
+    }
+}
+
+// Enumeration for AddMouseSourceEvent() actual source of Mouse Input data.
+// Historically we use "Mouse" terminology everywhere to indicate pointer data, e.g. MousePos, IsMousePressed(), io.AddMousePosEvent()
+// But that "Mouse" data can come from different source which occasionally may be useful for application to know about.
+// You can submit a change of pointer type using io.AddMouseSourceEvent().
+// -> enum ImGuiMouseSource      // Enum; A mouse input source identifier (Mouse, TouchPad, TouchScreen, Pen)
+sealed class MouseSource : FlagBase<MouseSource>() {
+
+    /** Input is coming from an actual mouse. */
+    object Mouse : MouseSource()
+
+    /** Input is coming from a touch screen (no hovering prior to initial press, less precise initial press aiming, dual-axis wheeling possible). */
+    object TouchScreen : MouseSource()
+
+    /** Input is coming from a pressure/magnetic pen (often used in conjunction with high-sampling rates). */
+    object Pen : MouseSource()
+
+    override val i: Int = ordinal
+
+    @GenSealedEnum
+    companion object {
+        val COUNT get() = values.size
     }
 }
 

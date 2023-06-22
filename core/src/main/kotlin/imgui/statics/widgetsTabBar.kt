@@ -220,7 +220,7 @@ fun TabBar.layout() {
     // Apply request requests
     if (scrollToTabID != 0)
         scrollToTab(scrollToTabID, sections)
-    else if (flags has TabBarFlag.FittingPolicyScroll && isMouseHoveringRect(barRect.min, barRect.max, true) && g.currentWindow.isContentHoverable) {
+    else if (flags has TabBarFlag.FittingPolicyScroll && isMouseHoveringRect(barRect.min, barRect.max, true) && g.currentWindow!!.isContentHoverable) {
         val wheel = if (g.io.mouseWheelRequestAxisSwap) g.io.mouseWheel else g.io.mouseWheelH
         val wheelKey = if (g.io.mouseWheelRequestAxisSwap) Key.MouseWheelY else Key.MouseWheelX
         if (wheelKey.testOwner(id) && wheel != 0f) {

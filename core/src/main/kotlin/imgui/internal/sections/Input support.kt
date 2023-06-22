@@ -1,13 +1,11 @@
 package imgui.internal.sections
 
-import imgui.ID
-import imgui.Key
-import imgui.KeyChord
-import imgui.none
+import imgui.*
 
 
 enum class InputSource {
-    None, Mouse, Keyboard, Gamepad,
+    None, Mouse, // Note: may be Mouse or TouchScreen or Pen. See io.MouseSource to distinguish them.
+    Keyboard, Gamepad,
 
     /** Currently only used by InputText() */
     Clipboard
@@ -21,19 +19,20 @@ sealed class InputEvent {
     var addedByTestEngine = false
 
     class MousePos(val posX: Float,
-                   val posY: Float) : InputEvent() {
+                   val posY: Float,
+                   val mouseSource: MouseSource) : InputEvent() {
         override val source: InputSource = InputSource.Mouse
     }
 
     class MouseWheel(val wheelX: Float,
-                     val wheelY: Float) : InputEvent() {
+                     val wheelY: Float,
+                     val mouseSource: MouseSource) : InputEvent() {
         override val source: InputSource = InputSource.Mouse
     }
 
-    class MouseButton(
-        val button: imgui.MouseButton,
-        val down: Boolean
-    ) : InputEvent() {
+    class MouseButton(val button: imgui.MouseButton,
+                      val down: Boolean,
+                      val mouseSource: MouseSource) : InputEvent() {
         override val source: InputSource = InputSource.Mouse
     }
 

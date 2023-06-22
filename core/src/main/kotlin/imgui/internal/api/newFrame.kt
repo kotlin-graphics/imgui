@@ -56,6 +56,7 @@ internal interface newFrame {
                     if (trickleFastInputs && (mouseButtonChanged != 0 || mouseWheeled || keyChanged || textInputed))
                         break
                     io.mousePos put eventPos
+                    io.mouseSource = e.mouseSource
                     mouseMoved = true
                 }
                 is InputEvent.MouseButton -> {
@@ -65,6 +66,7 @@ internal interface newFrame {
                     if (trickleFastInputs && ((mouseButtonChanged has (1 shl button.i)) || mouseWheeled))
                         break
                     io.mouseDown[button.i] = e.down
+                    io.mouseSource = e.mouseSource
                     mouseButtonChanged = mouseButtonChanged or (1 shl button.i)
                 }
                 is InputEvent.MouseWheel -> {
@@ -73,6 +75,7 @@ internal interface newFrame {
                         break
                     io.mouseWheelH += e.wheelX
                     io.mouseWheel += e.wheelY
+                    io.mouseSource = e.mouseSource
                     mouseWheeled = true
                 }
                 is InputEvent.Key -> {
@@ -307,10 +310,10 @@ internal interface newFrame {
         fun debugPrintInputEvent(prefix: String, e: InputEvent) = when (e) {
             is InputEvent.MousePos -> when {
                 e.posX == -Float.MAX_VALUE && e.posY == -Float.MAX_VALUE -> IMGUI_DEBUG_LOG_IO("%s: MousePos (-FLT_MAX, -FLT_MAX)\n", prefix)
-                else -> IMGUI_DEBUG_LOG_IO("$prefix: MousePos (%.1f, %.1f)", e.posX, e.posY)
+                else -> IMGUI_DEBUG_LOG_IO("$prefix: MousePos (%.1f, %.1f) (${e.mouseSource})", e.posX, e.posY)
             }
-            is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("$prefix: MouseButton ${e.button.i} ${if (e.down) "Down" else "Up"}")
-            is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("$prefix: MouseWheel (%.3f, %.3f)", e.wheelX, e.wheelY)
+            is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("$prefix: MouseButton ${e.button.i} ${if (e.down) "Down" else "Up"} (${e.mouseSource})")
+            is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("$prefix: MouseWheel (%.3f, %.3f) (${e.mouseSource})", e.wheelX, e.wheelY)
             is InputEvent.Key -> IMGUI_DEBUG_LOG_IO("$prefix: Key \"${e.key.name}\" ${if (e.down) "Down" else "Up"}")
             is InputEvent.Text -> IMGUI_DEBUG_LOG_IO("$prefix: Text: ${e.char} (U+%08X)", e.char.code)
             is InputEvent.AppFocused -> IMGUI_DEBUG_LOG_IO("$prefix: AppFocused ${e.focused.i}")

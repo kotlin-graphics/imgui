@@ -204,7 +204,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         it.backendRendererUserData = backendRendererUserData; it.backendLanguageUserData = backendLanguageUserData; it.getClipboardTextFn = getClipboardTextFn
         it.setClipboardTextFn = setClipboardTextFn; it.clipboardUserData = clipboardUserData /*it.setPlatformImeDataFn = setPlatformImeDataFn*/
         it.ctx = ctx; /*it.mousePos put mousePos; repeat(5) { i -> it.mouseDown[i] = mouseDown[i] }; it.mouseWheel = mouseWheelH
-        it.mouseWheelH = mouseWheelH; it.keyCtrl = keyCtrl; it.keyShift = keyShift; it.keyAlt = keyAlt; it.keySuper = keySuper;
+        it.mouseWheelH = mouseWheelH; it.keyCtrl = keyCtrl; it.keyShift = keyShift; it.keyAlt = keyAlt; it.keySuper = keySuper; it.mouseSource
         repeat(NavInput.COUNT) { i -> it.navInputs[i] = navInputs[i] }; it.keyMods = keyMods; repeat(Key.COUNT) {i -> it.keysData[i]}*/
     }
 
@@ -273,7 +273,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (latestPos.x == pos.x && latestPos.y == pos.y)
             return
 
-        g.inputEventsQueue += InputEvent.MousePos(pos.x, pos.y)
+        g.inputEventsQueue += InputEvent.MousePos(pos.x, pos.y, g.inputEventsNextMouseSource)
     }
 
     /** Queue a mouse button change */
@@ -288,7 +288,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (latestButtonDown == down)
             return
 
-        g.inputEventsQueue += InputEvent.MouseButton(mouseButton, down)
+        g.inputEventsQueue += InputEvent.MouseButton(mouseButton, down, g.inputEventsNextMouseSource)
     }
 
     /** Queue a mouse wheel update. wheel_y<0: scroll down, wheel_y>0: scroll up, wheel_x<0: scroll right, wheel_x>0: scroll left.
@@ -301,7 +301,16 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (!appAcceptingEvents || (wheelX == 0f && wheelY == 0f))
             return
 
-        g.inputEventsQueue += InputEvent.MouseWheel(wheelX, wheelY)
+        g.inputEventsQueue += InputEvent.MouseWheel(wheelX, wheelY, g.inputEventsNextMouseSource)
+    }
+
+    // Queue a mouse source change (Mouse/TouchScreen/Pen)
+    // This is not a real event, the data is latched in order to be stored in actual Mouse events.
+    // This is so that duplicate events (e.g. Windows sending extraneous WM_MOUSEMOVE) gets filtered and are not leading to actual source changes.
+    fun addMouseSourceEvent(source: MouseSource) {
+//        IM_ASSERT(Ctx != NULL);
+        val g = ctx!!
+        g.inputEventsNextMouseSource = source
     }
 
     /** Queue a gain/loss of focus for the application (generally based on OS/platform focus of your window) */
@@ -484,6 +493,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Mouse wheel Horizontal. >0 scrolls Left, <0 scrolls Right. Most users don't have a mouse with a horizontal wheel, may not be filled by all backends.  */
     var mouseWheelH = 0f
+
+    /** Mouse actual input peripheral (Mouse/TouchPad/TouchScreen/Pen). */
+    var mouseSource: MouseSource = MouseSource.Mouse
 
     /** Keyboard modifier down: Control  */
     var keyCtrl = false

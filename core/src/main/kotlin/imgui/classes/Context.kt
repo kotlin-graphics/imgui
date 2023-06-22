@@ -41,6 +41,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Past input events processed in NewFrame(). This is to allow domain-specific application to access e.g mouse/pen trail. */
     val inputEventsTrail = ArrayList<InputEvent>()
 
+    var inputEventsNextMouseSource: MouseSource = MouseSource.Mouse
+
     var style = Style()
 
     lateinit var font: Font
