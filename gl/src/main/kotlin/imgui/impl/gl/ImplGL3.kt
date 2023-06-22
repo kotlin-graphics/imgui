@@ -246,7 +246,7 @@ class ImplGL3 : GLInterface {
         }
 
         // Restore modified GL state
-        glUseProgram(lastProgram)
+        if (lastProgram == 0 || glIsProgram(lastProgram)) glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         if (OPENGL_MAY_HAVE_BIND_SAMPLER && data.glVersion > 330)
             glBindSampler(0, lastSampler)
