@@ -16,19 +16,28 @@ fun IMGUI_DEBUG_LOG_ACTIVEID(fmt: String, vararg args: Any) {
     if (g.debugLogFlags has DebugLogFlag.EventActiveId)
         IMGUI_DEBUG_LOG(fmt, *args)
 }
+
 fun IMGUI_DEBUG_LOG_FOCUS(fmt: String, vararg args: Any) {
     if (g.debugLogFlags has DebugLogFlag.EventFocus)
         IMGUI_DEBUG_LOG(fmt, *args)
 }
+
 // Debug Logging for selected systems. Remove the '((void)0) //' to enable.
 fun IMGUI_DEBUG_LOG_POPUP(fmt: String, vararg args: Any) {
     if (g.debugLogFlags has DebugLogFlag.EventPopup)
         IMGUI_DEBUG_LOG(fmt, *args)
 }
+
 fun IMGUI_DEBUG_LOG_NAV(fmt: String, vararg args: Any) {
     if (g.debugLogFlags has DebugLogFlag.EventNav)
         IMGUI_DEBUG_LOG(fmt, *args)
 }
+
+fun IMGUI_DEBUG_LOG_SELECTION(fmt: String, vararg args: Any) {
+    if (g.debugLogFlags has DebugLogFlag.EventSelection)
+        IMGUI_DEBUG_LOG(fmt, *args)
+}
+
 fun IMGUI_DEBUG_LOG_CLIPPER(fmt: String, vararg args: Any) {
     if (g.debugLogFlags has DebugLogFlag.EventClipper)
         IMGUI_DEBUG_LOG(fmt, *args)

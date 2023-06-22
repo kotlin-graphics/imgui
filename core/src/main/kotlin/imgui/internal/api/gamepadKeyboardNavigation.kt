@@ -145,13 +145,13 @@ internal interface gamepadKeyboardNavigation {
 
         // Scroll to keep newly navigated item fully into view.
         if (g.navLayer == NavLayer.Main) {
+            val rectAbs = result.window!! rectRelToAbs result.rectRel
+            scrollToRectEx(result.window!!, rectAbs, g.navMoveScrollFlags)
+
             if (g.navMoveFlags has NavMoveFlag.ScrollToEdgeY) {
-                // FIXME: Should remove this
+                // FIXME: Should remove this? Or make more precise: use ScrollToRectEx() with edge?
                 val scrollTarget = if (g.navMoveDir == Dir.Up) window.scrollMax.y else 0f
                 window setScrollY scrollTarget
-            } else {
-                val rectAbs = result.window!! rectRelToAbs result.rectRel
-                scrollToRectEx(result.window!!, rectAbs, g.navMoveScrollFlags)
             }
         }
 

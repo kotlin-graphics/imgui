@@ -131,6 +131,7 @@ sealed class DebugLogFlag(val int: Int? = null) : FlagBase<DebugLogFlag>() {
     object EventFocus : DebugLogFlag()
     object EventPopup : DebugLogFlag()
     object EventNav : DebugLogFlag()
+    object EventSelection : DebugLogFlag()
     object EventClipper : DebugLogFlag()
     object EventIO : DebugLogFlag()
 

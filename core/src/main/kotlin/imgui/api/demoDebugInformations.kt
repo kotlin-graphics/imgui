@@ -584,14 +584,13 @@ interface demoDebugInformations {
             return
         }
 
-        alignTextToFramePadding()
-        text("Log events:")
-        sameLine(); checkboxFlags("All", g::debugLogFlags, DebugLogFlag.EventMask)
+        checkboxFlags("All", g::debugLogFlags, DebugLogFlag.EventMask)
         sameLine(); checkboxFlags("ActiveId", g::debugLogFlags, DebugLogFlag.EventActiveId)
         sameLine(); checkboxFlags("Focus", g::debugLogFlags, DebugLogFlag.EventFocus)
         sameLine(); checkboxFlags("Popup", g::debugLogFlags, DebugLogFlag.EventPopup)
         sameLine(); checkboxFlags("Nav", g::debugLogFlags, DebugLogFlag.EventNav)
         sameLine(); checkboxFlags("Clipper", g::debugLogFlags, DebugLogFlag.EventClipper)
+        //SameLine(); CheckboxFlags("Selection", &g.DebugLogFlags, ImGuiDebugLogFlags_EventSelection);
         sameLine(); checkboxFlags("IO", g::debugLogFlags, DebugLogFlag.EventIO)
 
         if (smallButton("Clear")) {
