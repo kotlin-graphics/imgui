@@ -25,6 +25,7 @@ import org.lwjgl.glfw.GLFWScrollCallbackI
 import org.lwjgl.glfw.GLFWWindowFocusCallbackI
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
+import org.lwjgl.system.windows.User32
 import uno.glfw.*
 import uno.glfw.GlfwWindow.CursorMode
 
@@ -71,9 +72,16 @@ class ImplGlfw @JvmOverloads constructor(
             getClipboardTextFn = { glfwGetClipboardString(clipboardUserData as Long) }
             clipboardUserData = window.handle
 
-            // Set platform dependent data in viewport
-            if (Platform.get() == Platform.WINDOWS)
+            if (Platform.get() == Platform.WINDOWS) {
+                // TODO
+                // Windows: register a WndProc hook so we can intercept some messages.
+//                bd->GlfwWndProc = (WNDPROC)::GetWindowLongPtr((HWND)main_viewport->PlatformHandleRaw, GWLP_WNDPROC)
+//                IM_ASSERT(bd->GlfwWndProc != NULL)
+//                ::SetWindowLongPtr((HWND) main_viewport->PlatformHandleRaw, GWLP_WNDPROC, (LONG_PTR)ImGui_ImplGlfw_WndProc)
+
+                // Set platform dependent data in viewport
                 mainViewport.platformHandleRaw = window.hwnd
+            }
         }
 
         // Create mouse cursors
@@ -436,6 +444,7 @@ class ImplGlfw @JvmOverloads constructor(
             var prevUserCBKey: GLFWKeyCallbackI? = null
             var prevUserCBChar: GLFWCharCallbackI? = null
             var prevUserCBMonitor: GLFWMonitorCallbackI? = null
+            var glfwWndProc: WNDPROC = NULL
         }
 
         val uno.glfw.Key.imguiKey: Key
