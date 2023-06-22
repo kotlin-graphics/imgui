@@ -5,6 +5,7 @@ import glm_.f
 import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.isDragging
 import imgui.ImGui.renderArrow
 import imgui.ImGui.startMouseMoving
 import imgui.api.g
@@ -70,7 +71,7 @@ internal interface widgetsWindowDecorations {
         window.drawList.renderArrow(bb.min + ImGui.style.framePadding, textCol.u32, if (window.collapsed) Dir.Right else Dir.Down, 1f)
 
         // Switch to moving the window after mouse is moved beyond the initial drag threshold
-        if (ImGui.isItemActive && ImGui.isMouseDragging(MouseButton.Left))
+        if (ImGui.isItemActive && MouseButton.Left.isDragging())
             window.startMouseMoving()
 
         return pressed

@@ -24,6 +24,7 @@ import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
 import imgui.ImGui.isClicked
 import imgui.ImGui.isDown
+import imgui.ImGui.isDragging
 import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -220,7 +221,7 @@ object CustomRendering {
                 // Pan (we use a zero mouse threshold when there's no context menu)
                 // You may decide to make that threshold dynamic based on whether the mouse is hovering something etc.
                 val mouseThresholdForPan = if (optEnableContextMenu) -1f else 0f
-                if (isActive && ImGui.isMouseDragging(MouseButton.Right, mouseThresholdForPan))
+                if (isActive && MouseButton.Right.isDragging(mouseThresholdForPan))
                     scrolling += io.mouseDelta
 
                 // Context menu (under default mouse threshold)

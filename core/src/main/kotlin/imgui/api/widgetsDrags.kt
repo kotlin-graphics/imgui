@@ -19,7 +19,7 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.isClicked
-import imgui.ImGui.isMouseDragPastThreshold
+import imgui.ImGui.isDragPastThreshold
 import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
@@ -299,7 +299,7 @@ interface widgetsDrags {
 
             // (Optional) simple click (without moving) turns Drag into an InputText
             if (io.configDragClickToInputText && tempInputAllowed && !tempInputIsActive)
-                if (g.activeId == id && hovered && io.mouseReleased[0] && !isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
+                if (g.activeId == id && hovered && io.mouseReleased[0] && !MouseButton.Left.isDragPastThreshold(io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
                     g.navActivateId = id
                     tempInputIsActive = true
                 }

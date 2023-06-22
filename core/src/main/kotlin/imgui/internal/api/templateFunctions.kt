@@ -13,7 +13,7 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.getNavTweakPressedAmount
 import imgui.ImGui.io
 import imgui.ImGui.isDown
-import imgui.ImGui.isMouseDragPastThreshold
+import imgui.ImGui.isDragPastThreshold
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushMultiItemsWidths
@@ -189,7 +189,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f.fp
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && MouseButton.Left isDragPastThreshold (io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis].fp
             if (io.keyAlt) adjustDelta *= 1f.fp / 100f.fp
             if (io.keyShift) adjustDelta *= 10f.fp

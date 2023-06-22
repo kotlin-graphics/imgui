@@ -20,8 +20,8 @@ import imgui.ImGui.getColumnName
 import imgui.ImGui.getColumnWidthAuto
 import imgui.ImGui.getID
 import imgui.ImGui.getInstanceData
+import imgui.ImGui.isDragging
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isReleased
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -591,7 +591,7 @@ interface tables {
 
         // Drag and drop to re-order columns.
         // FIXME-TABLE: Scroll request while reordering a column and it lands out of the scrolling zone.
-        if (held && table.flags has Tf.Reorderable && isMouseDragging(MouseButton.Left) && !g.dragDropActive) {
+        if (held && table.flags has Tf.Reorderable && MouseButton.Left.isDragging() && !g.dragDropActive) {
             // While moving a column it will jump on the other side of the mouse, so we also test for MouseDelta.x
             table.reorderColumn = columnN
             table.instanceInteracted = table.instanceCurrent

@@ -10,15 +10,14 @@ import imgui.ImGui.bullet
 import imgui.ImGui.button
 import imgui.ImGui.checkboxFlags
 import imgui.ImGui.colorButton
-import imgui.ImGui.data
 import imgui.ImGui.endDisabled
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isDown
+import imgui.ImGui.isDragging
 import imgui.ImGui.isItemActive
-import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.popTabStop
 import imgui.ImGui.pushTabStop
@@ -155,9 +154,9 @@ object ShowDemoWindowInputs {
                 for (button in MouseButton.values())
                     if (button != MouseButton.None) {
                         text("IsMouseDragging(${button.i}):")
-                        text("  w/ default threshold: ${isMouseDragging(button).i},")
-                        text("  w/ zero threshold: ${isMouseDragging(button, 0f).i},")
-                        text("  w/ large threshold: ${isMouseDragging(button, 20f)},")
+                        text("  w/ default threshold: ${button.isDragging().i},")
+                        text("  w/ zero threshold: ${button.isDragging(0f).i},")
+                        text("  w/ large threshold: ${button.isDragging(20f)},")
                     }
                 button("Drag Me")
                 if (isItemActive)

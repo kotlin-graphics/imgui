@@ -5,7 +5,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.isClicked
-import imgui.ImGui.isMouseDragPastThreshold
+import imgui.ImGui.isDragPastThreshold
 import imgui.ImGui.style
 import imgui.ImGui.testOwner
 import imgui.internal.classes.InputFlag
@@ -94,11 +94,11 @@ interface inputUtilitiesMouse {
         get() = Vec2(g.beginPopupStack.lastOrNull()?.openMousePos ?: io.mousePos)
 
     /** is mouse dragging? (if lock_threshold < -1.0f, uses io.MouseDraggingThreshold) */
-    fun isMouseDragging(button: MouseButton, lockThreshold: Float = -1f): Boolean {
-        assert(button.i in io.mouseDown.indices)
-        if (!io.mouseDown[button.i])
+    fun MouseButton.isDragging(lockThreshold: Float = -1f): Boolean {
+        assert(i in io.mouseDown.indices)
+        if (!io.mouseDown[i])
             return false
-        return isMouseDragPastThreshold(button, lockThreshold)
+        return isDragPastThreshold(lockThreshold)
     }
 
     /** return the delta from the initial clicking position while the mouse button is clicked or was just released.

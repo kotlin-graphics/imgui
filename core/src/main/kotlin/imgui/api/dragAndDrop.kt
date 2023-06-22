@@ -7,7 +7,7 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.isDown
-import imgui.ImGui.isMouseDragging
+import imgui.ImGui.isDragging
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.setActiveID
@@ -85,8 +85,8 @@ interface dragAndDrop {
             }
             if (g.activeId != sourceId)
                 return false
-            sourceParentId = window!!.idStack.last()
-            sourceDragActive = isMouseDragging(mouseButton)
+            sourceParentId = window.idStack.last()
+            sourceDragActive = mouseButton.isDragging()
 
             // Disable navigation and key inputs while dragging + cancel existing request if any
             setActiveIdUsingAllKeyboardKeys()

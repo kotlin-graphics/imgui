@@ -42,6 +42,7 @@ import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getID
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
+import imgui.ImGui.isDragging
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.itemRectMax
@@ -797,7 +798,7 @@ object ShowDemoWindowLayout {
                     pushID(n)
 
                     invisibleButton("##canvas", size)
-                    if (ImGui.isItemActive && ImGui.isMouseDragging(MouseButton.Left))
+                    if (ImGui.isItemActive && MouseButton.Left.isDragging())
                         offset += io.mouseDelta
                     popID()
                     if (!ImGui.isItemVisible) // Skip rendering as ImDrawList elements are not clipped.

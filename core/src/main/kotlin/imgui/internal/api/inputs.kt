@@ -94,15 +94,14 @@ internal interface inputs {
 
     /** Return if a mouse click/drag went past the given threshold. Valid to call during the MouseReleased frame.
      *  [Internal] This doesn't test if the button is pressed */
-    fun isMouseDragPastThreshold(button: MouseButton, lockThreshold_: Float): Boolean {
-
-        assert(button.i in io.mouseDown.indices)
-        if (!io.mouseDown[button.i])
+    infix fun MouseButton.isDragPastThreshold(lockThreshold_: Float): Boolean {
+        assert(i in io.mouseDown.indices)
+        if (!io.mouseDown[i])
             return false
         var lockThreshold = lockThreshold_
         if (lockThreshold < 0f)
             lockThreshold = io.mouseDragThreshold
-        return io.mouseDragMaxDistanceSqr[button.i] >= lockThreshold * lockThreshold
+        return io.mouseDragMaxDistanceSqr[i] >= lockThreshold * lockThreshold
     }
 
     /** Return 2D vector representing the combination of four cardinal direction, with analog value support (for e.g. ImGuiKey_GamepadLStick* values). */

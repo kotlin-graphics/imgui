@@ -41,7 +41,7 @@ interface windowScrolling {
     /** center_x_ratio: 0.0f left of last item, 0.5f horizontal center of last item, 1.0f right of last item.
      *
      *  adjust scrolling amount to make current cursor position visible. center_x_ratio=0.0: left, 0.5: center, 1.0: right. When using to make a "default/current item" visible, consider using SetItemDefaultFocus() instead. */
-    fun setScrollHereX(centerXRatio: Float) {
+    fun setScrollHereX(centerXRatio: Float = 0.5f) {
         val window = g.currentWindow!!
         val spacingX = window.windowPadding.x max style.itemSpacing.x
         val targetPosX = lerp(g.lastItemData.rect.min.x - spacingX, g.lastItemData.rect.max.x + spacingX, centerXRatio)
@@ -64,7 +64,7 @@ interface windowScrolling {
         window.scrollTargetEdgeSnapDist.y = 0f max (window.windowPadding.y - spacingY)
     }
 
-    fun setScrollFromPosX(localX: Float, centerXratio: Float) = g.currentWindow!!.setScrollFromPosX(localX, centerXratio)
+    fun setScrollFromPosX(localX: Float, centerXratio: Float = 0.5f) = g.currentWindow!!.setScrollFromPosX(localX, centerXratio)
 
-    fun setScrollFromPosY(localY: Float, centerYratio: Float) = g.currentWindow!!.setScrollFromPosY(localY, centerYratio)
+    fun setScrollFromPosY(localY: Float, centerYratio: Float = 0.5f) = g.currentWindow!!.setScrollFromPosY(localY, centerYratio)
 }

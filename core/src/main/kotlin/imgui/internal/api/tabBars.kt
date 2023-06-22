@@ -8,6 +8,7 @@ import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
 import imgui.ImGui.isClicked
+import imgui.ImGui.isDragging
 import imgui.ImGui.isReleased
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushOverrideID
@@ -371,7 +372,7 @@ internal interface tabBars {
             ImGui.setItemAllowOverlap()
 
         // Drag and drop: re-order tabs
-        if (held && !tabAppearing && ImGui.isMouseDragging(MouseButton.Left))
+        if (held && !tabAppearing && MouseButton.Left.isDragging())
         // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
             if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable)
                 if (ImGui.io.mouseDelta.x < 0f && ImGui.io.mousePos.x < bb.min.x) {
