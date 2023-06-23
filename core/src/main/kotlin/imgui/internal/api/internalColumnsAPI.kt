@@ -10,6 +10,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.itemAdd
+import imgui.ImGui.navUpdateCurrentWindowIsScrollPushableX
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
@@ -57,6 +58,7 @@ internal interface internalColumnsAPI {
         columns.count = columnsCount
         columns.flags = flags
         window.dc.currentColumns = columns
+        window.dc.navIsScrollPushableX = false // Shortcut for NavUpdateCurrentWindowIsScrollPushableX();
 
         val columnPadding = style.itemSpacing.x
         val halfClipExtendX = floor((window.windowPadding.x * 0.5f) max window.windowBorderSize)
@@ -185,6 +187,7 @@ internal interface internalColumnsAPI {
             dc.columnsOffset = 0f
             dc.cursorPos.x = floor(pos.x + dc.indent + dc.columnsOffset)
         }
+        navUpdateCurrentWindowIsScrollPushableX()
     }
 
     fun pushColumnClipRect(columnIndex_: Int) {

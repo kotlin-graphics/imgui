@@ -7,6 +7,7 @@ import imgui.ImGui.rectRelToAbs
 import imgui.ImGui.scrollToRectEx
 import imgui.ImGui.setScrollY
 import imgui.api.g
+import imgui.api.gImGui
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
@@ -200,6 +201,14 @@ internal interface gamepadKeyboardNavigation {
         // In theory we should test for NavMoveRequestButNoResultYet() but there's no point doing it, NavEndFrame() will do the same test
         if (g.navWindow === window && g.navMoveScoringItems && g.navLayer == NavLayer.Main)
             g.navMoveFlags = g.navMoveFlags or wrapFlags
+    }
+
+    // True when current work location may be scrolled horizontally when moving left / right.
+    // This is generally always true UNLESS within a column. We don't have a vertical equivalent.
+    fun navUpdateCurrentWindowIsScrollPushableX() {
+        val g = gImGui
+        val window = g.currentWindow!!
+        window.dc.navIsScrollPushableX = g.currentTable == null && window.dc.currentColumns == null
     }
 
     /** Remotely activate a button, checkbox, tree node etc. given its unique ID. activation is queued and processed

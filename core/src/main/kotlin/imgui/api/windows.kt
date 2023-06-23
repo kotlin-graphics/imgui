@@ -636,6 +636,7 @@ interface windows {
                 dc.navLayerCurrent = NavLayer.Main
                 dc.navLayersActiveMask = dc.navLayersActiveMaskNext
                 dc.navLayersActiveMaskNext = 0x00
+                dc.navIsScrollPushableX = true
                 dc.navHideHighlightOneFrame = false
                 dc.navWindowHasScrollY = scrollMax.y > 0f
 

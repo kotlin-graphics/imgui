@@ -66,6 +66,9 @@ class WindowTempData {
     /** Which layers have been written to (accumulator for current frame) */
     var navLayersActiveMaskNext = 0x00
 
+    /** Set when current work location may be scrolled horizontally when moving left / right. This is generally always true UNLESS within a column. */
+    var navIsScrollPushableX = false
+
     var navHideHighlightOneFrame = false
 
     /** Set per window when scrolling can be used (== ScrollMax.y > 0.0f)  */

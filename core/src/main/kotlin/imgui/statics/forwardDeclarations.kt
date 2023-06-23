@@ -10,6 +10,7 @@ import imgui.ImGui.findWindowByID
 import imgui.ImGui.findWindowSettingsByID
 import imgui.ImGui.findWindowSettingsByWindow
 import imgui.ImGui.io
+import imgui.ImGui.navUpdateCurrentWindowIsScrollPushableX
 import imgui.ImGui.style
 import imgui.WindowFlag
 import imgui.api.g
@@ -40,8 +41,8 @@ fun setCurrentWindow(window: Window?) {
         else -> null
     }
     if (window != null) {
-        g.fontSize = window.calcFontSize()
-        g.drawListSharedData.fontSize = g.fontSize
+        g.fontSize = window.calcFontSize(); g.drawListSharedData.fontSize = g.fontSize
+        navUpdateCurrentWindowIsScrollPushableX()
     }
 }
 

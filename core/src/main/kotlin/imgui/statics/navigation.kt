@@ -883,8 +883,14 @@ fun navProcessItem() {
 
     val window = g.currentWindow!!
     val id = g.lastItemData.id
-    val navBb = g.lastItemData.navRect
     val itemFlags = g.lastItemData.inFlags
+
+    // When inside a container that isn't scrollable with Left<>Right, clip NavRect accordingly (#2221)
+    if (!window.dc.navIsScrollPushableX) {
+        g.lastItemData.navRect.min.x = clamp(g.lastItemData.navRect.min.x, window.clipRect.min.x, window.clipRect.max.x)
+        g.lastItemData.navRect.max.x = clamp(g.lastItemData.navRect.max.x, window.clipRect.min.x, window.clipRect.max.x)
+    }
+    val navBb = g.lastItemData.navRect // [JVM] apparently safe using same instance so far
 
     // Process Init Request
     if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent && itemFlags hasnt If.Disabled) {
@@ -922,14 +928,14 @@ fun navProcessItem() {
         }
     }
 
-    // Update window-relative bounding box of navigated item
+    // Update information for currently focused/navigated item
     if (g.navId == id) {
         if (g.navWindow !== window)
             setNavWindow(window) // Always refresh g.NavWindow, because some operations such as FocusItem() may not have a window.
         g.navLayer = window.dc.navLayerCurrent
         g.navFocusScopeId = g.currentFocusScopeId
         g.navIdIsAlive = true
-        window.navRectRel[window.dc.navLayerCurrent] = window rectAbsToRel navBb    // Store item bounding box (relative to window position)
+        window.navRectRel[window.dc.navLayerCurrent] = window rectAbsToRel navBb // Store item bounding box (relative to window position)
     }
 }
 

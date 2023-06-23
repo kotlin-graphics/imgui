@@ -26,6 +26,7 @@ import imgui.ImGui.isReleased
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.mergeDrawChannels
+import imgui.ImGui.navUpdateCurrentWindowIsScrollPushableX
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushID
@@ -288,6 +289,7 @@ interface tables {
             it.drawSplitter = tempData!!.drawSplitter
         }
         outerWindow.dc.currentTableIdx = g.currentTable?.let { g.tables.getIndex(it).i } ?: -1
+        navUpdateCurrentWindowIsScrollPushableX()
     }
 
     /** [Public] Starts into the first cell of a new row

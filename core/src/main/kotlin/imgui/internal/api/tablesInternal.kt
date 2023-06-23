@@ -225,6 +225,7 @@ interface tablesInternal {
 
         // Make table current
         g.currentTable = table
+        outerWindow.dc.navIsScrollPushableX = false // Shortcut for NavUpdateCurrentWindowIsScrollPushableX();
         outerWindow.dc.currentTableIdx = tableIdx.i
         if (innerWindow !== outerWindow) // So EndChild() within the inner window can restore the table properly.
             innerWindow.dc.currentTableIdx = tableIdx.i
