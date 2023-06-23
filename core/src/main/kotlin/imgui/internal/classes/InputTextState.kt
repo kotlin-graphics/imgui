@@ -167,7 +167,7 @@ class InputTextState(
     /** ~is_separator */
     val Char.isSeparator: Boolean
         get() = let { c ->
-            isBlankW || c == ',' || c == ';' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '|' || c == '\n' || c == '\r' || c == '.' || c == '!'
+            c == ',' || c == ';' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '|' || c == '\n' || c == '\r' || c == '.' || c == '!'
         }
 
     /** ~is_word_boundary_from_right */

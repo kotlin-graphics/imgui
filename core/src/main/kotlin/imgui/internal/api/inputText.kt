@@ -80,7 +80,7 @@ internal interface inputText {
     // [JVM] since this is a very particular case, that's why we don't overload
     fun inputTextEx(label: String, hint: String?, buf: ByteArray, sizeArg: Vec2, flags: InputTextFlags,
                     callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean =
-            inputTextEx(label, hint, buf, buf.size, sizeArg, flags, callback, callbackUserData)
+        inputTextEx(label, hint, buf, buf.size, sizeArg, flags, callback, callbackUserData)
 
     /** InputTextEx
      *  - bufSize account for the zero-terminator, so a buf_size of 6 can hold "Hello" but not "Hello!".
@@ -452,33 +452,27 @@ internal interface inputText {
                     isWordmoveKeyDown -> K.WORDLEFT
                     else -> K.LEFT
                 } or kMask)
-
                 Key.RightArrow.isPressed -> state onKeyPressed (when {
                     isStartendKeyDown -> K.LINEEND
                     isWordmoveKeyDown -> K.WORDRIGHT
                     else -> K.RIGHT
                 } or kMask)
-
                 Key.UpArrow.isPressed && isMultiline -> when {
                     io.keyCtrl -> drawWindow setScrollY glm.max(drawWindow.scroll.y - g.fontSize, 0f)
                     else -> state onKeyPressed ((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
                 }
-
                 Key.DownArrow.isPressed && isMultiline -> when {
                     io.keyCtrl -> drawWindow setScrollY glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY)
                     else -> state onKeyPressed ((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
                 }
-
                 Key.PageUp.isPressed && isMultiline -> {
                     state onKeyPressed (K.PGUP or kMask)
                     scrollY -= rowCountPerPage * g.fontSize
                 }
-
                 Key.PageDown.isPressed && isMultiline -> {
                     state onKeyPressed (K.PGDOWN or kMask)
                     scrollY += rowCountPerPage * g.fontSize
                 }
-
                 Key.Home.isPressed -> state onKeyPressed ((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
                 Key.End.isPressed -> state onKeyPressed ((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
                 Key.Delete.isPressed && !isReadOnly && !isCut -> {
@@ -489,7 +483,6 @@ internal interface inputText {
                     }
                     state onKeyPressed (K.DELETE or kMask)
                 }
-
                 Key.Backspace.isPressed && !isReadOnly -> {
                     if (!state.hasSelection)
                         if (isWordmoveKeyDown)
@@ -498,7 +491,6 @@ internal interface inputText {
                             state onKeyPressed (K.LINESTART or K.SHIFT)
                     state onKeyPressed (K.BACKSPACE or kMask)
                 }
-
                 isEnterPressed || isGamepadValidate -> {
                     // Determine if we turn Enter into a \n character
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
@@ -516,7 +508,6 @@ internal interface inputText {
                         }
                     }
                 }
-
                 isCancel ->
                     if (flags has Itf.EscapeClearsAll) {
                         if (state.curLenA > 0)
@@ -529,23 +520,20 @@ internal interface inputText {
                         clearActiveId = true; revertEdit = true
                         renderCursor = false; renderSelection = false
                     }
-
                 isUndo || isRedo -> {
                     state onKeyPressed if (isUndo) K.UNDO else K.REDO
                     state.clearSelection()
                 }
-
                 isSelectAll -> {
                     state.selectAll()
                     state.cursorFollow = true
                 }
-
                 isCut || isCopy -> {
                     // Cut, Copy
                     io.setClipboardTextFn?.let {
                         val ib = if (state.hasSelection) min(state.stb.selectStart, state.stb.selectEnd) else 0
                         val ie =
-                                if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
+                            if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
                         clipboardText = String(state.textW, ib, ie - ib)
                     }
                     if (isCut) {
@@ -555,7 +543,6 @@ internal interface inputText {
                         state.cut()
                     }
                 }
-
                 isPaste -> {
 
                     val clipboard = clipboardText
@@ -934,8 +921,7 @@ internal interface inputText {
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, 0,
-                        bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, 0, bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
             }
 
             // Draw blinking cursor
@@ -944,7 +930,7 @@ internal interface inputText {
                 val cursorIsVisible = !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
                 val cursorScreenPos = floor(drawPos + cursorOffset - drawScroll)
                 val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f,
-                        cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
+                                            cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
                 if (cursorIsVisible && cursorScreenRect overlaps clipRect)
                     drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
@@ -970,7 +956,7 @@ internal interface inputText {
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
                 drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, 0, bufDisplayEnd,
-                        0f, clipRect.takeUnless { isMultiline })
+                                            0f, clipRect.takeUnless { isMultiline })
             }
         }
 
@@ -1071,7 +1057,7 @@ internal interface inputText {
             val dataBackup = p
 
             // Apply new value (or operations) then clamp
-            p = parse(buf.cStr, format) ?: p
+            p = parse(buf, format) ?: p
             if (clampMin != null || clampMax != null) {
                 var clampMin = clampMin
                 var clampMax = clampMax

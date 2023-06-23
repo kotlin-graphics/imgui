@@ -3,10 +3,12 @@ package imgui.internal.api
 import imgui.DataType
 import imgui.ID
 import imgui.ImGui.debugHookIdInfo
+import imgui.ImGui.inputTextDeactivateHook
 import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.setNavWindow
 import imgui.MouseButton
 import imgui.api.g
+import imgui.api.gImGui
 import imgui.div
 import imgui.internal.classes.Window
 import imgui.internal.hashData
@@ -33,19 +35,29 @@ internal interface basicAccessors {
 
     fun setActiveID(id: ID, window: Window?) {
 
-        // While most behaved code would make an effort to not steal active id during window move/drag operations,
-        // we at least need to be resilient to it. Cancelling the move is rather aggressive and users of 'master' branch
-        // may prefer the weird ill-defined half working situation ('docking' did assert), so may need to rework that.
-        if (g.movingWindow != null && g.activeId == g.movingWindow!!.moveId) {
-            IMGUI_DEBUG_LOG_ACTIVEID("SetActiveID() cancel MovingWindow")
-            g.movingWindow = null
+        val g = gImGui
+
+        // Clear previous active id
+        if (g.activeId != 0) {
+            // While most behaved code would make an effort to not steal active id during window move/drag operations,
+            // we at least need to be resilient to it. Canceling the move is rather aggressive and users of 'master' branch
+            // may prefer the weird ill-defined half working situation ('docking' did assert), so may need to rework that.
+            if (g.movingWindow != null && g.activeId == g.movingWindow!!.moveId) {
+                IMGUI_DEBUG_LOG_ACTIVEID("SetActiveID() cancel MovingWindow\n")
+                g.movingWindow = null
+            }
+
+            // This could be written in a more general way (e.g associate a hook to ActiveId),
+            // but since this is currently quite an exception we'll leave it as is.
+            // One common scenario leading to this is: pressing Key ->NavMoveRequestApplyResult() -> ClearActiveId()
+            if (g.inputTextState.id == g.activeId)
+                inputTextDeactivateHook(g.activeId)
         }
 
         // Set active id
-        g.activeIdIsJustActivated = g.activeId != id
+        g.activeIdIsJustActivated = (g.activeId != id)
         if (g.activeIdIsJustActivated) {
-            IMGUI_DEBUG_LOG_ACTIVEID("SetActiveID() old:0x%08X (window \"${g.activeIdWindow?.name ?: ""}\") -> new:0x%08X (window \"${window?.name ?: ""}\")",
-                                     g.activeId, id)
+            IMGUI_DEBUG_LOG_ACTIVEID("SetActiveID() old:0x%08X (window \"${g.activeIdWindow?.name ?: ""}\") -> new:0x%08X (window \"${window?.name ?: ""}\")\n", g.activeId, id)
             g.activeIdTimer = 0f
             g.activeIdHasBeenPressedBefore = false
             g.activeIdHasBeenEditedBefore = false
@@ -62,7 +74,7 @@ internal interface basicAccessors {
         g.activeIdHasBeenEditedThisFrame = false
         if (id != 0) {
             g.activeIdIsAlive = id
-            g.activeIdSource = if (g.navActivateId == id || g.navJustMovedToId == id) g.navInputSource else InputSource.Mouse
+            g.activeIdSource = if(g.navActivateId == id || g.navJustMovedToId == id) g.navInputSource else InputSource.Mouse
             assert(g.activeIdSource != InputSource.None)
         }
 
@@ -70,6 +82,9 @@ internal interface basicAccessors {
         // (Please note that this is WIP and not all keys/inputs are thoroughly declared by all widgets yet)
         g.activeIdUsingNavDirMask = 0x00
         g.activeIdUsingAllKeyboardKeys = false
+//        #ifndef IMGUI_DISABLE_OBSOLETE_KEYIO
+//                g.ActiveIdUsingNavInputMask = 0x00
+//        #endif
     }
 
     /** FIXME-NAV: The existence of SetNavID/SetNavIDWithRectRel/SetFocusID is incredibly messy and confusing and needs some explanation or refactoring. */
@@ -124,10 +139,17 @@ internal interface basicAccessors {
     fun markItemEdited(id: ID) {
         // This marking is solely to be able to provide info for IsItemDeactivatedAfterEdit().
         // ActiveId might have been released by the time we call this (as in the typical press/release button behavior) but still need to fill the data.
-        assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
-        //IM_ASSERT(g.CurrentWindow->DC.LastItemId == id)
-        g.activeIdHasBeenEditedThisFrame = true
-        g.activeIdHasBeenEditedBefore = true
+        val g = gImGui
+        if (g.activeId == id || g.activeId == 0) {
+            g.activeIdHasBeenEditedThisFrame = true
+            g.activeIdHasBeenEditedBefore = true
+        }
+
+        // We accept a MarkItemEdited() on drag and drop targets (see https://github.com/ocornut/imgui/issues/1875#issuecomment-978243343)
+        // We accept 'ActiveIdPreviousFrame == id' for InputText() returning an edit after it has been taken ActiveId away (#4714)
+        assert(g.dragDropActive || g.activeId == id || g.activeId == 0 || g.activeIdPreviousFrame == id)
+
+        //IM_ASSERT(g.CurrentWindow->DC.LastItemId == id);
         g.lastItemData.statusFlags /= ItemStatusFlag.Edited
     }
 

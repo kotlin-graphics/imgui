@@ -48,8 +48,7 @@ internal interface newFrame {
 
         var eventN = 0
         while (eventN < g.inputEventsQueue.size) {
-            val e = g.inputEventsQueue[eventN]
-            when (e) {
+            when (val e = g.inputEventsQueue[eventN]) {
                 is InputEvent.MousePos -> {
                     // Trickling Rule: Stop processing queued events if we already handled a mouse button change
                     val eventPos = Vec2(e.posX, e.posY)
@@ -314,8 +313,8 @@ internal interface newFrame {
                 e.posX == -Float.MAX_VALUE && e.posY == -Float.MAX_VALUE -> IMGUI_DEBUG_LOG_IO("%s: MousePos (-FLT_MAX, -FLT_MAX)\n", prefix)
                 else -> IMGUI_DEBUG_LOG_IO("$prefix: MousePos (%.1f, %.1f) (${e.mouseSource})", e.posX, e.posY)
             }
-            is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("$prefix: MouseButton ${e.button.i} ${if (e.down) "Down" else "Up"} (${e.mouseSource})")
-            is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("$prefix: MouseWheel (%.3f, %.3f) (${e.mouseSource})", e.wheelX, e.wheelY)
+            is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("$prefix: MouseButton ${e.button.i} ${if (e.down) "Down" else "Up"} (${e.mouseSource.name})")
+            is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("$prefix: MouseWheel (%.3f, %.3f) (${e.mouseSource.name})", e.wheelX, e.wheelY)
             is InputEvent.Key -> IMGUI_DEBUG_LOG_IO("$prefix: Key \"${e.key.name}\" ${if (e.down) "Down" else "Up"}")
             is InputEvent.Text -> IMGUI_DEBUG_LOG_IO("$prefix: Text: ${e.char} (U+%08X)", e.char.code)
             is InputEvent.AppFocused -> IMGUI_DEBUG_LOG_IO("$prefix: AppFocused ${e.focused.i}")

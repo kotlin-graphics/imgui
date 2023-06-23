@@ -132,7 +132,7 @@ internal interface basicHelpersForWidgetCode {
         //    return false;
         val isRectVisible = bb overlaps window.clipRect
         if (!isRectVisible)
-            if (id == 0 || (id != g.activeId && id != g.navId))
+            if (id == 0 || (id != g.activeId && id != g.activeIdPreviousFrame && id != g.navId))
                 if (!g.logEnabled)
                     return false
 

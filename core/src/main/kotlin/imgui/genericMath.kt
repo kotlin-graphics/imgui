@@ -2,6 +2,7 @@ package imgui
 
 import glm_.*
 import imgui.internal.addClampOverflow
+import imgui.internal.charIsBlankA
 import imgui.internal.parseFormatSanitizeForScanning
 import imgui.internal.subClampOverflow
 import uno.kotlin.NUL
@@ -39,29 +40,42 @@ sealed interface NumberOps<N> where N : Number, N : Comparable<N> {
     val dataType: DataType
     val Number.coerced: N
 
-    /** return true if modified */
-    fun KMutableProperty0<N>.applyFromText(buf: String, format: String): Boolean {
-        val initial = get()
+    /** User can input math operators (e.g. +100) to edit a numerical values.
+     *  NB: This is _not_ a full expression evaluator. We should probably add one and replace this dumb mess..
+     *
+     *  ~DataTypeApplyFromText
+     *  @return true if modified */
+    fun KMutableProperty0<N>.applyFromText(buf: ByteArray, format: String): Boolean {
+
+        var ptr = 0
+        while (charIsBlankA(buf[ptr].i))
+            ptr++
+        if (buf[ptr] == 0.b)
+            return false
+
+        // Copy the value in an opaque buffer so we can compare at the end of the function if it changed at all.
+        val backupData = get()
+
         val v = parse(buf, format)
         return v?.let {
             this.set(v)
-            get() != initial
+            get() != backupData
         } == true
     }
 
-    fun parse(buf: String, format: String, radix: Int): N
+    fun parse(buf: ByteArray, format: String, radix: Int): N
     val String.parsed: N
 
     fun N.format(format: String): String {
         // [JVM] we have to filter `.`, since `%.03d` causes `IllegalFormatPrecisionException`, but `%03d` doesn't
         return format.replace(".", "").format(when (this) {
-            // we need to intervene since java printf cant handle %u
-            is Ubyte -> i
-            is Ushort -> i
-            is Uint -> L
-            is Ulong -> toBigInt()
-            else -> this
-        })
+                                                  // we need to intervene since java printf cant handle %u
+                                                  is Ubyte -> i
+                                                  is Ushort -> i
+                                                  is Uint -> L
+                                                  is Ulong -> toBigInt()
+                                                  else -> this
+                                              })
     }
 
     operator fun N.plus(other: N): N
@@ -73,9 +87,13 @@ sealed interface NumberOps<N> where N : Number, N : Comparable<N> {
 private fun <N, FP> NumberFpOps<N, FP>.nTimesN(n: N, other: N): N where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> = (n.fp * other.fp).n
 private fun <N, FP> NumberFpOps<N, FP>.nDivN(n: N, other: N): N where N : Number, N : Comparable<N>, FP : Number, FP : Comparable<FP> = (n.fp / other.fp).n
 
-fun <N> NumberOps<N>.parse(buf: String, format: String): N? where N : Number, N : Comparable<N> {
+fun <N> NumberOps<N>.parse(buf: ByteArray, format: String): N? where N : Number, N : Comparable<N> {
     // ImCharIsBlankA
-    @Suppress("NAME_SHADOWING") val buf = buf.replace(Regex("\\s+"), "").replace("\t", "").removeSuffix("\u0000")
+    buf.cStr
+        .replace(Regex("\\s+"), "")
+        .replace("\t", "")
+        .removeSuffix("\u0000")
+        .toByteArray(buf)
 
     if (buf.isEmpty()) return null
 
@@ -92,6 +110,7 @@ fun NumberOps<*>.defaultInputCharsFilter(format: String): InputTextFlag.Single {
         else -> InputTextFlag.CharsDecimal
     }
 }
+
 val NumberOps<*>.defaultFormat: String
     get() = when (dataType) {
         DataType.Float, DataType.Double -> "%.3f"
@@ -138,9 +157,11 @@ sealed interface FloatingPointOps<FP> where  FP : Number, FP : Comparable<FP> {
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("fpMinus")
     operator fun FP.minus(other: FP): FP
+
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("fpTimes")
     operator fun FP.times(other: FP): FP
+
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("fpDiv")
     operator fun FP.div(other: FP): FP
@@ -169,7 +190,7 @@ object ByteOps : NumberFpOps<Byte, Float>, FloatingPointOps<Float> by FloatOps {
     override val one: Byte = 1
     override val Number.coerced get() = b
     override val dataType: DataType = DataType.Byte
-    override fun parse(buf: String, format: String, radix: Int): Byte = format.format(buf.parseInt(radix)).toByte(radix)
+    override fun parse(buf: ByteArray, format: String, radix: Int): Byte = format.format(buf.cStr.parseInt(radix)).toByte(radix)
     override val String.parsed: Byte get() = b
     override fun Byte.plus(other: Byte): Byte = addClampOverflow(i, other.i, min.i, max.i).b
     override fun Byte.minus(other: Byte): Byte = subClampOverflow(i, other.i, min.i, max.i).b
@@ -183,7 +204,7 @@ object UbyteOps : NumberFpOps<Ubyte, Float>, FloatingPointOps<Float> by FloatOps
     override val Ubyte.isNegative: Boolean get() = false
     override val Number.coerced get() = ub
     override val dataType: DataType = DataType.Ubyte
-    override fun parse(buf: String, format: String, radix: Int): Ubyte = format.format(buf.parseInt(radix)).toInt(radix).ub
+    override fun parse(buf: ByteArray, format: String, radix: Int): Ubyte = format.format(buf.cStr.parseInt(radix)).toInt(radix).ub
     override val String.parsed: Ubyte get() = ub
     override fun Ubyte.plus(other: Ubyte): Ubyte = addClampOverflow(i, other.i, min.i, max.i).ub
     override fun Ubyte.minus(other: Ubyte): Ubyte = subClampOverflow(i, other.i, min.i, max.i).ub
@@ -196,7 +217,7 @@ object ShortOps : NumberFpOps<Short, Float>, FloatingPointOps<Float> by FloatOps
     override val one: Short = 1
     override val Number.coerced get() = s
     override val dataType: DataType = DataType.Short
-    override fun parse(buf: String, format: String, radix: Int): Short = format.format(buf.parseInt(radix)).toShort(radix)
+    override fun parse(buf: ByteArray, format: String, radix: Int): Short = format.format(buf.cStr.parseInt(radix)).toShort(radix)
     override val String.parsed: Short get() = s
     override fun Short.plus(other: Short): Short = addClampOverflow(i, other.i, min.i, max.i).s
     override fun Short.minus(other: Short): Short = subClampOverflow(i, other.i, min.i, max.i).s
@@ -210,7 +231,7 @@ object UshortOps : NumberFpOps<Ushort, Float>, FloatingPointOps<Float> by FloatO
     override val Ushort.isNegative: Boolean get() = false
     override val Number.coerced get() = us
     override val dataType: DataType = DataType.Ushort
-    override fun parse(buf: String, format: String, radix: Int): Ushort = format.format(buf.parseInt(radix)).toInt(radix).us
+    override fun parse(buf: ByteArray, format: String, radix: Int): Ushort = format.format(buf.cStr.parseInt(radix)).toInt(radix).us
     override val String.parsed: Ushort get() = us
     override fun Ushort.plus(other: Ushort): Ushort = addClampOverflow(i, other.i, min.i, max.i).us
     override fun Ushort.minus(other: Ushort): Ushort = subClampOverflow(i, other.i, min.i, max.i).us
@@ -223,7 +244,7 @@ object IntOps : NumberFpOps<Int, Float>, FloatingPointOps<Float> by FloatOps {
     override val one = 1
     override val Number.coerced get() = i
     override val dataType: DataType = DataType.Int
-    override fun parse(buf: String, format: String, radix: Int): Int = format.format(buf.parseInt(radix)).toInt(radix)
+    override fun parse(buf: ByteArray, format: String, radix: Int): Int = format.format(buf.cStr.parseInt(radix)).toInt(radix)
     override val String.parsed: Int get() = i
     override fun Int.plus(other: Int): Int = addClampOverflow(this, other, min, max)
     override fun Int.minus(other: Int): Int = subClampOverflow(this, other, min, max)
@@ -237,7 +258,7 @@ object UintOps : NumberFpOps<Uint, Float>, FloatingPointOps<Float> by FloatOps {
     override val Uint.isNegative: Boolean get() = false
     override val Number.coerced get() = ui
     override val dataType: DataType = DataType.Uint
-    override fun parse(buf: String, format: String, radix: Int): Uint = format.format(buf.parseLong(radix)).toLong(radix).ui
+    override fun parse(buf: ByteArray, format: String, radix: Int): Uint = format.format(buf.cStr.parseLong(radix)).toLong(radix).ui
     override val String.parsed: Uint get() = ui
     override fun Uint.plus(other: Uint): Uint = addClampOverflow(L, other.L, min.L, max.L).ui
     override fun Uint.minus(other: Uint): Uint = subClampOverflow(L, other.L, min.L, max.L).ui
@@ -250,7 +271,7 @@ object LongOps : NumberFpOps<Long, Double>, FloatingPointOps<Double> by DoubleOp
     override val one = 1L
     override val Number.coerced get() = L
     override val dataType: DataType = DataType.Long
-    override fun parse(buf: String, format: String, radix: Int): Long = format.format(buf.parseUnsignedLong(radix)).toLong(radix)
+    override fun parse(buf: ByteArray, format: String, radix: Int): Long = format.format(buf.cStr.parseUnsignedLong(radix)).toLong(radix)
     override val String.parsed: Long get() = L
     override fun Long.plus(other: Long): Long = addClampOverflow(this, other, min, max)
     override fun Long.minus(other: Long): Long = subClampOverflow(this, other, min, max)
@@ -264,7 +285,7 @@ object UlongOps : NumberFpOps<Ulong, Double>, FloatingPointOps<Double> by Double
     override val Ulong.isNegative: Boolean get() = false
     override val Number.coerced get() = ul
     override val dataType: DataType = DataType.Ulong
-    override fun parse(buf: String, format: String, radix: Int): Ulong = format.format(buf.parseUnsignedLong(radix)).toBigInteger(radix).ul
+    override fun parse(buf: ByteArray, format: String, radix: Int): Ulong = format.format(buf.cStr.parseUnsignedLong(radix)).toBigInteger(radix).ul
     override val String.parsed: Ulong get() = ul
     override fun Ulong.plus(other: Ulong): Ulong = addClampOverflow(toBigInt(), other.toBigInt(), min.toBigInt(), max.toBigInt()).ul
     override fun Ulong.minus(other: Ulong): Ulong = subClampOverflow(toBigInt(), other.toBigInt(), min.toBigInt(), max.toBigInt()).ul
@@ -280,7 +301,7 @@ object FloatOps : NumberFpOps<Float, Float> {
     override val Number.coercedFp: Float get() = f
     override val dataType: DataType = DataType.Float
     override fun Float.format(format: String): String = format.format(this)
-    override fun parse(buf: String, format: String, radix: Int): Float = "%f".format(buf.parseFloat).f
+    override fun parse(buf: ByteArray, format: String, radix: Int): Float = "%f".format(buf.cStr.parseFloat).f
     override val String.parsed: Float get() = f
     override fun Float.unaryMinus(): Float = -this
 
@@ -291,9 +312,11 @@ object FloatOps : NumberFpOps<Float, Float> {
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("fpMinus")
     override fun Float.minus(other: Float): Float = this - other
+
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("fpTimes")
     override fun Float.times(other: Float): Float = this * other
+
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("fpDiv")
     override fun Float.div(other: Float): Float = this / other
@@ -310,7 +333,7 @@ object DoubleOps : NumberFpOps<Double, Double> {
     override val Number.coercedFp: Double get() = d
     override val dataType: DataType = DataType.Double
     override fun Double.format(format: String): String = format.format(this)
-    override fun parse(buf: String, format: String, radix: Int): Double = "%f".format(buf.parseDouble).d
+    override fun parse(buf: ByteArray, format: String, radix: Int): Double = "%f".format(buf.cStr.parseDouble).d
     override val String.parsed: Double get() = d
     override fun Double.unaryMinus(): Double = -this
 
@@ -321,9 +344,11 @@ object DoubleOps : NumberFpOps<Double, Double> {
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("fpMinus")
     override fun Double.minus(other: Double): Double = this - other
+
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("fpTimes")
     override fun Double.times(other: Double): Double = this * other
+
     @Suppress("INAPPLICABLE_JVM_NAME")
     @JvmName("fpDiv")
     override fun Double.div(other: Double): Double = this / other

@@ -180,9 +180,12 @@ var imeInProgress = false
 
 fun ByteArray.memchr(startIdx: Int, c: Char, num: Int = size - startIdx): Int {
     val char = c.b
-    for (i in startIdx until startIdx + num)
+    for (i in startIdx until startIdx + num) {
+        if (this[i] == 0.b)
+            return -1
         if (this[i] == char)
             return i
+    }
     return -1
 }
 

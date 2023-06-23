@@ -147,7 +147,7 @@ interface widgetsInputWithKeyboard {
         var valueChanged = false
         if (step == null) {
             if (inputText(label, buf, flags))
-                valueChanged = pData.applyFromText(buf.cStr, format)
+                valueChanged = pData.applyFromText(buf, format)
         } else {
             val buttonSize = frameHeight
 
@@ -155,7 +155,7 @@ interface widgetsInputWithKeyboard {
             pushID(label)
             setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
             if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
-                valueChanged = pData.applyFromText(buf.cStr, format)
+                valueChanged = pData.applyFromText(buf, format)
             IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label, g.lastItemData.statusFlags / ItemStatusFlag.Inputable)
 
             // Step buttons
@@ -188,7 +188,8 @@ interface widgetsInputWithKeyboard {
             endGroup()
         }
 
-        if (valueChanged) markItemEdited(g.lastItemData.id)
+        if (valueChanged)
+            markItemEdited(g.lastItemData.id)
 
         return valueChanged
     }

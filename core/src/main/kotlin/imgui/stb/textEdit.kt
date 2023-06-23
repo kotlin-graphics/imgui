@@ -835,17 +835,14 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
     //                    state->insert_mode = !state->insert_mode
     //                    break
     //                #endif
-
             K.UNDO -> {
                 undo()
                 stb.hasPreferredX = false
             }
-
             K.REDO -> {
                 redo()
                 stb.hasPreferredX = false
             }
-
             K.LEFT -> {
                 // if currently there's a selection, move cursor to start of selection
                 if (stb.hasSelection)
@@ -854,7 +851,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                     --stb.cursor
                 stb.hasPreferredX = false
             }
-
             K.RIGHT -> {
                 // if currently there's a selection, move cursor to end of selection
                 if (stb.hasSelection)
@@ -864,7 +860,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 clamp()
                 stb.hasPreferredX = false
             }
-
             K.LEFT or K.SHIFT -> {
                 clamp()
                 stb.prepSelectionAtCursor()
@@ -874,7 +869,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 stb.cursor = stb.selectEnd
                 stb.hasPreferredX = false
             }
-
     //            #ifdef STB_TEXTEDIT_MOVEWORDLEFT
             K.WORDLEFT -> {
                 if (stb.hasSelection)
@@ -884,7 +878,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                     clamp()
                 }
             }
-
             K.WORDLEFT or K.SHIFT -> {
                 if (!stb.hasSelection)
                     stb.prepSelectionAtCursor()
@@ -895,7 +888,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 clamp()
             }
     //            #endif
-
     //                #ifdef STB_TEXTEDIT_MOVEWORDRIGHT
             K.WORDRIGHT -> {
                 if (stb.hasSelection)
@@ -905,7 +897,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                     clamp()
                 }
             }
-
             K.WORDRIGHT or K.SHIFT -> {
                 if (!stb.hasSelection)
                     stb.prepSelectionAtCursor()
@@ -916,7 +907,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 clamp()
             }
     //                #endif
-
             K.RIGHT or K.SHIFT -> {
                 stb.prepSelectionAtCursor()
                 // move selection right
@@ -925,7 +915,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 stb.cursor = stb.selectEnd
                 stb.hasPreferredX = false
             }
-
             K.DOWN,
             K.DOWN or K.SHIFT,
             K.PGDOWN,
@@ -987,7 +976,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                     }
                 }
             }
-
             K.UP,
             K.UP or K.SHIFT,
             K.PGUP,
@@ -1051,7 +1039,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                     }
                 }
             }
-
             K.DELETE,
             K.DELETE or K.SHIFT -> {
                 if (stb.hasSelection)
@@ -1063,7 +1050,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 }
                 stb.hasPreferredX = false
             }
-
             K.BACKSPACE,
             K.BACKSPACE or K.SHIFT -> {
                 if (stb.hasSelection)
@@ -1077,35 +1063,30 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 }
                 stb.hasPreferredX = false
             }
-
             K.TEXTSTART -> {
                 stb.cursor = 0
                 stb.selectStart = 0
                 stb.selectEnd = 0
                 stb.hasPreferredX = false
             }
-
             K.TEXTEND -> {
                 stb.cursor = stringLen
                 stb.selectStart = 0
                 stb.selectEnd = 0
                 stb.hasPreferredX = false
             }
-
             K.TEXTSTART or K.SHIFT -> {
                 stb.prepSelectionAtCursor()
                 stb.cursor = 0
                 stb.selectEnd = 0
                 stb.hasPreferredX = false
             }
-
             K.TEXTEND or K.SHIFT -> {
                 stb.prepSelectionAtCursor()
                 stb.cursor = stringLen
                 stb.selectEnd = stringLen
                 stb.hasPreferredX = false
             }
-
             K.LINESTART -> {
                 clamp()
                 stb.moveToFirst()
@@ -1115,7 +1096,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                     --stb.cursor
                 stb.hasPreferredX = false
             }
-
             K.LINEEND -> {
                 val n = stringLen
                 clamp()
@@ -1126,7 +1106,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                     ++stb.cursor
                 stb.hasPreferredX = false
             }
-
             K.LINESTART or K.SHIFT -> {
                 clamp()
                 stb.prepSelectionAtCursor()
@@ -1137,7 +1116,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 stb.selectEnd = stb.cursor
                 stb.hasPreferredX = false
             }
-
             K.LINEEND or K.SHIFT -> {
                 val n = stringLen
                 clamp()
@@ -1149,7 +1127,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 stb.selectEnd = stb.cursor
                 stb.hasPreferredX = false
             }
-
             else -> {
                 val c = keyToText(key)
                 if (c > 0) {
