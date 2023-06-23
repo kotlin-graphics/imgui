@@ -17,8 +17,9 @@ import imgui.statics.navRestoreLastChildNavWindow
 internal interface windowsDisplayAndFocusOrder {
 
     /** Moving window to front of display (which happens to be back of our sorted list)  ~ FocusWindow  */
-    fun focusWindow(window: Window? = null, flags: FocusRequestFlags = none) {
+    fun focusWindow(window_: Window? = null, flags: FocusRequestFlags = none) {
 
+        var window = window_
         val g = gImGui
 
         // Modal check?
@@ -27,6 +28,10 @@ internal interface windowsDisplayAndFocusOrder {
                 IMGUI_DEBUG_LOG_FOCUS("[focus] FocusWindow(\"${window?.name ?: "<NULL>"}\", UnlessBelowModal): prevented by \"${blockingModal.name}\".\n")
                 return
             }
+
+        // Find last focused child (if any) and focus it instead.
+        if (flags has FocusRequestFlag.RestoreFocusedChild && window != null)
+            window = navRestoreLastChildNavWindow(window)
 
         // Apply focus
         if (g.navWindow !== window) {
@@ -85,7 +90,7 @@ internal interface windowsDisplayAndFocusOrder {
             if (window === ignoreWindow || !window.wasActive)
                 continue
             if ((WindowFlag.NoMouseInputs or WindowFlag.NoNavInputs) !in window.flags) {
-                focusWindow(navRestoreLastChildNavWindow(window), flags)
+                focusWindow(window, flags)
                 return
             }
         }

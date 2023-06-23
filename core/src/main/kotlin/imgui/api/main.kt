@@ -35,6 +35,7 @@ import imgui.classes.Style
 import imgui.font.FontAtlas
 import imgui.internal.DrawData
 import imgui.internal.classes.DebugLogFlag
+import imgui.internal.classes.FocusRequestFlag
 import imgui.internal.classes.Rect
 import imgui.internal.sections.DrawListFlags
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
@@ -258,7 +259,7 @@ interface main {
 
         // Closing the focused window restore focus to the first active root window in descending z-order
         if (g.navWindow?.wasActive == false)
-            focusTopMostWindowUnderOne() // [JVM] all default args are fine
+            focusTopMostWindowUnderOne(flags = FocusRequestFlag.RestoreFocusedChild) // [JVM] all default args are fine
 
         // No window should be open at the beginning of the frame.
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.

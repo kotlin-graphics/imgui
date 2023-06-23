@@ -23,6 +23,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.WindowFlag
 import imgui.api.g
+import imgui.internal.classes.FocusRequestFlag
 import imgui.internal.classes.PopupData
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -138,15 +139,11 @@ internal interface popupsModalsTooltips {
             g.openPopupStack.pop()
 
         if (restoreFocusToWindowUnderPopup) {
-            var focusWindow = if (popupWindow != null && popupWindow.flags has Wf._ChildMenu) popupWindow.parentWindow else popupBackupNavWindow
+            val focusWindow = if (popupWindow != null && popupWindow.flags has Wf._ChildMenu) popupWindow.parentWindow else popupBackupNavWindow
             if (focusWindow?.wasActive == false && popupWindow != null)
-                // Fallback
-                focusTopMostWindowUnderOne(popupWindow) // [JVM] default args
-            else {
-                if (g.navLayer == NavLayer.Main && focusWindow != null)
-                    focusWindow = navRestoreLastChildNavWindow(focusWindow)
-                focusWindow(focusWindow)
-            }
+                focusTopMostWindowUnderOne(popupWindow, flags = FocusRequestFlag.RestoreFocusedChild) // Fallback, [JVM] default args
+            else
+                focusWindow(focusWindow, if (g.navLayer == NavLayer.Main) FocusRequestFlag.RestoreFocusedChild else none)
         }
     }
 

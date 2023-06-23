@@ -153,6 +153,7 @@ typealias FocusRequestFlags = Flag<FocusRequestFlag>
 // and FindBlockingModal() with this, we may want to change the flag to be opt-out instead of opt-in.
 sealed class FocusRequestFlag : FlagBase<FocusRequestFlag>() {
 
+    object RestoreFocusedChild : FocusRequestFlag()   // Find last focused child (if any) and focus it instead.
     object UnlessBelowModal : FocusRequestFlag() // Do not set focus if the window is below a modal.
 
     override val i: Int = 1 shl ordinal

@@ -54,6 +54,7 @@ import imgui.ImGui.testOwner
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.*
+import imgui.internal.classes.FocusRequestFlag
 import imgui.internal.classes.InputFlag
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -225,7 +226,7 @@ fun navUpdateWindowing() {
     var applyToggleLayer = false
 
     val modalWindow = topMostPopupModal
-    val allowWindowing = modalWindow == null
+    val allowWindowing = modalWindow == null // FIXME: This prevent CTRL+TAB from being usable with windows over a popup
     if (!allowWindowing)
         g.navWindowingTarget = null
 
@@ -350,9 +351,9 @@ fun navUpdateWindowing() {
     if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindow)) {
         clearActiveID()
         navRestoreHighlightAfterMove()
-        applyFocusWindow = navRestoreLastChildNavWindow(applyFocusWindow!!)
         closePopupsOverWindow(applyFocusWindow, false)
-        focusWindow(applyFocusWindow)
+        focusWindow(applyFocusWindow, FocusRequestFlag.RestoreFocusedChild)
+        applyFocusWindow = g.navWindow
         if (applyFocusWindow!!.navLastIds[0] == 0)
             navInitWindow(applyFocusWindow!!, false)
 

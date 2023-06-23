@@ -10,6 +10,7 @@ import imgui.ImGui.debugLocateItemResolveWithLastItem
 import imgui.ImGui.endColumns
 import imgui.ImGui.errorCheckUsingSetCursorPosToExtendParentBoundaries
 import imgui.ImGui.findBestWindowPosForPopup
+import imgui.ImGui.findBlockingModal
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.ImGui.gcAwakeTransientBuffers
