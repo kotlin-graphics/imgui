@@ -250,7 +250,7 @@ internal interface widgets {
      *
      *  FIXME: Surprisingly, this seemingly trivial widget is a victim of many different legacy/tricky layout issues.
      *  Note how thickness == 1.0f is handled specifically as not moving CursorPos by 'thickness', but other values are. */
-    fun separatorEx(flags: SeparatorFlags, thickness: Float) {
+    fun separatorEx(flags: SeparatorFlags, thickness: Float = 1f) {
 
         val window = currentWindow
         if (window.skipItems) return
