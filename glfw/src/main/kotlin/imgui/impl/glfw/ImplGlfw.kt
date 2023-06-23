@@ -73,15 +73,20 @@ class ImplGlfw @JvmOverloads constructor(
             clipboardUserData = window.handle
 
             if (Platform.get() == Platform.WINDOWS) {
+
+                // Set platform dependent data in viewport
+                mainViewport.platformHandleRaw = window.hwnd
+
                 // TODO
                 // Windows: register a WndProc hook so we can intercept some messages.
 //                bd->GlfwWndProc = (WNDPROC)::GetWindowLongPtr((HWND)main_viewport->PlatformHandleRaw, GWLP_WNDPROC)
 //                IM_ASSERT(bd->GlfwWndProc != NULL)
 //                ::SetWindowLongPtr((HWND) main_viewport->PlatformHandleRaw, GWLP_WNDPROC, (LONG_PTR)ImGui_ImplGlfw_WndProc)
-
-                // Set platform dependent data in viewport
-                mainViewport.platformHandleRaw = window.hwnd
             }
+
+            io.backendPlatformName = null
+            io.backendPlatformUserData = null
+            io.backendFlags -= BackendFlag.HasMouseCursors / BackendFlag.HasSetMousePos / BackendFlag.HasGamepad
         }
 
         // Create mouse cursors

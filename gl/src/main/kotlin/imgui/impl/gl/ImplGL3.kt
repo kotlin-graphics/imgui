@@ -15,14 +15,12 @@ import gln.identifiers.GlShader
 import gln.identifiers.GlVertexArray
 import gln.uniform.glUniform
 import gln.vertexArray.glVertexAttribPointer
-import imgui.BackendFlag
-import imgui.DEBUG
+import imgui.*
 import imgui.ImGui.io
 import imgui.L
 import imgui.internal.DrawData
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
-import imgui.or
 import kool.*
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL31C.GL_PRIMITIVE_RESTART
@@ -81,6 +79,7 @@ class ImplGL3 : GLInterface {
         destroyDeviceObjects()
         io.backendRendererName = null
         io.backendRendererUserData = null
+        io.backendFlags -= BackendFlag.RendererHasVtxOffset
     }
 
     override fun newFrame() {
