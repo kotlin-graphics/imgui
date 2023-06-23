@@ -7,6 +7,7 @@ import imgui.classes.ListClipper
 // [SECTION] Clipper support
 //-----------------------------------------------------------------------------
 
+// Note that Max is exclusive, so perhaps should be using a Begin/End convention.
 class ListClipperRange {
     var min = 0
     var max = 0
