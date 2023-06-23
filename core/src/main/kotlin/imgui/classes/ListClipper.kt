@@ -106,8 +106,9 @@ class ListClipper {
         itemsCount = 1
     }
 
-    // Call IncludeRangeByIndices() before first call to Step() if you need a range of items to be displayed regardless of visibility.
-    fun includeRangeByIndices(itemBegin: Int, itemEnd: Int) { // item_end is exclusive e.g. use (42, 42+1) to make item 42 always visible BUT due to alignment/padding of certain items it is possible/likely that an extra item may be included on either end of the display range.
+    // Call IncludeRangeByIndices() *BEFORE* first call to Step() if you need a range of items to not be clipped, regardless of their visibility.
+    // (Due to alignment / padding of certain items it is possible that an extra item may be included on either end of the display range).
+    fun includeRangeByIndices(itemBegin: Int, itemEnd: Int) { // item_end is exclusive e.g. use (42, 42+1) to make item 42 never clipped.
         val data = tempData as ListClipperData
         assert(displayStart < 0) { "Only allowed after Begin () and if there has not been a specified range yet ." }
         assert(itemBegin <= itemEnd)
