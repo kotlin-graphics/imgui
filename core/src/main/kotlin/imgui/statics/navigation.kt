@@ -226,7 +226,7 @@ fun navUpdateWindowing() {
     var applyToggleLayer = false
 
     val modalWindow = topMostPopupModal
-    val allowWindowing = modalWindow == null // FIXME: This prevent CTRL+TAB from being usable with windows over a popup
+    val allowWindowing = modalWindow == null // FIXME: This prevent CTRL+TAB from being usable with windows that are inside the Begin-stack of that modal.
     if (!allowWindowing)
         g.navWindowingTarget = null
 

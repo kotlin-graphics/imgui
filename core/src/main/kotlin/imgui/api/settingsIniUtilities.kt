@@ -23,7 +23,8 @@ interface settingsIniUtilities {
 
     /** call after CreateContext() and before the first call to NewFrame() to provide .ini data from your own data source.
      *
-     *  Zero-tolerance, no error reporting, cheap .ini parsing */
+     *  Zero-tolerance, no error reporting, cheap .ini parsing
+     *  Set ini_size==0 to let us use strlen(ini_data). Do not call this function with a 0 if your buffer is actually empty! */
     fun loadIniSettingsFromMemory(lines: List<String>) {
 
         assert(g.initialized)

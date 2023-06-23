@@ -23,7 +23,7 @@ internal interface windowsDisplayAndFocusOrder {
         val g = gImGui
 
         // Modal check?
-        if (flags has FocusRequestFlag.UnlessBelowModal)
+        if (flags has FocusRequestFlag.UnlessBelowModal && g.navWindow !== window) // Early out in common case.
             findBlockingModal(window)?.let { blockingModal ->
                 IMGUI_DEBUG_LOG_FOCUS("[focus] FocusWindow(\"${window?.name ?: "<NULL>"}\", UnlessBelowModal): prevented by \"${blockingModal.name}\".\n")
                 val wnd = window
