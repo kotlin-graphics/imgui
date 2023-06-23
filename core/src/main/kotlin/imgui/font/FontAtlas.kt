@@ -808,13 +808,11 @@ class FontAtlas {
 
         // 9. Setup ImFont and glyphs for runtime
         for (srcIdx in srcTmpArray.indices) {
-            val srcTmp = srcTmpArray[srcIdx]
-            if (srcTmp.glyphsCount == 0)
-                continue
 
             // When merging fonts with MergeMode=true:
             // - We can have multiple input fonts writing into a same destination font.
             // - dst_font->ConfigData is != from cfg which is our source configuration.
+            val srcTmp = srcTmpArray[srcIdx]
             val cfg = configData[srcIdx]
             val dstFont = cfg.dstFont!!
 
