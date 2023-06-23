@@ -612,7 +612,7 @@ interface tables {
         }
 
         // Sort order arrow
-        val ellipsisMax = cellR.max.x - wArrow - wSortText
+        val ellipsisMax = (cellR.max.x - wArrow - wSortText) max labelPos.x
         if (table.flags has Tf.Sortable && column.flags hasnt Tcf.NoSort) {
             if (column.sortOrder != -1) {
                 var x = cellR.min.x max (cellR.max.x - wArrow - wSortText)
