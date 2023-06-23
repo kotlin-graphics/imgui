@@ -49,8 +49,10 @@ internal interface windowsDisplayAndFocusOrder {
             displayFrontWindow.bringToDisplayFront()
     }
 
-    fun focusTopMostWindowUnderOne(underThisWindow_: Window? = null, ignoreWindow: Window? = null) {
+    // [JVM] default arguments to `null`
+    fun focusTopMostWindowUnderOne(underThisWindow_: Window? = null, ignoreWindow: Window? = null, filterViewport: Viewport? = null) {
         var underThisWindow = underThisWindow_
+//        IM_UNUSED(filter_viewport); // Unused in master branch.
         var startIdx = g.windowsFocusOrder.lastIndex
         if (underThisWindow != null) {
             // Aim at root window behind us, if we are in a child window that's our own root (see #4640)
@@ -65,11 +67,12 @@ internal interface windowsDisplayAndFocusOrder {
             // We may later decide to test for different NoXXXInputs based on the active navigation input (mouse vs nav) but that may feel more confusing to the user.
             val window = g.windowsFocusOrder[i]
             assert(window === window.rootWindow)
-            if (window !== ignoreWindow && window.wasActive)
-                if ((WindowFlag.NoMouseInputs or WindowFlag.NoNavInputs) !in window.flags) {
-                    focusWindow(navRestoreLastChildNavWindow(window))
-                    return
-                }
+            if (window === ignoreWindow || !window.wasActive)
+                continue
+            if ((WindowFlag.NoMouseInputs or WindowFlag.NoNavInputs) !in window.flags) {
+                focusWindow(navRestoreLastChildNavWindow(window))
+                return
+            }
         }
         focusWindow()
     }
