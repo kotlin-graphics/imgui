@@ -120,8 +120,9 @@ class ImplGL3 : GLInterface {
         val orthoProjection = glm.ortho(L, R, B, T, mat)
         glUseProgram(data.shaderHandle.name)
         glUniform(data.attribLocationProjMtx, orthoProjection)
-        if (OPENGL_MAY_HAVE_BIND_SAMPLER && data.glVersion > 330)
-            glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER)
+            if (data.glVersion > 330/* || bd->GlProfileIsES3*/)
+                glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 and GL ES 3.0 may set that otherwise.
 
         data.vao.bind()
 
@@ -152,7 +153,7 @@ class ImplGL3 : GLInterface {
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastSampler = when {
-            !OPENGL_MAY_HAVE_BIND_SAMPLER && data.glVersion > 330 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
+            !OPENGL_MAY_HAVE_BIND_SAMPLER && data.glVersion > 330 /* || bd->GlProfileIsES3*/ -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
             else -> 0
         }
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -245,8 +246,9 @@ class ImplGL3 : GLInterface {
         // Restore modified GL state
         if (lastProgram == 0 || glIsProgram(lastProgram)) glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        if (OPENGL_MAY_HAVE_BIND_SAMPLER && data.glVersion > 330)
-            glBindSampler(0, lastSampler)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER)
+            if (data.glVersion > 330 /*|| bd->GlProfileIsES3*/)
+                glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
@@ -264,7 +266,7 @@ class ImplGL3 : GLInterface {
                 else -> glDisable(GL_PRIMITIVE_RESTART)
             }
         if (IMPL_HAS_POLYGON_MODE)
-            // Desktop OpenGL 3.0 and OpenGL 3.1 had separate polygon draw modes for front-facing and back-facing faces of polygons
+        // Desktop OpenGL 3.0 and OpenGL 3.1 had separate polygon draw modes for front-facing and back-facing faces of polygons
             if (data.glVersion <= 310 || data.glProfileIsCompat) {
                 glPolygonMode(GL_FRONT, lastPolygonMode[0])
                 glPolygonMode(GL_BACK, lastPolygonMode[1])
@@ -374,7 +376,7 @@ class ImplGL3 : GLInterface {
         // Desktop GL 3.2+ has glDrawElementsBaseVertex() which GL ES and WebGL don't have.
         val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && data.glVersion >= 320 }
 
-        // Desktop GL 3.3+ has glBindSampler()
+        // Desktop GL 3.3+ and GL ES 3.0+ have glBindSampler()
         val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && data.glVersion >= 330 }
 
         // Desktop GL 3.1+ has GL_PRIMITIVE_RESTART state
@@ -536,6 +538,7 @@ class ImplGL3 : GLInterface {
 
             /** Specified by user or detected based on compile time GL settings. */
             var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
+
             /** [JVM] both lazy for the same reason as `useBufferSubData` */
             val glProfileIsCompat: Boolean by lazy { glProfileMask has GL_CONTEXT_COMPATIBILITY_PROFILE_BIT }
             val glProfileMask: Int by lazy { glGetInteger(GL_CONTEXT_PROFILE_MASK) }
