@@ -197,10 +197,11 @@ internal interface gamepadKeyboardNavigation {
     /** Navigation wrap-around logic is delayed to the end of the frame because this operation is only valid after entire
      *  popup is assembled and in case of appended popups it is not clear which EndPopup() call is final. */
     fun navMoveRequestTryWrapping(window: Window, wrapFlags: NavMoveFlags) {
-        assert(wrapFlags.isNotEmpty) { "Call with _WrapX, _WrapY, _LoopX, _LoopY" }
+        assert(wrapFlags has NavMoveFlag.WrapMask_  && (wrapFlags wo NavMoveFlag.WrapMask_) == none) { "Call with _WrapX, _WrapY, _LoopX, _LoopY" }
+
         // In theory we should test for NavMoveRequestButNoResultYet() but there's no point doing it, NavEndFrame() will do the same test
         if (g.navWindow === window && g.navMoveScoringItems && g.navLayer == NavLayer.Main)
-            g.navMoveFlags = g.navMoveFlags or wrapFlags
+            g.navMoveFlags = (g.navMoveFlags wo NavMoveFlag.WrapMask_) / wrapFlags
     }
 
     // True when current work location may be scrolled horizontally when moving left / right.

@@ -738,8 +738,7 @@ fun navEndFrame() {
     // Perform wrap-around in menus
     // FIXME-NAV: Wrap may need to apply a weight bias on the other axis. e.g. 4x4 grid with 2 last items missing on last item won't handle LoopY/WrapY correctly.
     // FIXME-NAV: Wrap (not Loop) support could be handled by the scoring function and then WrapX would function without an extra frame.
-    val wantedFlags = NavMoveFlag.WrapX or NavMoveFlag.LoopX or NavMoveFlag.WrapY or NavMoveFlag.LoopY
-    if (g.navWindow != null && navMoveRequestButNoResultYet() && g.navMoveFlags has wantedFlags && g.navMoveFlags hasnt NavMoveFlag.Forwarded)
+    if (g.navWindow != null && navMoveRequestButNoResultYet() && g.navMoveFlags has NavMoveFlag.WrapMask_ && g.navMoveFlags hasnt NavMoveFlag.Forwarded)
         navUpdateCreateWrappingRequest()
 }
 
@@ -763,11 +762,6 @@ fun navScoreItem(result: NavItemData): Boolean {
             return false
         cand clipWithFull window.clipRect // This allows the scored item to not overlap other candidates in the parent window
     }
-
-    /*  We perform scoring on items bounding box clipped by the current clipping rectangle on the other axis
-        (clipping on our movement axis would give us equal scores for all clipped items)
-        For example, this ensures that items in one column are not reached when moving vertically from items in another column. */
-    navClampRectToVisibleAreaForMoveDir(g.navMoveDir, cand, window.clipRect)
 
     // Compute distance between boxes
     // FIXME-NAV: Introducing biases for vertical navigation, needs to be removed.
@@ -1061,16 +1055,4 @@ fun navScoreItemDistInterval(candMin: Float, candMax: Float, currMin: Float, cur
     candMax < currMin -> candMax - currMin
     currMax < candMin -> candMin - currMax
     else -> 0f
-}
-
-fun navClampRectToVisibleAreaForMoveDir(moveDir: Dir, r: Rect, clipRect: Rect) = when (moveDir) {
-    Dir.Left, Dir.Right -> {
-        r.min.y = glm.clamp(r.min.y, clipRect.min.y, clipRect.max.y)
-        r.max.y = glm.clamp(r.max.y, clipRect.min.y, clipRect.max.y)
-    }
-
-    else -> { // FIXME: PageUp/PageDown are leaving move_dir == None
-        r.min.x = glm.clamp(r.min.x, clipRect.min.x, clipRect.max.x)
-        r.max.x = glm.clamp(r.max.x, clipRect.min.x, clipRect.max.x)
-    }
 }

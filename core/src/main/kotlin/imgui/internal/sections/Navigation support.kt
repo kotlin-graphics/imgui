@@ -3,6 +3,7 @@ package imgui.internal.sections
 import com.livefront.sealedenum.GenSealedEnum
 import imgui.Flag
 import imgui.FlagBase
+import imgui.div
 import imgui.internal.classes.Rect
 import imgui.or
 
@@ -125,7 +126,9 @@ sealed class NavMoveFlag : FlagBase<NavMoveFlag>() {
     override val i: Int = 1 shl ordinal
 
     @GenSealedEnum
-    companion object
+    companion object {
+        val WrapMask_ = LoopX / LoopY / WrapX / WrapY
+    }
 }
 
 enum class NavForward(val i: Int) {
