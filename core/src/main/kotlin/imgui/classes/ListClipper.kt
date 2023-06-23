@@ -106,12 +106,13 @@ class ListClipper {
         itemsCount = 1
     }
 
-    fun forceDisplayRangeByIndices(itemMin: Int, itemMax: Int) {
+    // Call IncludeRangeByIndices() before first call to Step() if you need a range of items to be displayed regardless of visibility.
+    fun includeRangeByIndices(itemBegin: Int, itemEnd: Int) { // item_end is exclusive e.g. use (42, 42+1) to make item 42 always visible BUT due to alignment/padding of certain items it is possible/likely that an extra item may be included on either end of the display range.
         val data = tempData as ListClipperData
         assert(displayStart < 0) { "Only allowed after Begin () and if there has not been a specified range yet ." }
-        assert(itemMin <= itemMax)
-        if (itemMin < itemMax)
-            data.ranges += ListClipperRange.fromIndices(itemMin, itemMax)
+        assert(itemBegin <= itemEnd)
+        if (itemBegin < itemEnd)
+            data.ranges += ListClipperRange.fromIndices(itemBegin, itemEnd)
     }
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those items.  */
