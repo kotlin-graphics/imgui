@@ -520,8 +520,7 @@ internal interface debugTools {
     fun debugNodeTabBar(tabBar: TabBar, label: String) {
         // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
         val isActive = tabBar.prevFrameVisible >= ImGui.frameCount - 2
-        var text = "$label 0x%08X (${tabBar.tabs.size} tabs)${if (isActive) "" else " *Inactive*"}".format(tabBar.id)
-        text += "  { "
+        var text = "$label 0x%08X (${tabBar.tabs.size} tabs)${if (isActive) "" else " *Inactive*"}  {".format(tabBar.id)
         for (tabN in 0 until (tabBar.tabs.size min 3)) {
             val tab = tabBar.tabs[tabN]
             text += (if (tabN > 0) ", " else "") + "'" + tabBar.getTabName(tab) + "'"
@@ -584,9 +583,8 @@ internal interface debugTools {
 
     fun debugNodeTable(table: Table) {
         val isActive = table.lastFrameActive >= ImGui.frameCount - 2 // Note that fully clipped early out scrolling tables will appear as inactive here.
-        val p = "Table 0x%08X (${table.columnsCount} columns, in '${table.outerWindow!!.name}')${if (isActive) "" else " *Inactive*"}".format(table.id)
         if (!isActive) pushStyleColor(Col.Text, Col.TextDisabled.u32)
-        val open = treeNode(table, p)
+        val open = treeNode(table, "Table 0x%08X (${table.columnsCount} columns, in '${table.outerWindow!!.name}')${if(isActive) "" else " *Inactive*"}", table.id)
         if (!isActive) popStyleColor()
         if (isItemHovered())
             foregroundDrawList.addRect(table.outerRect.min, table.outerRect.max, COL32(255, 255, 0, 255))

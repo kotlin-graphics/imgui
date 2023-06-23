@@ -955,10 +955,17 @@ object ShowDemoWindowWidgets {
         
         """.trimIndent().toByteArray(1024 * 16)
         var flags: InputTextSingleFlags = Itf.AllowTabInput
-        val bufs = Array(6) { ByteArray(64) }
+        val bufs = Array(7) { ByteArray(64) }
 
         object TextFilters {
-            // Return 0 (pass) if the character is 'i' or 'm' or 'g' or 'u' or 'i'
+            // Modify character input by altering 'data->Eventchar' (ImGuiInputTextFlags_CallbackCharFilter callback)
+            val filterCasingSwap: InputTextCallback = { data ->
+                if (data.eventChar in 'a'..'z') data.eventChar = Char(data.eventChar - 'A' - 'a') // Lowercase becomes uppercase
+                else if (data.eventChar in 'A'..'Z') data.eventChar = Char(data.eventChar + 'a' - 'A') // Uppercase becomes lowercase
+                false
+            }
+
+            // Return 0 (pass) if the character is 'i' or 'm' or 'g' or 'u' or 'i', otherwise return 1 (filter out)
             val filterImGuiLetters: InputTextCallback = { data: InputTextCallbackData ->
                 !(data.eventChar < 256 && data.eventChar in "imgui")
             }
@@ -1022,7 +1029,8 @@ object ShowDemoWindowWidgets {
                     inputText("hexadecimal", bufs[2], Itf.CharsHexadecimal or Itf.CharsUppercase)
                     inputText("uppercase", bufs[3], Itf.CharsUppercase)
                     inputText("no blank", bufs[4], Itf.CharsNoBlank)
-                    inputText("\"imgui\" letters", bufs[5], Itf.CallbackCharFilter, TextFilters.filterImGuiLetters)
+                    inputText("casing swap", bufs[5], Itf.CallbackCharFilter, TextFilters.filterCasingSwap) // Use CharFilter callback to replace characters.
+                    inputText("\"imgui\"", bufs[6], Itf.CallbackCharFilter, TextFilters.filterImGuiLetters)
                 }
                 treeNode("Password Input") {
                     inputText("password", password, Itf.Password)
