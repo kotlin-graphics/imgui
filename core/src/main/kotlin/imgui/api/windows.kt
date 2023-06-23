@@ -31,6 +31,7 @@ import imgui.ImGui.setSize
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateParentAndRootLinks
+import imgui.internal.classes.FocusRequestFlag
 import imgui.internal.classes.Rect
 import imgui.internal.classes.WindowStackData
 import imgui.internal.floor
@@ -411,20 +412,6 @@ interface windows {
                     wantFocus = true
                 if (flags hasnt (Wf._ChildWindow or Wf._Tooltip))
                     wantFocus = true
-
-                val modal = topMostPopupModal
-                if (modal != null && !window.isWithinBeginStackOf(modal)) {
-                    // Avoid focusing a window that is created outside of active modal. This will prevent active modal from being closed.
-                    // Since window is not focused it would reappear at the same display position like the last time it was visible.
-                    // In case of completely new windows it would go to the top (over current modal), but input to such window would still be blocked by modal.
-                    // Position window behind a modal that is not a begin-parent of this window.
-                    wantFocus = false
-                    if (window === window.rootWindow) {
-                        val blockingModal = findBlockingModal(window)
-                        check(blockingModal != null)
-                        window bringToDisplayBehind blockingModal
-                    }
-                }
             }
 
             // [Test Engine] Register whole window in the item system (before submitting further decorations)
@@ -661,10 +648,13 @@ interface windows {
             }
 
             // Apply focus (we need to call FocusWindow() AFTER setting DC.CursorStartPos so our initial navigation reference rectangle can start around there)
-            if (wantFocus) {
-                focusWindow(window)
-                navInitWindow(window, false)
-            }
+            // We ImGuiFocusRequestFlags_UnlessBelowModal to:
+            // - Avoid focusing a window that is created outside of a modal. This will prevent active modal from being closed.
+            // - Position window behind the modal that is not a begin-parent of this window.
+            if (wantFocus)
+                focusWindow(window, flags = FocusRequestFlag.UnlessBelowModal)
+            if (wantFocus && window === g.navWindow)
+                navInitWindow(window, false) // <-- this is in the way for us to be able to defer and sort reappearing FocusWindow() calls
 
             // Title bar
             if (flags hasnt Wf.NoTitleBar) {

@@ -26,6 +26,9 @@ internal interface windowsDisplayAndFocusOrder {
         if (flags has FocusRequestFlag.UnlessBelowModal)
             findBlockingModal(window)?.let { blockingModal ->
                 IMGUI_DEBUG_LOG_FOCUS("[focus] FocusWindow(\"${window?.name ?: "<NULL>"}\", UnlessBelowModal): prevented by \"${blockingModal.name}\".\n")
+                val wnd = window
+                if (wnd != null && wnd === wnd.rootWindow && wnd.flags hasnt WindowFlag.NoBringToFrontOnFocus)
+                    wnd bringToDisplayBehind blockingModal // Still bring to right below modal.
                 return
             }
 

@@ -286,7 +286,7 @@ internal interface popupsModalsTooltips {
         }
 
     /** ~GetTopMostPopupModal */
-    // FIXME: In principle we should converge toward replacing calls to GetTopMostPopupModal() + IsWindowWithinBeginStackOf() with calls to FindBlockingModal()
+    // Also see FindBlockingModal(NULL)
     val topMostPopupModal: Window?
         get() {
             for (n in g.openPopupStack.size - 1 downTo 0)
@@ -298,6 +298,7 @@ internal interface popupsModalsTooltips {
         }
 
     /** ~GetTopMostAndVisiblePopupModal */
+    // See Demo->Stacked Modal to confirm what this is for.
     val topMostAndVisiblePopupModal: Window?
         get() {
             for (n in g.openPopupStack.lastIndex downTo 0)
@@ -317,6 +318,9 @@ internal interface popupsModalsTooltips {
     //      - Window        //                  .. returns Modal2
     //          - Window    //                  .. returns Modal2
     //          - Modal2    //                  .. returns Modal2
+    // Notes:
+    // - FindBlockingModal(NULL) == NULL is generally equivalent to GetTopMostPopupModal() == NULL.
+    //   Only difference is here we check for ->Active/WasActive but it may be unecessary.
     fun findBlockingModal(window: Window?): Window? {
 
         if (g.openPopupStack.isEmpty())
