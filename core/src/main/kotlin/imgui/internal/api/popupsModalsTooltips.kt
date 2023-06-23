@@ -6,6 +6,7 @@ import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.endPopup
 import imgui.ImGui.findWindowByName
@@ -30,7 +31,6 @@ import imgui.internal.classes.Window
 import imgui.internal.floor
 import imgui.internal.sections.*
 import imgui.statics.navCalcPreferredRefPos
-import imgui.statics.navRestoreLastChildNavWindow
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.math.max
@@ -78,10 +78,13 @@ internal interface popupsModalsTooltips {
 
         // Process navigation-in immediately so NavInit can run on first frame
         // Can enter a child if (A) it has navigatable items or (B) it can be scrolled.
+        val tempIdForActivation: ID = id + 1
+        if (g.activeId == tempIdForActivation)
+            clearActiveID()
         if (g.navActivateId == id && flags hasnt Wf._NavFlattened && (childWindow.dc.navLayersActiveMask != 0 || childWindow.dc.navWindowHasScrollY)) {
             focusWindow(childWindow)
             navInitWindow(childWindow, false)
-            setActiveID(id + 1, childWindow) // Steal ActiveId with another arbitrary id so that key-press won't activate child item
+            setActiveID(tempIdForActivation, childWindow) // Steal ActiveId with another arbitrary id so that key-press won't activate child item
             g.activeIdSource = g.navInputSource
         }
 

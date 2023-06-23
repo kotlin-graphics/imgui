@@ -13,6 +13,7 @@ import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.ScrollFlag
 import imgui.or
+import imgui.statics.navApplyItemToResult
 import imgui.statics.navUpdateAnyRequestFlag
 
 
@@ -27,12 +28,11 @@ interface focusActivation {
         val window = g.currentWindow!!
         if (!window.appearing)
             return
-        if (g.navWindow !== window.rootWindowForNav || (!g.navInitRequest && g.navInitResultId == 0) || g.navLayer != window.dc.navLayerCurrent)
+        if (g.navWindow !== window.rootWindowForNav || (!g.navInitRequest && g.navInitResult.id == 0) || g.navLayer != window.dc.navLayerCurrent)
             return
 
         g.navInitRequest = false
-        g.navInitResultId = g.lastItemData.id
-        g.navInitResultRectRel = window rectAbsToRel g.lastItemData.rect
+        navApplyItemToResult(g.navInitResult)
         navUpdateAnyRequestFlag()
 
         // Scroll could be done in NavInitRequestApplyResult() via an opt-in flag (we however don't want regular init requests to scroll)

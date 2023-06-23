@@ -36,8 +36,7 @@ internal interface gamepadKeyboardNavigation {
             setNavID(0, g.navLayer, window.navRootFocusScopeId, Rect())
             g.navInitRequest = true
             g.navInitRequestFromMove = false
-            g.navInitResultId = 0
-            g.navInitResultRectRel = Rect()
+            g.navInitResult.id = 0
             navUpdateAnyRequestFlag()
         } else {
             g.navId = window.navLastIds[0]
@@ -49,10 +48,17 @@ internal interface gamepadKeyboardNavigation {
         // In very rare cases g.NavWindow may be null (e.g. clearing focus after requesting an init request, which does happen when releasing Alt while clicking on void)
         val navWindow = g.navWindow ?: return
 
+        val result = g.navInitResult
+        if (g.navId != result.id) {
+            g.navJustMovedToId = result.id
+            g.navJustMovedToFocusScopeId = result.focusScopeId
+            g.navJustMovedToKeyMods = none
+        }
+
         // Apply result from previous navigation init request (will typically select the first item, unless SetItemDefaultFocus() has been called)
         // FIXME-NAV: On _NavFlattened windows, g.NavWindow will only be updated during subsequent frame. Not a problem currently.
-        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: ApplyResult: NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${navWindow.name}\"", g.navInitResultId)
-        setNavID(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
+        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: ApplyResult: NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${navWindow.name}\"", result.id)
+        setNavID(result.id, g.navLayer, result.focusScopeId, result.rectRel)
         g.navIdIsAlive = true // Mark as alive from previous frame as we got a result
         if (g.navInitRequestFromMove)
             navRestoreHighlightAfterMove()

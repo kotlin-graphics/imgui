@@ -89,12 +89,12 @@ fun navUpdate() {
                 g.navInputSource = InputSource.Keyboard
 
     // Process navigation init request (select first/default focus)
-    if (g.navInitResultId != 0)
+    g.navJustMovedToId = 0
+    if (g.navInitResult.id != 0)
         navInitRequestApplyResult()
     g.navInitRequest = false
     g.navInitRequestFromMove = false
-    g.navInitResultId = 0
-    g.navJustMovedToId = 0
+    g.navInitResult.id = 0
 
     // Process navigation move request
     if (g.navMoveSubmitted)
@@ -565,7 +565,7 @@ fun navUpdateCreateMoveRequest() {
         IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from move, window \"${window?.name ?: "<NULL>"}\", layer=${g.navLayer}")
         g.navInitRequest = true
         g.navInitRequestFromMove = true
-        g.navInitResultId = 0
+        g.navInitResult.id = 0
         g.navDisableHighlight = false
     }
 
@@ -929,10 +929,8 @@ fun navProcessItem() {
     if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent && itemFlags hasnt If.Disabled) {
         // Even if 'ImGuiItemFlags_NoNavDefaultFocus' is on (typically collapse/close button) we record the first ResultId so they can be used as a fallback
         val candidateForNavDefaultFocus = itemFlags hasnt If.NoNavDefaultFocus
-        if (candidateForNavDefaultFocus || g.navInitResultId == 0) {
-            g.navInitResultId = id
-            g.navInitResultRectRel = window rectAbsToRel navBb
-        }
+        if (candidateForNavDefaultFocus || g.navInitResult.id == 0)
+            navApplyItemToResult(g.navInitResult)
         if (candidateForNavDefaultFocus) {
             g.navInitRequest = false // Found a match, clear request
             navUpdateAnyRequestFlag()

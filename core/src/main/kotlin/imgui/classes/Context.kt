@@ -344,10 +344,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navInitRequestFromMove = false
 
     /** Init request result (first item of the window, or one for which SetItemDefaultFocus() was called) */
-    var navInitResultId: ID = 0
-
-    /** Init request result rectangle (relative to parent window) */
-    var navInitResultRectRel = Rect()
+    val navInitResult = NavItemData()
 
     /** Move request submitted, will process result on next NewFrame() */
     var navMoveSubmitted = false
