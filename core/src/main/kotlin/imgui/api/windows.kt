@@ -550,8 +550,8 @@ interface windows {
                     // - We disable this when the parent window has zero vertices, which is a common pattern leading to laying out multiple overlapping childs
                     val previousChild = if (parentWindow!!.dc.childWindows.size >= 2) parentWindow.dc.childWindows[parentWindow.dc.childWindows.size - 2] else null
                     val previousChildOverlapping = previousChild?.rect()?.overlaps(window.rect()) ?: false
-                    val parentIsEmpty = parentWindow.drawList.vtxBuffer.rem > 0
-                    if (window.drawList.cmdBuffer.last().elemCount == 0 && parentIsEmpty && !previousChildOverlapping)
+                    val parentIsEmpty = parentWindow.drawList.vtxBuffer.rem == 0
+                    if (window.drawList.cmdBuffer.last().elemCount == 0 && !parentIsEmpty && !previousChildOverlapping)
                         renderDecorationsInParent = true
                 }
                 if (renderDecorationsInParent)
