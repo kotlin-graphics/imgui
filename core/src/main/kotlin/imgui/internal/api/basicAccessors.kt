@@ -4,6 +4,7 @@ import imgui.DataType
 import imgui.ID
 import imgui.ImGui.debugHookIdInfo
 import imgui.ImGui.inputTextDeactivateHook
+import imgui.ImGui.navClearPreferredPosForAxis
 import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.setNavWindow
 import imgui.MouseButton
@@ -109,6 +110,10 @@ internal interface basicAccessors {
             g.navDisableMouseHover = true
         else
             g.navDisableHighlight = true
+
+        // Clear preferred scoring position (NavMoveRequestApplyResult() will tend to restore it)
+        navClearPreferredPosForAxis(Axis.X)
+        navClearPreferredPosForAxis(Axis.Y)
     }
 
     fun clearActiveID() = setActiveID(0, null) // g.ActiveId = 0;

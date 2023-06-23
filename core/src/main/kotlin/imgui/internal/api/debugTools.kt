@@ -229,7 +229,7 @@ internal interface debugTools {
         treeNode("Font Atlas", "Font Atlas (${atlas.texWidth}x${atlas.texHeight} pixels)") {
             val cfg = g.debugMetricsConfig
             checkbox("Tint with Text Color", cfg::showAtlasTintedWithTextColor) // Using text color ensure visibility of core atlas data, but will alter custom colored icons
-            val tintCol = if(cfg.showAtlasTintedWithTextColor) getStyleColorVec4(Col.Text) else Vec4(1f)
+            val tintCol = if (cfg.showAtlasTintedWithTextColor) getStyleColorVec4(Col.Text) else Vec4(1f)
             val borderCol = getStyleColorVec4(Col.Border)
             ImGui.image(atlas.texID, Vec2(atlas.texWidth, atlas.texHeight), Vec2(), Vec2(1), tintCol, borderCol)
         }
@@ -317,7 +317,7 @@ internal interface debugTools {
             }
 
             var buf = "DrawCmd:%5d tris, Tex 0x%02d, ClipRect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
-                cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                    cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
             val pcmdNodeOpen = treeNode(drawList.cmdBuffer.indexOf(cmd), buf)
             if (isItemHovered() && (cfg.showDrawCmdMesh || cfg.showDrawCmdBoundingBoxes) /*&& fgDrawList != null*/)
                 debugNodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, cfg.showDrawCmdMesh, cfg.showDrawCmdBoundingBoxes)
@@ -426,11 +426,11 @@ internal interface debugTools {
         setNextItemWidth(ImGui.fontSize * 8)
         drag("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
         sameLine(); metricsHelpMarker(
-            "Note than the default embedded font is NOT meant to be scaled.\n\n" +
-                    "Font are currently rendered into bitmaps at a given size at the time of building the atlas. " +
-                    "You may oversample them to get some flexibility with scaling. " +
-                    "You can also render at multiple sizes and select which one to use at runtime.\n\n" +
-                    "(Glimmer of hope: the atlas system will be rewritten in the future to make scaling more flexible.)")
+                "Note than the default embedded font is NOT meant to be scaled.\n\n" +
+                        "Font are currently rendered into bitmaps at a given size at the time of building the atlas. " +
+                        "You may oversample them to get some flexibility with scaling. " +
+                        "You can also render at multiple sizes and select which one to use at runtime.\n\n" +
+                        "(Glimmer of hope: the atlas system will be rewritten in the future to make scaling more flexible.)")
         text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
         val cStr = ByteArray(5)
         text("Fallback character: '${textCharToUtf8(cStr, font.fallbackChar)}' (U+%04X)", font.fallbackChar.code)
@@ -440,7 +440,7 @@ internal interface debugTools {
         for (configI in 0 until font.configDataCount)
             font.configData.getOrNull(configI)?.let { cfg ->
                 bulletText("Input $configI: \'${cfg.name}\', Oversample: (${cfg.oversample.x},${cfg.oversample.y}), PixelSnapH: ${cfg.pixelSnapH}, Offset: (%.1f,%.1f)",
-                           cfg.glyphOffset.x, cfg.glyphOffset.y)
+                        cfg.glyphOffset.x, cfg.glyphOffset.y)
             }
         // Display all glyphs of the fonts in separate pages of 256 characters
         treeNode("Glyphs", "Glyphs (${font.glyphs.size})") {
@@ -644,7 +644,7 @@ internal interface debugTools {
             val dir = if (sortDir == SortDirection.Ascending) "Asc" else if (sortDir == SortDirection.Descending) "Des" else "---"
             val stretch = if (columnSettings.isStretch) "Weight" else "Width "
             bulletText("Column $n Order ${columnSettings.displayOrder} SortOrder ${columnSettings.sortOrder} $dir Vis ${columnSettings.isEnabled.d} $stretch %7.3f UserID 0x%08X",
-                       columnSettings.widthOrWeight, columnSettings.userID)
+                    columnSettings.widthOrWeight, columnSettings.userID)
         }
         treePop()
     }
@@ -670,7 +670,7 @@ internal interface debugTools {
                 if (undoRecType != ' ' && undoRec.charStorage != -1)
                     textStrToUtf8(buf, undoState.undoChar.sliceArray(undoRec.charStorage until undoRec.insertLength))
                 text("$undoRecType [%02d] where %03d, insert %03d, delete %03d, char_storage %03d \"$buf\"",
-                     n, undoRec.where, undoRec.insertLength, undoRec.deleteLength, undoRec.charStorage)
+                        n, undoRec.where, undoRec.insertLength, undoRec.deleteLength, undoRec.charStorage)
                 if (undoRecType == ' ')
                     endDisabled()
             }
@@ -702,8 +702,8 @@ internal interface debugTools {
         val flags = window.flags
         debugNodeDrawList(window, window.drawList, "DrawList")
         bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), ContentSize (%.1f,%.1f) Ideal (%.1f,%.1f)",
-                   window.pos.x, window.pos.y, window.size.x, window.size.y,
-                   window.contentSize.x, window.contentSize.y, window.contentSizeIdeal.x, window.contentSizeIdeal.y)
+                window.pos.x, window.pos.y, window.size.x, window.size.y,
+                window.contentSize.x, window.contentSize.y, window.contentSizeIdeal.x, window.contentSizeIdeal.y)
         val s = StringBuilder()
         if (flags has WindowFlag._ChildWindow) s += "Child "
         if (flags has WindowFlag._Tooltip) s += "Tooltip "
@@ -739,6 +739,9 @@ internal interface debugTools {
                 getForegroundDrawList(window).addRect(r.min + window.pos, r.max + window.pos, COL32(255, 255, 0, 255))
             debugLocateItemOnHover(window.navLastIds[layer])
         }
+        val pr = window.navPreferredScoringPosRel
+        for (layer in NavLayer.values())
+            bulletText("NavPreferredScoringPosRel[${layer.ordinal}] = {%.1f,%.1f)", if (pr[layer.ordinal].x == Float.MAX_VALUE) -99999f else pr[layer.ordinal].x, if (pr[layer.ordinal].y == Float.MAX_VALUE) -99999f else pr[layer.ordinal].y) // Display as 99999.0f so it looks neater.
         bulletText("NavLayersActiveMask: %X, NavLastChildNavWindow: %s", window.dc.navLayersActiveMask, window.navLastChildNavWindow?.name ?: "NULL")
         if (window.rootWindow !== window) debugNodeWindow(window.rootWindow, "RootWindow")
         window.parentWindow?.let { debugNodeWindow(it, "ParentWindow") }
@@ -793,12 +796,12 @@ internal interface debugTools {
         if (treeNode("viewport0", "Viewport #0")) {
             val flags = viewport.flags
             bulletText("Main Pos: (%.0f,%.0f), Size: (%.0f,%.0f)\nWorkArea Offset Left: %.0f Top: %.0f, Right: %.0f, Bottom: %.0f",
-                       viewport.pos.x, viewport.pos.y, viewport.size.x, viewport.size.y,
-                       viewport.workOffsetMin.x, viewport.workOffsetMin.y, viewport.workOffsetMax.x, viewport.workOffsetMax.y)
+                    viewport.pos.x, viewport.pos.y, viewport.size.x, viewport.size.y,
+                    viewport.workOffsetMin.x, viewport.workOffsetMin.y, viewport.workOffsetMax.x, viewport.workOffsetMax.y)
             bulletText("Flags: 0x%04X =%s%s%s", viewport.flags,
-                       if (flags has ViewportFlag.IsPlatformWindow) " IsPlatformWindow" else "",
-                       if (flags has ViewportFlag.IsPlatformMonitor) " IsPlatformMonitor" else "",
-                       if (flags has ViewportFlag.OwnedByApp) " OwnedByApp" else "")
+                    if (flags has ViewportFlag.IsPlatformWindow) " IsPlatformWindow" else "",
+                    if (flags has ViewportFlag.IsPlatformMonitor) " IsPlatformMonitor" else "",
+                    if (flags has ViewportFlag.OwnedByApp) " OwnedByApp" else "")
             for (layer in viewport.drawDataBuilder.layers)
                 for (drawListIdx in layer.indices)
                     debugNodeDrawList(null, layer[drawListIdx], "DrawList")
@@ -822,10 +825,11 @@ internal interface debugTools {
         val startPos = Vec2(boardMin.x + 5f - keyStep.x, boardMin.y)
 
         class KeyLayoutData(val row: Int, val col: Int, val label: String, val key: Key)
+
         val keysToDisplay = arrayOf(
-                KeyLayoutData(0, 0, "", Key.Tab),      KeyLayoutData(0, 1, "Q", Key.Q), KeyLayoutData(0, 2, "W", Key.W), KeyLayoutData(0, 3, "E", Key.E), KeyLayoutData(0, 4, "R", Key.R),
+                KeyLayoutData(0, 0, "", Key.Tab), KeyLayoutData(0, 1, "Q", Key.Q), KeyLayoutData(0, 2, "W", Key.W), KeyLayoutData(0, 3, "E", Key.E), KeyLayoutData(0, 4, "R", Key.R),
                 KeyLayoutData(1, 0, "", Key.CapsLock), KeyLayoutData(1, 1, "A", Key.A), KeyLayoutData(1, 2, "S", Key.S), KeyLayoutData(1, 3, "D", Key.D), KeyLayoutData(1, 4, "F", Key.F),
-                KeyLayoutData(2, 0, "", Key.LeftShift),KeyLayoutData(2, 1, "Z", Key.Z), KeyLayoutData(2, 2, "X", Key.X), KeyLayoutData(2, 3, "C", Key.C), KeyLayoutData(2, 4, "V", Key.V))
+                KeyLayoutData(2, 0, "", Key.LeftShift), KeyLayoutData(2, 1, "Z", Key.Z), KeyLayoutData(2, 2, "X", Key.X), KeyLayoutData(2, 3, "C", Key.C), KeyLayoutData(2, 4, "V", Key.V))
 
         // Elements rendered manually via ImDrawList API are not clipped automatically.
         // While not strictly necessary, here IsItemVisible() is used to avoid rendering these shapes when they are out of view.

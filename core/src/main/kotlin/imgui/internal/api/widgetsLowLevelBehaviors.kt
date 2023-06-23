@@ -28,6 +28,7 @@ import imgui.ImGui.logRenderedText
 import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.mouseCursor
+import imgui.ImGui.navClearPreferredPosForAxis
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.renderArrow
@@ -512,11 +513,12 @@ internal interface widgetsLowLevelBehaviors {
 
             if (g.navId == id && g.navMoveDir == Dir.Left && isOpen) {
                 toggled = true
+                navClearPreferredPosForAxis(Axis.X)
                 navMoveRequestCancel()
             }
-            // If there's something upcoming on the line we may want to give it the priority?
-            if (g.navId == id && g.navMoveDir == Dir.Right && !isOpen) {
+            if (g.navId == id && g.navMoveDir == Dir.Right && !isOpen) { // If there's something upcoming on the line we may want to give it the priority?
                 toggled = true
+                navClearPreferredPosForAxis(Axis.X)
                 navMoveRequestCancel()
             }
             if (toggled) {

@@ -2,6 +2,7 @@
   <code_scheme name="Project" version="173">
     <JetCodeStyleSettings>
       <option name="LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY" value="false" />
+      <option name="WRAP_ELVIS_EXPRESSIONS" value="0" />
     </JetCodeStyleSettings>
     <codeStyleSettings language="kotlin">
       <option name="METHOD_ANNOTATION_WRAP" value="0" />

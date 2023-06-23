@@ -190,6 +190,12 @@ internal interface windows {
         return Rect(r.min.x + off.x, r.min.y + off.y, r.max.x + off.x, r.max.y + off.y)
     }
 
+    /** ~WindowPosRelToAbs */
+    infix fun Window.posRelToAbs(p: Vec2): Vec2 {
+        val off = dc.cursorStartPos
+        return Vec2(p.x + off.x, p.y + off.y)
+    }
+
     companion object {
         val shrinkWidthItemComparer: Comparator<ShrinkWidthItem> = Comparator { a, b ->
             val d = (b.width - a.width).toInt()

@@ -124,11 +124,13 @@ internal interface gamepadKeyboardNavigation {
                 result = g.navTabbingResultFirst
 
         // In a situation when there are no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
+        val axis = if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down) Axis.Y else Axis.X
         if (result == null) {
             if (g.navMoveFlags has NavMoveFlag.Tabbing)
                 g.navMoveFlags /= NavMoveFlag.DontSetNavHighlight
             if (g.navId != 0 && g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight)
                 navRestoreHighlightAfterMove()
+            navClearPreferredPosForAxis(axis) // On a failed move, clear preferred pos for this axis.
             IMGUI_DEBUG_LOG_NAV("[nav] NavMoveSubmitted but not led to a result!\n")
             return
         }
@@ -171,9 +173,17 @@ internal interface gamepadKeyboardNavigation {
             g.navJustMovedToKeyMods = g.navMoveKeyMods
         }
 
-        // Focus
-        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
+        // Apply new NavID/Focus
+        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
+        val preferredScoringPosRel = g.navWindow!!.rootWindowForNav!!.navPreferredScoringPosRel[g.navLayer.ordinal]
         setNavID(result.id, g.navLayer, result.focusScopeId, result.rectRel)
+
+        // Restore last preferred position for current axis
+        // (storing in RootWindowForNav-> as the info is desirable at the beginning of a Move Request. In theory all storage should use RootWindowForNav..)
+        if (g.navMoveFlags hasnt NavMoveFlag.Tabbing) {
+            preferredScoringPosRel[axis] = result.rectRel.center[axis]
+            g.navWindow!!.rootWindowForNav!!.navPreferredScoringPosRel[g.navLayer.ordinal] = preferredScoringPosRel
+        }
 
         // Tabbing: Activates Inputable or Focus non-Inputable
         if (g.navMoveFlags has NavMoveFlag.Tabbing && result.inFlags has ItemFlag.Inputable) {
@@ -197,11 +207,16 @@ internal interface gamepadKeyboardNavigation {
     /** Navigation wrap-around logic is delayed to the end of the frame because this operation is only valid after entire
      *  popup is assembled and in case of appended popups it is not clear which EndPopup() call is final. */
     fun navMoveRequestTryWrapping(window: Window, wrapFlags: NavMoveFlags) {
-        assert(wrapFlags has NavMoveFlag.WrapMask_  && (wrapFlags wo NavMoveFlag.WrapMask_) == none) { "Call with _WrapX, _WrapY, _LoopX, _LoopY" }
+        assert(wrapFlags has NavMoveFlag.WrapMask_ && (wrapFlags wo NavMoveFlag.WrapMask_) == none) { "Call with _WrapX, _WrapY, _LoopX, _LoopY" }
 
         // In theory we should test for NavMoveRequestButNoResultYet() but there's no point doing it, NavEndFrame() will do the same test
         if (g.navWindow === window && g.navMoveScoringItems && g.navLayer == NavLayer.Main)
             g.navMoveFlags = (g.navMoveFlags wo NavMoveFlag.WrapMask_) / wrapFlags
+    }
+
+    fun navClearPreferredPosForAxis(axis: Axis) {
+        val g = gImGui
+        g.navWindow!!.rootWindowForNav!!.navPreferredScoringPosRel[g.navLayer.ordinal][axis] = Float.MAX_VALUE
     }
 
     // True when current work location may be scrolled horizontally when moving left / right.
@@ -240,5 +255,9 @@ internal interface gamepadKeyboardNavigation {
         g.navFocusScopeId = focusScopeId
         navWindow.navLastIds[navLayer] = id
         navWindow.navRectRel[navLayer] = rectRel
+
+        // Clear preferred scoring position (NavMoveRequestApplyResult() will tend to restore it)
+        navClearPreferredPosForAxis(Axis.X)
+        navClearPreferredPosForAxis(Axis.Y)
     }
 }

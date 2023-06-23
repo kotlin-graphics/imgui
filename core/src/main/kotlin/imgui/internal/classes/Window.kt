@@ -299,6 +299,9 @@ class Window(
     /** Reference rectangle, in window relative space   */
     val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
+    /** Preferred X/Y position updated when moving on a given axis, reset to FLT_MAX. */
+    val navPreferredScoringPosRel = Array(NavLayer.COUNT) { Vec2(Float.MAX_VALUE) }
+
     /** Focus Scope ID at the time of Begin() */
     var navRootFocusScopeId: ID = 0
 

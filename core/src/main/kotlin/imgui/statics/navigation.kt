@@ -28,6 +28,7 @@ import imgui.ImGui.isNavFocusable
 import imgui.ImGui.isPressed
 import imgui.ImGui.isReleased
 import imgui.ImGui.mainViewport
+import imgui.ImGui.navClearPreferredPosForAxis
 import imgui.ImGui.navInitRequestApplyResult
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.navMoveRequestApplyResult
@@ -53,6 +54,7 @@ import imgui.ImGui.style
 import imgui.ImGui.testOwner
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
+import imgui.api.gImGui
 import imgui.internal.*
 import imgui.internal.classes.FocusRequestFlag
 import imgui.internal.classes.InputFlag
@@ -208,13 +210,17 @@ fun navUpdate() {
 
     // [DEBUG]
     g.navScoringDebugCount = 0
-    //    #if IMGUI_DEBUG_NAV_RECTS
-    //    if (g.NavWindow) {
-    //        ImDrawList * draw_list = GetForegroundDrawList(g.NavWindow)
-    //        if (1) { for (int layer = 0; layer < 2; layer++) { ImRect r = WindowRectRelToAbs(g.NavWindow, g.NavWindow->NavRectRel[layer]); draw_list->AddRect(r.Min, r.Max, IM_COL32(255,200,0,255)); } } // [DEBUG]
-    //        if (1) { ImU32 col =(!g.NavWindow->Hidden) ? IM_COL32(255, 0, 255, 255) : IM_COL32(255, 0, 0, 255); ImVec2 p = NavCalcPreferredRefPos (); char buf [32]; ImFormatString(buf, 32, "%d", g.NavLayer); draw_list->AddCircleFilled(p, 3.0f, col); draw_list->AddText(NULL, 13.0f, p+ImVec2(8, -4), col, buf); }
-    //    }
-    //    #endif
+    if (IMGUI_DEBUG_NAV_RECTS)
+        g.navWindow?.let { debugWindow ->
+            val drawList = getForegroundDrawList(debugWindow)
+            val layer = g.navLayer
+            /* for (int layer = 0; layer < 2; layer++)*/
+            run {
+                val r = debugWindow rectRelToAbs debugWindow.navRectRel[layer]
+                drawList.addRect(r.min, r.max, COL32(255, 200, 0, 255))
+            }
+            //if (1) { ImU32 col = (!debug_window->Hidden) ? IM_COL32(255,0,255,255) : IM_COL32(255,0,0,255); ImVec2 p = NavCalcPreferredRefPos(); char buf[32]; ImFormatString(buf, 32, "%d", g.NavLayer); draw_list->AddCircleFilled(p, 3.0f, col); draw_list->AddText(NULL, 13.0f, p + ImVec2(8,-4), col, buf); }
+        }
 }
 
 /** Windowing management mode
@@ -471,6 +477,29 @@ fun navUpdateCancelRequest() {
     }
 }
 
+// Bias scoring rect ahead of scoring + update preferred pos (if missing) using source position
+fun navBiasScoringRect(r: Rect, preferredPosRel: Vec2, moveDir: Dir) {
+    // Bias initial rect
+    val g = gImGui
+    val relToAbsOffset = g.navWindow!!.dc.cursorStartPos // [JVM] it's safe to use the same instance
+
+    // Initialize bias on departure if we don't have any. So mouse-click + arrow will record bias.
+    // - We default to L/U bias, so moving down from a large source item into several columns will land on left-most column.
+    // - But each successful move sets new bias on one axis, only cleared when using mouse.
+    if (preferredPosRel.x == Float.MAX_VALUE)
+        preferredPosRel.x = min(r.min.x + 1f, r.max.x) - relToAbsOffset.x
+    if (preferredPosRel.y == Float.MAX_VALUE)
+        preferredPosRel.y = r.center.y - relToAbsOffset.y
+
+    // Apply general bias on the other axis
+    if (moveDir == Dir.Up || moveDir == Dir.Down) {
+        r.min.x = preferredPosRel.x + relToAbsOffset.x; r.max.x = r.min.x
+    }
+    else {
+        r.min.y = preferredPosRel.y + relToAbsOffset.y; r.max.y = r.min.y
+    }
+}
+
 fun navUpdateCreateMoveRequest() {
 
     val window = g.navWindow
@@ -571,8 +600,8 @@ fun navUpdateCreateMoveRequest() {
         val navRectRel = if (!window.navRectRel[g.navLayer].isInverted) window.navRectRel[g.navLayer] else Rect()
         scoringRect.put(window rectRelToAbs navRectRel)
         scoringRect translateY scoringRectOffsetY
-        scoringRect.min.x = (scoringRect.min.x + 1f) min scoringRect.max.x
-        scoringRect.max.x = scoringRect.min.x
+        if (g.navMoveSubmitted)
+            navBiasScoringRect(scoringRect, window.rootWindowForNav!!.navPreferredScoringPosRel[g.navLayer.ordinal], g.navMoveDir)
         assert(!scoringRect.isInverted) { "Ensure if we have a finite, non-inverted bounding box here will allow us to remove extraneous ImFabs() calls in NavScoreItem()." }
         //GetForegroundDrawList()->AddRect(scoring_rect.Min, scoring_rect.Max, IM_COL32(255,200,0,255)); // [DEBUG]
         //if (!g.NavScoringNoClipRect.IsInverted()) { GetForegroundDrawList()->AddRect(g.NavScoringNoClipRect.Min, g.NavScoringNoClipRect.Max, IM_COL32(255, 200, 0, 255)); } // [DEBUG]
@@ -726,6 +755,8 @@ fun navUpdateCreateWrappingRequest() {
     if (!doForward)
         return
     window.navRectRel[g.navLayer] = bbRel
+    navClearPreferredPosForAxis(Axis.X)
+    navClearPreferredPosForAxis(Axis.Y)
     navMoveRequestForward(g.navMoveDir, clipDir, moveFlags, g.navMoveScrollFlags)
 }
 
@@ -811,15 +842,19 @@ fun navScoreItem(result: NavItemData): Boolean {
                 drawList.addRectFilled(cand.min, cand.min + calcTextSize(buf), COL32(255, 0, 0, 200))
                 drawList.addText(cand.min, COL32(255, 255, 255, 255), buf)
             }
-        if (isMouseHoveringRect(cand)) {
-            val buf = "d-box    (%7.3f,%7.3f) -> %7.3f\nd-center (%7.3f,%7.3f) -> %7.3f\nd-axial  (%7.3f,%7.3f) -> %7.3f\nnav WENS${g.navMoveDir.i}, quadrant WENS${quadrant.i}}"
+        val debugHovering = isMouseHoveringRect(cand.min, cand.max)
+        val debugTty = g.io.keyCtrl && Key.Space.isPressed
+        if (debugHovering || debugTty) {
+            val buf = "d-box    (%7.3f,%7.3f) -> %7.3f\nd-center (%7.3f,%7.3f) -> %7.3f\nd-axial  (%7.3f,%7.3f) -> %7.3f\nnav -WENS${g.navMoveDir.i}, quadrant -WENS${quadrant.i}}"
                     .format(dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial)
-            getForegroundDrawList(window).apply {
-                addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
-                addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
-                addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf) + Vec2(4), COL32(40, 0, 0, 2000))
-                addText(cand.max, 0.inv(), buf)
-            }
+            if (debugHovering)
+                getForegroundDrawList(window).apply {
+                    addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
+                    addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
+                    addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf) + Vec2(4), COL32(40, 0, 0, 2000))
+                    addText(cand.max, 0.inv(), buf)
+                }
+            if (debugTty) IMGUI_DEBUG_LOG_NAV("id 0x%08X\n$buf\n", g.lastItemData.id)
         }
     }
 
