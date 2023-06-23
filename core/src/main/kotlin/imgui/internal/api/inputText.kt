@@ -332,7 +332,6 @@ internal interface inputText {
             // Although we are active we don't prevent mouse from hovering other elements unless we are interacting right now with the widget.
             // Down the line we should have a cleaner library-wide concept of Selected vs Active.
             g.activeIdAllowOverlap = !io.mouseDown[0]
-            g.wantTextInputNextFrame = 1
 
             // Edit in progress
             val mouseX = io.mousePos.x - frameBb.min.x - style.framePadding.x + state.scrollX
@@ -754,8 +753,11 @@ internal interface inputText {
         }
 
         // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
-        if (clearActiveId && g.activeId == id)
+        // Otherwise request text input ahead for next frame.
+        if (g.activeId == id && clearActiveId)
             clearActiveID()
+        else if (g.activeId == id)
+            g.wantTextInputNextFrame = 1
 
         // Render frame
         if (!isMultiline) {
