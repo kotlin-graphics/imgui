@@ -6,6 +6,7 @@ import glm_.glm
 import glm_.i
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
 import glm_.vec4.Vec4ub
 import gln.*
 import gln.glf.semantic
@@ -160,7 +161,7 @@ class ImplGL3 : GLInterface {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
         val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
-        val lastPolygonMode = glGetVec2i(GL_POLYGON_MODE)[0]
+        val lastPolygonMode = if (IMPL_HAS_POLYGON_MODE) glGetVec2i(GL_POLYGON_MODE) else Vec2i(-1)
         val lastViewport = glGetVec4i(GL_VIEWPORT)
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
         val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)
@@ -266,7 +267,11 @@ class ImplGL3 : GLInterface {
                 else -> glDisable(GL_PRIMITIVE_RESTART)
             }
         if (IMPL_HAS_POLYGON_MODE)
-            glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
+            if (IMPL_HAS_SEPARATE_POLYGON_MODE) {
+                glPolygonMode(GL_FRONT, lastPolygonMode[0])
+                glPolygonMode(GL_BACK, lastPolygonMode[1])
+            } else
+                glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode[0])
         glViewport(lastViewport)
         glScissor(lastScissorBox)
     }
@@ -384,6 +389,9 @@ class ImplGL3 : GLInterface {
 
         // Desktop GL 2.0+ has glPolygonMode() which GL ES and WebGL don't have.
         var IMPL_HAS_POLYGON_MODE = true
+
+        // Desktop OpenGL 3.0 and OpenGL 3.1 had separate polygon draw modes for front-facing and back-facing faces of polygons
+        val IMPL_HAS_SEPARATE_POLYGON_MODE by lazy { data.glVersion >= 300 }
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
 
