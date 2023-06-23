@@ -328,7 +328,7 @@ class Font {
                     s = calcWordWrapPositionA(scale, text, s, if (lineEnd == -1) textEnd else lineEnd, wrapWidth)
                     s = calcWordWrapNextLineStartA(text, s, textEnd)
                 } else
-                    s = if(lineEnd != -1) lineEnd + 1 else textEnd
+                    s = if (lineEnd != -1) lineEnd + 1 else textEnd
                 y += lineHeight
             }
 
@@ -520,7 +520,23 @@ class Font {
         setGlyphVisible(' ', false)
         setGlyphVisible('\t', false)
 
-        // Ellipsis character is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
+        // Setup Fallback character
+        val fallbackChars = listOf(UNICODE_CODEPOINT_INVALID.toChar(), '?', ' ')
+        fallbackGlyph = findGlyphNoFallback(fallbackChar)
+        if (fallbackGlyph == null) {
+            fallbackChar = findFirstExistingGlyph(fallbackChars)
+            fallbackGlyph = findGlyphNoFallback(fallbackChar)
+            if (fallbackGlyph == null) {
+                fallbackGlyph = glyphs.last()
+                fallbackChar = fallbackGlyph!!.codepoint
+            }
+        }
+        fallbackAdvanceX = fallbackGlyph!!.advanceX
+        for (i in 0 .. maxCodepoint)
+        if (indexAdvanceX[i] < 0f)
+            indexAdvanceX[i] = fallbackAdvanceX
+
+        // Setup Ellipsis character. It is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
         // However some old fonts may contain ellipsis at U+0085. Here we auto-detect most suitable ellipsis character.
         // FIXME: Note that 0x2026 is rarely included in our font ranges. Because of this we are more likely to use three individual dots.
         val ellipsisChars = listOf('\u2026', '\u0085')
@@ -539,23 +555,6 @@ class Font {
             ellipsisCharStep = (glyph.x1 - glyph.x0) + 1f
             ellipsisWidth = ellipsisCharStep * 3f - 1f
         }
-
-        // Setup fallback character
-        val fallbackChars = listOf(UNICODE_CODEPOINT_INVALID.toChar(), '?', ' ') // TODO JVM check `UNICODE_CODEPOINT_INVALID.toChar`
-        fallbackGlyph = findGlyphNoFallback(fallbackChar)
-        if (fallbackGlyph == null) {
-            fallbackChar = findFirstExistingGlyph(fallbackChars)
-            fallbackGlyph = findGlyphNoFallback(fallbackChar)
-            if (fallbackGlyph == null) {
-                fallbackGlyph = glyphs.last()
-                fallbackChar = fallbackGlyph!!.codepoint
-            }
-        }
-
-        fallbackAdvanceX = fallbackGlyph!!.advanceX
-        for (i in 0 until maxCodepoint + 1)
-            if (indexAdvanceX[i] < 0f)
-                indexAdvanceX[i] = fallbackAdvanceX
     }
 
     fun clearOutputData() {
