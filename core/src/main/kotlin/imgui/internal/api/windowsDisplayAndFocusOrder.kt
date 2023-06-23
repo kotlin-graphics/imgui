@@ -1,9 +1,14 @@
 package imgui.internal.api
 
 import imgui.*
+import imgui.ImGui.findBlockingModal
 import imgui.ImGui.isWithinBeginStackOf
 import imgui.api.g
+import imgui.api.gImGui
+import imgui.internal.classes.FocusRequestFlag
+import imgui.internal.classes.FocusRequestFlags
 import imgui.internal.classes.Window
+import imgui.internal.sections.IMGUI_DEBUG_LOG_FOCUS
 import imgui.internal.sections.NavLayer
 import imgui.statics.findWindowFocusIndex
 import imgui.statics.navRestoreLastChildNavWindow
@@ -12,8 +17,18 @@ import imgui.statics.navRestoreLastChildNavWindow
 internal interface windowsDisplayAndFocusOrder {
 
     /** Moving window to front of display (which happens to be back of our sorted list)  ~ FocusWindow  */
-    fun focusWindow(window: Window? = null) {
+    fun focusWindow(window: Window? = null, flags: FocusRequestFlags = none) {
 
+        val g = gImGui
+
+        // Modal check?
+        if (flags has FocusRequestFlag.UnlessBelowModal)
+            findBlockingModal(window)?.let { blockingModal ->
+                IMGUI_DEBUG_LOG_FOCUS("[focus] FocusWindow(\"${window?.name ?: "<NULL>"}\", UnlessBelowModal): prevented by \"${blockingModal.name}\".\n")
+                return
+            }
+
+        // Apply focus
         if (g.navWindow !== window) {
             ImGui.setNavWindow(window)
             if (window != null && g.navDisableMouseHover)
@@ -50,7 +65,7 @@ internal interface windowsDisplayAndFocusOrder {
     }
 
     // [JVM] default arguments to `null`
-    fun focusTopMostWindowUnderOne(underThisWindow_: Window? = null, ignoreWindow: Window? = null, filterViewport: Viewport? = null) {
+    fun focusTopMostWindowUnderOne(underThisWindow_: Window? = null, ignoreWindow: Window? = null, filterViewport: Viewport? = null, flags: FocusRequestFlags = none) {
         var underThisWindow = underThisWindow_
 //        IM_UNUSED(filter_viewport); // Unused in master branch.
         var startIdx = g.windowsFocusOrder.lastIndex
@@ -70,11 +85,11 @@ internal interface windowsDisplayAndFocusOrder {
             if (window === ignoreWindow || !window.wasActive)
                 continue
             if ((WindowFlag.NoMouseInputs or WindowFlag.NoNavInputs) !in window.flags) {
-                focusWindow(navRestoreLastChildNavWindow(window))
+                focusWindow(navRestoreLastChildNavWindow(window), flags)
                 return
             }
         }
-        focusWindow()
+        focusWindow(flags = flags)
     }
 
     /** ~BringWindowToFocusFront */

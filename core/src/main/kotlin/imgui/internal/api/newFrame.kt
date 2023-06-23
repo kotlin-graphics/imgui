@@ -20,6 +20,7 @@ import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.BitArray
 import imgui.internal.classes.DebugLogFlag
+import imgui.internal.classes.FocusRequestFlag
 import imgui.internal.classes.Window
 import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
 import imgui.internal.sections.InputEvent
@@ -290,8 +291,8 @@ internal interface newFrame {
                 // Cancel moving if clicked over an item which was disabled or inhibited by popups (note that we know HoveredId == 0 already)
                 if (g.hoveredIdDisabled)
                     g.movingWindow = null
-            } else if (rootWindow == null && g.navWindow != null && topMostPopupModal == null)
-                focusWindow()  // Clicking on void disable focus
+            } else if (rootWindow == null && g.navWindow != null)
+                focusWindow(flags = FocusRequestFlag.UnlessBelowModal)  // Clicking on void disable focus
         }
 
         // With right mouse button we close popups without changing focus based on where the mouse is aimed

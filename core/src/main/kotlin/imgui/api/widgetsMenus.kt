@@ -26,6 +26,7 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushID
 import imgui.ImGui.setNavID
 import imgui.ImGui.style
+import imgui.internal.classes.FocusRequestFlag
 import imgui.internal.classes.Rect
 import imgui.internal.round
 import imgui.internal.sections.*
@@ -148,7 +149,7 @@ interface widgetsMenus {
         // When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
         // FIXME: With this strategy we won't be able to restore a NULL focus.
         if (g.currentWindow == g.navWindow && g.navLayer == NavLayer.Main && !g.navAnyRequest)
-            focusTopMostWindowUnderOne(g.navWindow)
+            focusTopMostWindowUnderOne(g.navWindow, flags = FocusRequestFlag.UnlessBelowModal)
 
         end()
     }

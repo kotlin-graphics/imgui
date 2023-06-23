@@ -146,6 +146,21 @@ sealed class DebugLogFlag(val int: Int? = null) : FlagBase<DebugLogFlag>() {
     override val i: Int = int ?: (1 shl ordinal)
 }
 
+typealias FocusRequestFlags = Flag<FocusRequestFlag>
+
+// Flags for FocusWindow(). This is not called ImGuiFocusFlags to avoid confusion with public-facing ImGuiFocusedFlags.
+// FIXME: Once we finishing replacing more uses of GetTopMostPopupModal()+IsWindowWithinBeginStackOf()
+// and FindBlockingModal() with this, we may want to change the flag to be opt-out instead of opt-in.
+sealed class FocusRequestFlag : FlagBase<FocusRequestFlag>() {
+
+    object UnlessBelowModal : FocusRequestFlag() // Do not set focus if the window is below a modal.
+
+    override val i: Int = 1 shl ordinal
+
+    @GenSealedEnum
+    companion object
+}
+
 // (+ for upcoming advanced versions of IsKeyPressed()/IsMouseClicked()/SetKeyOwner()/SetItemKeyOwner() that are currently in imgui_internal.h)
 /** -> enum ImGuiInputFlags_         // Flags: for IsKeyPressed(), IsMouseClicked(), SetKeyOwner(), SetItemKeyOwner() etc. */
 typealias InputFlags = Flag<InputFlag>
