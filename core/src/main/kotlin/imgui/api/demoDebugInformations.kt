@@ -612,7 +612,7 @@ interface demoDebugInformations {
                 val textRect = g.lastItemData.rect
                 if (isItemHovered()) {
                     var p = lineBegin
-                    while (p < lineEnd - 10) {
+                    while (p <= lineEnd - 10) {
                         val buf = g.debugLogBuf.toString()
                         val id: ID = buf.drop(2).parseInt()
                         if (buf[p] != '0' || (buf[p + 1] != 'x' && buf[p + 1] != 'X')/* || sscanf(p + 2, "%X", & id) != 1*/)
