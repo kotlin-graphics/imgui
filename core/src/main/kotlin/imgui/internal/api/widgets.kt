@@ -12,6 +12,7 @@ import imgui.ImGui.calcWrapWidthForPos
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
+import imgui.ImGui.isChildOf
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -363,9 +364,9 @@ internal interface widgets {
 
                 // Initially we used 'upper_popup->OpenParentId == window->IDStack.back()' to differentiate multiple menu sets from each others
                 // (e.g. inside menu bar vs loose menu items) based on parent ID.
-                // This would however prevent the use of e.g. PuhsID() user code submitting menus.
+                // This would however prevent the use of e.g. PushID() user code submitting menus.
                 // Previously this worked between popup and a first child menu because the first child menu always had the _ChildWindow flag,
-                // making  hovering on parent popup possible while first child menu was focused - but this was generally a bug with other side effects.
+                // making hovering on parent popup possible while first child menu was focused - but this was generally a bug with other side effects.
                 // Instead we don't treat Popup specifically (in order to consistently support menu features in them), maybe the first child menu of a Popup
                 // doesn't have the _ChildWindow flag, and we rely on this IsRootOfOpenMenuSet() check to allow hovering between root window/popup and first child menu.
                 // In the end, lack of ID check made it so we could no longer differentiate between separate menu sets. To compensate for that, we at least check parent window nav layer.
@@ -373,7 +374,9 @@ internal interface widgets {
                 // open on hover, but that should be a lesser problem, because if such menus are close in proximity in window content then it won't feel weird and if they are far apart
                 // it likely won't be a problem anyone runs into.
                 val upperPopup = g.openPopupStack[g.beginPopupStack.size]
-                return window.dc.navLayerCurrent.ordinal == upperPopup.parentNavLayer && upperPopup.window?.flags?.has(WindowFlag._ChildMenu) == true
+                if (window.dc.navLayerCurrent.ordinal != upperPopup.parentNavLayer)
+                    return false
+                return upperPopup.window != null && upperPopup.window!!.flags has WindowFlag._ChildMenu && upperPopup.window!!.isChildOf(window, true)
             }
     }
 }
