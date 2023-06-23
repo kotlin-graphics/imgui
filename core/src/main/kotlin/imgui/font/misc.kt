@@ -100,8 +100,8 @@ class FontGlyph {
 }
 
 /** Helpers to retrieve list of common Unicode ranges (2 value per range, values are inclusive)
- *  NB: Make sure that your string are UTF-8 and NOT in your local code page. In C++11, you can create a UTF-8 string
- *  literally using the u8"Hello world" syntax. See FAQ for details.
+ *  NB: Make sure that your string are UTF-8 and NOT in your local code page.
+ *  Read https://github.com/ocornut/imgui/blob/master/docs/FONTS.md/#about-utf-8-encoding for details.
  *  NB: Consider using ImFontGlyphRangesBuilder to build glyph ranges from textual data.
  *
  *  JVM

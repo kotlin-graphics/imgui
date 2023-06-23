@@ -19,7 +19,7 @@ interface debugUtilities {
     /** Helper tool to diagnose between text encoding issues and font loading issues. Pass your UTF-8 string and verify that there are correct. */
     fun debugTextEncoding(str: String) {
         text("Text: \"$str\"")
-        table("list", 4, TableFlag.Borders or TableFlag.RowBg or TableFlag.SizingFixedFit) {
+        table("##DebugTextEncoding", 4, TableFlag.Borders or TableFlag.RowBg or TableFlag.SizingFixedFit) {
             tableSetupColumn("Offset")
             tableSetupColumn("UTF-8")
             tableSetupColumn("Glyph")
