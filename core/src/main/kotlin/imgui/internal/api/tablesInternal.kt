@@ -55,7 +55,7 @@ interface tablesInternal {
         if (flags has Tf.ScrollX)
             assert(innerWidth >= 0f)
 
-        // If an outer size is specified ahead we will be able to early out when not visible. Exact clipping rules may evolve.
+        // If an outer size is specified ahead we will be able to early out when not visible. Exact clipping criteria may evolve.
         val useChildWindow = flags has (Tf.ScrollX or Tf.ScrollY)
         val availSize = ImGui.contentRegionAvail
         val actualOuterSize = calcItemSize(outerSize, availSize.x max 1f, if (useChildWindow) availSize.y max 1f else 0f)
@@ -102,7 +102,7 @@ interface tablesInternal {
                 assert(table.columnsCount == columnsCount) { "BeginTable(): Cannot change columns count mid-frame while preserving same ID" }
                 if (table.instanceDataExtra.size < instanceNo)
                     table.instanceDataExtra += TableInstanceData()
-                getIDWithSeed(instanceNo, getIDWithSeed("##Instances", -1, id)) // Push "##Instance" followed by (int)instance_no in ID stack.
+                getIDWithSeed(instanceNo, getIDWithSeed("##Instances", -1, id)) // Push "##Instances" followed by (int)instance_no in ID stack.
             }
 
             else -> id
@@ -219,7 +219,7 @@ interface tablesInternal {
         table.isUnfrozenRows = true
         table.declColumnsCount = 0
 
-        // Using opaque colors facilitate overlapping elements of the grid
+        // Using opaque colors facilitate overlapping lines of the grid, otherwise we'd need to improve TableDrawBorders()
         table.borderColorStrong = Col.TableBorderStrong.u32
         table.borderColorLight = Col.TableBorderLight.u32
 
@@ -233,7 +233,7 @@ interface tablesInternal {
         if (tableLastFlags has Tf.Reorderable && flags hasnt Tf.Reorderable)
             table.isResetDisplayOrderRequest = true
 
-        // Mark as used
+        // Mark as used to avoid GC
         if (tableIdx >= g.tablesLastTimeActive.size)
             for (i in g.tablesLastTimeActive.size..tableIdx)
                 g.tablesLastTimeActive += -1f
@@ -327,17 +327,16 @@ interface tablesInternal {
         return true
     }
 
-    /** For reference, the average total _allocation count_ for a table is:
-     *  + 0 (for ImGuiTable instance, we are pooling allocations in g.Tables)
-     *  + 1 (for table->RawData allocated below)
-     *  + 1 (for table->ColumnsNames, if names are used)
-     *  Shared allocations per number of nested tables
-     *  + 1 (for table->Splitter._Channels)
-     *  + 2 * active_channels_count (for ImDrawCmd and ImDrawIdx buffers inside channels)
-     *  Where active_channels_count is variable but often == columns_count or columns_count + 1, see TableSetupDrawChannels() for details.
-     *  Unused channels don't perform their +2 allocations.
-     *
-     *  ~tableBeginInitMemory */
+    // For reference, the average total _allocation count_ for a table is:
+    // + 0 (for ImGuiTable instance, we are pooling allocations in g.Tables[])
+    // + 1 (for table->RawData allocated below)
+    // + 1 (for table->ColumnsNames, if names are used)
+    // Shared allocations for the maximum number of simultaneously nested tables (generally a very small number)
+    // + 1 (for table->Splitter._Channels)
+    // + 2 * active_channels_count (for ImDrawCmd and ImDrawIdx buffers inside channels)
+    // Where active_channels_count is variable but often == columns_count or == columns_count + 1, see TableSetupDrawChannels() for details.
+    // Unused channels don't perform their +2 allocations.
+    // ~tableBeginInitMemory
     infix fun Table.beginInitMemory(columnsCount: Int) {
         // Allocate single buffer for our arrays
         repeat(columnsCount) { columns += TableColumn() }
@@ -353,7 +352,7 @@ interface tablesInternal {
      *  ~TableBeginApplyRequests */
     fun Table.beginApplyRequests() {
         // Handle resizing request
-        // (We process this at the first TableBegin of the frame)
+        // (We process this in the TableBegin() of the first instance of each table)
         // FIXME-TABLE: Contains columns if our work area doesn't allow for scrolling?
         if (instanceCurrent == 0) {
             if (resizedColumn != -1 && resizedColumnNextWidth != Float.MAX_VALUE)
@@ -396,8 +395,7 @@ interface tablesInternal {
                 }
                 assert(dstColumn.displayOrder == dstOrder - reorderDir)
 
-                // Display order is stored in both columns->IndexDisplayOrder and table->DisplayOrder[],
-                // rebuild the later from the former.
+                // Display order is stored in both columns->IndexDisplayOrder and table->DisplayOrder[]. Rebuild later from the former.
                 for (columnN in 0 until columnsCount)
                     displayOrderToIndex[columns[columnN].displayOrder] = columnN
                 reorderColumnDir = 0
@@ -468,11 +466,11 @@ interface tablesInternal {
         assert(bgClipRect.min.y <= bgClipRect.max.y)
     }
 
-    /** Layout columns for the frame. This is in essence the followup to BeginTable().
-     *  Runs on the first call to TableNextRow(), to give a chance for TableSetupColumn() to be called first.
-     *  FIXME-TABLE: Our width (and therefore our WorkRect) will be minimal in the first frame for _WidthAuto columns.
-     *  Increase feedback side-effect with widgets relying on WorkRect.Max.x... Maybe provide a default distribution for _WidthAuto columns?
-     *  ~TableUpdateLayout */
+    // Layout columns for the frame. This is in essence the followup to BeginTable() and this is our largest function.
+    // Runs on the first call to TableNextRow(), to give a chance for TableSetupColumn() and other TableSetupXXXXX() functions to be called first.
+    // FIXME-TABLE: Our width (and therefore our WorkRect) will be minimal in the first frame for _WidthAuto columns.
+    // Increase feedback side-effect with widgets relying on WorkRect.Max.x... Maybe provide a default distribution for _WidthAuto columns?
+    // ~TableUpdateLayout
     fun Table.updateLayout() {
 
         assert(!isLayoutLocked)
@@ -874,7 +872,7 @@ interface tablesInternal {
             ImGui.endPopup()
         }
 
-        // [Part 12] Sanitize and build sort specs before we have a change to use them for display.
+        // [Part 12] Sanitize and build sort specs before we have a chance to use them for display.
         // This path will only be exercised when sort specs are modified before header rows (e.g. init or visibility change)
         if (isSortSpecsDirty && flags has Tf.Sortable)
             sortSpecsBuild()
@@ -895,11 +893,11 @@ interface tablesInternal {
         }
     }
 
-    /** Process hit-testing on resizing borders. Actual size change will be applied in EndTable()
-     *  - Set table->HoveredColumnBorder with a short delay/timer to reduce feedback noise
-     *  - Submit ahead of table contents and header, use ImGuiButtonFlags_AllowItemOverlap to prioritize widgets
-     *    overlapping the same area.
-     *  ~TableUpdateBorders */
+    // Process hit-testing on resizing borders. Actual size change will be applied in EndTable()
+    // - Set table->HoveredColumnBorder with a short delay/timer to reduce visual feedback noise.
+    // - Submit ahead of table contents and header, use ImGuiButtonFlags_AllowItemOverlap to prioritize
+    //   widgets overlapping the same area.
+    // ~TableUpdateBorders
     fun Table.updateBorders() {
 
         assert(flags has Tf.Resizable)
@@ -962,7 +960,7 @@ interface tablesInternal {
 
         assert(leftMostStretchedColumn != -1 && rightMostStretchedColumn != -1)
 
-        // Measure existing quantity
+        // Measure existing quantities
         var visibleWeight = 0f
         var visibleWidth = 0f
         for (columnN in 0 until columnsCount) {
@@ -1318,11 +1316,9 @@ interface tablesInternal {
                         mergeClipRect.max.x = mergeClipRect.max.x max hostRect.max.x
                     if (mergeGroupN has 2 && flags hasnt Tf.NoHostExtendY)
                         mergeClipRect.max.y = mergeClipRect.max.y max hostRect.max.y
-                    //                    #if 0
-                    //                    GetOverlayDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 0, 0, 200), 0.0f, 0, 1.0f)
-                    //                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Min, merge_clip_rect.Min, IM_COL32(255, 100, 0, 200))
-                    //                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Max, merge_clip_rect.Max, IM_COL32(255, 100, 0, 200))
-                    //                    #endif
+//                    GetOverlayDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 0, 0, 200), 0.0f, 0, 1.0f)
+//                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Min, merge_clip_rect.Min, IM_COL32(255, 100, 0, 200))
+//                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Max, merge_clip_rect.Max, IM_COL32(255, 100, 0, 200))
                     remainingCount -= mergeGroup.channelsCount
                     for (n in remainingMask.indices)
                         remainingMask.storage[n] = remainingMask.storage[n] wo mergeGroup.channelsMask.storage[n]
@@ -1420,7 +1416,7 @@ interface tablesInternal {
             }
         }
 
-        // Fallback default sort order (if no column had the ImGuiTableColumnFlags_DefaultSort flag)
+        // Fallback default sort order (if no column with the ImGuiTableColumnFlags_DefaultSort flag)
         if (sortOrderCount == 0 && flags hasnt Tf.SortTristate)
             for (columnN in 0 until columnsCount) {
                 val column = columns[columnN]
@@ -1697,6 +1693,7 @@ interface tablesInternal {
      *  ~TableBeginCell */
     infix fun Table.beginCell(columnN: Int) {
 
+        val g = gImGui
         val column = columns[columnN]
         val window = innerWindow!!
         currentColumn = columnN
@@ -1735,7 +1732,6 @@ interface tablesInternal {
         }
 
         // Logging
-        val g = gImGui
         if (g.logEnabled && !column.isSkipItems) {
             logRenderedText(window.dc.cursorPos, "|")
             g.logLinePosY = Float.MAX_VALUE
@@ -1871,7 +1867,7 @@ interface tablesInternal {
         assert(!memoryCompacted)
         sortSpecs.specs.clear()
         sortSpecsMulti.clear()
-        isSortSpecsDirty = true // FIXME: shouldn't have to leak into user performing a sort
+        isSortSpecsDirty = true // FIXME: In theory shouldn't have to leak into user performing a sort on resume.
         columnsNames.clear()
         memoryCompacted = true
         for (n in 0 until columnsCount)

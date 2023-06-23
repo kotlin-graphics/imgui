@@ -71,7 +71,7 @@ interface tablesCandidatesForPublicAPI {
         // - All stretch: easy.
         // - One or more fixed + one stretch: easy.
         // - One or more fixed + more than one stretch: tricky.
-        //    // Qt when manual resize is enabled only support a single _trailing_ stretch column.
+        // Qt when manual resize is enabled only supports a single _trailing_ stretch column, we support more cases here.
 
         // When forwarding resize from Wn| to Fn+1| we need to be considerate of the _NoResize flag on Fn+1.
         // FIXME-TABLE: Find a way to rewrite all of this so interactions feel more consistent for the user.
@@ -159,7 +159,7 @@ interface tablesCandidatesForPublicAPI {
 
     /** May use (TableGetColumnFlags() & ImGuiTableColumnFlags_IsHovered) instead. Return hovered column. return -1 when table is not hovered. return columns_count if the unused space at the right of visible columns is hovered.
      *
-     *  Return -1 when table is not hovered. return columns_count if the unused space at the right of visible columns is hovered. */
+     * Return -1 when table is not hovered. return columns_count if hovering the unused space at the right of the right-most visible column.. */
     fun tableGetHoveredColumn(): Int = g.currentTable?.hoveredColumnBody ?: -1
 
     fun tableGetHeaderRowHeight(): Float {

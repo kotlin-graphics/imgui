@@ -8,7 +8,8 @@ import imgui.internal.DrawListSplitter
 import unsigned.toUnsignedString
 
 
-/** FIXME-TABLE: more transient data could be stored in a stacked ImGuiTableTempData: e.g. SortSpecs, incoming RowData */
+// FIXME-TABLE: more transient data could be stored in a stacked ImGuiTableTempData: e.g. SortSpecs, incoming RowData
+// sizeof() ~ 580 bytes + heap allocs described in TableBeginInitMemory()
 class Table {
 
     var id: ID = 0

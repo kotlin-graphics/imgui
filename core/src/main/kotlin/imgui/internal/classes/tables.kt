@@ -17,7 +17,7 @@ val TABLE_MAX_COLUMNS = 512
 typealias TableColumnIdx = Int
 typealias TableDrawChannelIdx = Int
 
-/** [Internal] sizeof() ~ 104
+/** [Internal] sizeof() ~ 112
  *  We use the terminology "Enabled" to refer to a column that is not Hidden by user/api.
  *  We use the terminology "Clipped" to refer to a column that is out of sight because of scrolling/clipping.
  *  This is in contrast with some user-facing api such as IsItemVisible() / IsRectVisible() which use "Visible" to mean "not clipped". */
@@ -138,7 +138,7 @@ class TableColumn {
     /** Mask of available sort directions (1-bit each) */
     var sortDirectionsAvailMask = 0
 
-    /** Ordered of available sort directions (2-bits each) */
+    /** Ordered list of available sort directions (2-bits each, total 8-bits) */
     var sortDirectionsAvailList = 0
 }
 
@@ -157,11 +157,10 @@ class TableInstanceData {
     var lastFrozenHeight = 0f
 }
 
-/** Temporary storage for one table (one per table in the stack), shared between tables.
- *
- *  Transient data that are only needed between BeginTable() and EndTable(), those buffers are shared (1 per level of stacked table).
- *  - Accessing those requires chasing an extra pointer so for very frequently used data we leave them in the main table structure.
- *  - We also leave out of this structure data that tend to be particularly useful for debugging/metrics. */
+// Transient data that are only needed between BeginTable() and EndTable(), those buffers are shared (1 per level of stacked table).
+// - Accessing those requires chasing an extra pointer so for very frequently used data we leave them in the main table structure.
+// - We also leave out of this structure data that tend to be particularly useful for debugging/metrics.
+// sizeof() ~ 112 bytes.
 class TableTempData {
 
     /** Index in g.Tables.Buf[] pool */

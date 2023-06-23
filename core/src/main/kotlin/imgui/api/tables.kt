@@ -675,7 +675,6 @@ interface tables {
             table.updateLayout()
 
         table.sortSpecsBuild()
-
         return table.sortSpecs
     }
 
