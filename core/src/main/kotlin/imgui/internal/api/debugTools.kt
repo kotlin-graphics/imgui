@@ -150,6 +150,10 @@ internal interface debugTools {
             logCallback?.invoke(userData, "Recovered from missing PopStyleVar() in '${window.name}'", emptyArray())
             popStyleVar()
         }
+        while (g.fontStack.size > stackSizes.sizeOfFontStack) { //-V1044
+            logCallback?.invoke(userData, "Recovered from missing PopFont() in '${window.name}'", emptyArray())
+            popFont()
+        }
         while (g.focusScopeStack.size > stackSizes.sizeOfFocusScopeStack + 1) { //-V1044
             logCallback?.invoke(userData, "Recovered from missing PopFocusScope() in '${window.name}'", emptyArray())
             popFocusScope()
