@@ -42,7 +42,6 @@ class KeyData {
     /** 0.0f..1.0f for gamepad values */
     var analogValue = 0f
 }
-
 class IO(sharedFontAtlas: FontAtlas? = null) {
 
     //------------------------------------------------------------------
@@ -149,15 +148,21 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // Debug options
 
     // - tools to test correct Begin/End and BeginChild/EndChild behaviors.
-    // - presently Begn()/End() and BeginChild()EndChild() needs to ALWAYS be called in tandem, regardless of return value of BeginXXX()
+    // - presently Begin()/End() and BeginChild()/EndChild() needs to ALWAYS be called in tandem, regardless of return value of BeginXXX()
     //   this is inconsistent with other BeginXXX functions and create confusion for many users.
-    // - we expect to update the API eventually. In the meanwhile we provided tools to facilitate checking user-code behavior.
+    // - we expect to update the API eventually. In the meanwhile we provide tools to facilitate checking user-code behavior.
 
     /** First-time calls to Begin()/BeginChild() will return false. NEEDS TO BE SET AT APPLICATION BOOT TIME if you don't want to miss windows. */
     var configDebugBeginReturnValueOnce = false
 
     /** Some calls to Begin()/BeginChild() will return false. Will cycle through window depths then repeat. Suggested use: add "io.ConfigDebugBeginReturnValue = io.KeyShift" in your main loop then occasionally press SHIFT. Windows should be flickering while running. */
     var configDebugBeginReturnValueLoop = false
+
+    // - option to deactivate io.AddFocusEvent(false) handling. May facilitate interactions with a debugger when focus loss leads to clearing inputs data.
+    // - backends may have other side-effects on focus loss, so this will reduce side-effects but not necessary remove all of them.
+    // - consider using e.g. Win32's IsDebuggerPresent() as an additional filter (or see ImOsIsDebuggerPresent() in imgui_test_engine/imgui_te_utils.cpp for a Unix compatible version).
+    /** Ignore io.AddFocusEvent(false), consequently not calling io.ClearInputKeys() in input processing. */
+    var configDebugIgnoreFocusLoss = false
 
     //------------------------------------------------------------------
     // Platform Functions
@@ -320,7 +325,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         // Filter duplicate
         val latestEvent = findLatestInputEvent<InputEvent.AppFocused>(g)
         val latestFocused = latestEvent?.focused ?: !g.io.appFocusLost
-        if (latestFocused == focused)
+        if (latestFocused == focused || (configDebugIgnoreFocusLoss && !focused))
             return
 
         g.inputEventsQueue += InputEvent.AppFocused(focused, g.inputEventsNextEventId++)
@@ -591,3 +596,4 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Queue of _characters_ input (obtained by platform backend). Fill using AddInputCharacter() helper. */
     val inputQueueCharacters = ArrayList<Char>()
 }
+

@@ -267,6 +267,8 @@ object DemoWindow {
                 sameLine(); helpMarker("First calls to Begin()/BeginChild() will return false.\n\nTHIS OPTION IS DISABLED because it needs to be set at application boot-time to make sense. Showing the disabled option is a way to make this feature easier to discover")
                 checkbox("io.ConfigDebugBeginReturnValueLoop", io::configDebugBeginReturnValueLoop)
                 sameLine(); helpMarker("Some calls to Begin()/BeginChild() will return false.\n\nWill cycle through window depths then repeat. Windows should be flickering while running.")
+                checkbox("io.ConfigDebugIgnoreFocusLoss", io::configDebugIgnoreFocusLoss)
+                sameLine(); helpMarker("Option to deactivate io.AddFocusEvent(false) handling. May facilitate interactions with a debugger when focus loss leads to clearing inputs data.")
 
                 spacing()
             }
