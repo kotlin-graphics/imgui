@@ -71,8 +71,14 @@ interface childWindows {
                 // When browsing a window that has no activable items (scroll only) we keep a highlight on the child (pass g.NavId to trick into always displaying)
                 if (window.dc.navLayersActiveMask == 0 && window === g.navWindow)
                     renderNavHighlight(Rect(bb.min - 2, bb.max + 2), g.navId, NavHighlightFlag.TypeThin)
-            } else // Not navigable into
+            } else {
+                // Not navigable into
                 itemAdd(bb, 0)
+
+                // But when flattened we directly reach items, adjust active layer mask accordingly
+                if (window.flags has Wf._NavFlattened)
+                    parentWindow.dc.navLayersActiveMaskNext /= window.dc.navLayersActiveMaskNext
+            }
             if (g.hoveredWindow === window)
                 g.lastItemData.statusFlags = g.lastItemData.statusFlags or ItemStatusFlag.HoveredWindow
         }
