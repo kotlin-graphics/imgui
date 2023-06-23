@@ -75,7 +75,8 @@ internal interface popupsModalsTooltips {
         if (childWindow.beginCount == 1) parentWindow.dc.cursorPos put childWindow.pos
 
         // Process navigation-in immediately so NavInit can run on first frame
-        if (g.navActivateId == id && flags hasnt Wf._NavFlattened && (childWindow.dc.navLayersActiveMask != 0 || childWindow.dc.navHasScroll)) {
+        // Can enter a child if (A) it has navigatable items or (B) it can be scrolled.
+        if (g.navActivateId == id && flags hasnt Wf._NavFlattened && (childWindow.dc.navLayersActiveMask != 0 || childWindow.dc.navWindowHasScrollY)) {
             focusWindow(childWindow)
             navInitWindow(childWindow, false)
             setActiveID(id + 1, childWindow) // Steal ActiveId with another arbitrary id so that key-press won't activate child item

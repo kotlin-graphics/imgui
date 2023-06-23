@@ -64,7 +64,7 @@ interface childWindows {
             val parentWindow = currentWindow
             val bb = Rect(parentWindow.dc.cursorPos, parentWindow.dc.cursorPos + sz)
             itemSize(sz)
-            if ((window.dc.navLayersActiveMask != 0 || window.dc.navHasScroll) && window.flags hasnt Wf._NavFlattened) {
+            if ((window.dc.navLayersActiveMask != 0 || window.dc.navWindowHasScrollY) && window.flags hasnt Wf._NavFlattened) {
                 itemAdd(bb, window.childId)
                 renderNavHighlight(bb, window.childId)
 

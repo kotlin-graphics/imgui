@@ -637,7 +637,7 @@ interface windows {
                 dc.navLayersActiveMask = dc.navLayersActiveMaskNext
                 dc.navLayersActiveMaskNext = 0x00
                 dc.navHideHighlightOneFrame = false
-                dc.navHasScroll = scrollMax.y > 0f
+                dc.navWindowHasScrollY = scrollMax.y > 0f
 
                 dc.menuBarAppending = false
                 dc.menuColumns.update(style.itemSpacing.x, windowJustActivatedByUser)

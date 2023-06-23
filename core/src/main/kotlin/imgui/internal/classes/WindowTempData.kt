@@ -52,7 +52,7 @@ class WindowTempData {
 
     var groupOffset = 0f
 
-    /** Record the loss of precision of CursorStartPos due to really large scrolling amount. This is used by clipper to compensentate and fix the most common use case of large scroll area. */
+    /** Record the loss of precision of CursorStartPos due to really large scrolling amount. This is used by clipper to compensate and fix the most common use case of large scroll area. */
     val cursorStartPosLossyness = Vec2()
 
     // Keyboard/Gamepad navigation
@@ -68,8 +68,8 @@ class WindowTempData {
 
     var navHideHighlightOneFrame = false
 
-    /** Set when scrolling can be used (ScrollMax > 0.0f)   */
-    var navHasScroll = false
+    /** Set per window when scrolling can be used (== ScrollMax.y > 0.0f)  */
+    var navWindowHasScrollY = false
 
 
     // Miscellaneous

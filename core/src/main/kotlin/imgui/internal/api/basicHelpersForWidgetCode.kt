@@ -141,6 +141,8 @@ internal interface basicHelpersForWidgetCode {
             if (id != 0 && id == g.debugLocateId)
                 debugLocateItemResolveWithLastItem()
         //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
+        //if ((g.LastItemData.InFlags & ImGuiItemFlags_NoNav) == 0)
+        //    window->DrawList->AddRect(g.LastItemData.NavRect.Min, g.LastItemData.NavRect.Max, IM_COL32(255,255,0,255)); // [DEBUG]
 
         // We need to calculate this now to take account of the current clipping rectangle (as items like Selectable may change them)
         if (isRectVisible)

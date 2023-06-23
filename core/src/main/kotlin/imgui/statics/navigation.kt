@@ -172,7 +172,7 @@ fun navUpdate() {
         val window = navWindow
         val scrollSpeed = round(window.calcFontSize() * 100 * io.deltaTime) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
         val moveDir = g.navMoveDir
-        if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll && moveDir != Dir.None) {
+        if (window.dc.navLayersActiveMask == 0x00 && window.dc.navWindowHasScrollY && moveDir != Dir.None) {
             if (moveDir == Dir.Left || moveDir == Dir.Right)
                 window.setScrollX(floor(window.scroll.x + (if (moveDir == Dir.Left) -1f else +1f) * scrollSpeed))
             if (moveDir == Dir.Up || moveDir == Dir.Down)
@@ -514,11 +514,12 @@ fun navUpdateCreateMoveRequest() {
 
     // [DEBUG] Always send a request when holding CTRL. Hold CTRL + Arrow change the direction.
     if (IMGUI_DEBUG_NAV_SCORING) {
-//        if (io.keyCtrl && Key.C.isPressed)
-//            g.navMoveDirForDebug = Dir.of((g.navMoveDirForDebug.i + 1) and 3)
+        //if (io.KeyCtrl && IsKeyPressed(ImGuiKey_C))
+        //    g.NavMoveDirForDebug = (ImGuiDir)((g.NavMoveDirForDebug + 1) & 3);
         if (io.keyCtrl) {
             if (g.navMoveDir == Dir.None)
                 g.navMoveDir = g.navMoveDirForDebug
+            g.navMoveClipDir = g.navMoveDir
             g.navMoveFlags /= NavMoveFlag.DebugNoResult
         }
     }
@@ -625,7 +626,7 @@ fun navUpdatePageUpPageDown(): Float {
     if (g.navLayer != NavLayer.Main)
         navRestoreLayer(NavLayer.Main)
 
-    if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll) {
+    if (window.dc.navLayersActiveMask == 0x00 && window.dc.navWindowHasScrollY) {
         // Fallback manual-scroll when window has no navigable item
         when {
             Key.PageUp.isPressed(KeyOwner_None, InputFlag.Repeat) -> window.setScrollY(window.scroll.y - window.innerRect.height)
@@ -805,9 +806,10 @@ fun navScoreItem(result: NavItemData): Boolean {
     else
         quadrant = if (g.lastItemData.id < g.navId) Dir.Left else Dir.Right
 
+    val moveDir = g.navMoveDir
     if (IMGUI_DEBUG_NAV_SCORING) {
         if (g.io.keyCtrl) // Hold CTRL to preview score in matching quadrant. CTRL+Arrow to rotate.
-            if (quadrant == g.navMoveDir) {
+            if (quadrant == moveDir) {
                 val buf = "%.0f/%.0f".format(distBox, distCenter)
                 val drawList = ImGui.getForegroundDrawList(window)
                 drawList.addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 80))
@@ -828,7 +830,6 @@ fun navScoreItem(result: NavItemData): Boolean {
 
     // Is it in the quadrant we're interested in moving to?
     var newBest = false
-    val moveDir = g.navMoveDir
     if (quadrant == moveDir) {
         // Does it beat the current best candidate?
         if (distBox < result.distBox) {
@@ -1049,9 +1050,9 @@ fun findWindowFocusIndex(window: Window): Int {
 
 // static spare functions
 
-fun navScoreItemDistInterval(a0: Float, a1: Float, b0: Float, b1: Float) = when {
-    a1 < b0 -> a1 - b0
-    b1 < a0 -> a0 - b1
+fun navScoreItemDistInterval(candMin: Float, candMax: Float, currMin: Float, currMax: Float) = when {
+    candMax < currMin -> candMax - currMin
+    currMax < candMin -> candMin - currMax
     else -> 0f
 }
 

@@ -128,6 +128,7 @@ internal interface gamepadKeyboardNavigation {
                 g.navMoveFlags /= NavMoveFlag.DontSetNavHighlight
             if (g.navId != 0 && g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight)
                 navRestoreHighlightAfterMove()
+            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveSubmitted but not led to a result!\n")
             return
         }
 
