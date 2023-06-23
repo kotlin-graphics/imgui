@@ -478,7 +478,7 @@ fun navUpdateCancelRequest() {
 }
 
 // Bias scoring rect ahead of scoring + update preferred pos (if missing) using source position
-fun navBiasScoringRect(r: Rect, preferredPosRel: Vec2, moveDir: Dir) {
+fun navBiasScoringRect(r: Rect, preferredPosRel: Vec2, moveDir: Dir, moveFlags: NavMoveFlags) {
     // Bias initial rect
     val g = gImGui
     val relToAbsOffset = g.navWindow!!.dc.cursorStartPos // [JVM] it's safe to use the same instance
@@ -486,16 +486,17 @@ fun navBiasScoringRect(r: Rect, preferredPosRel: Vec2, moveDir: Dir) {
     // Initialize bias on departure if we don't have any. So mouse-click + arrow will record bias.
     // - We default to L/U bias, so moving down from a large source item into several columns will land on left-most column.
     // - But each successful move sets new bias on one axis, only cleared when using mouse.
-    if (preferredPosRel.x == Float.MAX_VALUE)
-        preferredPosRel.x = min(r.min.x + 1f, r.max.x) - relToAbsOffset.x
-    if (preferredPosRel.y == Float.MAX_VALUE)
-        preferredPosRel.y = r.center.y - relToAbsOffset.y
+    if (moveFlags hasnt NavMoveFlag.Forwarded) {
+        if (preferredPosRel.x == Float.MAX_VALUE)
+            preferredPosRel.x = min(r.min.x + 1f, r.max.x) - relToAbsOffset.x
+        if (preferredPosRel.y == Float.MAX_VALUE)
+            preferredPosRel.y = r.center.y - relToAbsOffset.y
+    }
 
     // Apply general bias on the other axis
-    if (moveDir == Dir.Up || moveDir == Dir.Down) {
+    if ((moveDir == Dir.Up || moveDir == Dir.Down)  && preferredPosRel.x != Float.MAX_VALUE) {
         r.min.x = preferredPosRel.x + relToAbsOffset.x; r.max.x = r.min.x
-    }
-    else {
+    } else if ((moveDir == Dir.Left || moveDir == Dir.Right) && preferredPosRel.y != Float.MAX_VALUE) {
         r.min.y = preferredPosRel.y + relToAbsOffset.y; r.max.y = r.min.y
     }
 }
@@ -601,7 +602,7 @@ fun navUpdateCreateMoveRequest() {
         scoringRect.put(window rectRelToAbs navRectRel)
         scoringRect translateY scoringRectOffsetY
         if (g.navMoveSubmitted)
-            navBiasScoringRect(scoringRect, window.rootWindowForNav!!.navPreferredScoringPosRel[g.navLayer.ordinal], g.navMoveDir)
+            navBiasScoringRect(scoringRect, window.rootWindowForNav!!.navPreferredScoringPosRel[g.navLayer.ordinal], g.navMoveDir, g.navMoveFlags)
         assert(!scoringRect.isInverted) { "Ensure if we have a finite, non-inverted bounding box here will allow us to remove extraneous ImFabs() calls in NavScoreItem()." }
         //GetForegroundDrawList()->AddRect(scoring_rect.Min, scoring_rect.Max, IM_COL32(255,200,0,255)); // [DEBUG]
         //if (!g.NavScoringNoClipRect.IsInverted()) { GetForegroundDrawList()->AddRect(g.NavScoringNoClipRect.Min, g.NavScoringNoClipRect.Max, IM_COL32(255, 200, 0, 255)); } // [DEBUG]
@@ -717,7 +718,9 @@ fun navUpdateCreateWrappingRequest() {
     var doForward = false
     val bbRel = Rect(window.navRectRel[g.navLayer])
     var clipDir = g.navMoveDir
+
     val moveFlags = g.navMoveFlags
+    //const ImGuiAxis move_axis = (g.NavMoveDir == ImGuiDir_Up || g.NavMoveDir == ImGuiDir_Down) ? ImGuiAxis_Y : ImGuiAxis_X;
     if (g.navMoveDir == Dir.Left && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
         bbRel.min.x = window.contentSize.x + window.windowPadding.x; bbRel.max.x = bbRel.min.x
 

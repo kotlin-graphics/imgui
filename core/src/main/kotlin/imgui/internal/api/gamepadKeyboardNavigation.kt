@@ -209,7 +209,8 @@ internal interface gamepadKeyboardNavigation {
     fun navMoveRequestTryWrapping(window: Window, wrapFlags: NavMoveFlags) {
         assert(wrapFlags has NavMoveFlag.WrapMask_ && (wrapFlags wo NavMoveFlag.WrapMask_) == none) { "Call with _WrapX, _WrapY, _LoopX, _LoopY" }
 
-        // In theory we should test for NavMoveRequestButNoResultYet() but there's no point doing it, NavEndFrame() will do the same test
+        // In theory we should test for NavMoveRequestButNoResultYet() but there's no point doing it:
+        // as NavEndFrame() will do the same test. It will end up calling NavUpdateCreateWrappingRequest().
         if (g.navWindow === window && g.navMoveScoringItems && g.navLayer == NavLayer.Main)
             g.navMoveFlags = (g.navMoveFlags wo NavMoveFlag.WrapMask_) / wrapFlags
     }
