@@ -212,7 +212,7 @@ sealed class SeparatorFlag : FlagBase<SeparatorFlag>() {
     /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
     object Horizontal : SeparatorFlag()
     object Vertical : SeparatorFlag()
-    object SpanAllColumns : SeparatorFlag()
+    object SpanAllColumns : SeparatorFlag() // Make separator cover all columns of a legacy Columns() set.
 
     override val i: Int = 1 shl ordinal
 

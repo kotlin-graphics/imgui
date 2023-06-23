@@ -248,15 +248,16 @@ internal interface widgets {
     /** Horizontal/vertical separating line
      *  Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator.
      *
-     *  FIXME: Surprisingly, this seemingly simple widget is adjacent to MANY different legacy/tricky layout issues. */
-    fun separatorEx(flags: SeparatorFlags) {
+     *  FIXME: Surprisingly, this seemingly trivial widget is a victim of many different legacy/tricky layout issues.
+     *  Note how thickness == 1.0f is handled specifically as not moving CursorPos by 'thickness', but other values are. */
+    fun separatorEx(flags: SeparatorFlags, thickness: Float) {
 
         val window = currentWindow
         if (window.skipItems) return
 
         assert((flags and (SeparatorFlag.Horizontal or SeparatorFlag.Vertical)).isPowerOfTwo) { "Check that only 1 option is selected" }
+        assert(thickness > 0f)
 
-        val thickness = 1f // Cannot use g.Style.SeparatorTextSize yet for various reasons.
         if (flags has SeparatorFlag.Vertical) {
             // Vertical separator, for menu bars (use current line height).
             val y1 = window.dc.cursorPos.y
@@ -285,6 +286,8 @@ internal interface widgets {
                 x2 = table.columns[table.currentColumn].maxX
             }
 
+            // Before Tables API happened, we relied on Separator() to span all columns of a Columns() set.
+            // We currently don't need to provide the same feature for tables because tables naturally have border features.
             val columns = window.dc.currentColumns.takeIf { flags has SeparatorFlag.SpanAllColumns }
             if (columns != null)
                 pushColumnsBackground()
@@ -294,8 +297,8 @@ internal interface widgets {
             val thicknessForLayout = if (thickness == 1f) 0f else thickness // FIXME: See 1.70/1.71 Separator() change: makes legacy 1-px separator not affect layout yet. Should change.
             val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + thickness))
             itemSize(Vec2(0f, thicknessForLayout))
-            val itemVisible = itemAdd(bb, 0)
-            if (itemVisible) {
+
+            if (itemAdd(bb, 0)) {
                 // Draw
                 window.drawList.addRectFilled(bb.min, bb.max, Col.Separator.u32)
                 if (g.logEnabled)

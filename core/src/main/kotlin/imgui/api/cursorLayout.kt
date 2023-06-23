@@ -37,10 +37,11 @@ interface cursorLayout {
         if (window.skipItems)
             return
 
-        // Those flags should eventually be overridable by the user
+        // Those flags should eventually be configurable by the user
+        // FIXME: We cannot g.Style.SeparatorTextBorderSize for thickness as it relates to SeparatorText() which is a decorated separator, not defaulting to 1.0f.
         var flags: SeparatorFlags = if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else SeparatorFlag.Horizontal
         flags /= SeparatorFlag.SpanAllColumns // NB: this only applies to legacy Columns() api as they relied on Separator() a lot.
-        separatorEx(flags)
+        separatorEx(flags, 1f)
     }
 
     fun sameLine(offsetFromStartX: Int, spacing: Int = -1) = sameLine(offsetFromStartX.f, spacing.f)

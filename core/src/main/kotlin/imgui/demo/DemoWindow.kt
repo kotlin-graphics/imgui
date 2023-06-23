@@ -200,23 +200,21 @@ object DemoWindow {
 
         collapsingHeader("Help") {
 
-            text("ABOUT THIS DEMO:")
+            separatorText("ABOUT THIS DEMO:")
             bulletText("Sections below are demonstrating many aspects of the library.")
             bulletText("The \"Examples\" menu above leads to more demo contents.")
             bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
                 "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
-            separator()
 
-            text("PROGRAMMER GUIDE:")
+            separatorText("PROGRAMMER GUIDE:")
             bulletText("See the ShowDemoWindow() code in imgui_demo.cpp. <- you are here!")
             bulletText("See comments in imgui.cpp.")
             bulletText("See example applications in the examples/ folder.")
             bulletText("Read the FAQ at http://www.dearimgui.org/faq/")
             bulletText("Set 'io.ConfigFlags |= NavEnableKeyboard' for keyboard controls.")
             bulletText("Set 'io.ConfigFlags |= NavEnableGamepad' for gamepad controls.")
-            separator()
 
-            text("USER GUIDE:")
+            separatorText("USER GUIDE:")
             showUserGuide()
         }
 

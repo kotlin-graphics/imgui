@@ -134,8 +134,8 @@ interface widgetsText {
             return
 
         // The SeparatorText() vs SeparatorTextEx() distinction is designed to be considerate that we may want:
-        // - allow headers to be draggable items (would require a stable ID + a noticeable highlight)
-        // - this high-level entry point to allow formatting? (may require ID separate from formatted string)
+        // - allow separator-text to be draggable items (would require a stable ID + a noticeable highlight)
+        // - this high-level entry point to allow formatting? (which in turns may require ID separate from formatted string)
         // - because of this we probably can't turn 'const char* label' into 'const char* fmt, ...'
         // Otherwise, we can decide that users wanting to drag this would layout a dedicated drag-item,
         // and then we can turn this into a format function.
