@@ -1,9 +1,6 @@
 package imgui.impl.gl
 
-import glm_.L
-import glm_.f
-import glm_.glm
-import glm_.i
+import glm_.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -25,7 +22,7 @@ import imgui.internal.DrawVert
 import kool.*
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL31C.GL_PRIMITIVE_RESTART
-import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
+import org.lwjgl.opengl.GL32C.*
 import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL33C.glBindSampler
 import org.lwjgl.opengl.GL45C.GL_CLIP_ORIGIN
@@ -267,7 +264,8 @@ class ImplGL3 : GLInterface {
                 else -> glDisable(GL_PRIMITIVE_RESTART)
             }
         if (IMPL_HAS_POLYGON_MODE)
-            if (IMPL_HAS_SEPARATE_POLYGON_MODE) {
+            // Desktop OpenGL 3.0 and OpenGL 3.1 had separate polygon draw modes for front-facing and back-facing faces of polygons
+            if (data.glVersion <= 310 || data.glProfileIsCompat) {
                 glPolygonMode(GL_FRONT, lastPolygonMode[0])
                 glPolygonMode(GL_BACK, lastPolygonMode[1])
             } else
@@ -389,9 +387,6 @@ class ImplGL3 : GLInterface {
 
         // Desktop GL 2.0+ has glPolygonMode() which GL ES and WebGL don't have.
         var IMPL_HAS_POLYGON_MODE = true
-
-        // Desktop OpenGL 3.0 and OpenGL 3.1 had separate polygon draw modes for front-facing and back-facing faces of polygons
-        val IMPL_HAS_SEPARATE_POLYGON_MODE by lazy { data.glVersion >= 300 }
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
 
@@ -541,6 +536,9 @@ class ImplGL3 : GLInterface {
 
             /** Specified by user or detected based on compile time GL settings. */
             var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
+            /** [JVM] both lazy for the same reason as `useBufferSubData` */
+            val glProfileIsCompat: Boolean by lazy { glProfileMask has GL_CONTEXT_COMPATIBILITY_PROFILE_BIT }
+            val glProfileMask: Int by lazy { glGetInteger(GL_CONTEXT_PROFILE_MASK) }
             val fontTexture = IntBuffer(1)
             var shaderHandle = GlProgram(0)
 
