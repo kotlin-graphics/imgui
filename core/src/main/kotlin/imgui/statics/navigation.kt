@@ -376,9 +376,9 @@ fun navUpdateWindowing() {
         // Move to parent menu if necessary
         var newNavWindow = g.navWindow
         while (newNavWindow!!.parentWindow != null
-            && newNavWindow.dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu)
-            && newNavWindow.flags has Wf._ChildWindow
-            && newNavWindow.flags hasnt (Wf._Popup or Wf._ChildMenu)
+                && newNavWindow.dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu)
+                && newNavWindow.flags has Wf._ChildWindow
+                && newNavWindow.flags hasnt (Wf._Popup or Wf._ChildMenu)
         )
             newNavWindow = newNavWindow.parentWindow
         if (newNavWindow !== g.navWindow) {
@@ -512,12 +512,13 @@ fun navUpdateCreateMoveRequest() {
         g.navScoringNoClipRect translateY scoringRectOffsetY
     }
 
-    // [DEBUG] Always send a request
+    // [DEBUG] Always send a request when holding CTRL. Hold CTRL + Arrow change the direction.
     if (IMGUI_DEBUG_NAV_SCORING) {
-        if (io.keyCtrl && Key.C.isPressed)
-            g.navMoveDirForDebug = Dir.of((g.navMoveDirForDebug.i + 1) and 3)
-        if (io.keyCtrl && g.navMoveDir == Dir.None) {
-            g.navMoveDir = g.navMoveDirForDebug
+//        if (io.keyCtrl && Key.C.isPressed)
+//            g.navMoveDirForDebug = Dir.of((g.navMoveDirForDebug.i + 1) and 3)
+        if (io.keyCtrl) {
+            if (g.navMoveDir == Dir.None)
+                g.navMoveDir = g.navMoveDirForDebug
             g.navMoveFlags /= NavMoveFlag.DebugNoResult
         }
     }
@@ -771,7 +772,7 @@ fun navScoreItem(result: NavItemData): Boolean {
     var dbX = navScoreItemDistInterval(cand.min.x, cand.max.x, curr.min.x, curr.max.x)
     // Scale down on Y to keep using box-distance for vertically touching items
     val dbY = navScoreItemDistInterval(lerp(cand.min.y, cand.max.y, 0.2f), lerp(cand.min.y, cand.max.y, 0.8f),
-                                       lerp(curr.min.y, curr.max.y, 0.2f), lerp(curr.min.y, curr.max.y, 0.8f))
+            lerp(curr.min.y, curr.max.y, 0.2f), lerp(curr.min.y, curr.max.y, 0.8f))
     if (dbY != 0f && dbX != 0f)
         dbX = dbX / 1000f + if (dbX > 0f) 1f else -1f
     val distBox = abs(dbX) + abs(dbY)
@@ -804,25 +805,26 @@ fun navScoreItem(result: NavItemData): Boolean {
     else
         quadrant = if (g.lastItemData.id < g.navId) Dir.Left else Dir.Right
 
-    if (IMGUI_DEBUG_NAV_SCORING)
+    if (IMGUI_DEBUG_NAV_SCORING) {
+        if (g.io.keyCtrl) // Hold CTRL to preview score in matching quadrant. CTRL+Arrow to rotate.
+            if (quadrant == g.navMoveDir) {
+                val buf = "%.0f/%.0f".format(distBox, distCenter)
+                val drawList = ImGui.getForegroundDrawList(window)
+                drawList.addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 80))
+                drawList.addRectFilled(cand.min, cand.min + calcTextSize(buf), COL32(255, 0, 0, 200))
+                drawList.addText(cand.min, COL32(255, 255, 255, 255), buf)
+            }
         if (isMouseHoveringRect(cand)) {
-            val buf = "dbox (%.2f,%.2f->%.4f)\ndcen (%.2f,%.2f->%.4f)\nd (%.2f,%.2f->%.4f)\nnav WENS${g.navMoveDir}, quadrant WENS$quadrant"
-                .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial).toByteArray()
+            val buf = "d-box    (%7.3f,%7.3f) -> %7.3f\nd-center (%7.3f,%7.3f) -> %7.3f\nd-axial  (%7.3f,%7.3f) -> %7.3f\nnav WENS${g.navMoveDir.i}, quadrant WENS${quadrant.i}}"
+                    .format(dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial)
             getForegroundDrawList(window).apply {
                 addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
                 addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
-                addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf, 0) + Vec2(4), COL32(40, 0, 0, 150))
-                addText(cand.max, 0.inv(), buf.cStr)
-            }
-        } else if (io.keyCtrl) { // Hold to preview score in matching quadrant. Press C to rotate.
-            if (quadrant == g.navMoveDir) {
-                val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toByteArray()
-                getForegroundDrawList(window).apply {
-                    addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
-                    addText(cand.min, COL32(255), buf.cStr)
-                }
+                addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf) + Vec2(4), COL32(40, 0, 0, 2000))
+                addText(cand.max, 0.inv(), buf)
             }
         }
+    }
 
     // Is it in the quadrant we're interested in moving to?
     var newBest = false
@@ -995,7 +997,7 @@ fun navCalcPreferredRefPos(): Vec2 {
             rectRel translate (window.scroll - nextScroll)
         }
         val pos = Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width),
-                       rectRel.max.y - min(style.framePadding.y, rectRel.height))
+                rectRel.max.y - min(style.framePadding.y, rectRel.height))
         val viewport = mainViewport
         floor(glm.clamp(pos, viewport.pos, viewport.pos + viewport.size)) // ImFloor() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
     }
