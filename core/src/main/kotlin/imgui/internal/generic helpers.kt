@@ -310,15 +310,15 @@ fun parseFormatFindEnd(fmt: String, i_: Int = 0): Int {
     return 0
 }
 
-/** Extract the format out of a format string with leading or trailing decorations
- *  fmt = "blah blah"  -> return fmt
- *  fmt = "%.3f"       -> return fmt
- *  fmt = "hello %.3f" -> return fmt + 6
- *  fmt = "%.3f hello" -> return buf written with "%.3f" */
+// Extract the format out of a format string with leading or trailing decorations
+//  fmt = "blah blah"  -> return ""
+//  fmt = "%.3f"       -> return fmt
+//  fmt = "hello %.3f" -> return fmt + 6
+//  fmt = "%.3f hello" -> return buf written with "%.3f"
 fun parseFormatTrimDecorations(fmt: String): String {
     val fmtStart = parseFormatFindStart(fmt)
     if (fmt[fmtStart] != '%')
-        return fmt
+        return ""
     val fmtEnd = fmtStart + parseFormatFindEnd(fmt.substring(fmtStart))
     return fmt.substring(fmtStart, fmtEnd)
 }

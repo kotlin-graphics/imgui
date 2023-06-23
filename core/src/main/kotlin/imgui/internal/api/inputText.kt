@@ -1042,12 +1042,18 @@ internal interface inputText {
      *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
     fun <N> NumberOps<N>.tempInputScalar(bb: Rect, id: ID, label: String, pData: KMutableProperty0<N>, format_: String, clampMin: N? = null, clampMax: N? = null): Boolean where N : Number, N : Comparable<N> {
         var p by pData
+
+        // FIXME: May need to clarify display behavior if format doesn't contain %.
+        // "%d" -> "%d" / "There are %d items" -> "%d" / "items" -> "%d" (fallback). Also see #6405
+
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
         val init = g.tempInputId != id
         if (init) clearActiveID()
 
         val format = parseFormatTrimDecorations(format_)
+//        if (format[0] == 0)
+//            format = type_info->PrintFmt;
         val dataBuf = p.format(format).trim()
 
         val flags = Itf.AutoSelectAll or Itf._NoMarkEdited or defaultInputCharsFilter(format)
@@ -1061,14 +1067,14 @@ internal interface inputText {
             // Apply new value (or operations) then clamp
             p = parse(buf, format) ?: p
             if (clampMin != null || clampMax != null) {
-                var clampMin = clampMin
-                var clampMax = clampMax
-                if (clampMin != null && clampMax != null) {
-                    if (clampMin > clampMax) {
-                        val swap = clampMin; clampMin = clampMax; clampMax = swap
+                var cMin = clampMin
+                var cMax = clampMax
+                if (cMin != null && cMax != null) {
+                    if (cMin > cMax) {
+                        val swap = cMin; cMin = cMax; cMax = swap
                     }
                 }
-                p = p.clamp(clampMin, clampMax)
+                p = p.clamp(cMin, cMax)
             }
 
             // Only mark as edited if new value is different

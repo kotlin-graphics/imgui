@@ -334,7 +334,7 @@ object ShowDemoWindowWidgets {
                     text("Tooltips:")
 
                     sameLine()
-                    smallButton("Button")
+                    smallButton("Basic")
                     if (isItemHovered())
                         setTooltip("I am a tooltip")
 
@@ -424,7 +424,7 @@ object ShowDemoWindowWidgets {
                     // Here we completely omit '%d' from the format string, so it'll only display a name.
                     // This technique can also be used with DragInt().
                     val elemName = Element.values().getOrNull(elem)?.name ?: "Unknown"
-                    slider("slider enum", ::elem, 0, Element.values().lastIndex, elemName)
+                    slider("slider enum", ::elem, 0, Element.values().lastIndex, elemName) // Use ImGuiSliderFlags_NoInput flag to disable CTRL+Click here.
                     sameLine(); helpMarker("Using the format string parameter to display a name instead of the underlying integer.")
                 }
 

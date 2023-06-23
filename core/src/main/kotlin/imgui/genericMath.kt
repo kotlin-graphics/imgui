@@ -56,6 +56,10 @@ sealed interface NumberOps<N> where N : Number, N : Comparable<N> {
         // Copy the value in an opaque buffer so we can compare at the end of the function if it changed at all.
         val backupData = get()
 
+        // Sanitize format
+        // For float/double we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in, so force them into %f and %lf
+        // - For float/double we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in, so force them into %f and %lf
+        // - In theory could treat empty format as using default, but this would only cover rare/bizarre case of using InputScalar() + integer + format string without %.
         val v = parse(buf, format)
         return v?.let {
             this.set(v)
