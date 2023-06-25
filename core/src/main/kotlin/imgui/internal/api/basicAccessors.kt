@@ -58,7 +58,7 @@ internal interface basicAccessors {
         // Set active id
         g.activeIdIsJustActivated = (g.activeId != id)
         if (g.activeIdIsJustActivated) {
-            IMGUI_DEBUG_LOG_ACTIVEID("SetActiveID() old:0x%08X (window \"${g.activeIdWindow?.name ?: ""}\") -> new:0x%08X (window \"${window?.name ?: ""}\")\n", g.activeId, id)
+            IMGUI_DEBUG_LOG_ACTIVEID("SetActiveID() old:0x%08X (window \"${g.activeIdWindow?.name ?: ""}\") -> new:0x%08X (window \"${window?.name ?: ""}\")", g.activeId, id)
             g.activeIdTimer = 0f
             g.activeIdHasBeenPressedBefore = false
             g.activeIdHasBeenEditedBefore = false
@@ -104,7 +104,7 @@ internal interface basicAccessors {
         g.navFocusScopeId = g.currentFocusScopeId
         window.navLastIds[navLayer] = id
         if (g.lastItemData.id == id)
-            window.navRectRel[navLayer].put(window rectAbsToRel g.lastItemData.navRect)
+            window.navRectRel[navLayer] = window rectAbsToRel g.lastItemData.navRect
 
         if (g.activeIdSource == InputSource.Keyboard || g.activeIdSource == InputSource.Gamepad)
             g.navDisableMouseHover = true

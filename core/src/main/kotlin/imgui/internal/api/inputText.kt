@@ -717,7 +717,7 @@ internal interface inputText {
             if (g.activeId != id && isItemDeactivatedAfterEdit && !isReadOnly) {
                 applyNewText = g.inputTextDeactivatedState.textA
                 applyNewTextLength = g.inputTextDeactivatedState.textA.size
-                valueChanged /= !g.inputTextDeactivatedState.textA.contentEquals(buf)
+                valueChanged /= g.inputTextDeactivatedState.textA.strcmp(buf) != 0
                 //IMGUI_DEBUG_LOG("InputText(): apply Deactivated data for 0x%08X: \"%.*s\".\n", id, apply_new_text_length, apply_new_text);
             }
             g.inputTextDeactivatedState.id = 0

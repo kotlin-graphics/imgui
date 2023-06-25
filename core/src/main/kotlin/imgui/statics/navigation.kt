@@ -801,8 +801,7 @@ fun navScoreItem(result: NavItemData): Boolean {
     // FIXME-NAV: Introducing biases for vertical navigation, needs to be removed.
     var dbX = navScoreItemDistInterval(cand.min.x, cand.max.x, curr.min.x, curr.max.x)
     // Scale down on Y to keep using box-distance for vertically touching items
-    val dbY = navScoreItemDistInterval(lerp(cand.min.y, cand.max.y, 0.2f), lerp(cand.min.y, cand.max.y, 0.8f),
-            lerp(curr.min.y, curr.max.y, 0.2f), lerp(curr.min.y, curr.max.y, 0.8f))
+    val dbY = navScoreItemDistInterval(lerp(cand.min.y, cand.max.y, 0.2f), lerp(cand.min.y, cand.max.y, 0.8f), lerp(curr.min.y, curr.max.y, 0.2f), lerp(curr.min.y, curr.max.y, 0.8f))
     if (dbY != 0f && dbX != 0f)
         dbX = dbX / 1000f + if (dbX > 0f) 1f else -1f
     val distBox = abs(dbX) + abs(dbY)
@@ -857,7 +856,7 @@ fun navScoreItem(result: NavItemData): Boolean {
                     addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf) + Vec2(4), COL32(40, 0, 0, 2000))
                     addText(cand.max, 0.inv(), buf)
                 }
-            if (debugTty) IMGUI_DEBUG_LOG_NAV("id 0x%08X\n$buf\n", g.lastItemData.id)
+            if (debugTty) IMGUI_DEBUG_LOG_NAV("id 0x%08X\n$buf", g.lastItemData.id)
         }
     }
 

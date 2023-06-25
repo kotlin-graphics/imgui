@@ -13,6 +13,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.popColumnsBackground
 import imgui.ImGui.pushColumnsBackground
+import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
@@ -156,7 +157,7 @@ interface widgetsSelectables {
         // Update NavId when clicking or when Hovering (this doesn't happen on most widgets), so navigation can be resumed with gamepad/keyboard
         if (pressed || (hovered && flags has Sf._SetNavIdOnHover))
             if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerCurrent) {
-                setNavID(id, window.dc.navLayerCurrent, g.currentFocusScopeId, Rect(bb.min - window.pos, bb.max - window.pos)) // (bb == NavRect)
+                setNavID(id, window.dc.navLayerCurrent, g.currentFocusScopeId, window rectAbsToRel bb) // (bb == NavRect)
                 g.navDisableHighlight = true
             }
         if (pressed)

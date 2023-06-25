@@ -127,7 +127,7 @@ sealed class NavMoveFlag : FlagBase<NavMoveFlag>() {
 
     @GenSealedEnum
     companion object {
-        val WrapMask_ = LoopX / LoopY / WrapX / WrapY
+        val WrapMask_ get() = LoopX / LoopY / WrapX / WrapY
     }
 }
 

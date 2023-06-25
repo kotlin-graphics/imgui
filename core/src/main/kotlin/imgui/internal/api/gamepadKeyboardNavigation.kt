@@ -137,7 +137,7 @@ internal interface gamepadKeyboardNavigation {
             if (g.navId != 0 && g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight)
                 navRestoreHighlightAfterMove()
             navClearPreferredPosForAxis(axis) // On a failed move, clear preferred pos for this axis.
-            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveSubmitted but not led to a result!\n")
+            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveSubmitted but not led to a result!")
             return
         }
 

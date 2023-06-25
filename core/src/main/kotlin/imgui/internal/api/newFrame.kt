@@ -311,7 +311,7 @@ internal interface newFrame {
     companion object {
         fun debugPrintInputEvent(prefix: String, e: InputEvent) = when (e) {
             is InputEvent.MousePos -> when {
-                e.posX == -Float.MAX_VALUE && e.posY == -Float.MAX_VALUE -> IMGUI_DEBUG_LOG_IO("%s: MousePos (-FLT_MAX, -FLT_MAX)\n", prefix)
+                e.posX == -Float.MAX_VALUE && e.posY == -Float.MAX_VALUE -> IMGUI_DEBUG_LOG_IO("%s: MousePos (-FLT_MAX, -FLT_MAX)", prefix)
                 else -> IMGUI_DEBUG_LOG_IO("$prefix: MousePos (%.1f, %.1f) (${e.mouseSource})", e.posX, e.posY)
             }
             is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("$prefix: MouseButton ${e.button.i} ${if (e.down) "Down" else "Up"} (${e.mouseSource.name})")

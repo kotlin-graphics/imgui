@@ -398,7 +398,7 @@ class NavItemData {
     var focusScopeId: ID = 0
 
     /** Init,Move    // Best candidate bounding box in window relative space */
-    lateinit var rectRel: Rect
+    var rectRel = Rect()
 
     /** ????,Move    // Best candidate item flags */
     var inFlags: ItemFlags = none

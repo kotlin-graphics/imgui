@@ -154,7 +154,7 @@ interface widgetsMenus {
         end()
     }
 
-    fun beginMenu(label: String, enabled: Boolean = true) = beginMenuEx(label, "", enabled)
+    fun beginMenu(label: String, enabled: Boolean = true): Boolean = beginMenuEx(label, "", enabled)
 
     /** Only call EndMenu() if BeginMenu() returns true! */
     fun endMenu() {
