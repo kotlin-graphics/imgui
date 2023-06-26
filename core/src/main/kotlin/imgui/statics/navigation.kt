@@ -783,10 +783,9 @@ fun navScoreItem(result: NavItemData): Boolean {
     val window = g.currentWindow!!
     if (g.navLayer != window.dc.navLayerCurrent) return false
 
-    // Current modified source rect (NB: we've applied max.x = min.x in navUpdate() to inhibit the effect of having varied item width)
-    val curr = Rect(g.navScoringRect)
     // FIXME: Those are not good variables names
-    val cand = g.lastItemData.navRect   // Current item nav rectangle
+    val cand = Rect(g.lastItemData.navRect)   // Current item nav rectangle
+    val curr = g.navScoringRect   // Current modified source rect (NB: we've applied Max.x = Min.x in NavUpdate() to inhibit the effect of having varied item width)
     g.navScoringDebugCount++
 
     // When entering through a NavFlattened border, we consider child window items as fully clipped for scoring

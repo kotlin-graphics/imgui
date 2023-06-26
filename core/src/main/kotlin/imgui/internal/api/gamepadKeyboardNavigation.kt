@@ -1,6 +1,7 @@
 package imgui.internal.api
 
 import glm_.i
+import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.rectRelToAbs
@@ -181,7 +182,7 @@ internal interface gamepadKeyboardNavigation {
 
         // Apply new NavID/Focus
         IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
-        val preferredScoringPosRel = g.navWindow!!.rootWindowForNav!!.navPreferredScoringPosRel[g.navLayer.ordinal]
+        val preferredScoringPosRel = Vec2(g.navWindow!!.rootWindowForNav!!.navPreferredScoringPosRel[g.navLayer.ordinal])
         setNavID(result.id, g.navLayer, result.focusScopeId, result.rectRel)
 
         // Restore last preferred position for current axis

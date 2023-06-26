@@ -77,7 +77,7 @@ interface childWindows {
 
                 // But when flattened we directly reach items, adjust active layer mask accordingly
                 if (window.flags has Wf._NavFlattened)
-                    parentWindow.dc.navLayersActiveMaskNext /= window.dc.navLayersActiveMaskNext
+                    parentWindow.dc.navLayersActiveMaskNext = parentWindow.dc.navLayersActiveMaskNext or window.dc.navLayersActiveMaskNext
             }
             if (g.hoveredWindow === window)
                 g.lastItemData.statusFlags = g.lastItemData.statusFlags or ItemStatusFlag.HoveredWindow
