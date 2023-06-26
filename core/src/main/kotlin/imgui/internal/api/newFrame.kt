@@ -311,14 +311,14 @@ internal interface newFrame {
     companion object {
         fun debugPrintInputEvent(prefix: String, e: InputEvent) = when (e) {
             is InputEvent.MousePos -> when {
-                e.posX == -Float.MAX_VALUE && e.posY == -Float.MAX_VALUE -> IMGUI_DEBUG_LOG_IO("%s: MousePos (-FLT_MAX, -FLT_MAX)", prefix)
-                else -> IMGUI_DEBUG_LOG_IO("$prefix: MousePos (%.1f, %.1f) (${e.mouseSource})", e.posX, e.posY)
+                e.posX == -Float.MAX_VALUE && e.posY == -Float.MAX_VALUE -> IMGUI_DEBUG_LOG_IO("[io] $prefix: MousePos (-FLT_MAX, -FLT_MAX)")
+                else -> IMGUI_DEBUG_LOG_IO("[io] $prefix: MousePos (%.1f, %.1f) (${e.mouseSource.name.substringAfter('_')})", e.posX, e.posY)
             }
-            is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("$prefix: MouseButton ${e.button.i} ${if (e.down) "Down" else "Up"} (${e.mouseSource.name})")
-            is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("$prefix: MouseWheel (%.3f, %.3f) (${e.mouseSource.name})", e.wheelX, e.wheelY)
-            is InputEvent.Key -> IMGUI_DEBUG_LOG_IO("$prefix: Key \"${e.key.name}\" ${if (e.down) "Down" else "Up"}")
-            is InputEvent.Text -> IMGUI_DEBUG_LOG_IO("$prefix: Text: ${e.char} (U+%08X)", e.char.code)
-            is InputEvent.AppFocused -> IMGUI_DEBUG_LOG_IO("$prefix: AppFocused ${e.focused.i}")
+            is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("[io] $prefix: MouseButton ${e.button.i} ${if (e.down) "Down" else "Up"} (${e.mouseSource.name.substringAfter('_')})")
+            is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("[io] $prefix: MouseWheel (%.3f, %.3f) (${e.mouseSource.name.substringAfter('_')})", e.wheelX, e.wheelY)
+            is InputEvent.Key -> IMGUI_DEBUG_LOG_IO("[io] $prefix: Key \"${e.key.name}\" ${if (e.down) "Down" else "Up"}")
+            is InputEvent.Text -> IMGUI_DEBUG_LOG_IO("[io] $prefix: Text: ${e.char} (U+%08X)", e.char.code)
+            is InputEvent.AppFocused -> IMGUI_DEBUG_LOG_IO("[io] $prefix: AppFocused ${e.focused.i}")
         }
     }
 }

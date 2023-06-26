@@ -223,11 +223,11 @@ sealed class WindowFlag(override val i: Int) : FlagBase<WindowFlag>() {
 
     @GenSealedEnum
     companion object {
-        val NoNav: WindowFlags get() = NoNavInputs or NoNavFocus
+        val NoNav: WindowFlags get() = NoNavInputs / NoNavFocus
 
-        val NoDecoration: WindowFlags get() = NoTitleBar or NoResize or NoScrollbar or NoCollapse
+        val NoDecoration: WindowFlags get() = NoTitleBar / NoResize / NoScrollbar / NoCollapse
 
-        val NoInputs: WindowFlags get() = NoMouseInputs or NoNavInputs or NoNavFocus
+        val NoInputs: WindowFlags get() = NoMouseInputs / NoNavInputs / NoNavFocus
     }
 }
 

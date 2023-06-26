@@ -165,14 +165,14 @@ class Style {
 
     // [JVM]
     fun copy() = Style().also {
-        it.alpha = alpha; it.disabledAlpha = disabledAlpha; it.windowPadding = windowPadding; it.windowRounding = windowRounding; it.windowBorderSize = windowBorderSize
-        it.windowMinSize = windowMinSize; it.windowTitleAlign = windowTitleAlign; it.windowMenuButtonPosition = windowMenuButtonPosition; it.childRounding = childRounding
-        it.childBorderSize = childBorderSize; it.popupRounding = popupRounding; it.popupBorderSize = popupBorderSize; it.framePadding = framePadding; it.frameRounding = frameRounding
-        it.frameBorderSize = frameBorderSize; it.itemSpacing = itemSpacing; it.itemInnerSpacing = itemInnerSpacing; it.cellPadding put cellPadding
-        it.touchExtraPadding = touchExtraPadding; it.indentSpacing = indentSpacing; it.columnsMinSpacing = columnsMinSpacing; it.scrollbarSize = scrollbarSize;
+        it.alpha = alpha; it.disabledAlpha = disabledAlpha; it.windowPadding put windowPadding; it.windowRounding = windowRounding; it.windowBorderSize = windowBorderSize
+        it.windowMinSize put windowMinSize; it.windowTitleAlign put windowTitleAlign; it.windowMenuButtonPosition = windowMenuButtonPosition; it.childRounding = childRounding
+        it.childBorderSize = childBorderSize; it.popupRounding = popupRounding; it.popupBorderSize = popupBorderSize; it.framePadding put framePadding; it.frameRounding = frameRounding
+        it.frameBorderSize = frameBorderSize; it.itemSpacing put itemSpacing; it.itemInnerSpacing put itemInnerSpacing; it.cellPadding put cellPadding
+        it.touchExtraPadding put touchExtraPadding; it.indentSpacing = indentSpacing; it.columnsMinSpacing = columnsMinSpacing; it.scrollbarSize = scrollbarSize
         it.scrollbarRounding = scrollbarRounding; it.grabMinSize = grabMinSize; it.grabRounding = grabRounding; it.logSliderDeadzone = logSliderDeadzone; it.tabRounding = tabRounding
-        it.tabBorderSize = tabBorderSize; it.tabMinWidthForCloseButton = tabMinWidthForCloseButton; it.colorButtonPosition = colorButtonPosition; it.buttonTextAlign = buttonTextAlign
-        it.selectableTextAlign = selectableTextAlign; it.displayWindowPadding = displayWindowPadding; it.displaySafeAreaPadding = displaySafeAreaPadding
+        it.tabBorderSize = tabBorderSize; it.tabMinWidthForCloseButton = tabMinWidthForCloseButton; it.colorButtonPosition = colorButtonPosition; it.buttonTextAlign put buttonTextAlign
+        it.selectableTextAlign put selectableTextAlign; it.displayWindowPadding put displayWindowPadding; it.displaySafeAreaPadding put displaySafeAreaPadding
         it.mouseCursorScale = mouseCursorScale; it.antiAliasedLines = antiAliasedLines; it.antiAliasedLinesUseTex = antiAliasedLinesUseTex; it.antiAliasedFill = antiAliasedFill
         it.curveTessellationTol = curveTessellationTol; it.circleTessellationMaxError = circleTessellationMaxError; it.colors += colors; it.locale = locale
     }
@@ -234,7 +234,7 @@ class Style {
     fun scaleAllSizes(scaleFactor: Float) {
         windowPadding = floor(windowPadding * scaleFactor)
         windowRounding = floor(windowRounding * scaleFactor)
-        windowMinSize.put(floor(windowMinSize.x * scaleFactor), floor(windowMinSize.y * scaleFactor))
+        windowMinSize.put(floor(windowMinSize * scaleFactor))
         childRounding = floor(childRounding * scaleFactor)
         popupRounding = floor(popupRounding * scaleFactor)
         framePadding = floor(framePadding * scaleFactor)

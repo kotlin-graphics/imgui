@@ -83,7 +83,7 @@ internal interface inputs {
         out += if (keyChord has Key.Mod_Shift) "Shift+" else ""
         out += if (keyChord has Key.Mod_Alt) "Alt+" else ""
         out += if (keyChord has Key.Mod_Super) (if (g.io.configMacOSXBehaviors) "Cmd+" else "Super+") else ""
-        return out + (Key of (keyChord wo Key.Mod_Mask)).name
+        return out + (Key of (keyChord wo Key.Mod_Mask)).name.substringAfter('_')
     }
 
 
