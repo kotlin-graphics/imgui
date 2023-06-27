@@ -25,9 +25,8 @@ dependencies {
     api("kotlin.graphics:uno-core:0.7.21")
     lwjgl { implementation(jemalloc, stb) }
 
-    // Temporarily use a commit-hash for the version until the "is checks for equality" change is released
-    implementation("com.github.livefront.sealed-enum:runtime:f690fca874")
-    ksp("com.github.livefront.sealed-enum:ksp:f690fca874")
+    implementation("com.github.livefront.sealed-enum:runtime:0.7.0")
+    ksp("com.github.livefront.sealed-enum:ksp:0.7.0")
 
     val brotliVersion = "1.11.0"
     val operatingSystem: OperatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
