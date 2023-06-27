@@ -316,7 +316,7 @@ internal interface newFrame {
             }
             is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("[io] $prefix: MouseButton ${e.button.i} ${if (e.down) "Down" else "Up"} (${e.mouseSource.name.substringAfter('_')})")
             is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("[io] $prefix: MouseWheel (%.3f, %.3f) (${e.mouseSource.name.substringAfter('_')})", e.wheelX, e.wheelY)
-            is InputEvent.Key -> IMGUI_DEBUG_LOG_IO("[io] $prefix: Key \"${e.key.name}\" ${if (e.down) "Down" else "Up"}")
+            is InputEvent.Key -> IMGUI_DEBUG_LOG_IO("[io] $prefix: Key \"${e.key.name.substringAfter('_')}\" ${if (e.down) "Down" else "Up"}")
             is InputEvent.Text -> IMGUI_DEBUG_LOG_IO("[io] $prefix: Text: ${e.char} (U+%08X)", e.char.code)
             is InputEvent.AppFocused -> IMGUI_DEBUG_LOG_IO("[io] $prefix: AppFocused ${e.focused.i}")
         }
