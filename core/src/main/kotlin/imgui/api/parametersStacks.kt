@@ -68,149 +68,125 @@ interface parametersStacks {
      *  modify a style float variable. always use this if you modify the style after NewFrame().
      *  modify a style ImVec2 variable. always use this if you modify the style after NewFrame(). */
     fun pushStyleVar(idx: StyleVar, value: Any) {
-        g.styleVarStack.push(StyleMod(idx).also {
+        infix fun FloatArray.put(v: Vec2) {
+            v to this
+        }
+        g.styleVarStack += StyleMod(idx).apply {
             when (idx) {
                 StyleVar.Alpha -> {
-                    it.floats[0] = style.alpha
+                    floats[0] = style.alpha
                     style.alpha = value as Float
                 }
-
                 StyleVar.DisabledAlpha -> {
-                    it.floats[0] = style.disabledAlpha
+                    floats[0] = style.disabledAlpha
                     style.disabledAlpha = value as Float
                 }
-
                 StyleVar.WindowPadding -> {
-                    style.windowPadding to it.floats
+                    floats put style.windowPadding
                     style.windowPadding put value as Vec2
                 }
-
                 StyleVar.WindowRounding -> {
-                    it.floats[0] = style.windowRounding
+                    floats[0] = style.windowRounding
                     style.windowRounding = value as Float
                 }
-
                 StyleVar.WindowBorderSize -> {
-                    it.floats[0] = style.windowBorderSize
+                    floats[0] = style.windowBorderSize
                     style.windowBorderSize = value as Float
                 }
-
                 StyleVar.WindowMinSize -> {
-                    style.windowMinSize to it.floats
+                    floats put style.windowMinSize
                     style.windowMinSize put value as Vec2
                 }
-
                 StyleVar.WindowTitleAlign -> {
-                    style.windowTitleAlign to it.floats
+                    floats put style.windowTitleAlign
                     style.windowTitleAlign put value as Vec2
                 }
-
                 StyleVar.ChildRounding -> {
-                    it.floats[0] = style.childRounding
+                    floats[0] = style.childRounding
                     style.childRounding = value as Float
                 }
-
                 StyleVar.ChildBorderSize -> {
-                    it.floats[0] = style.childBorderSize
+                    floats[0] = style.childBorderSize
                     style.childBorderSize = value as Float
                 }
-
                 StyleVar.PopupRounding -> {
-                    it.floats[0] = style.popupRounding
+                    floats[0] = style.popupRounding
                     style.popupRounding = value as Float
                 }
-
                 StyleVar.PopupBorderSize -> {
-                    it.floats[0] = style.popupBorderSize
+                    floats[0] = style.popupBorderSize
                     style.popupBorderSize = value as Float
                 }
-
                 StyleVar.FramePadding -> {
-                    style.framePadding to it.floats
+                    floats put style.framePadding
                     style.framePadding put value as Vec2
                 }
-
                 StyleVar.FrameRounding -> {
-                    it.floats[0] = style.frameRounding
+                    floats[0] = style.frameRounding
                     style.frameRounding = value as Float
                 }
-
                 StyleVar.FrameBorderSize -> {
-                    it.floats[0] = style.frameBorderSize
+                    floats[0] = style.frameBorderSize
                     style.frameBorderSize = value as Float
                 }
-
                 StyleVar.ItemSpacing -> {
-                    style.itemSpacing to it.floats
+                    floats put style.itemSpacing
                     style.itemSpacing put value as Vec2
                 }
-
                 StyleVar.ItemInnerSpacing -> {
-                    style.itemInnerSpacing to it.floats
+                    floats put style.itemInnerSpacing
                     style.itemInnerSpacing put value as Vec2
                 }
-
                 StyleVar.IndentSpacing -> {
-                    it.floats[0] = style.indentSpacing
+                    floats[0] = style.indentSpacing
                     style.indentSpacing = value as Float
                 }
-
                 StyleVar.CellPadding -> {
-                    style.cellPadding to it.floats
+                    floats put style.cellPadding
                     style.cellPadding put value as Vec2
                 }
-
                 StyleVar.ScrollbarSize -> {
-                    it.floats[0] = style.scrollbarSize
+                    floats[0] = style.scrollbarSize
                     style.scrollbarSize = value as Float
                 }
-
                 StyleVar.ScrollbarRounding -> {
-                    it.floats[0] = style.scrollbarRounding
+                    floats[0] = style.scrollbarRounding
                     style.scrollbarRounding = value as Float
                 }
-
                 StyleVar.GrabMinSize -> {
-                    it.floats[0] = style.grabMinSize
+                    floats[0] = style.grabMinSize
                     style.grabMinSize = value as Float
                 }
-
                 StyleVar.GrabRounding -> {
-                    it.floats[0] = style.grabRounding
+                    floats[0] = style.grabRounding
                     style.grabRounding = value as Float
                 }
-
                 StyleVar.TabRounding -> {
-                    it.floats[0] = style.tabRounding
+                    floats[0] = style.tabRounding
                     style.tabRounding = value as Float
                 }
-
                 StyleVar.ButtonTextAlign -> {
-                    style.buttonTextAlign to it.floats
+                    floats put style.buttonTextAlign
                     style.buttonTextAlign put value as Vec2
                 }
-
                 StyleVar.SelectableTextAlign -> {
-                    style.selectableTextAlign to it.floats
+                    floats put style.selectableTextAlign
                     style.selectableTextAlign put value as Vec2
                 }
-
                 StyleVar.SeparatorTextBorderSize -> {
-                    it.floats[0] = style.separatorTextBorderSize
+                    floats[0] = style.separatorTextBorderSize
                     style.separatorTextBorderSize = value as Float
                 }
-
                 StyleVar.SeparatorTextAlign -> {
-                    style.separatorTextAlign to it.floats
+                    floats put style.separatorTextAlign
                     style.separatorTextAlign put value as Vec2
                 }
-
                 StyleVar.SeparatorTextPadding -> {
-                    style.separatorTextPadding to it.floats
+                    floats put style.separatorTextPadding
                     style.separatorTextPadding put value as Vec2
                 }
             }
-        })
+        }
     }
 
     fun popStyleVar(count_: Int = 1) {

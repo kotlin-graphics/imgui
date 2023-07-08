@@ -2,9 +2,11 @@
   <code_scheme name="Project" version="173">
     <JetCodeStyleSettings>
       <option name="LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY" value="false" />
+      <option name="CONTINUATION_INDENT_IN_PARAMETER_LISTS" value="false" />
       <option name="WRAP_ELVIS_EXPRESSIONS" value="0" />
     </JetCodeStyleSettings>
     <codeStyleSettings language="kotlin">
+      <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
       <option name="METHOD_ANNOTATION_WRAP" value="0" />
       <option name="CLASS_ANNOTATION_WRAP" value="0" />
       <option name="FIELD_ANNOTATION_WRAP" value="0" />

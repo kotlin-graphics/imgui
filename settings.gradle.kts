@@ -10,7 +10,7 @@ pluginManagement {
 
 rootProject.name = "imgui"
 
-for(module in listOf("core", "glfw", "gl"/*,"vk", "jogl",*//* "openjfx"*//*, "bgfx"*/, "platform")) {
+for(module in listOf("core", "glfw", "gl"/*,"vk", "jogl",*//* "openjfx"*//*, "bgfx"*/, "plot", "platform")) {
     include(module)
     project(":$module").buildFileName = "$module.gradle.kts"
 }

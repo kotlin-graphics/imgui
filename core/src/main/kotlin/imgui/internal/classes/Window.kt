@@ -180,13 +180,13 @@ class Window(
     var disableInputsFrames = 0
 
     /** store acceptable condition flags for SetNextWindowPos() use. */
-    var setWindowPosAllowFlags: CondFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+    var setWindowPosAllowFlags: CondFlags = Cond.None
 
     /** store acceptable condition flags for SetNextWindowSize() use.    */
-    var setWindowSizeAllowFlags: CondFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+    var setWindowSizeAllowFlags: CondFlags = Cond.None
 
     /** store acceptable condition flags for SetNextWindowCollapsed() use.   */
-    var setWindowCollapsedAllowFlags: CondFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+    var setWindowCollapsedAllowFlags: CondFlags = Cond.None
 
     /** store window position when using a non-zero Pivot (position set needs to be processed when we know the window size) */
     var setWindowPosVal = Vec2(Float.MAX_VALUE)

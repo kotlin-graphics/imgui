@@ -14,7 +14,7 @@ import kotlin.internal.NoInfer
 //-----------------------------------------------------------------------------
 
 @JvmInline
-private value class Flags<F : Flag<F>>(override val i: Int) : Flag<F> {
+value class Flags<F : Flag<F>>(override val i: Int) : Flag<F> {
     constructor() : this(0)
     constructor(flag: Flag<F>) : this(flag.i)
 
@@ -1677,7 +1677,7 @@ enum class Col {
 
     companion object {
         val COUNT = values().size
-        fun of(i: Int) = values()[i]
+        infix fun of(i: Int) = values()[i]
     }
 }
 
@@ -1783,6 +1783,10 @@ enum class StyleVar {
 
     @JvmField
     val i = ordinal
+
+    companion object {
+        infix fun of(i: Int) = values().first { it.i == i }
+    }
 }
 
 

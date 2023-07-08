@@ -495,7 +495,6 @@ typealias WriteAllFn = (ctx: Context, handler: SettingsHandler, outBuf: StringBu
 
 /** Stacked style modifier, backup of modified data so we can restore it. Data type inferred from the variable. */
 class StyleMod(val idx: StyleVar) {
-    var ints = IntArray(2)
     val floats = FloatArray(2)
 }
 
@@ -602,15 +601,15 @@ class Pool<T>(val placementNew: () -> T) : Iterable<T> {
 
     fun destroy() = clear()
 
-    fun getByKey(key: ID): T? = map[key]?.let { buf[it.i] }
+    infix fun getByKey(key: ID): T? = map[key]?.let { buf[it.i] }
     operator fun get(key: ID): T? = getByKey(key)
 
     fun getByIndex(n: PoolIdx): T = buf[n.i]
-    fun getByIndex(n: Int): T = buf[n]
+    infix fun getByIndex(n: Int): T = buf[n]
     operator fun get(n: PoolIdx): T = getByIndex(n)
 
     fun getIndex(p: T) = PoolIdx(buf.indexOf(p))
-    fun getOrAddByKey(key: ID): T {
+    infix fun getOrAddByKey(key: ID): T {
         map[key]?.let { return buf[it.i] }
         val new = add()
         map[key] = PoolIdx(buf.lastIndex) // not size because ::add already increased it

@@ -29,7 +29,7 @@ class Rect {
 
     constructor(min: Vec2i, max: Vec2) {
         this.min put min
-        this.max = max
+        this.max put max
     }
 
     constructor(min: Vec2, max: Vec2) {
