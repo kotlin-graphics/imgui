@@ -260,6 +260,15 @@ class ImplGlfw @JvmOverloads constructor(
         check(!data.installedCallbacks) { "Callbacks already installed!" }
         check(data.window == window)
 
+        data.prevUserCBWindowFocus = glfwSetWindowFocusCallback(window.handle, null)
+        data.prevUserCBCursorEnter = glfwSetCursorEnterCallback(window.handle, null)
+        data.prevUserCBCursorPos = glfwSetCursorPosCallback(window.handle, null)
+        data.prevUserCBMousebutton = glfwSetMouseButtonCallback(window.handle, null)
+        data.prevUserCBScroll = glfwSetScrollCallback(window.handle, null)
+        data.prevUserCBKey = glfwSetKeyCallback(window.handle, null)
+        data.prevUserCBChar = glfwSetCharCallback(window.handle, null)
+        data.prevUserCBMonitor = glfwSetMonitorCallback(null)
+
         window.focusCB = windowFocusCB
         window.cursorEnterCB = cursorEnterCB
         window.cursorPosCB = cursorPosCB
@@ -269,14 +278,6 @@ class ImplGlfw @JvmOverloads constructor(
         window.charCB = charCB
         glfw.monitorCallback = monitorCB
 
-        data.prevUserCBWindowFocus = glfwSetWindowFocusCallback(window.handle, null)
-        data.prevUserCBCursorEnter = glfwSetCursorEnterCallback(window.handle, null)
-        data.prevUserCBCursorPos = glfwSetCursorPosCallback(window.handle, null)
-        data.prevUserCBMousebutton = glfwSetMouseButtonCallback(window.handle, null)
-        data.prevUserCBScroll = glfwSetScrollCallback(window.handle, null)
-        data.prevUserCBKey = glfwSetKeyCallback(window.handle, null)
-        data.prevUserCBChar = glfwSetCharCallback(window.handle, null)
-        data.prevUserCBMonitor = glfwSetMonitorCallback(null)
         data.installedCallbacks = true
     }
 
