@@ -122,8 +122,11 @@ sealed class NavMoveFlag : FlagBase<NavMoveFlag>() {
     // Activate/select target item.
     object Activate : NavMoveFlag()
 
+    // Don't trigger selection by not setting g.NavJustMovedTo
+    object NoSelect : NavMoveFlag()
+
     /** Do not alter the visible state of keyboard vs mouse nav highlight */
-    object DontSetNavHighlight : NavMoveFlag()
+    object NotSetNavHighlight : NavMoveFlag()
 
     override val i: Int = 1 shl ordinal
 

@@ -134,8 +134,8 @@ internal interface gamepadKeyboardNavigation {
         val axis = if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down) Axis.Y else Axis.X
         if (result == null) {
             if (g.navMoveFlags has NavMoveFlag.Tabbing)
-                g.navMoveFlags /= NavMoveFlag.DontSetNavHighlight
-            if (g.navId != 0 && g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight)
+                g.navMoveFlags /= NavMoveFlag.NotSetNavHighlight
+            if (g.navId != 0 && g.navMoveFlags hasnt NavMoveFlag.NotSetNavHighlight)
                 navRestoreHighlightAfterMove()
             navClearPreferredPosForAxis(axis) // On a failed move, clear preferred pos for this axis.
             IMGUI_DEBUG_LOG_NAV("[nav] NavMoveSubmitted but not led to a result!")
@@ -172,7 +172,7 @@ internal interface gamepadKeyboardNavigation {
         }
         if (g.activeId != result.id)
             clearActiveID()
-        if (g.navId != result.id && g.navMoveFlags has NavMoveFlag.Activate) {
+        if (g.navId != result.id && g.navMoveFlags hasnt NavMoveFlag.NoSelect) {
             // Don't set NavJustMovedToId if just landed on the same spot (which may happen with ImGuiNavMoveFlags_AllowCurrentNavId)
             g.navJustMovedToId = result.id
             g.navJustMovedToFocusScopeId = result.focusScopeId
@@ -200,13 +200,13 @@ internal interface gamepadKeyboardNavigation {
         if (g.navMoveFlags has NavMoveFlag.Activate) {
             g.navNextActivateId = result.id
             g.navNextActivateFlags = none
-            g.navMoveFlags /= NavMoveFlag.DontSetNavHighlight
+            g.navMoveFlags /= NavMoveFlag.NotSetNavHighlight
             if (g.navMoveFlags has NavMoveFlag.Tabbing)
                 g.navNextActivateFlags /= ActivateFlag.PreferInput / ActivateFlag.TryToPreserveState
         }
 
         // Enable nav highlight
-        if (g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight)
+        if (g.navMoveFlags hasnt NavMoveFlag.NotSetNavHighlight)
             navRestoreHighlightAfterMove()
     }
 
