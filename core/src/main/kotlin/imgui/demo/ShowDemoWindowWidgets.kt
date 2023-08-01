@@ -959,8 +959,8 @@ object ShowDemoWindowWidgets {
         object TextFilters {
             // Modify character input by altering 'data->Eventchar' (ImGuiInputTextFlags_CallbackCharFilter callback)
             val filterCasingSwap: InputTextCallback = { data ->
-                if (data.eventChar in 'a'..'z') data.eventChar = data.eventChar - ('A' - 'a') // Lowercase becomes uppercase
-                else if (data.eventChar in 'A'..'Z') data.eventChar = data.eventChar + ('a' - 'A') // Uppercase becomes lowercase
+                if (data.eventChar in 'a'..'z') data.eventChar -= 'a' - 'A' // Lowercase becomes uppercase
+                else if (data.eventChar in 'A'..'Z') data.eventChar += 'a' - 'A' // Uppercase becomes lowercase
                 false
             }
 
