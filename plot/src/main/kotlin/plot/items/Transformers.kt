@@ -26,7 +26,7 @@ class Transformer1(val pixMin: Double,
     operator fun get(p_: Double): Float {
         var p = p_
         if (transformFwd != null) {
-            val s = transformFwd(p, transformData)
+            val s = transformFwd!!(p, transformData)
             val t = (s - scaMin) / (scaMax - scaMin)
             p = pltMin + (pltMax - pltMin) * t
         }

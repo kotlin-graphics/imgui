@@ -65,6 +65,10 @@ fun plotLine(labelId: String, xs: FloatArray, ys: FloatArray, flags: PlotLineFla
     val getter = GetterXY_float(xs, ys)
     plotLineEx(labelId, getter, flags)
 }
+fun plotLine(labelId: String, xs: DoubleArray, ys: DoubleArray, flags: PlotLineFlags = none, offset: Int = 0, stride: Int = Float.BYTES) {
+    val getter = GetterXY_double(xs, ys)
+    plotLineEx(labelId, getter, flags)
+}
 //IMPLOT_API void PlotLineG(const char* label_id, ImPlotGetter getter, void* data , int count, ImPlotLineFlags flags=0);
 //
 //// Plots a standard 2D scatter plot. Default marker is ImPlotMarker_Circle.

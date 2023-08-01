@@ -79,7 +79,7 @@ fun showDemoWindow(pOpen: KMutableProperty0<Boolean>? = null) {
 
     if (ImGui.beginTabBar("ImPlotDemoTabs")) {
         if (ImGui.beginTabItem("Plots")) {
-            demoHeader("Line Plots", Demo_LinePlots)
+            demoHeader("Line Plots", LinePlots::invoke)
 //            DemoHeader("Filled Line Plots", Demo_FilledLinePlots)
 //            DemoHeader("Shaded Plots##", Demo_ShadedPlots)
 //            DemoHeader("Scatter Plots", Demo_ScatterPlots)
@@ -99,7 +99,7 @@ fun showDemoWindow(pOpen: KMutableProperty0<Boolean>? = null) {
 //            DemoHeader("Images", Demo_Images)
 //            DemoHeader("Markers and Text", Demo_MarkersAndText)
 //            DemoHeader("NaN Values", Demo_NaNValues)
-            ImGui::EndTabItem()
+            ImGui.endTabItem()
         }
 //        if (ImGui::BeginTabItem("Subplots")) {
 //            DemoHeader("Sizing", Demo_SubplotsSizing)

@@ -4,9 +4,7 @@ package demo
 
 import glm_.f
 import imgui.ImGui
-import plot.api.beginPlot
-import plot.api.plotLine
-import plot.api.setupAxes
+import plot.api.*
 import kotlin.math.sin
 
 object LinePlots {
@@ -26,9 +24,9 @@ object LinePlots {
         }
         if (beginPlot("Line Plots")) {
             setupAxes("x", "y")
-            plotLine("f(x)", xs1, ys1, 1001)
-            setNextMarkerStyle(ImPlotMarker_Circle)
-            plotLine("g(x)", xs2, ys2, 20, ImPlotLineFlags_Segments)
+            plotLine("f(x)", xs1, ys1)
+            setNextMarkerStyle(PlotMarker.Circle)
+            plotLine("g(x)", xs2, ys2, PlotLineFlag.Segments)
             endPlot()
         }
     }

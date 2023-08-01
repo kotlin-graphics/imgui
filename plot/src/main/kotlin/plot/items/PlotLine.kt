@@ -6,6 +6,7 @@ import imgui.has
 import imgui.u32
 import plot.api.*
 import plot.internalApi.beginItemEx
+import plot.internalApi.endItem
 import plot.internalApi.itemData
 
 //-----------------------------------------------------------------------------
@@ -14,7 +15,7 @@ import plot.internalApi.itemData
 
 //template <typename _Getter>
 fun plotLineEx(label_id: String, getter: Getter, flags: PlotLineFlags) {
-    if (beginItemEx(label_id, Fitter1(getter), Flags<PlotItemFlag>(flags.i), PlotCol.Line)) {
+    if (beginItemEx(label_id, Fitter1(getter), Flags(flags.i), PlotCol.Line)) {
         val s = itemData
         if (getter.count > 1) {
             if (flags has PlotLineFlag.Shaded && s.renderFill) {
@@ -46,9 +47,9 @@ fun plotLineEx(label_id: String, getter: Getter, flags: PlotLineFlags) {
             }
             val colLine = s.colors[PlotCol.MarkerOutline].u32.toUInt()
             val colFill = s.colors[PlotCol.MarkerFill].u32.toUInt()
-            renderMarkers<_Getter>(getter, s.Marker, s.MarkerSize, s.RenderMarkerFill, colFill, s.RenderMarkerLine, colLine, s.MarkerWeight)
+            renderMarkers(getter, s.marker, s.markerSize, s.renderMarkerFill, colFill, s.renderMarkerLine, colLine, s.markerWeight)
         }
-        EndItem()
+        endItem()
     }
 }
 
