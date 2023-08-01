@@ -631,9 +631,10 @@ fun navUpdateCreateTabbingRequest() {
         navKeyboardActive -> if (g.navDisableHighlight && g.activeId == 0) 0 else +1
         else -> if (g.activeId == 0) 0 else +1
     }
+    val moveFlags = NavMoveFlag.Tabbing / NavMoveFlag.Activate
     val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
     val clipDir = if (g.navTabbingDir < 0) Dir.Up else Dir.Down
-    navMoveRequestSubmit(Dir.None, clipDir, NavMoveFlag.Tabbing, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
+    navMoveRequestSubmit(Dir.None, clipDir, moveFlags, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
     g.navTabbingCounter = -1
 }
 

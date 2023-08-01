@@ -5,6 +5,7 @@ import imgui.api.*
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
 import imgui.internal.api.*
+import imgui.internal.api.focusActivation
 
 // Version
 const val IMGUI_BUILD = 0
@@ -145,7 +146,7 @@ object ImGui :
         loggingCapture,
         dragAndDrop,
         clipping,
-        focusActivation,
+        imgui.api.focusActivation,
         itemWidgetsUtilities,
         backgroundForegroundDrawLists,
         miscellaneousUtilities,
@@ -181,6 +182,7 @@ object ImGui :
         menus,
         combos,
         gamepadKeyboardNavigation,
+        focusActivation,
         inputs,
         focusScope,
         imgui.internal.api.dragAndDrop,

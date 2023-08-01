@@ -113,11 +113,13 @@ sealed class NavMoveFlag : FlagBase<NavMoveFlag>() {
     /** Dummy scoring for debug purpose, don't apply result */
     object DebugNoResult : NavMoveFlag()
 
+    // Requests from focus API can land/focus/activate items even if they are marked with _NoTabStop (see NavProcessItemForTabbingRequest() for details)
     object FocusApi : NavMoveFlag()
 
     /** == Focus + Activate if item is Inputable + DontChangeNavHighlight */
     object Tabbing : NavMoveFlag()
 
+    // Activate/select target item.
     object Activate : NavMoveFlag()
 
     /** Do not alter the visible state of keyboard vs mouse nav highlight */

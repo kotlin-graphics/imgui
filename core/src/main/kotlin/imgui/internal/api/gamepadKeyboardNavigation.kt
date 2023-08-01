@@ -172,7 +172,7 @@ internal interface gamepadKeyboardNavigation {
         }
         if (g.activeId != result.id)
             clearActiveID()
-        if (g.navId != result.id) {
+        if (g.navId != result.id && g.navMoveFlags has NavMoveFlag.Activate) {
             // Don't set NavJustMovedToId if just landed on the same spot (which may happen with ImGuiNavMoveFlags_AllowCurrentNavId)
             g.navJustMovedToId = result.id
             g.navJustMovedToFocusScopeId = result.focusScopeId
@@ -192,17 +192,17 @@ internal interface gamepadKeyboardNavigation {
             g.navWindow!!.rootWindowForNav!!.navPreferredScoringPosRel[g.navLayer.ordinal] = preferredScoringPosRel
         }
 
-        // Tabbing: Activates Inputable or Focus non-Inputable
-        if (g.navMoveFlags has NavMoveFlag.Tabbing && result.inFlags has ItemFlag.Inputable) {
-            g.navNextActivateId = result.id
-            g.navNextActivateFlags = ActivateFlag.PreferInput or ActivateFlag.TryToPreserveState
-            g.navMoveFlags /= NavMoveFlag.DontSetNavHighlight
-        }
+        // Tabbing: Activates Inputable, otherwise only Focus
+        if (g.navMoveFlags has NavMoveFlag.Tabbing && result.inFlags has ItemFlag.Inputable)
+            g.navMoveFlags -= NavMoveFlag.Activate
 
         // Activate
         if (g.navMoveFlags has NavMoveFlag.Activate) {
             g.navNextActivateId = result.id
             g.navNextActivateFlags = none
+            g.navMoveFlags /= NavMoveFlag.DontSetNavHighlight
+            if (g.navMoveFlags has NavMoveFlag.Tabbing)
+                g.navNextActivateFlags /= ActivateFlag.PreferInput / ActivateFlag.TryToPreserveState
         }
 
         // Enable nav highlight
@@ -233,13 +233,6 @@ internal interface gamepadKeyboardNavigation {
         val g = gImGui
         val window = g.currentWindow!!
         window.dc.navIsScrollPushableX = g.currentTable == null && window.dc.currentColumns == null
-    }
-
-    /** Remotely activate a button, checkbox, tree node etc. given its unique ID. activation is queued and processed
-     *  on the next frame when the item is encountered again.  */
-    fun activateItem(id: ID) {
-        g.navNextActivateId = id
-        g.navNextActivateFlags = none
     }
 
     // FIXME-NAV: The existence of SetNavID vs SetFocusID vs FocusWindow() needs to be clarified/reworked.
