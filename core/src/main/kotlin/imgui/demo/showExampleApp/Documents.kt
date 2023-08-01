@@ -55,8 +55,10 @@ class MyDocument(
 
     /** Copy of Open from last update. */
     var openPrev = open
+
     /** Set when the document has been modified */
     var dirty = false
+
     /** Set when the document */
     var wantClose = false
 
@@ -255,10 +257,11 @@ object Documents {
                 if (beginPopupModal("Save?", null, WindowFlag.AlwaysAutoResize)) {
                     text("Save change to the following items?")
                     val itemHeight = textLineHeightWithSpacing
-                    if (beginChildFrame(getID("frame"), Vec2(-Float.MIN_VALUE, 6.25f * itemHeight))) {
-                        closeQueue.forEach { if (it.dirty) text(it.name) }
-                        endChildFrame()
-                    }
+                    if (beginChildFrame(getID("frame"), Vec2(-Float.MIN_VALUE, 6.25f * itemHeight)))
+                        closeQueue.forEach {
+                            if (it.dirty)
+                                text(it.name)
+                        }
 
                     val buttonSize = Vec2(fontSize * 7f, 0f)
                     if (button("Yes", buttonSize)) {
