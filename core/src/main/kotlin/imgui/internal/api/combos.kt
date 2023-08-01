@@ -89,7 +89,7 @@ internal interface combos {
         if (window.skipItems || g.lastItemData.statusFlags hasnt ItemStatusFlag.Visible)
             return false
         assert(g.lastItemData.rect.min.x == previewData.previewRect.min.x && g.lastItemData.rect.min.y == previewData.previewRect.min.y) { "Didn't call after BeginCombo/EndCombo block or forgot to pass ImGuiComboFlags_CustomPreview flag?" }
-        if (!window.clipRect.contains(previewData.previewRect)) // Narrower test (optional)
+        if (!window.clipRect.overlaps(previewData.previewRect)) // Narrower test (optional)
             return false
 
         // FIXME: This could be contained in a PushWorkRect() api
