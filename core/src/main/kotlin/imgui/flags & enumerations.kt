@@ -377,7 +377,10 @@ sealed class TreeNodeFlag(override val i: Int) : FlagBase<TreeNodeFlag>() {
 
     // [Internal]
 
-    object _ClipLabelForTrailingButton : TreeNodeFlag(1 shl 20)
+    internal object ClipLabelForTrailingButton : TreeNodeFlag(1 shl 20)
+
+    /** (FIXME-WIP) Turn Down arrow into an Up arrow, but reversed trees (#6517) */
+    internal object UpsideDownArrow : TreeNodeFlag(1 shl 21)
 
     @GenSealedEnum
     companion object {

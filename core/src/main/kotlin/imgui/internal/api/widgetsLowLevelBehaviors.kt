@@ -10,7 +10,6 @@ import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.data
-import imgui.ImGui.dragBehavior
 import imgui.ImGui.dragBehaviorT
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusWindow
@@ -24,7 +23,6 @@ import imgui.ImGui.isReleased
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
-import imgui.ImGui.logRenderedText
 import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.mouseCursor
@@ -41,10 +39,10 @@ import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setOwner
-import imgui.ImGui.sliderBehavior
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
 import imgui.ImGui.testOwner
+import imgui.TreeNodeFlag
 import imgui.api.g
 import imgui.internal.classes.InputFlag
 import imgui.internal.classes.Rect
@@ -220,7 +218,7 @@ internal interface widgetsLowLevelBehaviors {
                 if (flags has Bf.PressedOnRelease)
                     if (mouseButtonReleased != MouseButton.None) {
                         val hasRepeatedAtLeastOnce =
-                            flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased.i] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
+                                flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased.i] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
                         if (!hasRepeatedAtLeastOnce)
                             pressed = true
                         if (flags hasnt Bf.NoNavFocus)
@@ -275,7 +273,7 @@ internal interface widgetsLowLevelBehaviors {
 
                 val mouseButton = g.activeIdMouseButton
                 if (mouseButton == MouseButton.None)
-                    // Fallback for the rare situation were g.ActiveId was set programmatically or from another widget (e.g. #6304).
+                // Fallback for the rare situation were g.ActiveId was set programmatically or from another widget (e.g. #6304).
                     clearActiveID()
                 else if (mouseButton isDown testOwnerId)
                     held = true
@@ -318,7 +316,7 @@ internal interface widgetsLowLevelBehaviors {
      *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
      *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
     fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean =
-        sliderBehavior(bb, id, pV mutablePropertyAt 0, pMin, pMax, format, flags, outGrabBb)
+            sliderBehavior(bb, id, pV mutablePropertyAt 0, pMin, pMax, format, flags, outGrabBb)
 
     //    fun <N> sliderBehavior(bb: Rect, id: ID,
     //                           v: KMutableProperty0<N>,
@@ -398,7 +396,7 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = none, label: String): Boolean =
-        treeNodeBehavior(id, flags, label.toByteArray())
+            treeNodeBehavior(id, flags, label.toByteArray())
 
     fun treeNodeBehavior(id: ID, flags: TreeNodeFlags = none, label: ByteArray, labelEnd_: Int = -1): Boolean {
 
@@ -418,10 +416,10 @@ internal interface widgetsLowLevelBehaviors {
         // We vertically grow up to current line height up the typical widget height.
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
         val frameBb = Rect(
-            x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
-            y1 = window.dc.cursorPos.y,
-            x2 = window.workRect.max.x,
-            y2 = window.dc.cursorPos.y + frameHeight)
+                x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
+                y1 = window.dc.cursorPos.y,
+                x2 = window.workRect.max.x,
+                y2 = window.dc.cursorPos.y + frameHeight)
         if (displayFrame) {
             // Framed header expand a little outside the default padding, to the edge of InnerClipRect
             // (FIXME: May remove this at some point and make InnerClipRect align with WindowPadding.x instead of WindowPadding.x*0.5f)
@@ -544,11 +542,12 @@ internal interface widgetsLowLevelBehaviors {
             renderNavHighlight(frameBb, id, navHighlightFlags)
             if (flags has Tnf.Bullet)
                 window.drawList.renderBullet(Vec2(textPos.x - textOffsetX * 0.6f, textPos.y + g.fontSize * 0.5f), textCol)
-            else if (!isLeaf)
-                window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol, if (isOpen) Dir.Down else Dir.Right, 1f)
-            else // Leaf without bullet, left-adjusted text
+            else if (!isLeaf) {
+                val dir = if (isOpen) if (flags has TreeNodeFlag.UpsideDownArrow) Dir.Up else Dir.Down else Dir.Right
+                window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol, dir, 1f)
+            } else // Leaf without bullet, left-adjusted text
                 textPos.x -= textOffsetX
-            if (flags has Tnf._ClipLabelForTrailingButton)
+            if (flags has Tnf.ClipLabelForTrailingButton)
                 frameBb.max.x -= g.fontSize + style.framePadding.x
             if (g.logEnabled)
                 logSetNextTextDecoration("###", "###")
@@ -624,13 +623,13 @@ internal interface widgetsLowLevelBehaviors {
 }
 
 inline fun <reified N> dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> =
-    ImGui.dragBehavior(id, pV, vSpeed, min, max, format, flags)
+        ImGui.dragBehavior(id, pV, vSpeed, min, max, format, flags)
 
 inline fun <reified N> ImGui.dragBehavior(id: ID, pV: KMutableProperty0<N>, vSpeed: Float, min: N?, max: N?, format: String, flags: SliderFlags): Boolean where N : Number, N : Comparable<N> =
-    numberFpOps<N, Nothing>().dragBehavior(id, pV, vSpeed, min, max, format, flags)
+        numberFpOps<N, Nothing>().dragBehavior(id, pV, vSpeed, min, max, format, flags)
 
 inline fun <reified N> sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
-    ImGui.sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
+        ImGui.sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
 
 inline fun <reified N> ImGui.sliderBehavior(bb: Rect, id: ID, pV: KMutableProperty0<N>, min: N, max: N, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
-    numberFpOps<N, Nothing>().sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
+        numberFpOps<N, Nothing>().sliderBehavior(bb, id, pV, min, max, format, flags, outGrabBb)
