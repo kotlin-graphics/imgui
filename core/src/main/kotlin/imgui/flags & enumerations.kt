@@ -964,15 +964,16 @@ sealed interface HoveredFlag<out HF : HoveredFlag<HF>> : Flag<HF> {
     /** IsItemHovered() only: Return true even if the item is disabled */
     object AllowWhenDisabled : ItemBase(1 shl 9)
 
-    /** Disable using gamepad/keyboard navigation state when active, always query mouse. */
+    /** IsItemHovered() only: Disable using gamepad/keyboard navigation state when active, always query mouse. */
     object NoNavOverride : General(1 shl 10)
 
     // Mouse Hovering delays (for tooltips)
-    /** IsItemHovered() only: Return true after io.HoverDelayNormal elapsed (~0.30 sec) */
-    object DelayNormal : General(1 shl 11)
 
-    /** IsItemHovered() only: Return true after io.HoverDelayShort elapsed (~0.10 sec) */
-    object DelayShort : General(1 shl 12)
+    /** IsItemHovered() only: Return true after io.HoverDelayShort elapsed (~0.15 sec) */
+    object DelayShort : General(1 shl 11)
+
+    /** IsItemHovered() only: Return true after io.HoverDelayNormal elapsed (~0.40 sec) */
+    object DelayNormal : General(1 shl 12)
 
     /** IsItemHovered() only: Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
     object NoSharedDelay : General(1 shl 13)

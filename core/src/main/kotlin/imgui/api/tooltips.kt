@@ -9,7 +9,7 @@ import imgui.internal.sections.TooltipFlag
 import imgui.WindowFlag as Wf
 
 /** Tooltips
- *  - Tooltip are windows following the mouse. They do not take focus away. */
+ *  - Tooltips are windows following the mouse. They do not take focus away. */
 interface tooltips {
 
     /** begin/append a tooltip window. to create full-featured tooltip (with any kind of items). */

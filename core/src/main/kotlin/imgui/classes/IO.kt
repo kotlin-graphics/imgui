@@ -84,11 +84,11 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** When holding a key/button, rate at which it repeats, in seconds.    */
     var keyRepeatRate = 0.05f
 
-    /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayNormal) returns true. */
-    var hoverDelayNormal = 0.35f
-
     /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayShort) returns true. */
-    var hoverDelayShort = 0.1f
+    var hoverDelayShort = 0.15f
+
+    /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayNormal) returns true. */
+    var hoverDelayNormal = 0.40f
 
     /** Store your own data. */
     var userData: Any? = null
