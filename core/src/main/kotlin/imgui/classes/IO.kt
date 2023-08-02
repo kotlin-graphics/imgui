@@ -85,7 +85,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     var keyRepeatRate = 0.05f
 
     /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayNormal) returns true. */
-    var hoverDelayNormal = 0.3f
+    var hoverDelayNormal = 0.35f
 
     /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayShort) returns true. */
     var hoverDelayShort = 0.1f

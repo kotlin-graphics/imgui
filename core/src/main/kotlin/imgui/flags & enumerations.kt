@@ -964,7 +964,7 @@ sealed interface HoveredFlag<out HF : HoveredFlag<HF>> : Flag<HF> {
     /** Disable using gamepad/keyboard navigation state when active, always query mouse. */
     object NoNavOverride : General(1 shl 10)
 
-    // Hovering delays (for tooltips)
+    // Mouse Hovering delays (for tooltips)
     /** Return true after io.HoverDelayNormal elapsed (~0.30 sec) */
     object DelayNormal : General(1 shl 11)
 

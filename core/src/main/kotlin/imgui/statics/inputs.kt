@@ -96,7 +96,8 @@ fun updateMouseInputs() {
             mouseDelta put 0f
 
         // If mouse moved we re-enable mouse hovering in case it was disabled by gamepad/keyboard. In theory should use a >0.0f threshold but would need to reset in everywhere we set this to true.
-        if (mouseDelta.x != 0f || mouseDelta.y != 0f)
+        val isStationary = g.io.mouseDelta.x == 0f && g.io.mouseDelta.y == 0f
+        if (!isStationary)
             g.navDisableMouseHover = false
 
         mousePosPrev put mousePos

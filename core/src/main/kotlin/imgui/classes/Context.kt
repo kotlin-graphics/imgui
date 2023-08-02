@@ -433,8 +433,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** 0.0..1.0 animation when fading in a dimming background (for modal window and CTRL+TAB list) */
     var dimBgRatio = 0f
 
-    var mouseCursor = MouseCursor.Arrow
-
 
     //------------------------------------------------------------------
     // Drag and Drop
@@ -514,17 +512,24 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var hoverDelayId: ID = 0
     var hoverDelayIdPreviousFrame: ID = 0
 
-    /** Currently used IsItemHovered(), generally inferred from g.HoveredIdTimer but kept uncleared until clear timer elapse. */
+    /** Currently used by IsItemHovered() */
     var hoverDelayTimer = 0f
 
-    /** Currently used IsItemHovered(): grace time before g.TooltipHoverTimer gets cleared. */
+    /** Currently used by IsItemHovered(): grace time before g.TooltipHoverTimer gets cleared. */
     var hoverDelayClearTimer = 0f
+
+    //------------------------------------------------------------------
+    // Mouse state
+    //------------------------------------------------------------------
+
+    var mouseCursor = MouseCursor.Arrow
+
+    val mouseLastValidPos = Vec2()
+
 
     //------------------------------------------------------------------
     // Widget state
     //------------------------------------------------------------------
-
-    val mouseLastValidPos = Vec2()
 
     var inputTextState = InputTextState(this)
 
