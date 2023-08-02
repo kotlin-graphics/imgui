@@ -29,6 +29,7 @@ import imgui.internal.classes.PopupData
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.floor
+import imgui.internal.hashStr
 import imgui.internal.sections.*
 import imgui.statics.navCalcPreferredRefPos
 import uno.kotlin.getValue
@@ -78,7 +79,7 @@ internal interface popupsModalsTooltips {
 
         // Process navigation-in immediately so NavInit can run on first frame
         // Can enter a child if (A) it has navigatable items or (B) it can be scrolled.
-        val tempIdForActivation: ID = id + 1
+        val tempIdForActivation: ID = hashStr("##Child", id)
         if (g.activeId == tempIdForActivation)
             clearActiveID()
         if (g.navActivateId == id && flags hasnt Wf._NavFlattened && (childWindow.dc.navLayersActiveMask != 0 || childWindow.dc.navWindowHasScrollY)) {
