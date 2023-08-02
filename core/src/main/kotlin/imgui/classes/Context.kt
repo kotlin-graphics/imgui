@@ -860,13 +860,15 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     companion object {
         // IMPORTANT: ###xxx suffixes must be same in ALL languages
-        val gLocalizationEntriesEnUS = listOf(LocEntry(LocKey.TableSizeOne, "Size column to fit###SizeOne"),
-                                              LocEntry(LocKey.TableSizeAllFit, "Size all columns to fit###SizeAll"),
-                                              LocEntry(LocKey.TableSizeAllDefault, "Size all columns to default###SizeAll"),
-                                              LocEntry(LocKey.TableResetOrder, "Reset order###ResetOrder"),
-                                              LocEntry(LocKey.WindowingMainMenuBar, "(Main menu bar)"),
-                                              LocEntry(LocKey.WindowingPopup, "(Popup)"),
-                                              LocEntry(LocKey.WindowingUntitled, "(Untitled)"))
+        val gLocalizationEntriesEnUS = listOf(
+                LocEntry(LocKey.VersionStr, "Dear ImGui $IMGUI_VERSION ($IMGUI_VERSION_NUM)"),
+                LocEntry(LocKey.TableSizeOne, "Size column to fit###SizeOne"),
+                LocEntry(LocKey.TableSizeAllFit, "Size all columns to fit###SizeAll"),
+                LocEntry(LocKey.TableSizeAllDefault, "Size all columns to default###SizeAll"),
+                LocEntry(LocKey.TableResetOrder, "Reset order###ResetOrder"),
+                LocEntry(LocKey.WindowingMainMenuBar, "(Main menu bar)"),
+                LocEntry(LocKey.WindowingPopup, "(Popup)"),
+                LocEntry(LocKey.WindowingUntitled, "(Untitled)"))
     }
 }
 
@@ -881,9 +883,9 @@ enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePos
 
 /** Hook for extensions like ImGuiTestEngine */
 class ContextHook(
-    // A unique ID assigned by AddContextHook()
-    var hookId: ID = 0,
-    var type: ContextHookType = ContextHookType.NewFramePre,
-    var owner: ID = 0,
-    var callback: ContextHookCallback? = null,
-    var userData: Any? = null)
+        // A unique ID assigned by AddContextHook()
+        var hookId: ID = 0,
+        var type: ContextHookType = ContextHookType.NewFramePre,
+        var owner: ID = 0,
+        var callback: ContextHookCallback? = null,
+        var userData: Any? = null)

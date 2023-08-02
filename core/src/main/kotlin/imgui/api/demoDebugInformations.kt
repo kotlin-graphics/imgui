@@ -171,10 +171,11 @@ interface demoDebugInformations {
         }
 
         // Basic info
-        text("Dear ImGui $version")
+        text("Dear ImGui $IMGUI_VERSION ($IMGUI_VERSION_NUM)")
         text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
         text("${io.metricsRenderVertices} vertices, ${io.metricsRenderIndices} indices (${io.metricsRenderIndices / 3} triangles)")
         text("${io.metricsRenderWindows} visible windows, ${io.metricsActiveAllocations} active allocations")
+        text("If your company uses this, please consider sponsoring the project!")
         //SameLine(); if (SmallButton("GC")) { g.GcCompactAll = true; }
 
         separator()

@@ -103,6 +103,7 @@ class MenuColumns {
 
 // This is experimental and not officially supported, it'll probably fall short of features, if/when it does we may backtrack.
 enum class LocKey {
+    VersionStr,
     TableSizeOne,
     TableSizeAllFit,
     TableSizeAllDefault,
