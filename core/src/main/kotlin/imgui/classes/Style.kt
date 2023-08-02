@@ -186,6 +186,7 @@ class Style {
         it.selectableTextAlign put selectableTextAlign; it.displayWindowPadding put displayWindowPadding; it.displaySafeAreaPadding put displaySafeAreaPadding
         it.mouseCursorScale = mouseCursorScale; it.antiAliasedLines = antiAliasedLines; it.antiAliasedLinesUseTex = antiAliasedLinesUseTex; it.antiAliasedFill = antiAliasedFill
         it.curveTessellationTol = curveTessellationTol; it.circleTessellationMaxError = circleTessellationMaxError; it.colors += colors; it.locale = locale
+        it.hoverStationaryDelay = hoverStationaryDelay; it.hoverDelayShort = hoverDelayShort; it.hoverDelayNormal = hoverDelayNormal
     }
 
     init {
