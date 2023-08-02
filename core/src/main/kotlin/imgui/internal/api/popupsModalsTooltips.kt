@@ -248,11 +248,14 @@ internal interface popupsModalsTooltips {
      *  @param extraWindowFlags WindowFlag   */
     fun beginTooltipEx(tooltipFlags_: TooltipFlags = none, extraWindowFlags: WindowFlags = none): Boolean {
         var tooltipFlags = tooltipFlags_
-        if (g.dragDropWithinSource || g.dragDropWithinTarget) { // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
-            // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
-            // Whatever we do we want to call SetNextWindowPos() to enforce a tooltip position and disable clipping the tooltip without our display area, like regular tooltip do.
+        if (g.dragDropWithinSource || g.dragDropWithinTarget) {
+            // Drag and Drop tooltips are positioning differently than other tooltips:
+            // - offset visibility to increase visibility around mouse.
+            // - never clamp within outer viewport boundary.
+            // We call SetNextWindowPos() to enforce position and disable clamping.
+            // See FindBestWindowPosForPopup() for positionning logic of other tooltips (not drag and drop ones).
             //ImVec2 tooltip_pos = g.IO.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding;
-            val tooltipPos = io.mousePos + Vec2(16 * style.mouseCursorScale, 8 * style.mouseCursorScale)
+            val tooltipPos = io.mousePos + TOOLTIP_DEFAULT_OFFSET * style.mouseCursorScale
             setNextWindowPos(tooltipPos)
             setNextWindowBgAlpha(
                     style.colors[Col.PopupBg].w * 0.6f
@@ -373,16 +376,19 @@ internal interface popupsModalsTooltips {
         if (window.flags has Wf._Popup)
             return findBestWindowPosForPopupEx(window.pos, window.size, window::autoPosLastDirection, rOuter, Rect(window.pos, window.pos), PopupPositionPolicy.Default) // Ideally we'd disable r_avoid here
         if (window.flags has Wf._Tooltip) {
-            // Position tooltip (always follows mouse)
-            val sc = style.mouseCursorScale
+            // Position tooltip (always follows mouse + clamp within outer boundaries)
+            // Note that drag and drop tooltips are NOT using this path: BeginTooltipEx() manually sets their position.
+            // In theory we could handle both cases in same location, but requires a bit of shuffling as drag and drop tooltips are calling SetWindowPos() leading to 'window_pos_set_by_api' being set in Begin()
+            assert(g.currentWindow === window)
+            val scale = g.style.mouseCursorScale
             val refPos = navCalcPreferredRefPos()
+            val tooltipPos = refPos + TOOLTIP_DEFAULT_OFFSET * scale
             val rAvoid = when {
-                !g.navDisableHighlight && g.navDisableMouseHover && !(io.configFlags has ConfigFlag.NavEnableSetMousePos) -> Rect(
-                        refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
-                else -> Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc,
-                        refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
+                !g.navDisableHighlight && g.navDisableMouseHover && !(io.configFlags has ConfigFlag.NavEnableSetMousePos) -> Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
+                else -> Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * scale, refPos.y + 24 * scale) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
             }
-            return findBestWindowPosForPopupEx(refPos, window.size, window::autoPosLastDirection, rOuter, rAvoid, PopupPositionPolicy.Default)
+            //GetForegroundDrawList()->AddRect(r_avoid.Min, r_avoid.Max, IM_COL32(255, 0, 255, 255));
+            return findBestWindowPosForPopupEx(tooltipPos, window.size, window::autoPosLastDirection, rOuter, rAvoid, PopupPositionPolicy.Default)
         }
         assert(false)
         return Vec2(window.pos)

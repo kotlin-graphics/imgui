@@ -1,6 +1,7 @@
 package imgui
 
 import glm_.i
+import glm_.vec2.Vec2
 import imgui.api.*
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
@@ -76,6 +77,9 @@ const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 
 /** Lock scrolled window (so it doesn't pick child windows that are scrolling through) for a certain time, unless mouse moved. */
 const val WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER = 0.7f
+
+// Tooltip offset
+var TOOLTIP_DEFAULT_OFFSET = Vec2(16, 10)            // Multiplied by g.Style.MouseCursorScale
 
 // Test engine hooks (imgui-test)
 var IMGUI_ENABLE_TEST_ENGINE = true
