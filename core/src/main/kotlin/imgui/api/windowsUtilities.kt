@@ -76,6 +76,7 @@ interface windowsUtilities {
         if (flags hasnt Hf.AllowWhenBlockedByActiveItem)
             if (g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != refWindow.moveId)
                 return false
+
         return true
     }
 

@@ -191,6 +191,7 @@ object StyleEditor {
 
                 separatorText("Misc")
                 slider2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f"); sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
+
                 endTabItem()
             }
 

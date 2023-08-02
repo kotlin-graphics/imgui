@@ -69,27 +69,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
 
-    /** Time for a double-click, in seconds.    */
-    var mouseDoubleClickTime = 0.3f
-
-    /** Distance threshold to stay in to validate a double-click, in pixels.    */
-    var mouseDoubleClickMaxDist = 6f
-
-    /** Distance threshold before considering we are dragging.   */
-    var mouseDragThreshold = 6f
-
-    /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
-    var keyRepeatDelay = 0.275f
-
-    /** When holding a key/button, rate at which it repeats, in seconds.    */
-    var keyRepeatRate = 0.05f
-
-    /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayShort) returns true. */
-    var hoverDelayShort = 0.15f
-
-    /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayNormal) returns true. */
-    var hoverDelayNormal = 0.40f
-
     /** Store your own data. */
     var userData: Any? = null
 
@@ -143,6 +122,27 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Timer (in seconds) to free transient windows/tables memory buffers when unused. Set to -1.0f to disable. */
     var configMemoryCompactTimer = 60f
+
+
+    //------------------------------------------------------------------
+    // Inputs Behaviors
+    // (other variables, ones which are expected to be tweaked within UI code, are exposed in ImGuiStyle)
+    //------------------------------------------------------------------
+
+    /** Time for a double-click, in seconds.    */
+    var mouseDoubleClickTime = 0.3f
+
+    /** Distance threshold to stay in to validate a double-click, in pixels.    */
+    var mouseDoubleClickMaxDist = 6f
+
+    /** Distance threshold before considering we are dragging.   */
+    var mouseDragThreshold = 6f
+
+    /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
+    var keyRepeatDelay = 0.275f
+
+    /** When holding a key/button, rate at which it repeats, in seconds.    */
+    var keyRepeatRate = 0.05f
 
 
     //------------------------------------------------------------------

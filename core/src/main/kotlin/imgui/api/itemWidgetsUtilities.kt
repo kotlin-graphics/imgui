@@ -65,8 +65,8 @@ interface itemWidgetsUtilities {
         // Handle hover delay
         // (some ideas: https://www.nngroup.com/articles/timing-exposing-content)
         val delay = when {
-            flags has Hf.DelayShort -> g.io.hoverDelayShort
-            flags has Hf.DelayNormal -> g.io.hoverDelayNormal
+            flags has Hf.DelayShort -> g.style.hoverDelayShort
+            flags has Hf.DelayNormal -> g.style.hoverDelayNormal
             else -> 0f
         }
         if (delay > 0f) {
@@ -74,7 +74,8 @@ interface itemWidgetsUtilities {
             if (flags has Hf.NoSharedDelay && g.hoverItemDelayIdPreviousFrame != hoverDelayId)
                 g.hoverItemDelayTimer = 0f
             g.hoverItemDelayId = hoverDelayId
-            return g.hoverItemDelayTimer >= delay
+            if (g.hoverItemDelayTimer < delay)
+                return false
         }
 
         return true

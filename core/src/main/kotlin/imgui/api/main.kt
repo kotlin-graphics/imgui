@@ -178,7 +178,7 @@ interface main {
             g.hoverItemDelayId = 0
         } else if (g.hoverItemDelayTimer > 0f) {
             // This gives a little bit of leeway before clearing the hover timer, allowing mouse to cross gaps
-            // We could expose 0.25f as io.HoverClearDelay but I am not sure of the logic yet, this is particularly subtle.
+            // We could expose 0.25f as style.HoverClearDelay but I am not sure of the logic yet, this is particularly subtle.
             g.hoverItemDelayClearTimer += g.io.deltaTime
             if (g.hoverItemDelayClearTimer >= 0.25f max (g.io.deltaTime * 2f)) { // ~7 frames at 30 Hz + allow for low framerate
                 g.hoverItemDelayTimer = 0f; g.hoverItemDelayClearTimer = 0f // May want a decaying timer, in which case need to clamp at max first, based on max of caller last requested timer.

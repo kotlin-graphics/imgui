@@ -158,6 +158,14 @@ class Style {
 
     val colors = ArrayList<Vec4>()
 
+    // Behaviors
+
+    /** Delay for IsItemHovered(ImGuiHoveredFlags_DelayShort). Usually used along with HoverStationaryDelay. */
+    var hoverDelayShort = 0.15f
+
+    /** Delay for IsItemHovered(ImGuiHoveredFlags_DelayNormal). " */
+    var hoverDelayNormal = 0.4f
+
     /** JVM IMGUI   */
     var locale: Locale = Locale.US
 //    var locale: Locale = Locale("no", "NO")

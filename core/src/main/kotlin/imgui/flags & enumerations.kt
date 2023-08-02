@@ -969,10 +969,10 @@ sealed interface HoveredFlag<out HF : HoveredFlag<HF>> : Flag<HF> {
 
     // Mouse Hovering delays (for tooltips)
 
-    /** IsItemHovered() only: Return true after io.HoverDelayShort elapsed (~0.15 sec) */
+    /** IsItemHovered() only: Return true after style.HoverDelayShort elapsed (~0.15 sec) */
     object DelayShort : General(1 shl 11)
 
-    /** IsItemHovered() only: Return true after io.HoverDelayNormal elapsed (~0.40 sec) */
+    /** IsItemHovered() only: Return true after style.HoverDelayNormal elapsed (~0.40 sec) */
     object DelayNormal : General(1 shl 12)
 
     /** IsItemHovered() only: Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
