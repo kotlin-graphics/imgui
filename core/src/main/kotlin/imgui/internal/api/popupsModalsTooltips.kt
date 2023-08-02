@@ -260,11 +260,11 @@ internal interface popupsModalsTooltips {
             setNextWindowBgAlpha(
                     style.colors[Col.PopupBg].w * 0.6f
             ) //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This would be nice but e.g ColorButton with checkboard has issue with transparent colors :(
-            tooltipFlags = tooltipFlags or TooltipFlag.OverridePreviousTooltip
+            tooltipFlags = tooltipFlags or TooltipFlag.OverridePrevious
         }
 
         var windowName = "##Tooltip_%02d".format(g.tooltipOverrideCount)
-        if (tooltipFlags has TooltipFlag.OverridePreviousTooltip) findWindowByName(windowName)?.let { window ->
+        if (tooltipFlags has TooltipFlag.OverridePrevious) findWindowByName(windowName)?.let { window ->
             if (window.active) {
                 // Hide previous tooltip from being displayed. We can't easily "reset" the content of a window so we create a new one.
                 window.setHiddendAndSkipItemsForCurrentFrame()

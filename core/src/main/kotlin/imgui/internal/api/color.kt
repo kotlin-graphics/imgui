@@ -46,7 +46,7 @@ internal interface color {
     /** Note: only access 3 floats if ColorEditFlag.NoAlpha flag is set. */
     fun colorTooltip(text: String, r: Float, g: Float, b: Float, a: Float, flags: ColorEditFlags) {
 
-        if (!beginTooltipEx(TooltipFlag.OverridePreviousTooltip))
+        if (!beginTooltipEx(TooltipFlag.OverridePrevious))
             return
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
         if (textEnd > 0) {

@@ -234,8 +234,8 @@ sealed class TextFlag : FlagBase<TextFlag>() {
 typealias TooltipFlags = Flag<TooltipFlag>
 
 sealed class TooltipFlag : FlagBase<TooltipFlag>() {
-    /** Override will clear/ignore previously submitted tooltip (defaults to append) */
-    object OverridePreviousTooltip : TooltipFlag()
+    /** Clear/ignore previously submitted tooltip (defaults to append) */
+    object OverridePrevious : TooltipFlag()
 
     override val i: Int = 1 shl ordinal
 
