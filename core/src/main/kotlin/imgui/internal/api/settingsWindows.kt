@@ -1,7 +1,6 @@
 package imgui.internal.api
 
 import imgui.ID
-import imgui.IMGUI_DEBUG_INI_SETTINGS
 import imgui.ImGui.findWindowByName
 import imgui.WindowFlag
 import imgui.api.g
@@ -15,10 +14,10 @@ import imgui.statics.initOrLoadWindowSettings
 interface settingsWindows {
 
     fun createNewWindowSettings(name_: String): WindowSettings {
-        val name = when {
+        val name = when(g.io.configDebugIniSettings) {
             // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()
-            // Preserve the full string when IMGUI_DEBUG_INI_SETTINGS is set to make .ini inspection easier.
-            !IMGUI_DEBUG_INI_SETTINGS -> name_.removePrefix("###")
+            // Preserve the full string when ConfigDebugVerboseIniSettings is set to make .ini inspection easier.
+            false -> name_.removePrefix("###")
             else -> name_
         }
         return WindowSettings(name).also {

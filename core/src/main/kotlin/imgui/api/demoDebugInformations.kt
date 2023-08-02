@@ -374,9 +374,10 @@ interface demoDebugInformations {
             sameLine()
             if (io.iniFilename != null) text("\"${io.iniFilename}\"")
             else textUnformatted("<NULL>")
+            checkbox("io.ConfigDebugIniSettings", io::configDebugIniSettings)
             text("SettingsDirtyTimer %.2f", g.settingsDirtyTimer)
             treeNode("SettingsHandlers", "Settings handlers: (${g.settingsHandlers.size})") {
-                g.settingsHandlers.forEach { bulletText(it.typeName) }
+                g.settingsHandlers.forEach { bulletText("\"${it.typeName}\"") }
             }
             treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
                 g.settingsWindows.forEach(::debugNodeWindowSettings)

@@ -267,6 +267,8 @@ object DemoWindow {
                 sameLine(); helpMarker("Some calls to Begin()/BeginChild() will return false.\n\nWill cycle through window depths then repeat. Windows should be flickering while running.")
                 checkbox("io.ConfigDebugIgnoreFocusLoss", io::configDebugIgnoreFocusLoss)
                 sameLine(); helpMarker("Option to deactivate io.AddFocusEvent(false) handling. May facilitate interactions with a debugger when focus loss leads to clearing inputs data.")
+                checkbox("io.ConfigDebugIniSettings", io::configDebugIniSettings);
+                sameLine(); helpMarker("Option to save .ini data with extra comments (particularly helpful for Docking, but makes saving slower).")
 
                 spacing()
             }

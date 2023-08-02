@@ -163,6 +163,8 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // - consider using e.g. Win32's IsDebuggerPresent() as an additional filter (or see ImOsIsDebuggerPresent() in imgui_test_engine/imgui_te_utils.cpp for a Unix compatible version).
     /** Ignore io.AddFocusEvent(false), consequently not calling io.ClearInputKeys() in input processing. */
     var configDebugIgnoreFocusLoss = false
+    // - tools to audit ini data
+    var configDebugIniSettings = false         // = false          // Save .ini data with extra comments (particularly helpful for Docking, but makes saving slower)
 
     //------------------------------------------------------------------
     // Platform Functions

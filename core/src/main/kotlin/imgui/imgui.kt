@@ -58,10 +58,6 @@ val IMGUI_DEBUG_NAV_SCORING = false
 @JvmField
 val IMGUI_DEBUG_NAV_RECTS = false
 
-/** Save additional comments in .ini file (particularly helps for Docking, but makes saving slower) */
-@JvmField
-val IMGUI_DEBUG_INI_SETTINGS = false
-
 // When using CTRL+TAB (or Gamepad Square+L/R) we delay the visual a little in order to reduce visual noise doing a fast switch.
 
 /** Time before the highlight and screen dimming starts fading in */
