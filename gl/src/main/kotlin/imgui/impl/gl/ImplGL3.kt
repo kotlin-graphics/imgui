@@ -41,33 +41,48 @@ class ImplGL3 : GLInterface {
         io.backendRendererName = "imgui_impl_opengl3"
 
         // Query for GL version (e.g. 320 for GL 3.2)
-        var major = glGetInteger(GL_MAJOR_VERSION)
-        var minor = glGetInteger(GL_MINOR_VERSION)
-        if (major == 0 && minor == 0)
-        // Query GL_VERSION in desktop GL 2.x, the string will start with "<major>.<minor>"
-            glGetString(GL_VERSION)?.let { glVersion ->
-                major = glVersion.substringBefore('.').i
-                minor = glVersion.substringAfter('.').i
+        if (OPENGL_ES2) {
+            // GLES 2
+            data.glVersion = 200
+            data.glProfileIsES2 = true
+        } else {
+            // Desktop or GLES 3
+            var major = glGetInteger(GL_MAJOR_VERSION)
+            var minor = glGetInteger(GL_MINOR_VERSION)
+            if (major == 0 && minor == 0)
+            // Query GL_VERSION in desktop GL 2.x, the string will start with "<major>.<minor>"
+                glGetString(GL_VERSION)?.let { glVersion ->
+                    major = glVersion.substringBefore('.').i
+                    minor = glVersion.substringAfter('.').i
+                }
+            data.glVersion = major * 100 + minor * 10
+
+            // [JVM] data.glProfileIsCompat is lazy
+
+            if (OPENGL_ES3)
+                data.glProfileIsES3 = true
+
+            // [JVM] data.useBufferSubData is lazy
+
+            if (IMGUI_IMPL_OPENGL_DEBUG)
+                println("GlVersion = ${data.glVersion}\n" +
+                        "GlProfileIsCompat = ${data.glProfileIsCompat}\n" +
+                        "GlProfileMask = ${"0x%X".format(data.glProfileMask)}\n" +
+                        "GlProfileIsES2 = ${data.glProfileIsES2}, GlProfileIsES3 = ${data.glProfileIsES3}\n" +
+                        "GL_VENDOR = '${glGetString(GL_VENDOR)}'\n" +
+                        "GL_RENDERER = '${glGetString(GL_RENDERER)}'") // [DEBUG]
+
+            // Detect extensions we support
+            data.hasClipOrigin = data.glVersion >= 450
+            if (OPENGL_MAY_HAVE_EXTENSIONS) {
+                val numExtensions = glGetInteger(GL_NUM_EXTENSIONS)
+                for (i in 0 until numExtensions) {
+                    val extension = glGetStringi(GL_EXTENSIONS, i)
+                    if (extension == "GL_ARB_clip_control")
+                        data.hasClipOrigin = true
+                }
             }
-        data.glVersion = when {
-            !OPENGL_ES2 -> major * 100 + minor * 10
-            else -> 200 // GLES 2
         }
-
-        if (IMGUI_IMPL_OPENGL_DEBUG)
-            print("GL_MAJOR_VERSION = $major\nGL_MINOR_VERSION = $minor\nGL_VENDOR = '${glGetString(GL_VENDOR)}'\nGL_RENDERER = '${glGetString(GL_RENDERER)}'") // [DEBUG]
-
-        // Detect extensions we support
-        data.hasClipOrigin = data.glVersion >= 450
-        if (OPENGL_MAY_HAVE_EXTENSIONS) {
-            val numExtensions = glGetInteger(GL_NUM_EXTENSIONS)
-            for (i in 0 until numExtensions) {
-                val extension = glGetStringi(GL_EXTENSIONS, i)
-                if (extension == "GL_ARB_clip_control")
-                    data.hasClipOrigin = true
-            }
-        }
-
         if (OPENGL_MAY_HAVE_VTX_OFFSET)
             if (data.glVersion >= 320)
                 io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
@@ -535,6 +550,8 @@ class ImplGL3 : GLInterface {
 
             /** Extracted at runtime using GL_MAJOR_VERSION, GL_MINOR_VERSION queries (e.g. 320 for GL 3.2) */
             var glVersion = 0
+            var glProfileIsES2 = false
+            var glProfileIsES3 = false
 
             /** Specified by user or detected based on compile time GL settings. */
             var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
