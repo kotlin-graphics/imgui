@@ -965,13 +965,13 @@ sealed interface HoveredFlag<out HF : HoveredFlag<HF>> : Flag<HF> {
     object NoNavOverride : General(1 shl 10)
 
     // Mouse Hovering delays (for tooltips)
-    /** Return true after io.HoverDelayNormal elapsed (~0.30 sec) */
+    /** IsItemHovered() only: Return true after io.HoverDelayNormal elapsed (~0.30 sec) */
     object DelayNormal : General(1 shl 11)
 
-    /** Return true after io.HoverDelayShort elapsed (~0.10 sec) */
+    /** IsItemHovered() only: Return true after io.HoverDelayShort elapsed (~0.10 sec) */
     object DelayShort : General(1 shl 12)
 
-    /** Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
+    /** IsItemHovered() only: Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
     object NoSharedDelay : General(1 shl 13)
 
     @GenSealedEnum

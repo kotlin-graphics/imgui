@@ -509,14 +509,14 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 
     // Hover Delay system
-    var hoverDelayId: ID = 0
-    var hoverDelayIdPreviousFrame: ID = 0
+    var hoverItemDelayId: ID = 0
+    var hoverItemDelayIdPreviousFrame: ID = 0
 
     /** Currently used by IsItemHovered() */
-    var hoverDelayTimer = 0f
+    var hoverItemDelayTimer = 0f
 
     /** Currently used by IsItemHovered(): grace time before g.TooltipHoverTimer gets cleared. */
-    var hoverDelayClearTimer = 0f
+    var hoverItemDelayClearTimer = 0f
 
     //------------------------------------------------------------------
     // Mouse state

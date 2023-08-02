@@ -4,7 +4,6 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginChildFrame
@@ -509,7 +508,7 @@ interface demoDebugInformations {
 
                 text("ActiveIdUsing: AllKeyboardKeys: ${g.activeIdUsingAllKeyboardKeys} NavDirMask: %X", g.activeIdUsingNavDirMask)
                 text("HoveredId: 0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}", g.hoveredIdPreviousFrame, g.hoveredIdTimer) // Not displaying g.HoveredId as it is update mid-frame
-                text("HoverDelayId: 0x%08X, Timer: %.2f, ClearTimer: %.2f", g.hoverDelayId, g.hoverDelayTimer, g.hoverDelayClearTimer)
+                text("HoverItemDelayId: 0x%08X, Timer: %.2f, ClearTimer: %.2f", g.hoverItemDelayId, g.hoverItemDelayTimer, g.hoverItemDelayClearTimer)
                 text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
                 debugLocateItemOnHover(g.dragDropPayload.sourceId)
             }

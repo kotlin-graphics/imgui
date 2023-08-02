@@ -71,10 +71,10 @@ interface itemWidgetsUtilities {
         }
         if (delay > 0f) {
             val hoverDelayId = if (g.lastItemData.id != 0) g.lastItemData.id else window.getIDFromRectangle(g.lastItemData.rect)
-            if (flags has Hf.NoSharedDelay && g.hoverDelayIdPreviousFrame != hoverDelayId)
-                g.hoverDelayTimer = 0f
-            g.hoverDelayId = hoverDelayId
-            return g.hoverDelayTimer >= delay
+            if (flags has Hf.NoSharedDelay && g.hoverItemDelayIdPreviousFrame != hoverDelayId)
+                g.hoverItemDelayTimer = 0f
+            g.hoverItemDelayId = hoverDelayId
+            return g.hoverItemDelayTimer >= delay
         }
 
         return true

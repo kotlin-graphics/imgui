@@ -170,18 +170,18 @@ interface main {
         }
 
         // Update hover delay for IsItemHovered() with delays and tooltips
-        g.hoverDelayIdPreviousFrame = g.hoverDelayId
-        if (g.hoverDelayId != 0) {
+        g.hoverItemDelayIdPreviousFrame = g.hoverItemDelayId
+        if (g.hoverItemDelayId != 0) {
             //if (g.IO.MouseDelta.x == 0.0f && g.IO.MouseDelta.y == 0.0f) // Need design/flags
-            g.hoverDelayTimer += g.io.deltaTime
-            g.hoverDelayClearTimer = 0f
-            g.hoverDelayId = 0
-        } else if (g.hoverDelayTimer > 0f) {
+            g.hoverItemDelayTimer += g.io.deltaTime
+            g.hoverItemDelayClearTimer = 0f
+            g.hoverItemDelayId = 0
+        } else if (g.hoverItemDelayTimer > 0f) {
             // This gives a little bit of leeway before clearing the hover timer, allowing mouse to cross gaps
             // We could expose 0.25f as io.HoverClearDelay but I am not sure of the logic yet, this is particularly subtle.
-            g.hoverDelayClearTimer += g.io.deltaTime
-            if (g.hoverDelayClearTimer >= 0.25f max (g.io.deltaTime * 2f)) { // ~7 frames at 30 Hz + allow for low framerate
-                g.hoverDelayTimer = 0f; g.hoverDelayClearTimer = 0f // May want a decaying timer, in which case need to clamp at max first, based on max of caller last requested timer.
+            g.hoverItemDelayClearTimer += g.io.deltaTime
+            if (g.hoverItemDelayClearTimer >= 0.25f max (g.io.deltaTime * 2f)) { // ~7 frames at 30 Hz + allow for low framerate
+                g.hoverItemDelayTimer = 0f; g.hoverItemDelayClearTimer = 0f // May want a decaying timer, in which case need to clamp at max first, based on max of caller last requested timer.
             }
         }
 
