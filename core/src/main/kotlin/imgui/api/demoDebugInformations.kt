@@ -442,6 +442,7 @@ interface demoDebugInformations {
                 text("Mouse clicked:"); for (i in 0 until count) if (MouseButton.of(i).isClicked) {; sameLine(); text("b$i (${io.mouseClickedCount[i]})"); }
                 text("Mouse released:"); for (i in 0 until count) if (MouseButton.of(i).isReleased) {; sameLine(); text("b$i"); }
                 text("Mouse wheel: %.1f", io.mouseWheel)
+                text("mouseStationaryTimer: %.2f", g.mouseStationaryTimer)
                 text("Mouse source: " + io.mouseSource)
                 text("Pen Pressure: %.1f", io.penPressure) // Note: currently unused
             }

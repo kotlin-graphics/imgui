@@ -169,10 +169,17 @@ interface main {
             g.activeIdUsingAllKeyboardKeys = false
         }
 
+        // Record when we have been stationary as this state is preserved while over same item.
+        // FIXME: The way this is expressed means user cannot alter HoverStationaryDelay during the frame to use varying values.
+        // To allow this we should store HoverItemMaxStationaryTime+ID and perform the >= check in IsItemHovered() function.
+        if (g.hoverItemDelayId != 0 && g.mouseStationaryTimer >= g.style.hoverStationaryDelay)
+            g.hoverItemUnlockedStationaryId = g.hoverItemDelayId
+        else if (g.hoverItemDelayId == 0)
+            g.hoverItemUnlockedStationaryId = 0
+
         // Update hover delay for IsItemHovered() with delays and tooltips
         g.hoverItemDelayIdPreviousFrame = g.hoverItemDelayId
         if (g.hoverItemDelayId != 0) {
-            //if (g.IO.MouseDelta.x == 0.0f && g.IO.MouseDelta.y == 0.0f) // Need design/flags
             g.hoverItemDelayTimer += g.io.deltaTime
             g.hoverItemDelayClearTimer = 0f
             g.hoverItemDelayId = 0

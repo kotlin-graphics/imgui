@@ -967,21 +967,27 @@ sealed interface HoveredFlag<out HF : HoveredFlag<HF>> : Flag<HF> {
     /** IsItemHovered() only: Disable using gamepad/keyboard navigation state when active, always query mouse. */
     object NoNavOverride : General(1 shl 10)
 
-    // Mouse Hovering delays (for tooltips)
+    // Mouse Hovering delays (e.g. for tooltips)
+    // - for frequently actioned or hovered items providing a tooltip, you want may to use ImGuiHoveredFlags_ForTooltip (stationary + normal delay) so the tooltip doesn't show too often.
+    // - for items which main purpose is to be hovered for a tooltip, or items with low affordance, prefer no delay or shorter delay.
 
-    /** IsItemHovered() only: Return true after style.HoverDelayShort elapsed (~0.15 sec) */
-    object DelayShort : General(1 shl 11)
+    /** IsItemHovered() only: Require mouse to be stationary for style.HoverStationaryDelay (~0.15 sec) _at least one time_. After this, can move on same item. */
+    object Stationary : General(1 shl 11)
 
-    /** IsItemHovered() only: Return true after style.HoverDelayNormal elapsed (~0.40 sec) */
-    object DelayNormal : General(1 shl 12)
+    /** IsItemHovered() only: Return true after style.HoverDelayShort elapsed (~0.15 sec) (shared between items) + requires mouse to be stationary for style.HoverStationaryDelay (once per item). */
+    object DelayShort : General(1 shl 13)
+
+    /** IsItemHovered() only: Return true after style.HoverDelayNormal elapsed (~0.40 sec) (shared between items) + requires mouse to be stationary for style.HoverStationaryDelay (once per item). */
+    object DelayNormal : General(1 shl 14)
 
     /** IsItemHovered() only: Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
-    object NoSharedDelay : General(1 shl 13)
+    object NoSharedDelay : General(1 shl 15)
 
     @GenSealedEnum
     companion object {
         val RootAndChildWindows: WindowHoveredFlags get() = RootWindow or ChildWindows
         val RectOnly get() = AllowWhenBlockedByPopup or AllowWhenBlockedByActiveItem or AllowWhenOverlapped
+        val ForTooltip = Stationary / DelayNormal
     }
 }
 

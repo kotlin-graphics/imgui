@@ -2,6 +2,7 @@ package imgui.api
 
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.HoveredFlag
 import imgui.ImGui.isClicked
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
@@ -69,11 +70,18 @@ interface itemWidgetsUtilities {
             flags has Hf.DelayNormal -> g.style.hoverDelayNormal
             else -> 0f
         }
-        if (delay > 0f) {
+        if (delay > 0f || flags has HoveredFlag.Stationary) {
             val hoverDelayId = if (g.lastItemData.id != 0) g.lastItemData.id else window.getIDFromRectangle(g.lastItemData.rect)
             if (flags has Hf.NoSharedDelay && g.hoverItemDelayIdPreviousFrame != hoverDelayId)
                 g.hoverItemDelayTimer = 0f
             g.hoverItemDelayId = hoverDelayId
+
+            // When changing hovered item we requires a bit of stationary delay before activating hover timer,
+            // but once unlocked on a given item we also moving.
+            //if (g.HoverDelayTimer >= delay && (g.HoverDelayTimer - g.IO.DeltaTime < delay || g.MouseStationaryTimer - g.IO.DeltaTime < g.Style.HoverStationaryDelay)) { IMGUI_DEBUG_LOG("HoverDelayTimer = %f/%f, MouseStationaryTimer = %f\n", g.HoverDelayTimer, delay, g.MouseStationaryTimer); }
+            if (flags has HoveredFlag.Stationary && g.hoverItemUnlockedStationaryId != hoverDelayId)
+                return false
+
             if (g.hoverItemDelayTimer < delay)
                 return false
         }
@@ -81,7 +89,7 @@ interface itemWidgetsUtilities {
         return true
     }
 
-    val isItemHovered : Boolean
+    val isItemHovered: Boolean
         get() = isItemHovered()
 
     /** Is the last item active? (e.g. button being held, text field being edited.

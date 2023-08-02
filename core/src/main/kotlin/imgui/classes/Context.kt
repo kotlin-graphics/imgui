@@ -518,12 +518,15 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Currently used by IsItemHovered(): grace time before g.TooltipHoverTimer gets cleared. */
     var hoverItemDelayClearTimer = 0f
 
+    var hoverItemUnlockedStationaryId: ID = 0
+
     //------------------------------------------------------------------
     // Mouse state
     //------------------------------------------------------------------
 
     var mouseCursor = MouseCursor.Arrow
-
+    var mouseMovingFrames = 0
+    var mouseStationaryTimer = 0f
     val mouseLastValidPos = Vec2()
 
 

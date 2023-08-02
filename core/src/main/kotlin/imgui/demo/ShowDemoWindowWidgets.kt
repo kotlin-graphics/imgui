@@ -330,16 +330,16 @@ object ShowDemoWindowWidgets {
                 run {
                     // Tooltips
 //                    IMGUI_DEMO_MARKER("Widgets/Basic/Tooltips");
-                    //ImGui::AlignTextToFramePadding();
+                    alignTextToFramePadding()
                     text("Tooltips:")
 
                     sameLine()
-                    smallButton("Basic")
+                    button("Basic")
                     if (isItemHovered())
                         setTooltip("I am a tooltip")
 
                     sameLine()
-                    smallButton("Fancy")
+                    button("Fancy")
                     if (isItemHovered() && beginTooltip()) {
                         text("I am a fancy tooltip")
                         plotLines("Curve", arr)
@@ -347,10 +347,21 @@ object ShowDemoWindowWidgets {
                         endTooltip()
                     }
 
+                    // Showcase use of ImGuiHoveredFlags_ForTooltip which is an alias for ImGuiHoveredFlags_DelayNormal + ImGuiHoveredFlags_Stationary.
+                    // - ImGuiHoveredFlags_DelayNormal requires an hovering delay (default to 0.40 sec)
+                    // - ImGuiHoveredFlags_Stationary requires mouse to be stationary (default to 0.15 sec) at least once on a new item.
+                    // We show two items to showcase how the main delay is by default shared between items,
+                    // so once in "tooltip mode" moving to another tooltip only requires the stationary delay.
+
                     sameLine()
-                    smallButton("Delayed")
-                    if (isItemHovered(HoveredFlag.DelayNormal)) // With a delay
+                    button("Delayed")
+                    if (isItemHovered(HoveredFlag.ForTooltip))
                         setTooltip("I am a tooltip with a delay.")
+
+                    sameLine()
+                    button("Delayed2")
+                    if (isItemHovered(HoveredFlag.ForTooltip))
+                        setTooltip("I am another tooltip with a delay.")
 
                     sameLine()
                     helpMarker("Tooltip are created by using the IsItemHovered() function over any kind of item.")
@@ -1878,8 +1889,10 @@ object ShowDemoWindowWidgets {
                 }
 
                 val hoveredDelayNone = ImGui.isItemHovered()
+                val hoveredDelayStationary = ImGui.isItemHovered(HoveredFlag.Stationary)
                 val hoveredDelayShort = ImGui.isItemHovered(HoveredFlag.DelayShort)
                 val hoveredDelayNormal = ImGui.isItemHovered(HoveredFlag.DelayNormal)
+                val hoveredDelayTooltip = ImGui.isItemHovered(HoveredFlag.ForTooltip) // = Normal + Stationary
 
                 // Display the values of IsItemHovered() and other common item state functions.
                 // Note that the ImGuiHoveredFlags_XXX flags can be combined.
@@ -1904,7 +1917,12 @@ object ShowDemoWindowWidgets {
                     GetItemRectMin() = (%.1f, %.1f)
                     GetItemRectMax() = (%.1f, %.1f)
                     GetItemRectSize() = (%.1f, %.1f)""".trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
-                bulletText("w/ Hovering Delay: None = ${hoveredDelayNone.i}, Fast ${hoveredDelayShort.i}, Normal = ${hoveredDelayNormal.i}")
+                bulletText("with Hovering Delay or Stationary test:\n" +
+                        "IsItemHovered() = = ${hoveredDelayNone.i}\n" +
+                        "IsItemHovered(_Stationary) = ${hoveredDelayStationary.i}\n" +
+                        "IsItemHovered(_DelayShort) = ${hoveredDelayShort.i}\n" +
+                        "IsItemHovered(_DelayNormal) = ${hoveredDelayNormal.i}\n" +
+                        "IsItemHovered(_Tooltip) = ${hoveredDelayTooltip.i}")
 
                 if (itemDisabled)
                     endDisabled()

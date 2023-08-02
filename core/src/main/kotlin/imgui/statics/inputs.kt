@@ -95,9 +95,17 @@ fun updateMouseInputs() {
         else
             mouseDelta put 0f
 
+        // Update stationary timer. Only reset on 2 successive moving frames.
+        // FIXME: May need to expose threshold or treat touch inputs differently.
+        val mouseStationaryThreshold = if (io.mouseSource == MouseSource.Mouse) 2f else 3f // Slightly higher threshold for ImGuiMouseSource_TouchScreen/ImGuiMouseSource_Pen, may need rework.
+        g.mouseMovingFrames = if (io.mouseDelta.lengthSqr >= mouseStationaryThreshold * mouseStationaryThreshold) g.mouseMovingFrames + 1 else 0
+        if (g.mouseMovingFrames == 0)
+            g.mouseStationaryTimer += io.deltaTime
+        else if (g.mouseMovingFrames > 1)
+            g.mouseStationaryTimer = 0f
+
         // If mouse moved we re-enable mouse hovering in case it was disabled by gamepad/keyboard. In theory should use a >0.0f threshold but would need to reset in everywhere we set this to true.
-        val isStationary = g.io.mouseDelta.x == 0f && g.io.mouseDelta.y == 0f
-        if (!isStationary)
+        if (io.mouseDelta.x != 0f || io.mouseDelta.y != 0f)
             g.navDisableMouseHover = false
 
         mousePosPrev put mousePos
@@ -161,7 +169,7 @@ fun updateMouseWheel() {
     }
 
     val wheel = Vec2(if (Key.MouseWheelX testOwner KeyOwner_None) g.io.mouseWheelH else 0f,
-                     if (Key.MouseWheelY testOwner KeyOwner_None) g.io.mouseWheel else 0f)
+            if (Key.MouseWheelY testOwner KeyOwner_None) g.io.mouseWheel else 0f)
 
     //IMGUI_DEBUG_LOG("MouseWheel X:%.3f Y:%.3f\n", wheel_x, wheel_y);
     val mouseWindow = g.wheelingWindow ?: g.hoveredWindow
@@ -179,7 +187,7 @@ fun updateMouseWheel() {
         if (window === window.rootWindow) {
             val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
             window.setPos(window.pos + offset)
-            window.setSize( floor(window.size * scale))
+            window.setSize(floor(window.size * scale))
             window.sizeFull = floor(window.sizeFull * scale)
         }
         return

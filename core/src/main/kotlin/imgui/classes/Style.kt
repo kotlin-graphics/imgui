@@ -160,6 +160,9 @@ class Style {
 
     // Behaviors
 
+    /** Delay for IsItemHovered(ImGuiHoveredFlags_Stationary). Time required to consider mouse stationary. */
+    var hoverStationaryDelay = 0.15f
+
     /** Delay for IsItemHovered(ImGuiHoveredFlags_DelayShort). Usually used along with HoverStationaryDelay. */
     var hoverDelayShort = 0.15f
 
