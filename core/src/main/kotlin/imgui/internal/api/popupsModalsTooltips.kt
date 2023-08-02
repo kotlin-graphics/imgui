@@ -319,12 +319,13 @@ internal interface popupsModalsTooltips {
     // When a modal popup is open, newly created windows that want focus (i.e. are not popups and do not specify ImGuiWindowFlags_NoFocusOnAppearing)
     // should be positioned behind that modal window, unless the window was created inside the modal begin-stack.
     // In case of multiple stacked modals newly created window honors begin stack order and does not go below its own modal parent.
-    // - Window             // FindBlockingModal() returns Modal1
-    //   - Window           //                  .. returns Modal1
+    // - WindowA            // FindBlockingModal() returns Modal1
+    //   - WindowB          //                  .. returns Modal1
     //   - Modal1           //                  .. returns Modal2
-    //      - Window        //                  .. returns Modal2
-    //          - Window    //                  .. returns Modal2
+    //      - WindowC       //                  .. returns Modal2
+    //          - WindowD   //                  .. returns Modal2
     //          - Modal2    //                  .. returns Modal2
+    //            - WindowE //                  .. returns NULL
     // Notes:
     // - FindBlockingModal(NULL) == NULL is generally equivalent to GetTopMostPopupModal() == NULL.
     //   Only difference is here we check for ->Active/WasActive but it may be unecessary.
@@ -334,7 +335,7 @@ internal interface popupsModalsTooltips {
             return null
 
         // Find a modal that has common parent with specified window. Specified window should be positioned behind that modal.
-        for (i in g.openPopupStack.lastIndex downTo 0) {
+        for (i in g.openPopupStack.indices) {
             val popupWindow = g.openPopupStack[i].window
             if (popupWindow == null || popupWindow.flags hasnt WindowFlag._Modal)
                 continue
@@ -342,14 +343,9 @@ internal interface popupsModalsTooltips {
                 continue
             if (window == null)                                         // FindBlockingModal(NULL) test for if FocusWindow(NULL) is naturally possible via a mouse click.
                 return popupWindow
-            if (window isWithinBeginStackOf popupWindow)      // Window is rendered over last modal, no render order change needed.
-                break
-            var parent = popupWindow.parentWindowInBeginStack!!.rootWindow
-            while (parent != null) {
-                if (window isWithinBeginStackOf parent)
-                    return popupWindow                        // Place window above its begin stack parent.
-                parent = parent.parentWindowInBeginStack!!.rootWindow
-            }
+            if (window isWithinBeginStackOf popupWindow)       // Window may be over modal
+                continue
+            return popupWindow                                        // Place window right below first block modal
         }
         return null
     }
