@@ -244,7 +244,10 @@ class ImplGlfw @JvmOverloads constructor(
             io.displayFramebufferScale put (displaySize / size)
 
         // Setup time step
-        val currentTime = glfw.time
+        // (Accept glfwGetTime() not returning a monotonically increasing value. Seems to happens on disconnecting peripherals and probably on VMs and Emscripten, see #6491, #6189, #6114, #3644)
+        var currentTime = glfw.time
+        if (currentTime <= data.time)
+            currentTime = data.time + 0.00001f
         io.deltaTime = if (data.time > 0) (currentTime - data.time).f else 1f / 60f
         data.time = currentTime
 
