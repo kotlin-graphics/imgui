@@ -84,8 +84,8 @@ class ListClipper {
     /** Automatically called on the last call of Step() that returns false. */
     fun end() {
 
-        val g = ctx
         (tempData as? ListClipperData)?.let { data ->
+            val g = ctx
             // In theory here we should assert that we are already at the right position, but it seems saner to just seek at the end and not assert/crash the user.
             IMGUI_DEBUG_LOG_CLIPPER("Clipper: End() in '${g.currentWindow!!.name}'")
             if (itemsCount >= 0 && itemsCount < Int.MAX_VALUE && displayStart >= 0)
