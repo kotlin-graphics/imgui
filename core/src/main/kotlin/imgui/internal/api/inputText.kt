@@ -579,6 +579,7 @@ internal interface inputText {
                     // Clear input
                     applyNewText = ByteArray(0)
                     applyNewTextLength = 0
+                    valueChanged /= buf[0] != 0.b
                     val emptyString = CharArray(0)
                     state.replace(emptyString, 0)
                 } else if (buf.strcmp(state.initialTextA) != 0) {
