@@ -305,6 +305,7 @@ class NextWindowData {
 
 data class NextItemData(
         var flags: NextItemDataFlags = none,
+        var itemFlags: ItemFlags = none,
 
         /** Set by SetNextItemWidth() */
         var width: Float = 0f,
@@ -320,6 +321,7 @@ data class NextItemData(
     /** Also cleared manually by ItemAdd()! */
     fun clearFlags() {
         flags = none
+        itemFlags = none
     }
 }
 

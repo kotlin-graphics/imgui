@@ -91,7 +91,7 @@ internal interface basicHelpersForWidgetCode {
         g.lastItemData.id = id
         g.lastItemData.rect put bb
         g.lastItemData.navRect put (navBbArg ?: bb)
-        g.lastItemData.inFlags = g.currentItemFlags or extraFlags
+        g.lastItemData.inFlags = g.currentItemFlags or g.nextItemData.itemFlags or extraFlags
         g.lastItemData.statusFlags = none
 
         // Directional navigation processing
@@ -121,6 +121,7 @@ internal interface basicHelpersForWidgetCode {
             assert(id != window.id) { "Cannot have an empty ID at the root of a window. If you need an empty label, use ## and read the FAQ about how the ID Stack works!" }
         }
         g.nextItemData.flags = none
+        g.nextItemData.itemFlags = none
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
             IMGUI_TEST_ENGINE_ITEM_ADD(id, Rect(g.lastItemData.navRect), g.lastItemData)

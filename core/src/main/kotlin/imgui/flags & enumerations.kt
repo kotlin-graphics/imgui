@@ -950,7 +950,7 @@ sealed class HoveredFlag(override val i: Int) : Flag<HoveredFlag> {
     /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns.   */
     object AllowWhenBlockedByActiveItem : HoveredFlag(1 shl 7)
 
-    /** IsItemHovered() only: Return true even if the position is obstructed or overlapped by another window,   */
+    /** IsItemHovered() only: Return true even if the position is obstructed or overlapped by another WINDOW,   */
     object AllowWhenOverlapped : HoveredFlag(1 shl 8)
 
     /** IsItemHovered() only: Return true even if the item is disabled */

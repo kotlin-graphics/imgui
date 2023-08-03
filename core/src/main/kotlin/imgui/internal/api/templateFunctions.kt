@@ -1,4 +1,5 @@
 @file:Suppress("NAME_SHADOWING")
+
 package imgui.internal.api
 
 import glm_.f
@@ -420,13 +421,9 @@ internal interface templateFunctions {
         val anyOn = flags has flagsValue
         val pressed = when {
             !allOn && anyOn -> {
-                val backupItemFlags = g.currentItemFlags
-                g.currentItemFlags = g.currentItemFlags or ItemFlag.MixedValue
-                checkbox(label, allOnRef).also {
-                    g.currentItemFlags = backupItemFlags
-                }
+                g.nextItemData.itemFlags /= ItemFlag.MixedValue
+                checkbox(label, allOnRef)
             }
-
             else -> checkbox(label, allOnRef)
         }
         if (pressed) flags = when {

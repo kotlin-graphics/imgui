@@ -969,11 +969,9 @@ internal interface inputText {
         if (isMultiline) {
             // For focus requests to work on our multiline we need to ensure our child ItemAdd() call specifies the ImGuiItemFlags_Inputable (ref issue #4761)...
             dummy(Vec2(textSize.x, textSize.y + style.framePadding.y))
-            val backupItemFlags = g.currentItemFlags
-            g.currentItemFlags = g.currentItemFlags or (ItemFlag.Inputable or ItemFlag.NoTabStop)
+            g.nextItemData.itemFlags /= ItemFlag.Inputable / ItemFlag.NoTabStop
             endChild()
             itemDataBackup.statusFlags = itemDataBackup.statusFlags or (g.lastItemData.statusFlags and ItemStatusFlag.HoveredWindow)
-            g.currentItemFlags = backupItemFlags
 
             // ...and then we need to undo the group overriding last item data, which gets a bit messy as EndGroup() tries to forward scrollbar being active...
             // FIXME: This quite messy/tricky, should attempt to get rid of the child window.
