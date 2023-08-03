@@ -558,7 +558,11 @@ class ImplGL3 : GLInterface {
 
             /** [JVM] both lazy for the same reason as `useBufferSubData` */
             val glProfileIsCompat: Boolean by lazy { glProfileMask has GL_CONTEXT_COMPATIBILITY_PROFILE_BIT }
-            val glProfileMask: Int by lazy { glGetInteger(GL_CONTEXT_PROFILE_MASK) }
+            val glProfileMask: Int by lazy {
+                if (glVersion >= 320)
+                    glGetInteger(GL_CONTEXT_PROFILE_MASK)
+                else 0
+            }
             val fontTexture = IntBuffer(1)
             var shaderHandle = GlProgram(0)
 
