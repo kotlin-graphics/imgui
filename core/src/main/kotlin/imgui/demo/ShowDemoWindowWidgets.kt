@@ -16,10 +16,10 @@ import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginDragDropTarget
+import imgui.ImGui.beginItemTooltip
 import imgui.ImGui.beginListBox
 import imgui.ImGui.beginPopupContextItem
 import imgui.ImGui.beginTable
-import imgui.ImGui.beginTooltip
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -48,7 +48,6 @@ import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.endListBox
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTable
-import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.getStyleColorVec4
@@ -101,6 +100,7 @@ import imgui.ImGui.separatorText
 import imgui.ImGui.setColorEditOptions
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setItemDefaultFocus
+import imgui.ImGui.setItemTooltip
 import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setTooltip
@@ -209,6 +209,7 @@ object ShowDemoWindowWidgets {
             beginDisabled()
 
         Basic()
+        Tooltips()
         Trees()
         `Collapsing Headers`()
 
@@ -255,7 +256,6 @@ object ShowDemoWindowWidgets {
         var clicked = 0
         var check = true
         var e = 0
-        val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
         var itemCurrent1 = 0
         var str0 = "Hello, world!".toByteArray(128)
         var str1 = ByteArray(128)
@@ -270,7 +270,6 @@ object ShowDemoWindowWidgets {
         var f3 = 0.0067f
         var i3 = 0
         var f4 = 0.123f
-        var f5 = 0f
         var angle = 0f
 
         enum class Element { Fire, Earth, Air, Water }
@@ -326,46 +325,9 @@ object ShowDemoWindowWidgets {
                 sameLine()
                 text("$counter")
 
-                separator()
-                run {
-                    // Tooltips
-//                    IMGUI_DEMO_MARKER("Widgets/Basic/Tooltips");
-                    alignTextToFramePadding()
-                    text("Tooltips:")
+                button("Tooltip")
+                setItemTooltip("I am a tooltip")
 
-                    sameLine()
-                    button("Basic")
-                    if (isItemHovered())
-                        setTooltip("I am a tooltip")
-
-                    sameLine()
-                    button("Fancy")
-                    if (isItemHovered() && beginTooltip()) {
-                        text("I am a fancy tooltip")
-                        plotLines("Curve", arr)
-                        text("Sin(time) = " + ImGui.time.f.sin)
-                        endTooltip()
-                    }
-
-                    // Showcase use of ImGuiHoveredFlags_ForTooltip which is an alias for ImGuiHoveredFlags_DelayNormal + ImGuiHoveredFlags_Stationary.
-                    // - ImGuiHoveredFlags_DelayNormal requires an hovering delay (default to 0.40 sec)
-                    // - ImGuiHoveredFlags_Stationary requires mouse to be stationary (default to 0.15 sec) at least once on a new item.
-                    // We show two items to showcase how the main delay is by default shared between items,
-                    // so once in "tooltip mode" moving to another tooltip only requires the stationary delay.
-
-                    sameLine()
-                    button("Delayed")
-                    if (isItemHovered(HoveredFlag.ForTooltip))
-                        setTooltip("I am a tooltip with a delay.")
-
-                    sameLine()
-                    button("Delayed2")
-                    if (isItemHovered(HoveredFlag.ForTooltip))
-                        setTooltip("I am another tooltip with a delay.")
-
-                    sameLine()
-                    helpMarker("Tooltip are created by using the IsItemHovered() function over any kind of item.")
-                }
                 labelText("label", "Value")
 
                 separatorText("Inputs")
@@ -469,6 +431,76 @@ object ShowDemoWindowWidgets {
 
                     sameLine(); helpMarker("Using the simplified one-liner ListBox API here.\nRefer to the \"List boxes\" section below for an explanation of how to use the more flexible and general BeginListBox/EndListBox API.")
                 }
+            }
+        }
+    }
+
+    object Tooltips {
+
+        val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
+        var alwaysOn = false
+
+        operator fun invoke() {
+
+//            IMGUI_DEMO_MARKER("Widgets/Tooltips");
+            treeNode("Tooltips") {
+
+                // Tooltips are windows following the mouse. They do not take focus away.
+                ImGui.separatorText("General")
+
+                // Typical use cases:
+                // - Short-form (text only):      SetItemTooltip("Hello");
+                // - Short-form (any contents):   if (BeginItemTooltip()) { Text("Hello"); EndTooltip(); }
+
+                // - Full-form (text only):       if (IsItemHovered(...)) { SetTooltip("Hello"); }
+                // - Full-form (any contents):    if (IsItemHovered(...) && BeginTooltip()) { Text("Hello"); EndTooltip(); }
+
+                helpMarker("Tooltip are typically created by using the IsItemHovered() + SetTooltip() functions over any kind of item.\n\n" +
+                        "We provide a helper SetItemTooltip() function to perform the two with standards flags.")
+
+                val sz = Vec2(-Float.MIN_VALUE, 0f)
+
+                ImGui.button("Basic", sz)
+                ImGui.setItemTooltip("I am a tooltip")
+
+                ImGui.button("Fancy", sz)
+                if (ImGui.beginItemTooltip()) {
+                    ImGui.text("I am a fancy tooltip")
+                    ImGui.plotLines("Curve", arr)
+                    ImGui.text("Sin(time) = " + ImGui.time.sin)
+                    ImGui.endTooltip()
+                }
+
+                ImGui.separatorText("Custom")
+
+                // Showcase NOT relying on a IsItemHovered() to emit a tooltip.
+                ImGui.checkbox("Always On", ::alwaysOn)
+                if (alwaysOn)
+                    ImGui.setTooltip("I am following you around.")
+
+                // The following examples are passed for documentation purpose but may not be useful to most users.
+                // Passing ImGuiHoveredFlags_Tooltip to IsItemHovered() will pull ImGuiHoveredFlags flags values from
+                // 'style.HoverFlagsForTooltipMouse' or 'style.HoverFlagsForTooltipNav' depending on whether mouse or gamepad/keyboard is being used.
+                // With default settings, ImGuiHoveredFlags_Tooltip is equivalent to ImGuiHoveredFlags_DelayShort + ImGuiHoveredFlags_Stationary.
+                ImGui.button("Manual", sz)
+                if (ImGui.isItemHovered(HoveredFlag.ForTooltip))
+                    ImGui.setTooltip("I am a manually emitted tooltip")
+
+                ImGui.button("DelayNone", sz)
+                if (ImGui.isItemHovered(HoveredFlag.DelayNone))
+                    ImGui.setTooltip("I am a tooltip with no delay.")
+
+                ImGui.button("DelayShort", sz)
+                if (ImGui.isItemHovered(HoveredFlag.DelayShort / HoveredFlag.NoSharedDelay))
+                    ImGui.setTooltip("I am a tooltip with a short delay (%0.2f sec).", ImGui.style.hoverDelayShort)
+
+                ImGui.button("DelayLong", sz)
+                if (ImGui.isItemHovered(HoveredFlag.DelayNormal / HoveredFlag.NoSharedDelay))
+                    ImGui.setTooltip("I am a tooltip with a long delay (%0.2f sec)", ImGui.style.hoverDelayNormal)
+
+                ImGui.button("Stationary", sz)
+                if (ImGui.isItemHovered(HoveredFlag.Stationary))
+                    ImGui.setTooltip("I am a tooltip requiring mouse to be stationary before activating.")
             }
         }
     }
@@ -684,7 +716,7 @@ object ShowDemoWindowWidgets {
                     val tintCol = if (useTextColorForTint) getStyleColorVec4(Col.Text) else Vec4(1f)   // No tint
                     val borderCol = getStyleColorVec4(Col.Border)
                     image(myTexId, Vec2(myTexSize.x, myTexSize.y), uvMin, uvMax, tintCol, borderCol)
-                    if (isItemHovered())
+                    if (beginItemTooltip())
                         tooltip {
                             val regionSz = 32f
                             var regionX = io.mousePos.x - pos.x - regionSz * 0.5f

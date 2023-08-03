@@ -124,14 +124,14 @@ object ShowDemoWindowTables {
         }
         sameLine()
         textDisabled("(?)")
-        if (ImGui.isItemHovered)
+        if (ImGui.beginItemTooltip())
             tooltip {
                 withTextWrapPos(ImGui.fontSize * 50f) {
                     for (m in policies.indices) {
                         separator()
                         text("${policies[m].name}:")
                         separator()
-                        ImGui.cursorPosX = ImGui.cursorPosX + style.indentSpacing * 0.5f
+                        ImGui.cursorPosX += style.indentSpacing * 0.5f
                         textUnformatted(policies[m].tooltip)
                     }
                 }

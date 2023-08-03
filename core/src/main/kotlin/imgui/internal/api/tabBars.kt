@@ -436,8 +436,7 @@ internal interface tabBars {
         // FIXME: We may want disabled tab to still display the tooltip?
         if (textClipped && g.hoveredId == id && !held)
             if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip)
-                if (ImGui.isItemHovered(HoveredFlag.DelayNormal))
-                    ImGui.setTooltip(label.substring(0, ImGui.findRenderedTextEnd(label)))
+                ImGui.setItemTooltip(label.substring(0, ImGui.findRenderedTextEnd(label)))
 
         assert(!isTabButton || !(selectedTabId == tab.id && isTabButton)) { "TabItemButton should not be selected" }
         return if (isTabButton) pressed else tabContentsVisible
@@ -555,7 +554,7 @@ internal interface tabBars {
             ellipsisMaxX = textPixelClipBb.max.x
         }
         renderTextEllipsis(drawList, textEllipsisClipBb.min, textEllipsisClipBb.max, textPixelClipBb.max.x,
-                           ellipsisMaxX, label, textSizeIfKnown = labelSize)
+                ellipsisMaxX, label, textSizeIfKnown = labelSize)
 
         //        #if 0
         //        if (!is_contents_visible)

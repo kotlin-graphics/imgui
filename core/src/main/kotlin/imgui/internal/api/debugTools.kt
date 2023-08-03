@@ -5,6 +5,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginDisabled
+import imgui.ImGui.beginItemTooltip
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.boundSettings
 import imgui.ImGui.bullet
@@ -570,7 +571,7 @@ internal interface debugTools {
         /** Avoid naming collision with imgui_demo.cpp's HelpMarker() for unity builds. */
         fun metricsHelpMarker(desc: String) {
             textDisabled("(?)")
-            if (isItemHovered(HoveredFlag.DelayShort) && beginTooltip()) {
+            if (beginItemTooltip()) {
                 pushTextWrapPos(fontSize * 35f)
                 textUnformatted(desc)
                 popTextWrapPos()

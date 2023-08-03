@@ -37,6 +37,7 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextEllipsis
 import imgui.ImGui.saveSettings
 import imgui.ImGui.setItemAllowOverlap
+import imgui.ImGui.setItemTooltip
 import imgui.ImGui.setScrollFromPosX
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sortSpecsBuild
@@ -641,8 +642,8 @@ interface tables {
         val posMax = Vec2(ellipsisMax, labelPos.y + labelHeight + g.style.framePadding.y)
         renderTextEllipsis(window.drawList, labelPos, posMax, ellipsisMax, ellipsisMax, label.toByteArray(), labelEnd, labelSize)
         val textClipped = labelSize.x > (ellipsisMax - labelPos.x)
-        if (textClipped && hovered && g.activeId == 0 && isItemHovered(HoveredFlag.DelayNormal))
-            setTooltip(label.substring(0, labelEnd))
+        if (textClipped && hovered && g.activeId == 0)
+            setItemTooltip(label.substring(0, labelEnd))
 
         // We don't use BeginPopupContextItem() because we want the popup to stay up even after the column is hidden
         if (MouseButton.Right.isReleased && isItemHovered())

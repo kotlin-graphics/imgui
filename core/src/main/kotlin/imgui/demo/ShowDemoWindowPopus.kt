@@ -26,6 +26,7 @@ import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.separatorText
 import imgui.ImGui.setItemDefaultFocus
+import imgui.ImGui.setItemTooltip
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setTooltip
@@ -119,7 +120,7 @@ object ShowDemoWindowPopups {
 
                     separator()
                     text("Tooltip here")
-                    if (isItemHovered()) setTooltip("I am a tooltip over a popup")
+                    setItemTooltip("I am a tooltip over a popup")
 
                     if (button("Stacked Popup")) openPopup("another popup")
                     popup("another popup") {
@@ -185,8 +186,7 @@ object ShowDemoWindowPopups {
                             if (button("Close"))
                                 closeCurrentPopup()
                         }
-                        if (isItemHovered())
-                            setTooltip("Right-click to open popup")
+                        setItemTooltip("Right-click to open popup")
                     }
                 }
 

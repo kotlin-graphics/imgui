@@ -39,6 +39,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
+import imgui.ImGui.isItemHovered
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
@@ -805,8 +806,8 @@ fun colorButton(descId: String, x: Float, y: Float, z: Float, w: Float, flags_: 
     if (flags hasnt Cef.NoBorder) if (g.style.frameBorderSize > 0f) renderFrameBorder(bb.min, bb.max, rounding)
     else window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)
 
-    /*  Drag and Drop Source
-        NB: The ActiveId test is merely an optional micro-optimization, BeginDragDropSource() does the same test.         */
+    // Drag and Drop Source
+    // NB: The ActiveId test is merely an optional micro-optimization, BeginDragDropSource() does the same test.
     if (g.activeId == id && flags hasnt Cef.NoDragDrop && beginDragDropSource()) {
 
         if (flags has Cef.NoAlpha) setDragDropPayload(PAYLOAD_TYPE_COLOR_3F, colRgb, Cond.Once)
@@ -817,9 +818,8 @@ fun colorButton(descId: String, x: Float, y: Float, z: Float, w: Float, flags_: 
         endDragDropSource()
     }
     // Tooltip
-    if (flags hasnt Cef.NoTooltip && hovered) {
+    if (flags hasnt Cef.NoTooltip && hovered && isItemHovered(HoveredFlag.ForTooltip))
         colorTooltip(descId, x, y, z, w, flags and (Cef._InputMask or Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf))
-    }
 
     return pressed
 }
