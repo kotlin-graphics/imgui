@@ -950,14 +950,17 @@ sealed class HoveredFlag(override val i: Int) : Flag<HoveredFlag> {
     /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns.   */
     object AllowWhenBlockedByActiveItem : HoveredFlag(1 shl 7)
 
-    /** IsItemHovered() only: Return true even if the position is obstructed or overlapped by another WINDOW,   */
-    object AllowWhenOverlapped : HoveredFlag(1 shl 8)
+    /** IsItemHovered() only: Return true even if the item uses AllowOverlap mode and is overlapped by another hoverable item. */
+    object AllowWhenOverlappedByItem : HoveredFlag(1 shl 8)
+
+    /** IsItemHovered() only: Return true even if the position is obstructed or overlapped by another window. */
+    object AllowWhenOverlappedByWindow : HoveredFlag(1 shl 9)
 
     /** IsItemHovered() only: Return true even if the item is disabled */
-    object AllowWhenDisabled : HoveredFlag(1 shl 9)
+    object AllowWhenDisabled : HoveredFlag(1 shl 10)
 
     /** IsItemHovered() only: Disable using gamepad/keyboard navigation state when active, always query mouse. */
-    object NoNavOverride : HoveredFlag(1 shl 10)
+    object NoNavOverride : HoveredFlag(1 shl 11)
 
     // Tooltips mode
     // - typically used in IsItemHovered() + SetTooltip() sequence.
@@ -989,6 +992,7 @@ sealed class HoveredFlag(override val i: Int) : Flag<HoveredFlag> {
 
     @GenSealedEnum
     companion object {
+        val AllowWhenOverlapped get() = AllowWhenOverlappedByItem / AllowWhenOverlappedByWindow
         val RectOnly: HoveredFlags = AllowWhenBlockedByPopup or AllowWhenBlockedByActiveItem or AllowWhenOverlapped
         val RootAndChildWindows: HoveredFlags = RootWindow or ChildWindows
 

@@ -49,12 +49,13 @@ interface itemWidgetsUtilities {
             // to use IsItemHovered() after EndChild() itself. Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
             // the test that has been running for a long while.
             if (g.hoveredWindow !== window && statusFlags hasnt ItemStatusFlag.HoveredWindow)
-                if (flags hasnt Hf.AllowWhenOverlapped)
+                if (flags hasnt Hf.AllowWhenOverlappedByWindow)
                     return false
 
             // Test if another item is active (e.g. being dragged)
+            val id = g.lastItemData.id
             if (flags hasnt Hf.AllowWhenBlockedByActiveItem)
-                if (g.activeId != 0 && g.activeId != g.lastItemData.id && !g.activeIdAllowOverlap && g.activeId != window.moveId)
+                if (g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap && g.activeId != window.moveId)
                     return false
 
             // Test if interactions on this window are blocked by an active popup or modal.
@@ -68,8 +69,14 @@ interface itemWidgetsUtilities {
 
             // Special handling for calling after Begin() which represent the title bar or tab.
             // When the window is skipped/collapsed (SkipItems==true) that last item will never be overwritten so we need to detect the case.
-            if (g.lastItemData.id == window.moveId && window.writeAccessed)
+            if (id == window.moveId && window.writeAccessed)
                 return false
+
+            // Test if using AllowOverlap and overlapped
+            if (g.lastItemData.inFlags has ItemFlag.AllowOverlap && id != 0)
+                if (flags hasnt HoveredFlag.AllowWhenOverlappedByItem)
+                    if (g.hoveredIdPreviousFrame != g.lastItemData.id)
+                        return false
         }
 
         // Handle hover delay

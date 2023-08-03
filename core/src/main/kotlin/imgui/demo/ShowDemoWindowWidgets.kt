@@ -1936,6 +1936,8 @@ object ShowDemoWindowWidgets {
                     isItemHovered() = ${isItemHovered().i}
                     isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup).i}
                     isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem).i}
+                    IsItemHovered(_AllowWhenOverlappedByItem) = ${isItemHovered(HoveredFlag.AllowWhenOverlappedByItem).i}
+                    IsItemHovered(_AllowWhenOverlappedByWindow) = ${isItemHovered(HoveredFlag.AllowWhenOverlappedByWindow).i}
                     isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped).i}
                     isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly).i}
                     isItemActive = ${isItemActive.i}
