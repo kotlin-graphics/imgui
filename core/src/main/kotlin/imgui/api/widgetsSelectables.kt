@@ -163,7 +163,7 @@ interface widgetsSelectables {
         if (pressed)
             markItemEdited(id)
 
-        if (flags has Sf.AllowItemOverlap)
+        if (flags has Sf.AllowItemOverlap && g.activeId != id) // Because: we don't want to hover other while Active
             setItemAllowOverlap()
 
         // In this branch, Selectable() cannot toggle the selection so this will never trigger.

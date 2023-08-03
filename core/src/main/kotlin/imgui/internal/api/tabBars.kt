@@ -368,7 +368,7 @@ internal interface tabBars {
             queueFocus(tab)
 
         // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
-        if (g.activeId != id)
+        if (g.activeId != id) // Because: we don't want to hover other items while dragging active)
             ImGui.setItemAllowOverlap()
 
         // Drag and drop: re-order tabs

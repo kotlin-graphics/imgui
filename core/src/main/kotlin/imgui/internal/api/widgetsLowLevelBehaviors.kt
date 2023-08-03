@@ -350,7 +350,7 @@ internal interface widgetsLowLevelBehaviors {
         val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
         if (hovered)
             g.lastItemData.statusFlags /= ItemStatusFlag.HoveredRect // for IsItemHovered(), because bb_interact is larger than bb
-        if (g.activeId != id)
+        if (g.activeId != id) // Because: we don't want to hover other while Active
             setItemAllowOverlap()
 
         if (held || (hovered && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
@@ -525,7 +525,7 @@ internal interface widgetsLowLevelBehaviors {
                 g.lastItemData.statusFlags /= ItemStatusFlag.ToggledOpen
             }
         }
-        if (flags has Tnf.AllowItemOverlap)
+        if (flags has Tnf.AllowItemOverlap && g.activeId != id) // Because: we don't want to hover other while Active
             setItemAllowOverlap()
 
         // In this branch, TreeNodeBehavior() cannot toggle the selection so this will never trigger.
