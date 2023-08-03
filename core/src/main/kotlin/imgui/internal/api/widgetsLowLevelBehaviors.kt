@@ -163,7 +163,7 @@ internal interface widgetsLowLevelBehaviors {
             g.hoveredWindow = backupHoveredWindow
 
         // AllowOverlap mode (rarely used) requires previous frame HoveredId to be null or to match. This allows using patterns where a later submitted widget overlaps a previous one.
-        if (hovered && flags has Bf.AllowItemOverlap && g.hoveredIdPreviousFrame != id)
+        if (hovered && flags has Bf.AllowOverlap && g.hoveredIdPreviousFrame != id)
             hovered = false
 
         // Mouse handling
@@ -343,7 +343,7 @@ internal interface widgetsLowLevelBehaviors {
 
         val bbInteract = Rect(bb)
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
-        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
+        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowOverlap)
         if (hovered)
             g.lastItemData.statusFlags /= ItemStatusFlag.HoveredRect // for IsItemHovered(), because bb_interact is larger than bb
         if (g.activeId != id) // Because: we don't want to hover other while Active
@@ -456,8 +456,8 @@ internal interface widgetsLowLevelBehaviors {
         }
 
         var buttonFlags: ButtonFlags = none
-        if (flags has Tnf.AllowItemOverlap)
-            buttonFlags = buttonFlags or Bf.AllowItemOverlap
+        if (flags has Tnf.AllowOverlap)
+            buttonFlags = buttonFlags or Bf.AllowOverlap
         if (!isLeaf)
             buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
 
@@ -521,7 +521,7 @@ internal interface widgetsLowLevelBehaviors {
                 g.lastItemData.statusFlags /= ItemStatusFlag.ToggledOpen
             }
         }
-        if (flags has Tnf.AllowItemOverlap && g.activeId != id) // Because: we don't want to hover other while Active
+        if (flags has Tnf.AllowOverlap && g.activeId != id) // Because: we don't want to hover other while Active
             setItemAllowOverlap()
 
         // In this branch, TreeNodeBehavior() cannot toggle the selection so this will never trigger.

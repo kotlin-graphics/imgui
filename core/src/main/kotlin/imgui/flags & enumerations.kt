@@ -337,7 +337,7 @@ sealed class TreeNodeFlag(override val i: Int) : FlagBase<TreeNodeFlag>() {
     object Framed : TreeNodeFlag(1 shl 1)
 
     /** Hit testing to allow subsequent widgets to overlap this one */
-    object AllowItemOverlap : TreeNodeFlag(1 shl 2)
+    object AllowOverlap : TreeNodeFlag(1 shl 2)
 
     /** Don't do a TreePush() when open (e.g. for CollapsingHeader) ( no extra indent nor pushing on ID stack   */
     object NoTreePushOnOpen : TreeNodeFlag(1 shl 3)
@@ -459,7 +459,7 @@ sealed class SelectableFlag(override val i: Int) : FlagBase<SelectableFlag>() {
     object Disabled : SelectableFlag(1 shl 3)
 
     /** (WIP) Hit testing to allow subsequent widgets to overlap this one */
-    object AllowItemOverlap : SelectableFlag(1 shl 4)
+    object AllowOverlap : SelectableFlag(1 shl 4)
 
     // [Internal] NB: need to be in sync with last value of ImGuiSelectableFlags_
 

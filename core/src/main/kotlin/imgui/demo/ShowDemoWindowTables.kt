@@ -1740,7 +1740,7 @@ object ShowDemoWindowTables {
                                 button(label, Vec2(-Float.MIN_VALUE, 0f))
                             else if (type == ContentsType.Selectable || type == ContentsType.SelectableSpanRow) {
                                 val selectableFlags = when (type) {
-                                    ContentsType.SelectableSpanRow -> SelectableFlag.SpanAllColumns or SelectableFlag.AllowItemOverlap
+                                    ContentsType.SelectableSpanRow -> SelectableFlag.SpanAllColumns or SelectableFlag.AllowOverlap
                                     else -> none
                                 }
                                 if (selectable(label, itemIsSelected, selectableFlags, Vec2(0f, rowMinHeight)))

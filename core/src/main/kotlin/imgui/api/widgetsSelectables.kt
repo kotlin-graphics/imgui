@@ -46,7 +46,7 @@ interface widgetsSelectables {
 
     /** Tip: pass a non-visible label (e.g. "##hello") then you can use the space to draw other text or image.
      *  But you need to make sure the ID is unique, e.g. enclose calls in PushID/PopID or use ##unique_id.
-     *  With this scheme, ImGuiSelectableFlags_SpanAllColumns and ImGuiSelectableFlags_AllowItemOverlap are also frequently used flags.
+     *  With this scheme, ImGuiSelectableFlags_SpanAllColumns and ImGuiSelectableFlags_AllowOverlap are also frequently used flags.
      *  FIXME: Selectable() with (size.x == 0.0f) and (SelectableTextAlign.x > 0.0f) followed by SameLine() is currently not supported.
      *
      *  "bool selected" carry the selection state (read-only). Selectable() is clicked is returns true so you can modify
@@ -133,7 +133,7 @@ interface widgetsSelectables {
         if (flags has Sf._SelectOnClick) buttonFlags /= Bf.PressedOnClick
         if (flags has Sf._SelectOnRelease) buttonFlags /= Bf.PressedOnRelease
         if (flags has Sf.AllowDoubleClick) buttonFlags /= Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
-        if (flags has Sf.AllowItemOverlap) buttonFlags /= Bf.AllowItemOverlap
+        if (flags has Sf.AllowOverlap) buttonFlags /= Bf.AllowOverlap
 
         val wasSelected = selected
 
@@ -163,7 +163,7 @@ interface widgetsSelectables {
         if (pressed)
             markItemEdited(id)
 
-        if (flags has Sf.AllowItemOverlap && g.activeId != id) // Because: we don't want to hover other while Active
+        if (flags has Sf.AllowOverlap && g.activeId != id) // Because: we don't want to hover other while Active
             setItemAllowOverlap()
 
         // In this branch, Selectable() cannot toggle the selection so this will never trigger.

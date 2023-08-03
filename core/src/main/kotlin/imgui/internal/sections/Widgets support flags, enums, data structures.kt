@@ -132,68 +132,70 @@ sealed class ButtonFlag(override val i: Int) : FlagBase<ButtonFlag>() {
     /** React on center mouse button */
     object MouseButtonMiddle : ButtonFlag(1 shl 2)
 
+    // Extend ImGuiButtonFlags_
+//    enum ImGuiButtonFlagsPrivate_
+
     /** return true on click (mouse down event) */
-    object PressedOnClick : ButtonFlag(1 shl 4)
+    internal object PressedOnClick : ButtonFlag(1 shl 4)
 
     /** [Default] return true on click + release on same item <-- this is what the majority of Button are using */
-    object PressedOnClickRelease : ButtonFlag(1 shl 5)
+    internal object PressedOnClickRelease : ButtonFlag(1 shl 5)
 
     /** return true on click + release even if the release event is not done while hovering the item */
-    object PressedOnClickReleaseAnywhere : ButtonFlag(1 shl 6)
+    internal object PressedOnClickReleaseAnywhere : ButtonFlag(1 shl 6)
 
     /** return true on release (default requires click+release) */
-    object PressedOnRelease : ButtonFlag(1 shl 7)
+    internal object PressedOnRelease : ButtonFlag(1 shl 7)
 
     /** return true on double-click (default requires click+release) */
-    object PressedOnDoubleClick : ButtonFlag(1 shl 8)
+    internal object PressedOnDoubleClick : ButtonFlag(1 shl 8)
 
     /** return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
-    object PressedOnDragDropHold : ButtonFlag(1 shl 9)
+    internal object PressedOnDragDropHold : ButtonFlag(1 shl 9)
 
     /** hold to repeat  */
-    object Repeat : ButtonFlag(1 shl 10)
+    internal object Repeat : ButtonFlag(1 shl 10)
 
     /** allow interactions even if a child window is overlapping */
-    object FlattenChildren : ButtonFlag(1 shl 11)
+    internal object FlattenChildren : ButtonFlag(1 shl 11)
 
     /** require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap() */
-    object AllowItemOverlap : ButtonFlag(1 shl 12)
+    internal object AllowOverlap : ButtonFlag(1 shl 12)
 
     /** disable automatically closing parent popup on press // [UNUSED] */
-    object DontClosePopups : ButtonFlag(1 shl 13)
+    internal object DontClosePopups : ButtonFlag(1 shl 13)
 
     /** disable interactions -> use BeginDisabled() or ImGuiItemFlags_Disabled */
     //    Disabled(1 shl 14),
 
     /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
-    object AlignTextBaseLine : ButtonFlag(1 shl 15)
+    internal object AlignTextBaseLine : ButtonFlag(1 shl 15)
 
     /** disable mouse interaction if a key modifier is held */
-    object NoKeyModifiers : ButtonFlag(1 shl 16)
+    internal object NoKeyModifiers : ButtonFlag(1 shl 16)
 
     /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
-    object NoHoldingActiveId : ButtonFlag(1 shl 17)
+    internal object NoHoldingActiveId : ButtonFlag(1 shl 17)
 
     /** don't override navigation focus when activated (FIXME: this is essentially used everytime an item uses ImGuiItemFlags_NoNav, but because legacy specs don't requires LastItemData to be set ButtonBehavior(), we can't poll g.LastItemData.InFlags) */
-    object NoNavFocus : ButtonFlag(1 shl 18)
+    internal object NoNavFocus : ButtonFlag(1 shl 18)
 
     /** don't report as hovered when nav focus is on this item */
-    object NoHoveredOnFocus : ButtonFlag(1 shl 19)
+    internal object NoHoveredOnFocus : ButtonFlag(1 shl 19)
 
     /** don't set key/input owner on the initial click (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
-    object NoSetKeyOwner : ButtonFlag(1 shl 20)
+    internal object NoSetKeyOwner : ButtonFlag(1 shl 20)
 
     /** don't test key/input owner when polling the key (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
-    object NoTestKeyOwner : ButtonFlag(1 shl 21)
+    internal object NoTestKeyOwner : ButtonFlag(1 shl 21)
 
     @GenSealedEnum
     companion object {
         val MouseButtonMask: ButtonFlags get() = MouseButtonLeft or MouseButtonRight or MouseButtonMiddle
-        val PressedOnMask: ButtonFlags
-            get() =
-                PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold
+        internal val PressedOnMask: ButtonFlags
+            get() = PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold
         val MouseButtonDefault get() = MouseButtonLeft
-        val PressedOnDefault get() = PressedOnClickRelease
+        internal val PressedOnDefault get() = PressedOnClickRelease
     }
 }
 

@@ -177,7 +177,7 @@ interface itemWidgetsUtilities {
         get() = g.lastItemData.rect.size
 
     /** Allow last item to be overlapped by a subsequent item. Both may be activated during the same frame before the later one takes priority.
-     *  FIXME: Although this is exposed, its interaction and ideal idiom with using ImGuiButtonFlags_AllowItemOverlap flag are extremely confusing, need rework. */
+     *  FIXME: Although this is exposed, its interaction and ideal idiom with using ImGuiButtonFlags_AllowOverlap flag are extremely confusing, need rework. */
     fun setItemAllowOverlap() {
         val id = g.lastItemData.id
         if (g.hoveredId == id)

@@ -360,7 +360,7 @@ internal interface tabBars {
         }
 
         // Click to Select a tab
-        var buttonFlags = (if (isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowItemOverlap
+        var buttonFlags = (if (isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowOverlap
         if (g.dragDropActive)
             buttonFlags /= ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered, held) = ImGui.buttonBehavior(bb, id, buttonFlags)
