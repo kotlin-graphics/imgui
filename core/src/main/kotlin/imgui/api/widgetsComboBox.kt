@@ -202,7 +202,7 @@ interface widgetsComboBox {
             var itemText by itemTextRef
             if (!itemsGetter(items, i, itemTextRef))
                 itemText = "*Unknown item*"
-            if (selectable(itemText, itemSelected)) {
+            if (selectable(itemText, itemSelected) && currentItem != i) {
                 valueChanged = true
                 currentItem = i
             }
