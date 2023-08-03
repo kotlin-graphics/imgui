@@ -11,11 +11,12 @@ import imgui.internal.sections.TooltipFlag
 import imgui.none
 import imgui.WindowFlag as Wf
 
-/** Tooltips
- *  - Tooltips are windows following the mouse. They do not take focus away. */
+// Tooltips
+// - Tooltips are windows following the mouse. They do not take focus away.
+// - A tooltip window can contain items of any types. SetTooltip() is a shortcut for the 'if (BeginTooltip()) { Text(...); EndTooltip(); }' idiom.
 interface tooltips {
 
-    /** begin/append a tooltip window. to create full-featured tooltip (with any kind of items). */
+    /** begin/append a tooltip window. */
     fun beginTooltip(): Boolean = beginTooltipEx()
 
     /** only call EndTooltip() if BeginTooltip()/BeginItemTooltip() returns true! */
@@ -24,7 +25,7 @@ interface tooltips {
         end()
     }
 
-    /** set a text-only tooltip, typically use with ImGui::IsItemHovered(). override any previous call to SetTooltip(). */
+    /** set a text-only tooltip. Often used after a ImGui::IsItemHovered() check. Override any previous call to SetTooltip(). */
     fun setTooltip(fmt: String, vararg args: Any) {
         if (!beginTooltipEx(TooltipFlag.OverridePrevious))
             return
@@ -32,9 +33,10 @@ interface tooltips {
         endTooltip()
     }
 
-    // Tooltips: helper for showing a tooltip when hovering an item
-    // - BeginItemTooltip(), SetItemTooltip() are shortcuts for the 'if (IsItemHovered(ImGuiHoveredFlags_Tooltip)) { BeginTooltip() or SetTooltip() }' idiom.
-    // - Where 'ImGuiHoveredFlags_Tooltip' itself is a shortcut to use 'style.HoverFlagsForTooltipMouse' or 'style.HoverFlagsForTooltipNav'. For mouse it defaults to 'ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayShort'.
+    // Tooltips: helpers for showing a tooltip when hovering an item
+    // - BeginItemTooltip() is a shortcut for the 'if (IsItemHovered(ImGuiHoveredFlags_Tooltip) && BeginTooltip())' idiom.
+    // - SetItemTooltip() is a shortcut for the 'if (IsItemHovered(ImGuiHoveredFlags_Tooltip)) { SetTooltip(...); }' idiom.
+    // - Where 'ImGuiHoveredFlags_Tooltip' itself is a shortcut to use 'style.HoverFlagsForTooltipMouse' or 'style.HoverFlagsForTooltipNav' depending on active input type. For mouse it defaults to 'ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayShort'.
 
     /** begin/append a tooltip window if preceding item was hovered. */
     fun beginItemTooltip(): Boolean {

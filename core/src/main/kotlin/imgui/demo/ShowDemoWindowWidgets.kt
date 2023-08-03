@@ -438,7 +438,7 @@ object ShowDemoWindowWidgets {
     object Tooltips {
 
         val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
-        var alwaysOn = false
+        var alwaysOn = 0
 
         operator fun invoke() {
 
@@ -455,7 +455,7 @@ object ShowDemoWindowWidgets {
                 // - Full-form (text only):       if (IsItemHovered(...)) { SetTooltip("Hello"); }
                 // - Full-form (any contents):    if (IsItemHovered(...) && BeginTooltip()) { Text("Hello"); EndTooltip(); }
 
-                helpMarker("Tooltip are typically created by using the IsItemHovered() + SetTooltip() functions over any kind of item.\n\n" +
+                helpMarker("Tooltip are typically created by using a IsItemHovered() + SetTooltip() sequence.\n\n" +
                         "We provide a helper SetItemTooltip() function to perform the two with standards flags.")
 
                 val sz = Vec2(-Float.MIN_VALUE, 0f)
@@ -471,12 +471,23 @@ object ShowDemoWindowWidgets {
                     ImGui.endTooltip()
                 }
 
-                ImGui.separatorText("Custom")
+                ImGui.separatorText("Always On")
 
                 // Showcase NOT relying on a IsItemHovered() to emit a tooltip.
-                ImGui.checkbox("Always On", ::alwaysOn)
-                if (alwaysOn)
+                // Here the tooltip is always emitted when 'always_on == true'.
+                ImGui.radioButton("Off", ::alwaysOn, 0)
+                ImGui.sameLine()
+                ImGui.radioButton("Always On (Simple)", ::alwaysOn, 1)
+                ImGui.sameLine()
+                ImGui.radioButton("Always On (Advanced)", ::alwaysOn, 2)
+                if (alwaysOn == 1)
                     ImGui.setTooltip("I am following you around.")
+                else if (alwaysOn == 2 && ImGui.beginTooltip()) {
+                    ImGui.progressBar(ImGui.time.f.sin * 0.5f + 0.5f, Vec2(ImGui.fontSize * 25, 0f))
+                    ImGui.endTooltip()
+                }
+
+                ImGui.separatorText("Custom")
 
                 // The following examples are passed for documentation purpose but may not be useful to most users.
                 // Passing ImGuiHoveredFlags_Tooltip to IsItemHovered() will pull ImGuiHoveredFlags flags values from

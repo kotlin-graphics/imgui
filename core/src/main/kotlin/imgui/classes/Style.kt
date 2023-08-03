@@ -159,6 +159,7 @@ class Style {
     val colors = ArrayList<Vec4>()
 
     // Behaviors
+    // (It is possible to modify those fields mid-frame if specific behavior need it, unlike e.g. configuration fields in ImGuiIO)
 
     /** Delay for IsItemHovered(ImGuiHoveredFlags_Stationary). Time required to consider mouse stationary. */
     var hoverStationaryDelay = 0.15f
