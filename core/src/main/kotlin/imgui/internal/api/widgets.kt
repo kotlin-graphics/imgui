@@ -156,7 +156,7 @@ internal interface widgets {
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val pos = Vec2(window.dc.cursorPos)
-        if (flags_ has ButtonFlag.AlignTextBaseLine && style.framePadding.y < window.dc.currLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
+        if (flags has ButtonFlag.AlignTextBaseLine && style.framePadding.y < window.dc.currLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
             pos.y += window.dc.currLineTextBaseOffset - style.framePadding.y
         val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
 
