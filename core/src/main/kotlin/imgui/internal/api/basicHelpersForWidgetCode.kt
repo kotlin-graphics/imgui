@@ -185,6 +185,14 @@ internal interface basicHelpersForWidgetCode {
                 return false
 
             hoveredId = id
+
+            // AllowOverlap mode (rarely used) requires previous frame HoveredId to be null or to match.
+            // This allows using patterns where a later submitted widget overlaps a previous one. Generally perceived as a front-to-back hit-test.
+            if (itemFlags has ItemFlag.AllowOverlap) {
+                g.hoveredIdAllowOverlap = true
+                if (g.hoveredIdPreviousFrame != id)
+                    return false
+            }
         }
 
         // When disabled we'll return false but still set HoveredId

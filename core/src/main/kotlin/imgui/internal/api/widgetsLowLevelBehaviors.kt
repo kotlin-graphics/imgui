@@ -168,14 +168,6 @@ internal interface widgetsLowLevelBehaviors {
         if (flattenHoveredChildren)
             g.hoveredWindow = backupHoveredWindow
 
-        // AllowOverlap mode (rarely used) requires previous frame HoveredId to be null or to match. This allows using patterns where a later submitted widget overlaps a previous one.
-        if (itemFlags has ItemFlag.AllowOverlap) {
-            if (hovered && g.hoveredIdPreviousFrame != id)
-                hovered = false
-            if (g.hoveredId == id) // FIXME: Added this to match legacy SetItemAllowOverlap(). Investigate precise side-effects of using (hovered==true) instead?
-                g.hoveredIdAllowOverlap = true
-        }
-
         // Mouse handling
         val testOwnerId = if (flags has Bf.NoTestKeyOwner) KeyOwner_Any else id
         if (hovered) {
