@@ -174,19 +174,21 @@ internal interface basicHelpersForWidgetCode {
             return false
         }
 
-        // Drag source doesn't report as hovered
-        if (g.dragDropActive && g.dragDropPayload.sourceId == id && g.dragDropSourceFlags hasnt DragDropFlag.SourceNoDisableHover)
-            return false
-
         // We exceptionally allow this function to be called with id==0 to allow using it for easy high-level
         // hover test in widgets code. We could also decide to split this function is two.
-        if (id != 0)
+        if (id != 0) {
+
+            // Drag source doesn't report as hovered
+            if (g.dragDropActive && g.dragDropPayload.sourceId == id && g.dragDropSourceFlags hasnt DragDropFlag.SourceNoDisableHover)
+                return false
+
             hoveredId = id
+        }
 
         // When disabled we'll return false but still set HoveredId
         if (itemFlags has ItemFlag.Disabled) {
             // Release active id if turning disabled
-            if (g.activeId == id)
+            if (g.activeId == id && id != 0)
                 clearActiveID()
             g.hoveredIdDisabled = true
             return false
