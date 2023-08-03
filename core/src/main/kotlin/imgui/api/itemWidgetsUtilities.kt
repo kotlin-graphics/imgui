@@ -20,6 +20,7 @@ interface itemWidgetsUtilities {
 
         var flags = flags_
         val window = g.currentWindow!!
+        assert((flags wo HoveredFlag.AllowedMaskForIsItemHovered) == none) { "Invalid flags for IsItemHovered()!" }
 
         if (g.navDisableMouseHover && !g.navDisableHighlight && flags hasnt Hf.NoNavOverride) {
 

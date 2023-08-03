@@ -2,6 +2,7 @@ package imgui.api
 
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.HoveredFlag
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
@@ -54,11 +55,13 @@ interface windowsUtilities {
      *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
      *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
     fun isWindowHovered(flags: HoveredFlags = none): Boolean {
+
+        assert((flags wo HoveredFlag.AllowedMaskForIsWindowHovered) == none) { "Invalid flags for IsWindowHovered()!" }
         val refWindow = g.hoveredWindow ?: return false
         var curWindow = g.currentWindow
 
         if (flags hasnt Hf.AnyWindow) {
-            check(curWindow != null) { "Not inside a Begin () / End()" }
+            check(curWindow != null) { "Not inside a Begin()/End()" }
             val popupHierarchy = flags hasnt Hf.NoPopupHierarchy
             if (flags has Hf.RootWindow)
                 curWindow = getCombinedRootWindow(curWindow, popupHierarchy)

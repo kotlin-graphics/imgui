@@ -991,6 +991,14 @@ sealed class HoveredFlag(override val i: Int) : Flag<HoveredFlag> {
     companion object {
         val RectOnly: HoveredFlags = AllowWhenBlockedByPopup or AllowWhenBlockedByActiveItem or AllowWhenOverlapped
         val RootAndChildWindows: HoveredFlags = RootWindow or ChildWindows
+
+        // Extend ImGuiHoveredFlags_
+//    enum ImGuiHoveredFlagsPrivate_
+//    {
+        internal val DelayMask_ get() = DelayNone / DelayShort / DelayNormal / NoSharedDelay
+        internal val AllowedMaskForIsWindowHovered get() = ChildWindows / RootWindow / AnyWindow / NoPopupHierarchy / AllowWhenBlockedByPopup / AllowWhenBlockedByActiveItem / ForTooltip / Stationary
+        internal val AllowedMaskForIsItemHovered get() = AllowWhenBlockedByPopup / AllowWhenBlockedByActiveItem / AllowWhenOverlapped / AllowWhenDisabled / NoNavOverride / ForTooltip / Stationary / DelayMask_
+//    };
     }
 }
 
