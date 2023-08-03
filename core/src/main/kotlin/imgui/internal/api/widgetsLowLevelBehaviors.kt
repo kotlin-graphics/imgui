@@ -147,10 +147,6 @@ internal interface widgetsLowLevelBehaviors {
         var pressed = false
         var hovered = itemHoverable(bb, id)
 
-        // Drag source doesn't report as hovered
-        if (hovered && g.dragDropActive && g.dragDropPayload.sourceId == id && g.dragDropSourceFlags hasnt DragDropFlag.SourceNoDisableHover)
-            hovered = false
-
         // Special mode for Drag and Drop where holding button pressed for a long time while dragging another item triggers the button
         if (g.dragDropActive && flags has Bf.PressedOnDragDropHold && g.dragDropSourceFlags hasnt DragDropFlag.SourceNoHoldToOpenOthers)
             if (isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)) {
