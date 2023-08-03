@@ -964,7 +964,7 @@ sealed class HoveredFlag(override val i: Int) : Flag<HoveredFlag> {
     // - this is a shortcut to pull flags from 'style.HoverFlagsForTooltipMouse' or 'style.HoverFlagsForTooltipNav' where you can reconfigure desired behavior.
     //   e.g. 'TooltipHoveredFlagsForMouse' defaults to 'ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayShort'.
     // - for frequently actioned or hovered items providing a tooltip, you want may to use ImGuiHoveredFlags_ForTooltip (stationary + delay) so the tooltip doesn't show too often.
-    // - for items which main purpose is to be hovered, or items with low affordance, or less consistent app, prefer no delay or shorter delay.
+    // - for items which main purpose is to be hovered, or items with low affordance, or in less consistent apps, prefer no delay or shorter delay.
 
     /** Shortcut for standard flags when using IsItemHovered() + SetTooltip() sequence. */
     object ForTooltip : HoveredFlag(1 shl 11)
@@ -973,7 +973,7 @@ sealed class HoveredFlag(override val i: Int) : Flag<HoveredFlag> {
     // - generally you can use ImGuiHoveredFlags_ForTooltip to use application-standardized flags.
     // - use those if you need specific overrides.
 
-    /** IsItemHovered() only: Require mouse to be stationary for style.HoverStationaryDelay (~0.15 sec) _at least one time_. After this, can move on same item. */
+    /** Require mouse to be stationary for style.HoverStationaryDelay (~0.15 sec) _at least one time_. After this, can move on same item./window. Using the stationary test tends to reduces the need for a long delay. */
     object Stationary : HoveredFlag(1 shl 12)
 
     object DelayNone : HoveredFlag(1 shl 13)  // IsItemHovered() only: Return true immediately (default). As this is the default you generally ignore this.

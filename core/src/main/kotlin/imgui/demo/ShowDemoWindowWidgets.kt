@@ -1998,7 +1998,8 @@ object ShowDemoWindowWidgets {
                         "isWindowHovered(_RootWindow) = ${isWindowHovered(HoveredFlag.RootWindow).i}\n" +
                         "IsWindowHovered(_RootWindow|_NoPopupHierarchy) = ${isWindowHovered(HoveredFlag.RootWindow or HoveredFlag.NoPopupHierarchy).i}\n" +
                         "IsWindowHovered(_ChildWindows|_AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.AllowWhenBlockedByPopup).i}\n" +
-                        "isWindowHovered(_AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow).i}\n")
+                        "isWindowHovered(_AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow).i}\n" +
+                        "IsWindowHovered(_Stationary) = ${isWindowHovered(HoveredFlag.Stationary).i}\n")
 
                 beginChild("child", Vec2(0, 50), true)
                 text("This is another child window for testing the _ChildWindows flag.")

@@ -518,7 +518,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Currently used by IsItemHovered(): grace time before g.TooltipHoverTimer gets cleared. */
     var hoverItemDelayClearTimer = 0f
 
+    /** Mouse has once been stationary on this item. Only reset after departing the item. */
     var hoverItemUnlockedStationaryId: ID = 0
+
+    /** Mouse has once been stationary on this window. Only reset after departing the window. */
+    var hoverWindowUnlockedStationaryId: ID = 0
 
     //------------------------------------------------------------------
     // Mouse state
@@ -526,6 +530,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var mouseCursor = MouseCursor.Arrow
     var mouseMovingFrames = 0
+
+    /** Time the mouse has been stationary (with some loose heuristic) */
     var mouseStationaryTimer = 0f
     val mouseLastValidPos = Vec2()
 
