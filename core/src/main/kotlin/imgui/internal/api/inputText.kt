@@ -1011,8 +1011,13 @@ internal interface inputText {
         val state = g.inputTextState
         if (id == 0 || state.id != id)
             return
-        g.inputTextDeactivatedState.id = state.id
-        g.inputTextDeactivatedState.textA = ByteArray(state.curLenA) { state.textA[it] }
+        if (state.flags has Itf.ReadOnly)
+            g.inputTextDeactivatedState.textA[0] = 0 // In theory this data won't be used, but clear to be neat.
+        else {
+            assert(state.textA.isNotEmpty())
+            g.inputTextDeactivatedState.id = state.id
+            g.inputTextDeactivatedState.textA = ByteArray(state.curLenA) { state.textA[it] }
+        }
     }
 
     /** Create text input in place of another active widget (e.g. used when doing a CTRL+Click on drag/slider widgets)
