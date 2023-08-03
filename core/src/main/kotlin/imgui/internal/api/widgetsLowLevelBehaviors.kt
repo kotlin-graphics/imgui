@@ -561,8 +561,10 @@ internal interface widgetsLowLevelBehaviors {
             renderNavHighlight(frameBb, id, navHighlightFlags)
             if (flags has Tnf.Bullet)
                 window.drawList.renderBullet(Vec2(textPos.x - textOffsetX * 0.5f, textPos.y + g.fontSize * 0.5f), textCol)
-            else if (!isLeaf)
-                window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y + g.fontSize * 0.15f), textCol, if (isOpen) Dir.Down else Dir.Right, 0.7f)
+            else if (!isLeaf) {
+                val dir = if(isOpen) if (flags has TreeNodeFlag.UpsideDownArrow) Dir.Up else Dir.Down else Dir.Right
+                window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y + g.fontSize * 0.15f), textCol, dir, 0.7f)
+            }
             if (g.logEnabled)
                 logSetNextTextDecoration(">", "")
             renderText(textPos, label, 0, labelEnd, false)
