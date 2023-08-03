@@ -132,11 +132,12 @@ internal interface widgetsLowLevelBehaviors {
             flags /= Bf.PressedOnDefault
 
         // Default behavior inherited from item flags
-        val itemFlags = if (g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
-        if (itemFlags has ItemFlag.ButtonRepeat)
-            flags /= Bf.Repeat
-        if (itemFlags has ItemFlag.AllowOverlap)
-            flags /= Bf.AllowOverlap
+        // Note that _both_ ButtonFlags and ItemFlags are valid sources, so copy one into the item_flags and only check that.
+        var itemFlags = if (g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
+        if (flags has Bf.AllowOverlap)
+            itemFlags /= ItemFlag.AllowOverlap
+        if (flags has Bf.Repeat)
+            itemFlags /= ItemFlag.ButtonRepeat
 
         val backupHoveredWindow = g.hoveredWindow
         val hoveredWindow = g.hoveredWindow
@@ -150,7 +151,7 @@ internal interface widgetsLowLevelBehaviors {
                 IMGUI_TEST_ENGINE_ITEM_ADD(id, bb, null)
 
         var pressed = false
-        var hovered = itemHoverable(bb, id)
+        var hovered = itemHoverable(bb, id, itemFlags)
 
         // Special mode for Drag and Drop where holding button pressed for a long time while dragging another item triggers the button
         if (g.dragDropActive && flags has Bf.PressedOnDragDropHold && g.dragDropSourceFlags hasnt DragDropFlag.SourceNoHoldToOpenOthers)
@@ -168,7 +169,7 @@ internal interface widgetsLowLevelBehaviors {
             g.hoveredWindow = backupHoveredWindow
 
         // AllowOverlap mode (rarely used) requires previous frame HoveredId to be null or to match. This allows using patterns where a later submitted widget overlaps a previous one.
-        if (flags has Bf.AllowOverlap) {
+        if (itemFlags has ItemFlag.AllowOverlap) {
             if (hovered && g.hoveredIdPreviousFrame != id)
                 hovered = false
             if (g.hoveredId == id) // FIXME: Added this to match legacy SetItemAllowOverlap(). Investigate precise side-effects of using (hovered==true) instead?
@@ -222,8 +223,7 @@ internal interface widgetsLowLevelBehaviors {
                 }
                 if (flags has Bf.PressedOnRelease)
                     if (mouseButtonReleased != MouseButton.None) {
-                        val hasRepeatedAtLeastOnce =
-                                flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased.i] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
+                        val hasRepeatedAtLeastOnce = itemFlags has ItemFlag.ButtonRepeat && io.mouseDownDurationPrev[mouseButtonReleased.i] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
                         if (!hasRepeatedAtLeastOnce)
                             pressed = true
                         if (flags hasnt Bf.NoNavFocus)
@@ -231,10 +231,9 @@ internal interface widgetsLowLevelBehaviors {
                         clearActiveID()
                     }
 
-                /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
-                Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
-                finer RepeatDelay/RepeatRate settings.  */
-                if (g.activeId == id && flags has Bf.Repeat)
+                // 'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
+                // Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing finer RepeatDelay/RepeatRate settings.
+                if (g.activeId == id && itemFlags has ItemFlag.ButtonRepeat)
                     if (io.mouseDownDuration[g.activeIdMouseButton.i] > 0f && g.activeIdMouseButton.isClicked(testOwnerId, InputFlag.Repeat))
                         pressed = true
             }
@@ -251,7 +250,7 @@ internal interface widgetsLowLevelBehaviors {
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id
             var navActivatedByInputs = g.navActivatePressedId == id
-            if (!navActivatedByInputs && flags has Bf.Repeat) {
+            if (!navActivatedByInputs && itemFlags has ItemFlag.ButtonRepeat) {
                 // Avoid pressing multiple keys from triggering excessive amount of repeat events
                 val key1 = Key.Space.data
                 val key2 = Key.Enter.data
@@ -288,7 +287,7 @@ internal interface widgetsLowLevelBehaviors {
                     if ((releaseIn || releaseAnywhere) && !g.dragDropActive) {
                         // Report as pressed when releasing the mouse (this is the most common path)
                         val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && g.io.mouseReleased[mouseButton.i] && io.mouseClickedLastCount[mouseButton.i] == 2
-                        val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton.i] >= io.keyRepeatDelay // Repeat mode trumps <on release>
+                        val isRepeatingAlready = itemFlags has ItemFlag.ButtonRepeat && io.mouseDownDurationPrev[mouseButton.i] >= io.keyRepeatDelay // Repeat mode trumps <on release>
                         val isButtonAvailOrOwned = mouseButton.key testOwner testOwnerId
                         if (!isDoubleClickRelease && !isRepeatingAlready && isButtonAvailOrOwned) pressed = true
                     }

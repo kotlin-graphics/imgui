@@ -20,6 +20,7 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setTooltip
 import imgui.ImGui.style
+import imgui.api.gImGui
 import imgui.internal.classes.Rect
 import imgui.internal.lerp
 import imgui.internal.saturate
@@ -32,6 +33,7 @@ import kotlin.math.min
 internal inline fun plotEx(plotType: PlotType, label: String, valuesCount: Int, valuesOffset: Int, overlayText: String,
                            scaleMin_: Float, scaleMax_: Float, sizeArg: Vec2, data: (Int) -> Float): Int {
 
+    val g = gImGui
     val window = currentWindow
     if (window.skipItems) return -1
 
@@ -46,7 +48,7 @@ internal inline fun plotEx(plotType: PlotType, label: String, valuesCount: Int, 
     val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0))
     itemSize(totalBb, style.framePadding.y)
     if (!itemAdd(totalBb, 0, frameBb)) return -1
-    val hovered = itemHoverable(innerBb, 0)
+    val hovered = itemHoverable(innerBb, 0, g.lastItemData.inFlags)
 
     // Determine scale from values if not specified
     if (scaleMin == Float.MAX_VALUE || scaleMax == Float.MAX_VALUE) {

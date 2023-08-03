@@ -97,7 +97,7 @@ interface widgetsSliders {
         // Default format string when passing NULL
         val format = format_ ?: defaultFormat
 
-        val hovered = ImGui.itemHoverable(frameBb, id)
+        val hovered = ImGui.itemHoverable(frameBb, id, g.lastItemData.inFlags)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
 
@@ -178,7 +178,7 @@ interface widgetsSliders {
         // Default format string when passing NULL
         val format = format_ ?: defaultFormat
 
-        val hovered = ImGui.itemHoverable(frameBb, id)
+        val hovered = ImGui.itemHoverable(frameBb, id, g.lastItemData.inFlags)
         val clicked = hovered && MouseButton.Left.isClicked(id)
         if (clicked || g.navActivateId == id) {
             if (clicked)

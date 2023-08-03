@@ -701,7 +701,7 @@ interface tablesInternal {
         val mouseHitRect = Rect(outerRect.min.x, outerRect.min.y, outerRect.max.x, outerRect.max.y max (outerRect.min.y + tableInstance.lastOuterHeight))
         val backupActiveId = g.activeId
         g.activeId = 0
-        val isHoveringTable = ImGui.itemHoverable(mouseHitRect, 0)
+        val isHoveringTable = ImGui.itemHoverable(mouseHitRect, 0, none)
         g.activeId = backupActiveId
 
         // [Part 6] Setup final position, offset, skip/clip states and clipping rectangles, detect hovered column

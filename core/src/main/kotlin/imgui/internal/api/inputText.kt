@@ -170,7 +170,7 @@ internal interface inputText {
                     return false
             itemStatusFlags = g.lastItemData.statusFlags
         }
-        val hovered = itemHoverable(frameBb, id)
+        val hovered = itemHoverable(frameBb, id, g.lastItemData.inFlags)
         if (hovered) g.mouseCursor = MouseCursor.TextInput
 
         // We are only allowed to access the state if we are already the active widget.

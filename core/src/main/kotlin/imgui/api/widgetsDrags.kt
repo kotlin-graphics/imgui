@@ -283,7 +283,7 @@ interface widgetsDrags {
         // Default format string when passing NULL
         val format = format_ ?: defaultFormat
 
-        val hovered = ImGui.itemHoverable(frameBb, id)
+        val hovered = ImGui.itemHoverable(frameBb, id, g.lastItemData.inFlags)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
 

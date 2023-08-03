@@ -75,7 +75,7 @@ interface dragAndDrop {
                 // Rely on keeping other window->LastItemXXX fields intact.
                 sourceId = window.getIDFromRectangle(g.lastItemData.rect); g.lastItemData.id = sourceId
                 keepAliveID(sourceId)
-                val isHovered = itemHoverable(g.lastItemData.rect, sourceId)
+                val isHovered = itemHoverable(g.lastItemData.rect, sourceId, g.lastItemData.inFlags)
                 if (isHovered && io.mouseClicked[mouseButton.i]) {
                     setActiveID(sourceId, window)
                     focusWindow(window)

@@ -153,8 +153,10 @@ internal interface basicHelpersForWidgetCode {
         return true
     }
 
-    /** Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().    */
-    fun itemHoverable(bb: Rect, id: ID): Boolean {
+    /** Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().
+     *
+     *  (this does not rely on LastItemData it can be called from a ButtonBehavior() call not following an ItemAdd() call)  */
+    fun itemHoverable(bb: Rect, id: ID, itemFlags: ItemFlags): Boolean {
 
         val window = g.currentWindow!!
 
@@ -169,7 +171,6 @@ internal interface basicHelpersForWidgetCode {
             return false
 
         // Done with rectangle culling so we can perform heavier checks now.
-        val itemFlags = if (g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
         if (itemFlags hasnt ItemFlag.NoWindowHoverableCheck && !window.isContentHoverable) {
             g.hoveredIdDisabled = true
             return false
