@@ -36,7 +36,6 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextEllipsis
 import imgui.ImGui.saveSettings
-import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setItemTooltip
 import imgui.ImGui.setScrollFromPosX
 import imgui.ImGui.sortSpecsBuild

@@ -37,7 +37,6 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
-import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setOwner
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
@@ -553,7 +552,7 @@ internal interface widgetsLowLevelBehaviors {
             if (flags has Tnf.Bullet)
                 window.drawList.renderBullet(Vec2(textPos.x - textOffsetX * 0.6f, textPos.y + g.fontSize * 0.5f), textCol)
             else if (!isLeaf) {
-                val dir = if (isOpen) if (flags has TreeNodeFlag.UpsideDownArrow) Dir.Up else Dir.Down else Dir.Right
+                val dir = if (isOpen) if (flags has Tnf.UpsideDownArrow) Dir.Up else Dir.Down else Dir.Right
                 window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol, dir, 1f)
             } else // Leaf without bullet, left-adjusted text
                 textPos.x -= textOffsetX - padding.x
@@ -572,7 +571,7 @@ internal interface widgetsLowLevelBehaviors {
             if (flags has Tnf.Bullet)
                 window.drawList.renderBullet(Vec2(textPos.x - textOffsetX * 0.5f, textPos.y + g.fontSize * 0.5f), textCol)
             else if (!isLeaf) {
-                val dir = if (isOpen) if (flags has TreeNodeFlag.UpsideDownArrow) Dir.Up else Dir.Down else Dir.Right
+                val dir = if (isOpen) if (flags has Tnf.UpsideDownArrow) Dir.Up else Dir.Down else Dir.Right
                 window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y + g.fontSize * 0.15f), textCol, dir, 0.7f)
             }
             if (g.logEnabled)
