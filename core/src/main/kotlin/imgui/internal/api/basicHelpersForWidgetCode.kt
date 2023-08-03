@@ -157,14 +157,14 @@ internal interface basicHelpersForWidgetCode {
 
         val window = g.currentWindow!!
 
-        if (g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap)
-            return false
-
         if (g.hoveredWindow !== window)
             return false
-        if (g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap)
-            return false
         if (!isMouseHoveringRect(bb))
+            return false
+
+        if (g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap)
+            return false
+        if (g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap)
             return false
 
         // Done with rectangle culling so we can perform heavier checks now.
