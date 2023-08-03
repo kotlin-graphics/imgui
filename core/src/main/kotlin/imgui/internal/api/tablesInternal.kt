@@ -935,7 +935,7 @@ interface tablesInternal {
             ImGui.itemAdd(hitRect, columnId, null, ItemFlag.NoNav)
             //GetForegroundDrawList()->AddRect(hit_rect.Min, hit_rect.Max, IM_COL32(255, 0, 0, 100));
 
-            var (pressed, hovered, held) = ImGui.buttonBehavior(hitRect, columnId, ButtonFlag.FlattenChildren or ButtonFlag.AllowItemOverlap or ButtonFlag.PressedOnClick or ButtonFlag.PressedOnDoubleClick or ButtonFlag.NoNavFocus)
+            var (pressed, hovered, held) = ImGui.buttonBehavior(hitRect, columnId, ButtonFlag.FlattenChildren or ButtonFlag.PressedOnClick or ButtonFlag.PressedOnDoubleClick or ButtonFlag.NoNavFocus)
             if (pressed && MouseButton.Left.isDoubleClicked) {
                 setColumnWidthAutoSingle(columnN)
                 ImGui.clearActiveID()

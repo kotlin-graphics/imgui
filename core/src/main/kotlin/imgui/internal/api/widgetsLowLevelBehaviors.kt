@@ -546,7 +546,7 @@ internal interface widgetsLowLevelBehaviors {
                 val dir = if (isOpen) if (flags has TreeNodeFlag.UpsideDownArrow) Dir.Up else Dir.Down else Dir.Right
                 window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol, dir, 1f)
             } else // Leaf without bullet, left-adjusted text
-                textPos.x -= textOffsetX
+                textPos.x -= textOffsetX - padding.x
             if (flags has Tnf.ClipLabelForTrailingButton)
                 frameBb.max.x -= g.fontSize + style.framePadding.x
             if (g.logEnabled)
