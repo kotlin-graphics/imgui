@@ -920,74 +920,77 @@ sealed class FocusedFlag : FlagBase<FocusedFlag>() {
     }
 }
 
-typealias HoveredFlags = Flag<HoveredFlag<*>>
-typealias ItemHoveredFlags = Flag<HoveredFlag.Item>
-typealias WindowHoveredFlags = Flag<HoveredFlag.Window>
+typealias HoveredFlags = Flag<HoveredFlag>
 
 /** Flags: for IsItemHovered(), IsWindowHovered() etc.
  *  Note: if you are trying to check whether your mouse should be dispatched to Dear ImGui or to your app, you should use 'io.WantCaptureMouse' instead! Please read the FAQ!
  *  Note: windows with the ImGuiWindowFlags_NoInputs flag are ignored by IsWindowHovered() calls.*/
 
 @Suppress("INCONSISTENT_TYPE_PARAMETER_VALUES")
-sealed interface HoveredFlag<out HF : HoveredFlag<HF>> : Flag<HF> {
-    sealed interface Window : HoveredFlag<Window>
-    sealed class WindowBase(override val i: Int) : Window, FlagBase<Window>()
-
-    sealed interface Item : HoveredFlag<Item>
-    sealed class ItemBase(override val i: Int) : Item, FlagBase<Item>()
-
-    sealed class General(override val i: Int) : Window, Item, FlagBase<General>()
+sealed class HoveredFlag(override val i: Int) : Flag<HoveredFlag> {
 
     /** isWindowHovered() only: Return true if any children of the window is hovered */
-    object ChildWindows : WindowBase(1 shl 0)
+    object ChildWindows : HoveredFlag(1 shl 0)
 
     /** isWindowHovered() only: Test from root window (top most parent of the current hierarchy) */
-    object RootWindow : WindowBase(1 shl 1)
+    object RootWindow : HoveredFlag(1 shl 1)
 
     /** IsWindowHovered() only: Return true if any window is hovered    */
-    object AnyWindow : WindowBase(1 shl 2)
+    object AnyWindow : HoveredFlag(1 shl 2)
 
     /** IsWindowHovered() only: Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow) */
-    object NoPopupHierarchy : WindowBase(1 shl 3)
+    object NoPopupHierarchy : HoveredFlag(1 shl 3)
+
     //ImGuiHoveredFlags_DockHierarchy               = 1 << 4,   // IsWindowHovered() only: Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
 
     /** Return true even if a popup window is normally blocking access to this item/window  */
-    object AllowWhenBlockedByPopup : General(1 shl 5)
+    object AllowWhenBlockedByPopup : HoveredFlag(1 shl 5)
     //AllowWhenBlockedByModal     (1 shl 6),   // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
 
     /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns.   */
-    object AllowWhenBlockedByActiveItem : General(1 shl 7)
+    object AllowWhenBlockedByActiveItem : HoveredFlag(1 shl 7)
 
     /** IsItemHovered() only: Return true even if the position is obstructed or overlapped by another window,   */
-    object AllowWhenOverlapped : ItemBase(1 shl 8)
+    object AllowWhenOverlapped : HoveredFlag(1 shl 8)
 
     /** IsItemHovered() only: Return true even if the item is disabled */
-    object AllowWhenDisabled : ItemBase(1 shl 9)
+    object AllowWhenDisabled : HoveredFlag(1 shl 9)
 
     /** IsItemHovered() only: Disable using gamepad/keyboard navigation state when active, always query mouse. */
-    object NoNavOverride : General(1 shl 10)
+    object NoNavOverride : HoveredFlag(1 shl 10)
 
-    // Mouse Hovering delays (e.g. for tooltips)
-    // - for frequently actioned or hovered items providing a tooltip, you want may to use ImGuiHoveredFlags_ForTooltip (stationary + normal delay) so the tooltip doesn't show too often.
-    // - for items which main purpose is to be hovered for a tooltip, or items with low affordance, prefer no delay or shorter delay.
+    // Tooltips mode
+    // - typically used in IsItemHovered() + SetTooltip() sequence.
+    // - this is a shortcut to pull flags from 'style.HoverFlagsForTooltipMouse' or 'style.HoverFlagsForTooltipNav' where you can reconfigure desired behavior.
+    //   e.g. 'TooltipHoveredFlagsForMouse' defaults to 'ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayShort'.
+    // - for frequently actioned or hovered items providing a tooltip, you want may to use ImGuiHoveredFlags_ForTooltip (stationary + delay) so the tooltip doesn't show too often.
+    // - for items which main purpose is to be hovered, or items with low affordance, or less consistent app, prefer no delay or shorter delay.
+
+    /** Shortcut for standard flags when using IsItemHovered() + SetTooltip() sequence. */
+    object ForTooltip : HoveredFlag(1 shl 11)
+
+    // (Advanced) Mouse Hovering delays.
+    // - generally you can use ImGuiHoveredFlags_ForTooltip to use application-standardized flags.
+    // - use those if you need specific overrides.
 
     /** IsItemHovered() only: Require mouse to be stationary for style.HoverStationaryDelay (~0.15 sec) _at least one time_. After this, can move on same item. */
-    object Stationary : General(1 shl 11)
+    object Stationary : HoveredFlag(1 shl 12)
+
+    object DelayNone : HoveredFlag(1 shl 13)  // IsItemHovered() only: Return true immediately (default). As this is the default you generally ignore this.
 
     /** IsItemHovered() only: Return true after style.HoverDelayShort elapsed (~0.15 sec) (shared between items) + requires mouse to be stationary for style.HoverStationaryDelay (once per item). */
-    object DelayShort : General(1 shl 13)
+    object DelayShort : HoveredFlag(1 shl 14)
 
     /** IsItemHovered() only: Return true after style.HoverDelayNormal elapsed (~0.40 sec) (shared between items) + requires mouse to be stationary for style.HoverStationaryDelay (once per item). */
-    object DelayNormal : General(1 shl 14)
+    object DelayNormal : HoveredFlag(1 shl 15)
 
     /** IsItemHovered() only: Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
-    object NoSharedDelay : General(1 shl 15)
+    object NoSharedDelay : HoveredFlag(1 shl 16)
 
     @GenSealedEnum
     companion object {
-        val RootAndChildWindows: WindowHoveredFlags get() = RootWindow or ChildWindows
-        val RectOnly get() = AllowWhenBlockedByPopup or AllowWhenBlockedByActiveItem or AllowWhenOverlapped
-        val ForTooltip = Stationary / DelayNormal
+        val RectOnly: HoveredFlags = AllowWhenBlockedByPopup or AllowWhenBlockedByActiveItem or AllowWhenOverlapped
+        val RootAndChildWindows: HoveredFlags = RootWindow or ChildWindows
     }
 }
 

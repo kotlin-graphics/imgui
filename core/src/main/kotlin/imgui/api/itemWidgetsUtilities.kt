@@ -13,25 +13,33 @@ import imgui.HoveredFlag as Hf
 // - See Demo Window under "Widgets->Querying Status" for an interactive visualization of most of those functions.
 interface itemWidgetsUtilities {
 
-    /** This is roughly matching the behavior of internal-facing ItemHoverable()
-     *      - we allow hovering to be true when activeId==window.moveID, so that clicking on non-interactive items
-     *          such as a text() item still returns true with isItemHovered()
-     *      - this should work even for non-interactive items that have no ID, so we cannot use LastItemId  */
+    // This is roughly matching the behavior of internal-facing ItemHoverable()
+    // - we allow hovering to be true when ActiveId==window->MoveID, so that clicking on non-interactive items such as a Text() item still returns true with IsItemHovered()
+    // - this should work even for non-interactive items that have no ID, so we cannot use LastItemId
+    fun isItemHovered(flags_: HoveredFlags = none): Boolean {
 
-    fun isItemHovered(flags: ItemHoveredFlags = none): Boolean {
-
+        var flags = flags_
         val window = g.currentWindow!!
+
         if (g.navDisableMouseHover && !g.navDisableHighlight && flags hasnt Hf.NoNavOverride) {
 
             if (g.lastItemData.inFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled)
                 return false
             if (!isItemFocused)
                 return false
+
+            if (flags has HoveredFlag.ForTooltip)
+                flags /= g.style.hoverFlagsForTooltipNav
         } else {
             // Test for bounding box overlap, as updated as ItemAdd()
             val statusFlags = g.lastItemData.statusFlags
             if (statusFlags hasnt ItemStatusFlag.HoveredRect)
                 return false
+
+            if (flags has HoveredFlag.ForTooltip)
+                flags /= g.style.hoverFlagsForTooltipMouse
+
+            assert(flags hasnt (HoveredFlag.AnyWindow / HoveredFlag.RootWindow / HoveredFlag.ChildWindows / HoveredFlag.NoPopupHierarchy)) { "Flags not supported by this function" }
 
             // Done with rectangle culling so we can perform heavier checks now
             // Test if we are hovering the right window (our window could be behind another window)

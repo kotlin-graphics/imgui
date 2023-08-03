@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package imgui.demo.showExampleApp
 
 import glm_.hasnt
@@ -13,6 +15,7 @@ import imgui.ImGui.beginTabItem
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.colorEdit4
 import imgui.ImGui.combo
 import imgui.ImGui.cursorScreenPos
@@ -45,6 +48,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
+import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
@@ -188,6 +192,18 @@ object StyleEditor {
                 slider2("SeparatorTextAlign", style.separatorTextAlign, 0f, 1f, "%.2f")
                 slider2("SeparatorTextPadding", style.separatorTextPadding, 0f, 40f, "%.0f")
                 slider("LogSliderDeadzone", style::logSliderDeadzone, 0f, 12f, "%.0f")
+
+                separatorText("Tooltips")
+                for (n in 0..<2)
+                    if (treeNodeEx(if (n == 0) "HoverFlagsForTooltipMouse" else "HoverFlagsForTooltipNav")) {
+                        val p = if (n == 0) style::hoverFlagsForTooltipMouse else style::hoverFlagsForTooltipNav
+                        checkboxFlags("ImGuiHoveredFlags_DelayNone", p, HoveredFlag.DelayNone)
+                        checkboxFlags("ImGuiHoveredFlags_DelayShort", p, HoveredFlag.DelayShort)
+                        checkboxFlags("ImGuiHoveredFlags_DelayNormal", p, HoveredFlag.DelayNormal)
+                        checkboxFlags("ImGuiHoveredFlags_Stationary", p, HoveredFlag.Stationary)
+                        checkboxFlags("ImGuiHoveredFlags_NoSharedDelay", p, HoveredFlag.NoSharedDelay)
+                        treePop()
+                    }
 
                 separatorText("Misc")
                 slider2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f"); sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
@@ -397,7 +413,7 @@ object StyleEditor {
                     val drawList = windowDrawList
                     for (n in 0 until 256) {
                         val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize + cellSpacing),
-                                          basePos.y + (n / 16) * (cellSize + cellSpacing))
+                                basePos.y + (n / 16) * (cellSize + cellSpacing))
                         val cellP2 = Vec2(cellP1.x + cellSize, cellP1.y + cellSize)
                         val glyph = font.findGlyphNoFallback((base + n).c)
                         drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions

@@ -53,7 +53,7 @@ interface windowsUtilities {
     /** Is current window hovered (and typically: not blocked by a popup/modal)? see flags for options.
      *  NB: If you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use
      *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
-    fun isWindowHovered(flags: WindowHoveredFlags = none): Boolean {
+    fun isWindowHovered(flags: HoveredFlags = none): Boolean {
         val refWindow = g.hoveredWindow ?: return false
         var curWindow = g.currentWindow
 

@@ -3,7 +3,7 @@ package imgui.classes
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
-import imgui.Dir
+import imgui.*
 import imgui.ImGui.styleColorsClassic
 import imgui.internal.floor
 import java.util.*
@@ -169,6 +169,12 @@ class Style {
     /** Delay for IsItemHovered(ImGuiHoveredFlags_DelayNormal). " */
     var hoverDelayNormal = 0.4f
 
+    /** Default flags when using IsItemHovered(ImGuiHoveredFlags_ForTooltip) or BeginItemTooltip()/SetItemTooltip() while using mouse. */
+    var hoverFlagsForTooltipMouse: HoveredFlags = HoveredFlag.Stationary / HoveredFlag.DelayShort
+
+    /** Default flags when using IsItemHovered(ImGuiHoveredFlags_ForTooltip) or BeginItemTooltip()/SetItemTooltip() while using keyboard/gamepad. */
+    var hoverFlagsForTooltipNav: HoveredFlags = HoveredFlag.NoSharedDelay / HoveredFlag.DelayNormal
+
     /** JVM IMGUI   */
     var locale: Locale = Locale.US
 //    var locale: Locale = Locale("no", "NO")
@@ -187,6 +193,7 @@ class Style {
         it.mouseCursorScale = mouseCursorScale; it.antiAliasedLines = antiAliasedLines; it.antiAliasedLinesUseTex = antiAliasedLinesUseTex; it.antiAliasedFill = antiAliasedFill
         it.curveTessellationTol = curveTessellationTol; it.circleTessellationMaxError = circleTessellationMaxError; it.colors += colors; it.locale = locale
         it.hoverStationaryDelay = hoverStationaryDelay; it.hoverDelayShort = hoverDelayShort; it.hoverDelayNormal = hoverDelayNormal
+        it.hoverFlagsForTooltipMouse = hoverFlagsForTooltipMouse; it.hoverFlagsForTooltipNav = hoverFlagsForTooltipNav
     }
 
     init {
