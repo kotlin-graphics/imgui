@@ -50,6 +50,9 @@ sealed class ItemFlag(override val i: Int) : FlagBase<ItemFlag>() {
     /** Disable hoverable check in ItemHoverable() */
     object NoWindowHoverableCheck : ItemFlag(1 shl 8)  // false
 
+    /** Allow being overlapped by another widget. Not-hovered to Hovered transition deferred by a frame. */
+    object AllowOverlap : ItemFlag(1 shl 9)  // false
+
 
     // Controlled by widget code
 
@@ -159,7 +162,7 @@ sealed class ButtonFlag(override val i: Int) : FlagBase<ButtonFlag>() {
     /** allow interactions even if a child window is overlapping */
     internal object FlattenChildren : ButtonFlag(1 shl 11)
 
-    /** require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap() */
+    /** require previous frame HoveredId to either match id or be null before being usable. */
     internal object AllowOverlap : ButtonFlag(1 shl 12)
 
     /** disable automatically closing parent popup on press // [UNUSED] */

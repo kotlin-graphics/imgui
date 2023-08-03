@@ -17,7 +17,6 @@ import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNavID
 import imgui.ImGui.style
 import imgui.ImGui.tablePopBackgroundChannel
@@ -133,7 +132,7 @@ interface widgetsSelectables {
         if (flags has Sf._SelectOnClick) buttonFlags /= Bf.PressedOnClick
         if (flags has Sf._SelectOnRelease) buttonFlags /= Bf.PressedOnRelease
         if (flags has Sf.AllowDoubleClick) buttonFlags /= Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
-        if (flags has Sf.AllowOverlap) buttonFlags /= Bf.AllowOverlap
+        if (flags has Sf.AllowOverlap|| g.lastItemData.inFlags has If.AllowOverlap) buttonFlags /= Bf.AllowOverlap
 
         val wasSelected = selected
 
@@ -162,9 +161,6 @@ interface widgetsSelectables {
             }
         if (pressed)
             markItemEdited(id)
-
-        if (flags has Sf.AllowOverlap && g.activeId != id) // Because: we don't want to hover other while Active
-            setItemAllowOverlap()
 
         // In this branch, Selectable() cannot toggle the selection so this will never trigger.
         if (selected != wasSelected)

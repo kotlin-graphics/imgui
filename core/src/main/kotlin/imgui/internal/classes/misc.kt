@@ -305,18 +305,11 @@ class NextWindowData {
 
 data class NextItemData(
         var flags: NextItemDataFlags = none,
-        var itemFlags: ItemFlags = none,
-
-        /** Set by SetNextItemWidth() */
-        var width: Float = 0f,
-
-        /** Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging) */
-        var focusScopeId: ID = 0,
-
+        var itemFlags: ItemFlags = none, // Currently only tested/used for ImGuiItemflags_AllowOverlap.
+        var width: Float = 0f, // Set by SetNextItemWidth()
+        var focusScopeId: ID = 0, // Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging)
         var openCond: Cond = Cond.None,
-
-        /** Set by SetNextItemOpen() function. */
-        var openVal: Boolean = false) {
+        var openVal: Boolean = false) { // Set by SetNextItemOpen() function.
 
     /** Also cleared manually by ItemAdd()! */
     fun clearFlags() {

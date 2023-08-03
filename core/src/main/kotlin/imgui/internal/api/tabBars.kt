@@ -360,16 +360,13 @@ internal interface tabBars {
         }
 
         // Click to Select a tab
+        // Allow the close button to overlap
         var buttonFlags = (if (isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowOverlap
         if (g.dragDropActive)
             buttonFlags /= ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered, held) = ImGui.buttonBehavior(bb, id, buttonFlags)
         if (pressed && !isTabButton)
             queueFocus(tab)
-
-        // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
-        if (g.activeId != id) // Because: we don't want to hover other items while dragging active)
-            ImGui.setItemAllowOverlap()
 
         // Drag and drop: re-order tabs
         if (held && !tabAppearing && MouseButton.Left.isDragging())

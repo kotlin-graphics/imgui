@@ -1,8 +1,8 @@
 package imgui.internal.api
 
-import glm_.has
 import glm_.func.common.max
 import glm_.glm
+import glm_.has
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
@@ -42,7 +42,6 @@ import imgui.ImGui.setOwner
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
 import imgui.ImGui.testOwner
-import imgui.TreeNodeFlag
 import imgui.api.g
 import imgui.internal.classes.InputFlag
 import imgui.internal.classes.Rect
@@ -137,6 +136,8 @@ internal interface widgetsLowLevelBehaviors {
         val itemFlags = if (g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
         if (itemFlags has ItemFlag.ButtonRepeat)
             flags /= Bf.Repeat
+        if (itemFlags has ItemFlag.AllowOverlap)
+            flags /= Bf.AllowOverlap
 
         val backupHoveredWindow = g.hoveredWindow
         val hoveredWindow = g.hoveredWindow
@@ -168,8 +169,12 @@ internal interface widgetsLowLevelBehaviors {
             g.hoveredWindow = backupHoveredWindow
 
         // AllowOverlap mode (rarely used) requires previous frame HoveredId to be null or to match. This allows using patterns where a later submitted widget overlaps a previous one.
-        if (hovered && flags has Bf.AllowOverlap && g.hoveredIdPreviousFrame != id)
-            hovered = false
+        if (flags has Bf.AllowOverlap) {
+            if (hovered && g.hoveredIdPreviousFrame != id)
+                hovered = false
+            if (g.hoveredId == id) // FIXME: Added this to match legacy SetItemAllowOverlap(). Investigate precise side-effects of using (hovered==true) instead?
+                g.hoveredIdAllowOverlap = true
+        }
 
         // Mouse handling
         val testOwnerId = if (flags has Bf.NoTestKeyOwner) KeyOwner_Any else id
@@ -346,13 +351,19 @@ internal interface widgetsLowLevelBehaviors {
         if (!itemAdd(bb, id, null, ItemFlag.NoNav))
             return false
 
+        // FIXME: AFAIK the only leftover reason for passing ImGuiButtonFlags_AllowOverlap here is
+        // to allow caller of SplitterBehavior() to call SetItemAllowOverlap() after the item.
+        // Nowadays we would instead want to use SetNextItemAllowOverlap() before the item.
+        val buttonFlags: ButtonFlags = Bf.FlattenChildren
+//        #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+//                button_flags |= ImGuiButtonFlags_AllowOverlap;
+//        #endif
+
         val bbInteract = Rect(bb)
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
-        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowOverlap)
+        val (_, hovered, held) = buttonBehavior(bbInteract, id, buttonFlags)
         if (hovered)
             g.lastItemData.statusFlags /= ItemStatusFlag.HoveredRect // for IsItemHovered(), because bb_interact is larger than bb
-        if (g.activeId != id) // Because: we don't want to hover other while Active
-            setItemAllowOverlap()
 
         if (held || (hovered && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
             mouseCursor = if (axis == Axis.Y) MouseCursor.ResizeNS else MouseCursor.ResizeEW
@@ -461,10 +472,10 @@ internal interface widgetsLowLevelBehaviors {
         }
 
         var buttonFlags: ButtonFlags = none
-        if (flags has Tnf.AllowOverlap)
-            buttonFlags = buttonFlags or Bf.AllowOverlap
+        if (flags has Tnf.AllowOverlap || g.lastItemData.inFlags has ItemFlag.AllowOverlap)
+            buttonFlags /= Bf.AllowOverlap
         if (!isLeaf)
-            buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
+            buttonFlags /= Bf.PressedOnDragDropHold
 
         // We allow clicking on the arrow section with keyboard modifiers held, in order to easily
         // allow browsing a tree while preserving selection with code implementing multi-selection patterns.
@@ -526,8 +537,6 @@ internal interface widgetsLowLevelBehaviors {
                 g.lastItemData.statusFlags /= ItemStatusFlag.ToggledOpen
             }
         }
-        if (flags has Tnf.AllowOverlap && g.activeId != id) // Because: we don't want to hover other while Active
-            setItemAllowOverlap()
 
         // In this branch, TreeNodeBehavior() cannot toggle the selection so this will never trigger.
         if (selected != wasSelected)
