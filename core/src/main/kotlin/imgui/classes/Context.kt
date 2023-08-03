@@ -529,7 +529,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
 
     var mouseCursor = MouseCursor.Arrow
-    var mouseMovingFrames = 0
 
     /** Time the mouse has been stationary (with some loose heuristic) */
     var mouseStationaryTimer = 0f

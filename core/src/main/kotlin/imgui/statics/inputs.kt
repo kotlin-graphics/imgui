@@ -95,14 +95,12 @@ fun updateMouseInputs() {
         else
             mouseDelta put 0f
 
-        // Update stationary timer. Only reset on 2 successive moving frames.
-        // FIXME: May need to expose threshold or treat touch inputs differently.
+        // Update stationary timer.
+        // FIXME: May need to rework again to have some tolerance for occasional small movement, while being functional on high-framerates.
         val mouseStationaryThreshold = if (io.mouseSource == MouseSource.Mouse) 2f else 3f // Slightly higher threshold for ImGuiMouseSource_TouchScreen/ImGuiMouseSource_Pen, may need rework.
-        g.mouseMovingFrames = if (io.mouseDelta.lengthSqr >= mouseStationaryThreshold * mouseStationaryThreshold) g.mouseMovingFrames + 1 else 0
-        if (g.mouseMovingFrames == 0)
-            g.mouseStationaryTimer += io.deltaTime
-        else if (g.mouseMovingFrames > 1)
-            g.mouseStationaryTimer = 0f
+        val mouseStationary = io.mouseDelta.lengthSqr <= mouseStationaryThreshold * mouseStationaryThreshold
+        g.mouseStationaryTimer = if (mouseStationary) g.mouseStationaryTimer + io.deltaTime else 0f
+        //IMGUI_DEBUG_LOG("%.4f\n", g.MouseStationaryTimer);
 
         // If mouse moved we re-enable mouse hovering in case it was disabled by gamepad/keyboard. In theory should use a >0.0f threshold but would need to reset in everywhere we set this to true.
         if (io.mouseDelta.x != 0f || io.mouseDelta.y != 0f)
