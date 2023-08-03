@@ -146,7 +146,7 @@ internal interface widgets {
         }
     }
 
-    fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags_: ButtonFlags = none): Boolean {
+    fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags: ButtonFlags = none): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -164,10 +164,6 @@ internal interface widgets {
         itemSize(size, style.framePadding.y)
         if (!itemAdd(bb, id))
             return false
-
-        var flags = flags_
-        if (g.lastItemData.inFlags has ItemFlag.ButtonRepeat)
-            flags /= ButtonFlag.Repeat
 
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
@@ -189,9 +185,7 @@ internal interface widgets {
     }
 
     /** square button with an arrow shape */
-    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags = none): Boolean {
-
-        var flags = flags_
+    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags: ButtonFlags = none): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -201,9 +195,6 @@ internal interface widgets {
         val defaultSize = frameHeight
         itemSize(size, if (size.y >= defaultSize) style.framePadding.y else -1f)
         if (!itemAdd(bb, id)) return false
-
-        if (g.lastItemData.inFlags has ItemFlag.ButtonRepeat)
-            flags /= ButtonFlag.Repeat
 
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
