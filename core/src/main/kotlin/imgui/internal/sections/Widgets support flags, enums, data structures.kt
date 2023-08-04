@@ -163,7 +163,7 @@ sealed class ButtonFlag(override val i: Int) : FlagBase<ButtonFlag>() {
     internal object FlattenChildren : ButtonFlag(1 shl 11)
 
     /** require previous frame HoveredId to either match id or be null before being usable. */
-    internal object AllowOverlap : ButtonFlag(1 shl 12)
+    /*internal*/ object AllowOverlap : ButtonFlag(1 shl 12)
 
     /** disable automatically closing parent popup on press // [UNUSED] */
     internal object DontClosePopups : ButtonFlag(1 shl 13)
