@@ -142,22 +142,22 @@ sealed class ButtonFlag(override val i: Int) : FlagBase<ButtonFlag>() {
     internal object PressedOnClick : ButtonFlag(1 shl 4)
 
     /** [Default] return true on click + release on same item <-- this is what the majority of Button are using */
-    internal object PressedOnClickRelease : ButtonFlag(1 shl 5)
+    /*internal*/ object PressedOnClickRelease : ButtonFlag(1 shl 5)
 
     /** return true on click + release even if the release event is not done while hovering the item */
-    internal object PressedOnClickReleaseAnywhere : ButtonFlag(1 shl 6)
+    /*internal*/ object PressedOnClickReleaseAnywhere : ButtonFlag(1 shl 6)
 
     /** return true on release (default requires click+release) */
-    internal object PressedOnRelease : ButtonFlag(1 shl 7)
+    /*internal*/ object PressedOnRelease : ButtonFlag(1 shl 7)
 
     /** return true on double-click (default requires click+release) */
-    internal object PressedOnDoubleClick : ButtonFlag(1 shl 8)
+    /*internal*/ object PressedOnDoubleClick : ButtonFlag(1 shl 8)
 
     /** return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
     internal object PressedOnDragDropHold : ButtonFlag(1 shl 9)
 
     /** hold to repeat  */
-    internal object Repeat : ButtonFlag(1 shl 10)
+    /*internal*/ object Repeat : ButtonFlag(1 shl 10)
 
     /** allow interactions even if a child window is overlapping */
     internal object FlattenChildren : ButtonFlag(1 shl 11)
@@ -187,10 +187,10 @@ sealed class ButtonFlag(override val i: Int) : FlagBase<ButtonFlag>() {
     internal object NoHoveredOnFocus : ButtonFlag(1 shl 19)
 
     /** don't set key/input owner on the initial click (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
-    internal object NoSetKeyOwner : ButtonFlag(1 shl 20)
+    /*internal*/ object NoSetKeyOwner : ButtonFlag(1 shl 20)
 
     /** don't test key/input owner when polling the key (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
-    internal object NoTestKeyOwner : ButtonFlag(1 shl 21)
+    /*internal*/ object NoTestKeyOwner : ButtonFlag(1 shl 21)
 
     @GenSealedEnum
     companion object {
