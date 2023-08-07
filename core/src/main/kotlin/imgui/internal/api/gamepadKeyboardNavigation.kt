@@ -193,7 +193,7 @@ internal interface gamepadKeyboardNavigation {
         }
 
         // Tabbing: Activates Inputable, otherwise only Focus
-        if (g.navMoveFlags has NavMoveFlag.Tabbing && result.inFlags has ItemFlag.Inputable)
+        if (g.navMoveFlags has NavMoveFlag.Tabbing && result.inFlags hasnt ItemFlag.Inputable)
             g.navMoveFlags -= NavMoveFlag.Activate
 
         // Activate
