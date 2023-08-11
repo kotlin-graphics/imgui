@@ -10,6 +10,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.defaultFont
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
+import imgui.ImGui.setCurrentFont
 import imgui.ImGui.style
 import imgui.font.Font
 import imgui.internal.classes.ColorMod
@@ -23,7 +24,7 @@ interface parametersStacks {
 
     /** use NULL as a shortcut to push default font */
     fun pushFont(font: Font = defaultFont) {
-        font.setCurrent()
+        setCurrentFont(font)
         g.fontStack.push(font)
         g.currentWindow!!.drawList.pushTextureID(font.containerAtlas.texID)
     }
@@ -31,7 +32,7 @@ interface parametersStacks {
     fun popFont() {
         g.currentWindow!!.drawList.popTextureID()
         g.fontStack.pop()
-        (g.fontStack.lastOrNull() ?: defaultFont).setCurrent()
+        setCurrentFont(g.fontStack.lastOrNull() ?: defaultFont)
     }
 
     /** FIXME: This may incur a round-trip (if the end user got their data from a float4) but eventually we aim to store

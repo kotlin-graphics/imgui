@@ -672,20 +672,6 @@ class Font {
         return true
     }
 
-    fun setCurrent() {
-        assert(isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
-        assert(scale > 0f)
-        g.font = this
-        g.fontBaseSize = io.fontGlobalScale * g.font.fontSize * g.font.scale
-        g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
-
-        val atlas = g.font.containerAtlas
-        g.drawListSharedData.texUvWhitePixel put atlas.texUvWhitePixel
-        g.drawListSharedData.texUvLines = atlas.texUvLines
-        g.drawListSharedData.font = g.font
-        g.drawListSharedData.fontSize = g.fontSize
-    }
-
 
     // [JVM] cant be static because we need the Font class instance to call `findGlyphNoFallback`
     fun findFirstExistingGlyph(candidateChars: List<Char>) = candidateChars.find { findGlyphNoFallback(it) != null }
