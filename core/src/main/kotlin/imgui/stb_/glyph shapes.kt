@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUnsignedTypes::class, ExperimentalStdlibApi::class)
+
 package imgui.stb_
 
 import glm_.f
@@ -33,12 +35,14 @@ class Vertex {
         this.cY = cY
     }
 
-    enum class Type { none, move, line, curve, cubic;
+    enum class Type {
+        none, move, line, curve, cubic;
 
         companion object {
             infix fun of(ubyte: UByte) = values()[ubyte.i]
         }
     }
+
     override fun toString() = "x=$x y=$y cx=$cX cy=$cY cx1=$cX1 cy1=$cY1 type=$type"
 }
 
@@ -57,17 +61,17 @@ class Vertex {
 // draws a line from previous endpoint to its x,y; a curveto
 // draws a quadratic bezier from previous endpoint to
 // its x,y, using cx,cy as the bezier control point.
-infix fun FontInfo.getGlyphShape(glyphIndex: Int): Array<Vertex> = when {
+infix fun FontInfo.getGlyphShape(glyphIndex: Int): Pair<Array<Vertex>, Int> = when {
     cff.isEmpty() -> getGlyphShapeTT(glyphIndex)
     else -> getGlyphShapeT2(glyphIndex)
 }
 
-fun FontInfo.getGlyphShapeTT(glyphIndex: Int): Array<Vertex> {
+fun FontInfo.getGlyphShapeTT(glyphIndex: Int): Pair<Array<Vertex>, Int> {
     lateinit var vertices: Array<Vertex>
-    var numVertices: Int
+    var numVertices = 0
     val g = getGlyfOffset(glyphIndex)
 
-    if (g < 0) return emptyArray()
+    if (g < 0) return emptyArray<Vertex>() to 0
 
     val numberOfContours = data.short(g)
 
@@ -243,10 +247,11 @@ fun FontInfo.getGlyphShapeTT(glyphIndex: Int): Array<Vertex> {
                 val n = sqrt(mtx[2] * mtx[2] + mtx[3] * mtx[3])
 
                 // Get indexed glyph.
-                val compVerts = getGlyphShape(gIdx)
-                if (compVerts.isNotEmpty()) {
+                val (compVerts, compNumVerts) = getGlyphShape(gIdx)
+                if (compNumVerts > 0) {
                     // Transform vertices.
-                    for (v in compVerts) {
+                    for (i in 0..<compNumVerts) {
+                        val v = compVerts[i]
                         var x = v.x
                         var y = v.y
                         v.x = (m * (mtx[0] * x + mtx[2] * y + mtx[4])).i
@@ -256,12 +261,12 @@ fun FontInfo.getGlyphShapeTT(glyphIndex: Int): Array<Vertex> {
                         v.cY = (n * (mtx[1] * x + mtx[3] * y + mtx[5])).i
                     }
                     // Append vertices.
-                    val tmp = Array(numVertices + compVerts.size) {
-                        if (it < numVertices) vertices!![it]
+                    val tmp = Array(numVertices + compNumVerts) {
+                        if (it < numVertices) vertices[it]
                         else compVerts[it - numVertices]
                     }
                     vertices = tmp
-                    numVertices += compVerts.size
+                    numVertices += compNumVerts
                 }
                 // More components ?
                 more = flags has (1 shl 5)
@@ -270,11 +275,12 @@ fun FontInfo.getGlyphShapeTT(glyphIndex: Int): Array<Vertex> {
 
         else -> {} // numberOfCounters == 0, do nothing
     }
-    return vertices
+
+    return vertices to numVertices
 }
 
 
-fun getGlyphShapeT2(glyphIndex: Int): Array<Vertex> {
+fun getGlyphShapeT2(glyphIndex: Int): Pair<Array<Vertex>, Int> {
     TODO()
 //        // runs the charstring twice, once to count and once to output (to avoid realloc)
 //        val countCtx = Csctx(true)

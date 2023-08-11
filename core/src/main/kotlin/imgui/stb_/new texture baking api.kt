@@ -1,8 +1,8 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package imgui.stb_
 
 import glm_.vec2.Vec2
-import glm_.vec2.Vec2i
-import glm_.vec2.operators.div
 import kotlin.math.floor
 
 //////////////////////////////////////////////////////////////////////////////
@@ -235,12 +235,10 @@ fun PackContext.packFontRangesRenderIntoRects(info: FontInfo, ranges: Array<Pack
                                                  0f, 0f,
                                                  glyph)
                     if (hOversample > 1u)
-                        TrueType.hPrefilter(pixels!!, r.x + r.y * strideInBytes,
-                                            r.w, r.h, strideInBytes, hOversample)
+                        TrueType.hPrefilter(pixels!!, r.x + r.y * strideInBytes, r.w, r.h, strideInBytes, hOversample)
 
                     if (vOversample > 1u)
-                        TrueType.vPrefilter(pixels!!, r.x + r.y * strideInBytes,
-                                            r.w, r.h, strideInBytes, vOversample)
+                        TrueType.vPrefilter(pixels!!, r.x + r.y * strideInBytes, r.w, r.h, strideInBytes, vOversample)
 
                     bc.x0 = r.x
                     bc.y0 = r.y

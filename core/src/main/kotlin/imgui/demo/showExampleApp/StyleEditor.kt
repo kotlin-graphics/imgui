@@ -42,6 +42,7 @@ import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.showFontAtlas
 import imgui.ImGui.showFontSelector
 import imgui.ImGui.slider2
+import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
@@ -359,7 +360,9 @@ object StyleEditor {
     fun debugNodeFont(font: Font) {
         val name = font.configData.getOrNull(0)?.name ?: ""
         val fontDetailsOpened = treeNode(font, "Font \\\"$name\\\"\\n%.2f px ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
-        sameLine(); smallButton("Set as default") { io.fontDefault = font }
+        sameLine()
+        if (smallButton("Set as default"))
+            io.fontDefault = font
         if (!fontDetailsOpened)
             return
 
@@ -413,7 +416,7 @@ object StyleEditor {
                     val drawList = windowDrawList
                     for (n in 0 until 256) {
                         val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize + cellSpacing),
-                                basePos.y + (n / 16) * (cellSize + cellSpacing))
+                                          basePos.y + (n / 16) * (cellSize + cellSpacing))
                         val cellP2 = Vec2(cellP1.x + cellSize, cellP1.y + cellSize)
                         val glyph = font.findGlyphNoFallback((base + n).c)
                         drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions

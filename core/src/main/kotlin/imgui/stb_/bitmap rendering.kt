@@ -1,6 +1,7 @@
+@file:OptIn(ExperimentalStdlibApi::class, ExperimentalUnsignedTypes::class)
+
 package imgui.stb_
 
-import glm_.b
 import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
@@ -65,13 +66,13 @@ import kotlin.math.sqrt
 //STBTT_DEF void stbtt_MakeGlyphBitmap(const stbtt_fontinfo *info, unsigned char *output, int out_w, int out_h, int out_stride, float scale_x, float scale_y, int glyph);
 
 fun FontInfo.makeGlyphBitmapSubpixel(output: UByteArray, ptr: Int, outW: Int, outH: Int, outStride: Int, scaleX: Float, scaleY: Float, shiftX: Float, shiftY: Float, glyph: Int) {
-    val vertices = getGlyphShape(glyph)
+    val (vertices, numVertices) = getGlyphShape(glyph)
 
     val (ix0, iy0, _, _) = getGlyphBitmapBoxSubpixel(glyph, scaleX, scaleY, shiftX, shiftY)
     val gbm = Bitmap(outW, outH, outStride, output, ptr)
 
     if (gbm.w != 0 && gbm.h != 0)
-        gbm.rasterize(0.35f, vertices, scaleX, scaleY, shiftX, shiftY, ix0, iy0, true)
+        gbm.rasterize(0.35f, vertices, numVertices, scaleX, scaleY, shiftX, shiftY, ix0, iy0, true)
 }
 
 //STBTT_DEF void stbtt_MakeGlyphBitmapSubpixelPrefilter(const stbtt_fontinfo *info, unsigned char *output, int out_w, int out_h, int out_stride, float scale_x, float scale_y, float shift_x, float shift_y, int oversample_x, int oversample_y, float *sub_x, float *sub_y, int glyph);
@@ -79,33 +80,35 @@ fun FontInfo.makeGlyphBitmapSubpixel(output: UByteArray, ptr: Int, outW: Int, ou
 fun FontInfo.getGlyphBitmapBox(glyph: Int, scaleX: Float, scaleY: Float, box: Vec4i = Vec4i()): Vec4i = getGlyphBitmapBoxSubpixel(glyph, scaleX, scaleY, box = box)
 
 fun FontInfo.getGlyphBitmapBoxSubpixel(glyph: Int, scaleX: Float, scaleY: Float, shiftX: Float = 0f, shiftY: Float = 0f, box: Vec4i = Vec4i()): Vec4i =
-        if (!getGlyphBox(glyph, box))
-        // e.g. space character
-            box(0) as Vec4i // TODO ->glm
-        else
-        // move to integral bboxes (treating pixels as little squares, what pixels get touched)?
-            Vec4i(floor(+box[0] * scaleX + shiftX),
-                  floor(-box[3] * scaleY + shiftY),
-                  ceil(+box[2] * scaleX + shiftX),
-                  ceil(-box[1] * scaleY + shiftY))
+    if (!getGlyphBox(glyph, box))
+    // e.g. space character
+        box(0) as Vec4i // TODO ->glm
+    else
+    // move to integral bboxes (treating pixels as little squares, what pixels get touched)?
+        Vec4i(floor(+box[0] * scaleX + shiftX),
+              floor(-box[3] * scaleY + shiftY),
+              ceil(+box[2] * scaleX + shiftX),
+              ceil(-box[1] * scaleY + shiftY))
 
 /** @TODO: don't expose this structure */
 class Bitmap(val w: Int, val h: Int,
              val stride: Int,
              val pixels: UByteArray, val ptr: Int)
 
-fun Bitmap.rasterize(flatnessInPixels: Float, vertices: Array<Vertex>, scaleX: Float, scaleY: Float,
+fun Bitmap.rasterize(flatnessInPixels: Float, vertices: Array<Vertex>, numVerts: Int, scaleX: Float, scaleY: Float,
                      shiftX: Float, shiftY: Float, xOff: Int, yOff: Int, invert: Boolean) {
 
     val scale = if (scaleX > scaleY) scaleY else scaleX
-    val windingLengths = ArrayList<Int>()
-    val windings = flattenCurves(vertices, flatnessInPixels / scale, windingLengths)
+    val (windings, windingLengths, windingCount) = flattenCurves(vertices, numVerts, flatnessInPixels / scale)
     if (windings.isNotEmpty())
-        rasterize(windings, windingLengths, scaleX, scaleY, shiftX, shiftY, xOff, yOff, invert)
+        rasterize(windings, windingLengths, windingCount, scaleX, scaleY, shiftX, shiftY, xOff, yOff, invert)
 }
 
-/** returns the contours */
-fun flattenCurves(vertices: Array<Vertex>, objspaceFlatness: Float, contourLengths: ArrayList<Int>): Array<Vec2> {
+/** returns the contours
+ *
+ *  [JVM]
+ *  @return [windings, windingLengths, windingCount]*/
+fun flattenCurves(vertices: Array<Vertex>, numVerts: Int, objspaceFlatness: Float): Triple<Array<Vec2>, IntArray, Int> {
     var points: Array<Vec2>? = null
     var numPoints = 0
 
@@ -113,21 +116,23 @@ fun flattenCurves(vertices: Array<Vertex>, objspaceFlatness: Float, contourLengt
     var start = 0
 
     // count how many "moves" there are to get the contour count
-    var n = vertices.count { it.type == Vertex.Type.move.ordinal.ub }
+    val numContours = vertices.take(numVerts).count { it.type == Vertex.Type.move.ordinal.ub }
 
-    if (n == 0) return emptyArray()
+    if (numContours == 0)
+        return Triple(emptyArray(), IntArray(0), 0)
 
-    repeat(n) { contourLengths += 0 }
+    val contourLengths = IntArray(numContours)
 
     // make two passes through the points so we don't need to realloc
-    for (pass in 0..1) {
+    for (pass in 0..<2) {
         var x = 0f
         var y = 0f
         if (pass == 1)
             points = Array(numPoints) { Vec2() }
         numPoints = 0
-        n = -1
-        for (v in vertices)
+        var n = -1
+        for (i in 0..<numVerts) {
+            val v = vertices[i]
             when (v.type.i) {
                 Vertex.Type.move.ordinal -> { // start the next contour
                     if (n >= 0)
@@ -163,10 +168,11 @@ fun flattenCurves(vertices: Array<Vertex>, objspaceFlatness: Float, contourLengt
 
                 else -> {}
             }
+        }
         contourLengths[n] = numPoints - start
     }
 
-    return points!!
+    return Triple(points!!, contourLengths, numContours)
 }
 
 fun addPoint(points: Array<Vec2>?, n: Int, x: Float, y: Float) {
@@ -241,7 +247,9 @@ fun tesselateCubic(points: Array<Vec2>?, numPoints_: Int, x0: Float, y0: Float, 
     return numPoints
 }
 
-fun Bitmap.rasterize(pts: Array<Vec2>, wCount: ArrayList<Int>, scaleX: Float, scaleY: Float, shiftX: Float, shiftY: Float, offX: Int, offY: Int, invert: Boolean) {
+fun Bitmap.rasterize(pts: Array<Vec2>, wCount: IntArray, windings: Int, scaleX: Float, scaleY: Float,
+                     shiftX: Float, shiftY: Float, offX: Int, offY: Int, invert: Boolean) {
+
     val yScaleInv = if (invert) -scaleY else scaleY
     val vsubsample = when (TrueType.RASTERIZER_VERSION) {
         1 -> if (h < 8) 15 else 5
@@ -251,35 +259,38 @@ fun Bitmap.rasterize(pts: Array<Vec2>, wCount: ArrayList<Int>, scaleX: Float, sc
     // vsubsample should divide 255 evenly; otherwise we won't reach full opacity
 
     // now we have to blow out the windings into explicit edge lists
-    var n = wCount.sum()
+    var n = wCount.take(windings).sum()
 
     val e = Array(n + 1) { TrueType.Edge() } // add an extra one as a sentinel
     n = 0
 
     var m = 0
-    for (w in wCount) {
-        val p = m
-        m += w
-        var j = w - 1
+    for (i in 0..<windings) {
+        val p = object {
+            val m_ = m
+            operator fun get(index: Int) = pts[m_ + index]
+        }
+        m += wCount[i]
+        var j = wCount[i] - 1
         var k = 0
-        while (k < w) {
+        while (k < wCount[i]) {
             var a = k
             var b = j
             // skip the edge if horizontal
-            if (pts[p + j].y == pts[p + k].y) {
+            if (p[j].y == p[k].y) {
                 j = k++
                 continue
             }
             // add edge from j to k to the list
             e[n].invert = false
-            if (if (invert) pts[p + j].y > pts[p + k].y else pts[p + j].y < pts[p + k].y) {
+            if (if (invert) p[j].y > p[k].y else p[j].y < p[k].y) {
                 e[n].invert = true
                 a = j; b = k
             }
-            e[n].x0 = pts[p + a].x * scaleX + shiftX
-            e[n].y0 = (pts[p + a].y * yScaleInv + shiftY) * vsubsample
-            e[n].x1 = pts[p + b].x * scaleX + shiftX
-            e[n].y1 = (pts[p + b].y * yScaleInv + shiftY) * vsubsample
+            e[n].x0 = p[a].x * scaleX + shiftX
+            e[n].y0 = (p[a].y * yScaleInv + shiftY) * vsubsample
+            e[n].x1 = p[b].x * scaleX + shiftX
+            e[n].y1 = (p[b].y * yScaleInv + shiftY) * vsubsample
             ++n
             j = k++
         }
@@ -301,34 +312,38 @@ fun sortEdges(edges: Array<TrueType.Edge>, n: Int) {
     sortEdgesInsSort(edges, n)
 }
 
-fun sortEdgesQuicksort(edges: Array<TrueType.Edge>, p: Int, n_: Int) {
-    var ptr = p
+fun sortEdgesQuicksort(edges: Array<TrueType.Edge>, ptr_: Int, n_: Int) {
+    var ptr = ptr_
     var n = n_
 
+    val p = object {
+        operator fun get(index: Int): TrueType.Edge = edges[ptr + index]
+        operator fun set(index: Int, edge: TrueType.Edge) = edges.set(ptr + index, edge)
+    }
     /* threshold for transitioning to insertion sort */
     while (n > 12) {
         lateinit var t: TrueType.Edge
 
         /* compute median of three */
         val m = n shr 1
-        val c01 = edges[ptr + 0] < edges[ptr + m]
-        val c12 = edges[ptr + m] < edges[ptr + n - 1]
+        val c01 = p[0] < p[m]
+        val c12 = p[m] < p[n - 1]
         /* if 0 >= mid >= end, or 0 < mid < end, then use mid */
         if (c01 != c12) {
             /* otherwise, we'll need to swap something else to middle */
-            val c = edges[ptr + 0] < edges[ptr + n - 1]
+            val c = p[0] < p[n - 1]
             /* 0>mid && mid<n:  0>n => n; 0<n => 0 */
             /* 0<mid && mid>n:  0>n => 0; 0<n => n */
             val z = if (c == c12) 0 else n - 1
-            t = edges[ptr + z]
-            edges[ptr + z] = edges[ptr + m]
-            edges[ptr + m] = t
+            t = p[z]
+            p[z] = p[m]
+            p[m] = t
         }
         /* now p[m] is the median-of-three */
         /* swap it to the beginning so it won't move around */
-        t = edges[ptr + 0]
-        edges[ptr + 0] = edges[ptr + m]
-        edges[ptr + m] = t
+        t = p[0]
+        p[0] = p[m]
+        p[m] = t
 
         /* partition loop */
         var i = 1
@@ -336,15 +351,19 @@ fun sortEdgesQuicksort(edges: Array<TrueType.Edge>, p: Int, n_: Int) {
         while (true) {
             /* handling of equality is crucial here */
             /* for sentinels & efficiency with duplicates */
-            while (true)
-                if (edges[ptr + i++] >= edges[ptr + 0]) break
-            while (true)
-                if (edges[ptr + 0] >= edges[ptr + j--]) break
+            while (true) {
+                if (p[i] >= p[0]) break
+                ++i
+            }
+            while (true) {
+                if (p[0] >= p[j]) break
+                --j
+            }
             /* make sure we haven't crossed */
             if (i >= j) break
-            t = edges[ptr + i]
-            edges[ptr + i] = edges[ptr + j]
-            edges[ptr + j] = t
+            t = p[i]
+            p[i] = p[j]
+            p[j] = t
 
             ++i
             --j

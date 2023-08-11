@@ -1,11 +1,16 @@
+@file:OptIn(ExperimentalUnsignedTypes::class)
+
 package imgui.stb_
 
 import glm_.f
+import glm_.i
+import glm_.s
 import glm_.vec3.Vec3i
 import glm_.vec4.Vec4i
 import imgui.stb_.TrueType.getGlyfOffset
 import imgui.stb_.TrueType.getGlyphInfoT2
 import imgui.stb_.TrueType.short
+import imgui.stb_.TrueType.ulong
 import imgui.stb_.TrueType.ushort
 
 //////////////////////////////////////////////////////////////////////////////
@@ -75,34 +80,34 @@ infix fun FontInfo.findGlyphIndex(unicodeCodepoint: Int): Int {
 
                 val offset = data.ushort(indexMap + 14 + segCount.i * 6 + 2 + 2 * item.i)
                 if (offset == 0u)
-                    return unicodeCodepoint + data.ushort(indexMap + 14 + segCount.i * 4 + 2 + 2 * item.i).i
+                    return (unicodeCodepoint + data.ushort(indexMap + 14 + segCount.i * 4 + 2 + 2 * item.i).i).s.i
 
                 data.ushort(offset.i + (unicodeCodepoint - start.i) * 2 + indexMap + 14 + segCount.i * 6 + 2 + 2 * item.i).i
             }
         }
 
         12, 13 -> {
-            TODO()
-//                stbtt_uint32 ngroups = ttULONG (data + indexMap + 12)
-//                stbtt_int32 low, high
-//                low = 0; high = (stbtt_int32) ngroups
-//                        // Binary search the right group.
-//                        while (low < high) {
-//                            stbtt_int32 mid = low +((high - low) > > 1) // rounds down, so low <= mid < high
-//                            stbtt_uint32 start_char = ttULONG (data + indexMap + 16 + mid * 12)
-//                            stbtt_uint32 end_char = ttULONG (data + indexMap + 16 + mid * 12 + 4)
-//                            if ((stbtt_uint32) unicode_codepoint < start_char)
-//                                high = mid
-//                            else if ((stbtt_uint32) unicode_codepoint > end_char)
-//                                low = mid + 1
-//                            else {
-//                                stbtt_uint32 start_glyph = ttULONG (data + indexMap + 16 + mid * 12 + 8)
-//                                if (format == 12)
-//                                    return start_glyph + unicodeCodepoint - start_char
-//                                else // format == 13
-//                                    return start_glyph
-//                            }
-//                        }
+            val nGroups = data.ulong(indexMap + 12)
+            var low = 0
+            var high = nGroups.i
+                    // Binary search the right group.
+                    while (low < high) {
+                        val mid = low +((high - low) shr 1) // rounds down, so low <= mid < high
+                        val startChar = data.ulong(indexMap + 16 + mid * 12)
+                        val endChar = data.ulong(indexMap + 16 + mid * 12 + 4)
+                        if (unicodeCodepoint.ui < startChar)
+                            high = mid
+                        else if (unicodeCodepoint.ui > endChar)
+                            low = mid + 1
+                        else {
+                            val startGlyph = data.ulong(indexMap + 16 + mid * 12 + 8)
+                            return startGlyph.i + when (format) {
+                                12 -> unicodeCodepoint - startChar.i
+                                // format == 13
+                                else -> 0
+                            }
+                        }
+                    }
             0 // not found
         }
 

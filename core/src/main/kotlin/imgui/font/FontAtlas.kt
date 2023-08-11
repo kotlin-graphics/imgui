@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
+@file:OptIn(ExperimentalUnsignedTypes::class, ExperimentalStdlibApi::class)
 
 package imgui.font
 
@@ -615,15 +615,16 @@ class FontAtlas {
 
             // Find index from cfg.DstFont (we allow the user to set cfg.DstFont. Also it makes casual debugging nicer than when storing indices)
             srcTmp.dstIndex = -1
-            for (outputIdx in 0 until fonts.size) {
-                if (srcTmp.dstIndex != -1) break
+            for (outputIdx in fonts.indices) {
+                if (srcTmp.dstIndex != -1)
+                    break
                 if (cfg.dstFont == fonts[outputIdx])
                     srcTmp.dstIndex = outputIdx
             }
-//            if (srcTmp.dstIndex == -1) {
-//                assert(srcTmp.dstIndex != -1) { "cfg.DstFont not pointing within atlas->Fonts[] array?" }
-//                return false
-//            }
+            if (srcTmp.dstIndex == -1) {
+                System.err.println("cfg.DstFont not pointing within atlas->Fonts[] array?")
+                return false
+            }
             // Initialize helper structure for font loading and verify that the TTF/OTF data is correct
             val fontOffset = getFontOffsetForIndex(cfg.fontData.asUByteArray(), cfg.fontNo)
             assert(fontOffset >= 0) { "FontData is incorrect, or FontNo cannot be found." }
@@ -847,11 +848,8 @@ class FontAtlas {
     }
 
     // Helper for font builder
-    fun getBuilderForStbTruetype(): FontBuilderIO {
-        val io = object : FontBuilderIO() {
-            override fun build(): Boolean = buildWithStbTrueType()
-        }
-        return io
+    fun getBuilderForStbTruetype(): FontBuilderIO = object : FontBuilderIO() {
+        override fun build(): Boolean = buildWithStbTrueType()
     }
 
     /** ~ImFontAtlasBuildInit

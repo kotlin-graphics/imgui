@@ -14,6 +14,7 @@ import uno.kotlin.NUL
 import unsigned.toBigInt
 import unsigned.toUInt
 import unsigned.ushr
+import java.io.File
 import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -49,7 +50,13 @@ fun round(f: Float): Float = (f + 0.5f).i.f
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: Hashing
 // -----------------------------------------------------------------------------------------------------------------
-fun fileLoadToMemory(filename: String): ByteArray? = ClassLoader.getSystemResourceAsStream(filename)?.use { it.readBytes() }
+fun fileLoadToMemory(filename: String): ByteArray? {
+    val file = File(filename)
+    return when {
+        file.exists() && file.canRead() -> file.readBytes()
+        else -> null
+    }
+}
 
 /** [JVM] */
 fun hashData(data: Int, seed: ID = 0): ID {
