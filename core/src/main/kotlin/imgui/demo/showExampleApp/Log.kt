@@ -126,8 +126,8 @@ object Log {
                 // This is because we don't have random access to the result of our filter.
                 // A real application processing logs with ten of thousands of entries may want to store the result of
                 // search/filter.. especially if the filtering function is not trivial (e.g. reg-exp).
-                    for (line_no in 0 until lineOffsets.size) {
-                        val line = buf.subSequence(lineOffsets[line_no], if (line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
+                    for (lineNo in 0 until lineOffsets.size) {
+                        val line = buf.subSequence(lineOffsets[lineNo], if (lineNo + 1 < lineOffsets.size) lineOffsets[lineNo + 1] - 1 else buf.length).toString()
                         if (filter.passFilter(line))
                             textEx(line)
                     }
@@ -146,6 +146,7 @@ object Log {
                     // anymore, which is why we don't use the clipper. Storing or skimming through the search result would make
                     // it possible (and would be recommended if you want to search through tens of thousands of entries).
                     val clipper = ListClipper()
+                    clipper.begin(lineOffsets.size)
                     while (clipper.step())
                         for (lineNo in clipper.display) {
                             val lineStart = lineOffsets[lineNo]

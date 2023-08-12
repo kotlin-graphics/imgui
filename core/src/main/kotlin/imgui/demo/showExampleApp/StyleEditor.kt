@@ -375,12 +375,11 @@ object StyleEditor {
         setNextItemWidth(fontSize * 8)
         drag("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
         sameLine()
-        helpMarker("""
-                        |Note than the default embedded font is NOT meant to be scaled.
-                        |
-                        |Font are currently rendered into bitmaps at a given size at the time of building the atlas. You may oversample them to get some flexibility with scaling. You can also render at multiple sizes and select which one to use at runtime.
-                        |
-                        |(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)""".trimMargin())
+        helpMarker("""|Note than the default embedded font is NOT meant to be scaled.
+                      |
+                      |Font are currently rendered into bitmaps at a given size at the time of building the atlas. You may oversample them to get some flexibility with scaling. You can also render at multiple sizes and select which one to use at runtime.
+                      |
+                      |(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)""".trimMargin())
         text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
         val cStr = ByteArray(5)
         text("Fallback character: '${textCharToUtf8(cStr, font.fallbackChar)}' (U+%04X)", font.fallbackChar.code)

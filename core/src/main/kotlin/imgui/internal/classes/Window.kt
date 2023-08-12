@@ -335,9 +335,10 @@ class Window(
 
     /** [JVM] we hack the pointer version in this way */
     fun getID(intPtr: Long): ID {
-        if (intPtr >= ptrId.size) increase()
+//        if (intPtr >= ptrId.size) increase()
         val seed: ID = idStack.last()
-        val id = hashData(System.identityHashCode(ptrId[intPtr.i]), seed)
+        val id = hashData(System.identityHashCode(intPtr), seed)
+//        val id = hashData(System.identityHashCode(ptrId[intPtr.i]), seed)
         val g = ctx
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType.Long, intPtr) // TODO check me
