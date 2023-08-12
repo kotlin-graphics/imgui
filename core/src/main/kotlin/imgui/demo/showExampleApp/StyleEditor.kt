@@ -359,7 +359,7 @@ object StyleEditor {
 
     fun debugNodeFont(font: Font) {
         val name = font.configData.getOrNull(0)?.name ?: ""
-        val fontDetailsOpened = treeNode(font, "Font \\\"$name\\\"\\n%.2f px ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
+        val fontDetailsOpened = treeNode(font, "Font \"$name\"\n%.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
         sameLine()
         if (smallButton("Set as default"))
             io.fontDefault = font

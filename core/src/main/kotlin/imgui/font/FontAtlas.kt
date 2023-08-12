@@ -83,7 +83,7 @@ class FontAtlas {
         if (fontCfg.sizePixels <= 0f)
             fontCfg.sizePixels = 13f * 1f
         if (fontCfg.name == "")
-            formatString(fontCfg.name.toByteArray(32), "ProggyClean.ttf, ${fontCfg.sizePixels.i}px")
+            fontCfg.name = "ProggyClean.ttf, ${fontCfg.sizePixels.i}px"
         fontCfg.ellipsisChar = '\u0085'
         fontCfg.glyphOffset.y = 1f * floor(fontCfg.sizePixels / 13f)  // Add +1 offset per 13 units
 
