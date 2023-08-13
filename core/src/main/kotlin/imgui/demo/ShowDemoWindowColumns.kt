@@ -29,6 +29,7 @@ import imgui.WindowFlag
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.api.drag
 import imgui.classes.ListClipper
+import imgui.classes.listClipper
 import imgui.dsl.child
 import imgui.dsl.collapsingHeader
 import imgui.dsl.selectable
@@ -71,16 +72,14 @@ object ShowDemoWindowColumns {
 
                 // Also demonstrate using clipper for large vertical lists
                 val ITEMS_COUNT = 2000
-                val clipper = ListClipper()
-                clipper.begin(ITEMS_COUNT)
-                while (clipper.step())
-                    for (i in clipper.displayStart until clipper.displayEnd)
+                listClipper(ITEMS_COUNT) {
+                    for (i in it.display)
                         for (j in 0..9) {
                             text("Line $i Column $j...")
                             nextColumn()
                         }
+                }
                 columns(1)
-                clipper.end()
             }
         }
 

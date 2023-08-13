@@ -26,6 +26,7 @@ import imgui.StyleVar
 import imgui.api.g
 import imgui.classes.ListClipper
 import imgui.classes.TextFilter
+import imgui.classes.listClipper
 import java.util.*
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
@@ -145,15 +146,13 @@ object Log {
                     // When using the filter (in the block of code above) we don't have random access into the data to display
                     // anymore, which is why we don't use the clipper. Storing or skimming through the search result would make
                     // it possible (and would be recommended if you want to search through tens of thousands of entries).
-                    val clipper = ListClipper()
-                    clipper.begin(lineOffsets.size)
-                    while (clipper.step())
-                        for (lineNo in clipper.display) {
+                    listClipper(lineOffsets.size) {
+                        for (lineNo in it.display) {
                             val lineStart = lineOffsets[lineNo]
                             val lineEnd = if (lineNo + 1 < lineOffsets.size) lineOffsets[lineNo + 1] - 1 else buf.length
                             textEx(buf.subSequence(lineStart, lineEnd).toString())
                         }
-                    clipper.end()
+                    }
                 }
 
                 popStyleVar()

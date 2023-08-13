@@ -25,6 +25,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.WindowFlag
 import imgui.classes.ListClipper
+import imgui.classes.listClipper
 import imgui.has
 import imgui.internal.classes.Rect
 import imgui.internal.floor
@@ -90,7 +91,7 @@ interface widgetsListBoxes {
     }
 
     fun listBox(label: String, currentItemPtr: IntArray, items: Array<String>, heightInItems: Int = -1): Boolean =
-            listBox(label, currentItemPtr mutablePropertyAt 0, items, heightInItems)
+        listBox(label, currentItemPtr mutablePropertyAt 0, items, heightInItems)
 
     /** This is merely a helper around BeginListBox(), EndListBox().
      *  Considering using those directly to submit custom data or store selection differently. */
@@ -110,10 +111,8 @@ interface widgetsListBoxes {
         // you can create a custom version of ListBox() in your code without using the clipper.
         var valueChanged = false
         // We know exactly our line height here so we pass it as a minor optimization, but generally you don't need to.
-        val clipper = ListClipper()
-        clipper.begin(itemsCount, textLineHeightWithSpacing)
-        while (clipper.step())
-            for (i in clipper.display) {
+        listClipper(itemsCount, textLineHeightWithSpacing) {
+            for (i in it.display) {
                 val itemText = items.getOrElse(i) { "*Unknown item*" }
                 pushID(i)
                 val itemSelectedRef = (i == currentItem).mutableReference
@@ -125,12 +124,12 @@ interface widgetsListBoxes {
                 if (itemSelected) setItemDefaultFocus()
                 popID()
             }
+        }
         endListBox()
 
         if (valueChanged)
             markItemEdited(g.lastItemData.id)
 
-        clipper.end()
         return valueChanged
     }
 
@@ -143,7 +142,7 @@ interface widgetsListBoxes {
      *  Tip: If your vertical size is calculated from an item count (e.g. 10 * item_height) consider adding a fractional part to facilitate seeing scrolling boundaries (e.g. 10.25 * item_height). */
     fun beginListBox(label: String, itemsCount: Int, heightInItems: Int = -1): Boolean {
         // If height_in_items == -1, default height is maximum 7.
-        val heightInItemsF = (if(heightInItems < 0) itemsCount min 7 else heightInItems) + 0.25f
+        val heightInItemsF = (if (heightInItems < 0) itemsCount min 7 else heightInItems) + 0.25f
 
         val size = Vec2(0f, textLineHeightWithSpacing * heightInItemsF + g.style.framePadding.y * 2f)
         return beginListBox(label, size)

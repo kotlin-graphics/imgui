@@ -71,6 +71,7 @@ import imgui.api.slider
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
 import imgui.classes.TableSortSpecs
+import imgui.classes.listClipper
 import imgui.dsl.popup
 import imgui.dsl.popupContextItem
 import imgui.dsl.table
@@ -881,17 +882,15 @@ object ShowDemoWindowTables {
                     tableHeadersRow()
 
                     // Demonstrate using clipper for large vertical lists
-                    val clipper = ListClipper()
-                    clipper.begin(1000)
-                    while (clipper.step())
-                        for (row in clipper.display) {
+                    listClipper(1000) {
+                        for (row in it.display) {
                             tableNextRow()
                             for (column in 0..2) {
                                 tableSetColumnIndex(column)
                                 text("Hello $column,$row")
                             }
                         }
-                    clipper.end()
+                    }
                 }
             }
         }
@@ -1506,10 +1505,8 @@ object ShowDemoWindowTables {
                     }
 
                     // Demonstrate using clipper for large vertical lists
-                    val clipper = ListClipper()
-                    clipper.begin(items.size)
-                    while (clipper.step())
-                        for (rowN in clipper.display) {
+                    listClipper(items.size) {
+                        for (rowN in it.display) {
                             // Display a data item
                             val item = items[rowN]
                             pushID(item.id)
@@ -1524,7 +1521,7 @@ object ShowDemoWindowTables {
                             text("${item.quantity}")
                             popID()
                         }
-                    clipper.end()
+                    }
                 }
             }
         }
@@ -1708,10 +1705,8 @@ object ShowDemoWindowTables {
                     pushButtonRepeat(true)
                     //                #if 1
                     // Demonstrate using clipper for large vertical lists
-                    val clipper = ListClipper()
-                    clipper.begin(items.size)
-                    while (clipper.step()) {
-                        for (rowN in clipper.display)
+                    listClipper(items.size) {
+                        for (rowN in it.display)
                         //                    #else
                         //                    // Without clipper
                         //                    {
@@ -1784,7 +1779,6 @@ object ShowDemoWindowTables {
 
                             popID()
                         }
-                        clipper.end()
                     }
                     popButtonRepeat()
 

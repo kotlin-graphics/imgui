@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package imgui.classes
 
 import glm_.*
@@ -43,16 +45,11 @@ class ListClipper {
     var displayStart = 0
     var displayEnd = 0
     val display
-        get() = displayStart until displayEnd
+        get() = displayStart ..< displayEnd
     var itemsCount = -1
     var itemsHeight = 0f // [Internal] Height of item after a first step and item submission can calculate it
     var startPosY = 0f // [Internal] Cursor position at the time of Begin() or after table frozen rows are all processed
     var tempData: Any? = null // [Internal] Internal data
-
-    fun dispose() {
-        assert(itemsCount == -1) { "Forgot to call End(), or to Step() until false?" }
-        end()
-    }
 
     fun begin(itemsCount: Int, itemsHeight: Float = -1f) {
 
@@ -309,6 +306,15 @@ class ListClipper {
             }
         }
     }
+}
+
+// [JVM] utility construct to easier the usage od the ListClipper (eg: native code destructor)
+inline fun listClipper(itemsCount: Int, itemsHeight: Float = -1f, step: (ListClipper) -> Unit) {
+    val clipper = ListClipper()
+    clipper.begin(itemsCount, itemsHeight)
+    while (clipper.step())
+        step(clipper)
+    clipper.end()
 }
 
 // FIXME-TABLE: This prevents us from using ImGuiListClipper _inside_ a table cell.

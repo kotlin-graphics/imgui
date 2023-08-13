@@ -95,6 +95,7 @@ import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.classes.ListClipper
 import imgui.classes.Style
+import imgui.classes.listClipper
 import imgui.demo.DemoWindow
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
@@ -605,10 +606,8 @@ interface demoDebugInformations {
             clipboardText = g.debugLogBuf.toString()
         beginChild("##log", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar)
 
-        val clipper = ListClipper()
-        clipper.begin(g.debugLogIndex.size)
-        while (clipper.step())
-            for (lineNo in clipper.displayStart until clipper.displayEnd) {
+        listClipper(g.debugLogIndex.size) {
+            for (lineNo in it.display) {
                 val lineBegin = g.debugLogIndex getLineBegin lineNo
                 val lineEnd = g.debugLogIndex getLineEnd lineNo
                 textUnformatted(g.debugLogBuf.toString(), lineEnd)
@@ -629,12 +628,12 @@ interface demoDebugInformations {
                     }
                 }
             }
+        }
         if (ImGui.scrollY >= ImGui.scrollMaxY)
             setScrollHereY(1f)
         endChild()
 
         end()
-        clipper.end()
     }
 
     /** create Stack Tool window. hover items with mouse to query information about the source of their unique ID.

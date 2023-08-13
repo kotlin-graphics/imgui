@@ -16,6 +16,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.StyleVar
 import imgui.classes.ListClipper
+import imgui.classes.listClipper
 import uno.kotlin.NUL
 import kotlin.reflect.KMutableProperty0
 
@@ -36,10 +37,10 @@ object LongText {
 
         text("Printing unusually long amount of text.")
         combo(
-                "Test type", ::testType,
-                "Single call to TextUnformatted()" + NUL +
-                "Multiple calls to Text(), clipped" + NUL +
-                "Multiple calls to Text(), not clipped (slow)" + NUL)
+            "Test type", ::testType,
+            "Single call to TextUnformatted()" + NUL +
+            "Multiple calls to Text(), clipped" + NUL +
+            "Multiple calls to Text(), not clipped (slow)" + NUL)
         text("Buffer contents: %d lines, %d bytes", lines, log.length)
         if (button("Clear")) log.clear().also { lines = 0 }
         sameLine()
@@ -56,13 +57,11 @@ object LongText {
             // Multiple calls to Text(), manually coarsely clipped - demonstrate how to use the ImGuiListClipper helper.
             1 -> {
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
-                val clipper = ListClipper()
-                clipper.begin(lines)
-                while (clipper.step())
-                    for (i in clipper.display)
+                listClipper(lines) {
+                    for (i in it.display)
                         text("$i The quick brown fox jumps over the lazy dog")
+                }
                 popStyleVar()
-                clipper.end()
             }
             2 -> {
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(0, 1))

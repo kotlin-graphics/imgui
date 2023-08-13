@@ -63,6 +63,7 @@ import imgui.api.drag
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
+import imgui.classes.listClipper
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.child
 import imgui.dsl.indent
@@ -322,7 +323,7 @@ internal interface debugTools {
             }
 
             var buf = "DrawCmd:%5d tris, Tex 0x%02d, ClipRect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
-                    cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
             val pcmdNodeOpen = treeNode(drawList.cmdBuffer.indexOf(cmd), buf)
             if (isItemHovered() && (cfg.showDrawCmdMesh || cfg.showDrawCmdBoundingBoxes) /*&& fgDrawList != null*/)
                 debugNodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, cfg.showDrawCmdMesh, cfg.showDrawCmdBoundingBoxes)
@@ -350,11 +351,9 @@ internal interface debugTools {
                 debugNodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, true, false)
 
             // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
-            val clipper = ListClipper()
-            clipper.begin(cmd.elemCount / 3) // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
-            while (clipper.step()) {
-                var idxI = cmd.idxOffset + clipper.displayStart * 3
-                for (prim in clipper.display) {
+            listClipper(cmd.elemCount / 3) { // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
+                var idxI = cmd.idxOffset + it.displayStart * 3
+                for (prim in it.display) {
                     val bufP = StringBuilder()
                     val triangle = Array(3) { Vec2() }
                     for (n in 0..2) {
@@ -362,7 +361,7 @@ internal interface debugTools {
                         triangle[n] put v.pos
                         val isFirst = if (n == 0) "Vert:" else "     "
                         bufP += "$isFirst %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
-                                .format(idxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                            .format(idxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
                         idxI++
                     }
                     buf = bufP.toString()
@@ -376,7 +375,6 @@ internal interface debugTools {
                 }
             }
             treePop()
-            clipper.end()
         }
         treePop()
     }
