@@ -85,10 +85,8 @@ object dsl {
 
     // Tables
 
-    inline fun table(
-            strId: String, columns: Int, flags: TableFlags = none,
-            outerSize: Vec2 = Vec2(), innerWidth: Float = 0f, block: () -> Unit
-    ) {
+    inline fun table(strId: String, columns: Int, flags: TableFlags = none,
+                     outerSize: Vec2 = Vec2(), innerWidth: Float = 0f, block: () -> Unit) {
         if (beginTable(strId, columns, flags, outerSize, innerWidth)) { // ~open
             block()
             endTable()
@@ -511,8 +509,8 @@ object dsl {
     // Miscellaneous Utilities
 
     inline fun childFrame(id: ID, size: Vec2, extraFlags: WindowFlags = none, block: () -> Unit) {
-        beginChildFrame(id, size, extraFlags)
-        block()
+        if (beginChildFrame(id, size, extraFlags))
+            block()
         endChildFrame()
     }
 

@@ -581,8 +581,8 @@ public class Jdsl {
     }
 
     public static void childFrame(int id, Vec2 size, Flag<WindowFlag> windowFlags, Runnable block) {
-        imgui.beginChildFrame(id, size, windowFlags);
-        block.run();
+        if (imgui.beginChildFrame(id, size, windowFlags))
+            block.run();
         imgui.endChildFrame();
     }
 

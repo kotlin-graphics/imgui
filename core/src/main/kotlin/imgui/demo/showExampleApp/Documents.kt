@@ -37,6 +37,7 @@ import imgui.ImGui.setTabItemClosed
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textWrapped
+import imgui.dsl.childFrame
 import kotlin.reflect.KMutableProperty0
 
 //-----------------------------------------------------------------------------
@@ -244,6 +245,7 @@ object Documents {
 
         // Display closing confirmation UI
         if (closeQueue.isNotEmpty()) {
+
             val closeQueueUnsavedDocuments = closeQueue.count { it.dirty }
 
             if (closeQueueUnsavedDocuments == 0) {
@@ -257,11 +259,12 @@ object Documents {
                 if (beginPopupModal("Save?", null, WindowFlag.AlwaysAutoResize)) {
                     text("Save change to the following items?")
                     val itemHeight = textLineHeightWithSpacing
-                    if (beginChildFrame(getID("frame"), Vec2(-Float.MIN_VALUE, 6.25f * itemHeight)))
+                    childFrame(getID("frame"), Vec2(-Float.MIN_VALUE, 6.25f * itemHeight)) {
                         closeQueue.forEach {
                             if (it.dirty)
                                 text(it.name)
                         }
+                    }
 
                     val buttonSize = Vec2(fontSize * 7f, 0f)
                     if (button("Yes", buttonSize)) {
