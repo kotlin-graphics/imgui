@@ -987,7 +987,7 @@ interface demoDebugInformations {
         fun stackToolFormatLevelInfo(tool: StackTool, n: Int, formatForUi: Boolean, buf: ByteArray): Int {
             val info = tool.results[n]
             val desc = info.desc.toByteArray()
-            val window = if (desc[0] == 0.b && n == 0) findWindowByID(info.id) else null
+            val window = if (desc.isNotEmpty() && desc[0] == 0.b && n == 0) findWindowByID(info.id) else null
             if (window != null)                                                                 // Source: window name (because the root ID don't call GetID() and so doesn't get hooked)
                 return formatString(buf, if (formatForUi) "\"%s\" [window]" else "%s", window.name)
             if (info.querySuccess)                                                     // Source: GetID() hooks (prioritize over ItemInfo() because we frequently use patterns like: PushID(str), Button("") where they both have same id)

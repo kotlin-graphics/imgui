@@ -31,6 +31,7 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.showDebugLogWindow
 import imgui.ImGui.showMetricsWindow
+import imgui.ImGui.showStackToolWindow
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.spacing
 import imgui.ImGui.tableNextColumn
@@ -121,7 +122,7 @@ object DemoWindow {
         if (show.debugLog)
             showDebugLogWindow(show::debugLog)
         if (show.stackTool)
-            showMetricsWindow(show::stackTool)
+            showStackToolWindow(show::stackTool)
         if (show.about)
             ShowAboutWindow(show::about)
         if (show.styleEditor)
