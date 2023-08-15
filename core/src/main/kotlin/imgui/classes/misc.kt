@@ -131,9 +131,6 @@ class TableColumnSortSpecs {
 class TableSortSpecs {
     /** Pointer to sort spec array. */
     var specs = ArrayList<TableColumnSortSpecs>()
-    fun specs(n: Int) = specsArray[specsPtr + n]
-    lateinit var specsArray: Array<TableColumnSortSpecs>
-    var specsPtr = 0
 
     /** Sort spec count. Most often 1. May be > 1 when ImGuiTableFlags_SortMulti is enabled. May be == 0 when ImGuiTableFlags_SortTristate is enabled. */
     var specsCount = 0

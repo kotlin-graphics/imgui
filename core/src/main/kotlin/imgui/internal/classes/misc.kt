@@ -557,13 +557,14 @@ value class PoolIdx(val i: Int) {
 }
 
 class TabBarPool {
+    val indices get() = list.indices
     /** Contiguous data */
     val list = ArrayList<TabBar?>()
 
     /** ID->Index */
     val map = mutableMapOf<ID, PoolIdx>()
 
-    /** ~GetByKey */
+    /** ~GetByKey/~TryGetMapData */
     operator fun get(key: ID): TabBar? = map[key]?.let { list[it.i] }
 
     /** ~GetByIndex */

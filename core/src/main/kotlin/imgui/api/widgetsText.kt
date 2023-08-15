@@ -4,6 +4,7 @@ import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.Col
+import imgui.Flag
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
@@ -111,7 +112,7 @@ interface widgetsText {
         if (window.skipItems)
             return
 
-        val text = fmt.format(style.locale, *args)
+        val text = fmt.format(style.locale, *args.map { if (it is Flag<*>) it.i else it }.toTypedArray())
         val labelSize = calcTextSize(text, hideTextAfterDoubleHash = false)
         val totalSize = Vec2(g.fontSize + if (labelSize.x > 0f) (labelSize.x + style.framePadding.x * 2) else 0f, labelSize.y)  // Empty text doesn't add padding
         val pos = Vec2(window.dc.cursorPos)

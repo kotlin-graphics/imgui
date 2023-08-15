@@ -338,9 +338,8 @@ interface demoDebugInformations {
 
         // Details for TabBars
         treeNode("TabBars", "Tab Bars (${g.tabBars.size})") {
-            for (n in 0 until g.tabBars.size)
+            for (n in g.tabBars.indices)
                 debugNodeTabBar(g.tabBars[n]!!, "TabBar")
-
         }
 
         treeNode("Tables", "Tables (${g.tables.size})") {

@@ -203,7 +203,7 @@ object ShowDemoWindowTables {
                 for (n in 0 until currentSortSpecs!!.specsCount) {
                     // Here we identify columns using the ColumnUserID value that we ourselves passed to TableSetupColumn()
                     // We could also choose to identify columns based on their index (sort_spec->ColumnIndex), which is simpler!
-                    val sortSpec = currentSortSpecs!!.specs(n)
+                    val sortSpec = currentSortSpecs!!.specs[n]
                     val delta = when (sortSpec.columnUserID) {
                         MyItemColumnID.ID.ordinal -> a.id - b.id
                         MyItemColumnID.Name.ordinal -> a.name.compareTo(b.name)
@@ -1798,7 +1798,6 @@ object ShowDemoWindowTables {
                             text(": DrawCmd: +${tableDrawListDrawCmdCount - 1} (in child window), Scroll: (%.f/%.f) (%.f/%.f)",
                                  tableScrollCur.x, tableScrollMax.x, tableScrollCur.y, tableScrollMax.y)
                     }
-                treePop()
             }
         }
     }

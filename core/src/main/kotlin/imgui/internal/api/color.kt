@@ -84,7 +84,7 @@ internal interface color {
         if (allowOptInputs) {
             if (radioButton("RGB", opts has Cef.DisplayRGB)) opts = (opts wo Cef._DisplayMask) or Cef.DisplayRGB
             if (radioButton("HSV", opts has Cef.DisplayHSV)) opts = (opts wo Cef._DisplayMask) or Cef.DisplayHSV
-            if (radioButton("HEX", opts has Cef.DisplayHEX)) opts = (opts wo Cef._DisplayMask) or Cef.DisplayHEX
+            if (radioButton("Hex", opts has Cef.DisplayHEX)) opts = (opts wo Cef._DisplayMask) or Cef.DisplayHEX
         }
         if (allowOptDatatype) {
             if (allowOptInputs) separator()
