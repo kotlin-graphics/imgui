@@ -101,7 +101,7 @@ interface widgetsListBoxes {
         val itemsCount = items.size
 
         // Calculate size from "height_in_items"
-        val heightInItems = if (heightInItems_ < 0) heightInItems_ else itemsCount min 7
+        val heightInItems = if (heightInItems_ < 0) itemsCount min 7 else heightInItems_
         val heightInItemsF = heightInItems + 0.25f
         val size = Vec2(0f, floor(textLineHeightWithSpacing * heightInItemsF + g.style.framePadding.y * 2f))
 

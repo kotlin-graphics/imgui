@@ -429,7 +429,6 @@ object ShowDemoWindowWidgets {
                     // See "List boxes" section for examples of how to use the more flexible BeginListBox()/EndListBox() api.
                     val items = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
                     listBox("listbox", ::itemCurrent0, items, 4)
-
                     sameLine(); helpMarker("Using the simplified one-liner ListBox API here.\nRefer to the \"List boxes\" section below for an explanation of how to use the more flexible and general BeginListBox/EndListBox API.")
                 }
             }
