@@ -202,3 +202,5 @@ val KMutableProperty0<Float>.L: MutableProperty<Long>
 
 val ULong.L: Long
     get() = toLong()
+
+fun utf8(vararg ints: Int): String = ints.map { it.toByte() }.toByteArray().decodeToString()

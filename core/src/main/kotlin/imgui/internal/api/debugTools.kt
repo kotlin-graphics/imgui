@@ -345,7 +345,7 @@ internal interface debugTools {
             }
 
             // Display vertex information summary. Hover to get all triangles drawn in wire-frame
-            buf = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%0.f px".format(totalArea)
+            buf = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(totalArea)
             selectable(buf)
             if (isItemHovered() /*&& fgDrawList != null*/)
                 debugNodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, true, false)

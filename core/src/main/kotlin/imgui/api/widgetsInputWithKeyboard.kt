@@ -81,10 +81,8 @@ interface widgetsInputWithKeyboard {
     fun input(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f", flags: InputTextSingleFlags = none): Boolean =
             input(label, v mutablePropertyAt 0, step, stepFast, format, flags)
 
-    fun input(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f", flags_: InputTextSingleFlags = none): Boolean {
-        val flags = flags_ or Itf.CharsScientific
-        return input(label, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, flags)
-    }
+    fun input(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f", flags: InputTextSingleFlags = none): Boolean =
+        input(label, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, flags / Itf.CharsScientific)
 
     fun input2(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextSingleFlags = none): Boolean = inputN(label, 2, null, null, format, flags, v::mutablePropertyAt)
 
@@ -130,6 +128,7 @@ interface widgetsInputWithKeyboard {
         return input(label, v, step.takeIf { it > 0.0 }, stepFast.takeIf { it > 0.0 }, format, flags)
     }
 
+    /** ~InputScalar */
     fun <N> NumberOps<N>.input(label: String, pData: KMutableProperty0<N>, step: N? = null, stepFast: N? = null, format_: String? = null, flags_: InputTextSingleFlags = none): Boolean where N : Number, N : Comparable<N> {
         var data by pData
         val window = currentWindow
@@ -196,11 +195,11 @@ interface widgetsInputWithKeyboard {
 
 }
 
-inline fun <reified N> input(label: String, pData: KMutableProperty0<N>, step: N? = null, stepFast: N? = null, format_: String? = null, flags_: InputTextSingleFlags = none): Boolean where N : Number, N : Comparable<N> =
-        ImGui.input(label, pData, step, stepFast, format_, flags_)
+inline fun <reified N> input(label: String, pData: KMutableProperty0<N>, step: N? = null, stepFast: N? = null, format: String? = null, flags: InputTextSingleFlags = none): Boolean where N : Number, N : Comparable<N> =
+        ImGui.input(label, pData, step, stepFast, format, flags)
 
-inline fun <reified N> ImGui.input(label: String, pData: KMutableProperty0<N>, step: N? = null, stepFast: N? = null, format_: String? = null, flags_: InputTextSingleFlags = none): Boolean where N : Number, N : Comparable<N> =
-        numberOps<N>().input(label, pData, step, stepFast, format_, flags_)
+inline fun <reified N> ImGui.input(label: String, pData: KMutableProperty0<N>, step: N? = null, stepFast: N? = null, format: String? = null, flags: InputTextSingleFlags = none): Boolean where N : Number, N : Comparable<N> =
+        numberOps<N>().input(label, pData, step, stepFast, format, flags)
 
 inline fun <reified N> inputN(label: String, components: Int, step: N? = null, stepFast: N? = null, format: String? = null, flags: InputTextSingleFlags = none, properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
         ImGui.inputN(label, components, step, stepFast, format, flags, properties)
