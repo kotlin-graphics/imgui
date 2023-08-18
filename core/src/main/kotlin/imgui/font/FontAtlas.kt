@@ -119,7 +119,7 @@ class FontAtlas {
     }
 
     fun addFontFromMemoryTTF(fontData: CharArray, sizePixels: Float, fontCfg: FontConfig = FontConfig(), glyphRanges: Array<IntRange> = emptyArray()): Font =
-            addFontFromMemoryTTF(ByteArray(fontData.size) { fontData[it].b }, sizePixels, fontCfg, glyphRanges)
+        addFontFromMemoryTTF(ByteArray(fontData.size) { fontData[it].b }, sizePixels, fontCfg, glyphRanges)
 
     /** @param compressedFontData still owned by caller. Compress with binary_to_compressed_c.cpp.   */
     fun addFontFromMemoryCompressedTTF(compressedFontData: CharArray, sizePixels: Float, fontCfg: FontConfig = FontConfig(), glyphRanges: Array<IntRange> = emptyArray()): Font {
@@ -205,10 +205,10 @@ class FontAtlas {
         //   using a hot-reloading scheme that messes up static data, store your own instance of ImFontBuilderIO somewhere
         //   and point to it instead of pointing directly to return value of the GetBuilderXXX functions.
         val builderIo = fontBuilderIO ?:
-        //            #ifdef IMGUI_ENABLE_FREETYPE
-        // TODO builderIo = ImGuiFreeType::GetBuilderForFreeType()
-        //            #elif defined(IMGUI_ENABLE_STB_TRUETYPE)
-        getBuilderForStbTruetype()
+                        //            #ifdef IMGUI_ENABLE_FREETYPE
+                        // TODO builderIo = ImGuiFreeType::GetBuilderForFreeType()
+                        //            #elif defined(IMGUI_ENABLE_STB_TRUETYPE)
+                        getBuilderForStbTruetype()
         //            #else
         //            IM_ASSERT(0) // Invalid Build function
 
@@ -538,7 +538,7 @@ class FontAtlas {
         var rects: Array<rectpack.Rect> = emptyArray()
 
         /** Output glyphs */
-        var packedChars: List<PackedChar> = emptyList()
+        var packedChars: Array<PackedChar> = emptyArray()
 
         /** Ranges as requested by user (user is allowed to request too much, e.g. 0x0020..0xFFFF) */
         lateinit var srcRanges: Array<IntRange>
@@ -694,8 +694,8 @@ class FontAtlas {
             if (srcTmp.glyphsCount == 0)
                 continue
 
-            srcTmp.rects = bufRects.drop(bufRectsOutN).toTypedArray()
-            srcTmp.packedChars = bufPackedchars.drop(bufPackedcharsOutN)
+            srcTmp.rects = bufRects.copyOfRange(bufRectsOutN, bufRectsOutN + srcTmp.glyphsCount)
+            srcTmp.packedChars = bufPackedchars.copyOfRange(bufPackedcharsOutN, bufPackedcharsOutN + srcTmp.glyphsCount)
             bufRectsOutN += srcTmp.glyphsCount
             bufPackedcharsOutN += srcTmp.glyphsCount
 
@@ -706,7 +706,7 @@ class FontAtlas {
                 firstUnicodeCodepointInRange = 0
                 arrayOfUnicodeCodepoints = srcTmp.glyphsList.toIntArray()
                 numChars = srcTmp.glyphsList.size
-                chardataForRange = ArrayList(srcTmp.packedChars)
+                chardataForRange = srcTmp.packedChars
                 hOversample = cfg.oversample.x.ui
                 vOversample = cfg.oversample.y.ui
             }
@@ -763,7 +763,7 @@ class FontAtlas {
 
             // Extend texture height and mark missing glyphs as non-packed so we won't render them.
             // FIXME: We are not handling packing failure here (would happen if we got off TEX_HEIGHT_MAX or if a single if larger than TexWidth?)
-            for (glyphIdx in 0 until srcTmp.glyphsCount)
+            for (glyphIdx in 0..<srcTmp.glyphsCount)
                 if (srcTmp.rects[glyphIdx].wasPacked != 0)
                     texSize.y = texSize.y max (srcTmp.rects[glyphIdx].y + srcTmp.rects[glyphIdx].h)
         }
@@ -832,7 +832,7 @@ class FontAtlas {
                 val q = AlignedQuad()
                 getPackedQuad(srcTmp.packedChars, texSize.x, texSize.y, glyphIdx, q = q)
                 dstFont.addGlyph(cfg, codepoint, q.x0 + fontOff.x, q.y0 + fontOff.y,
-                        q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
+                                 q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
             }
         }
 //        bufPackedchars.free()
@@ -928,7 +928,7 @@ class FontAtlas {
             val uv1 = Vec2()
             calcCustomRectUV(r, uv0, uv1)
             font.addGlyph(null, r.glyphID, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
-                    uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
+                          uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
         }
         // Build all fonts lookup tables
         fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }
@@ -1113,15 +1113,15 @@ class FontAtlas {
         }
 
         val cursorDatas = arrayOf(
-                // Pos ........ Size ......... Offset ......
-                arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)),         // MouseCursor.Arrow
-                arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(1, 8)),   // MouseCursor.TextInput
-                arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)),              // MouseCursor.Move
-                arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(4, 11)),  // MouseCursor.ResizeNS
-                arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 4)), // MouseCursor.ResizeEW
-                arrayOf(Vec2(73, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNESW
-                arrayOf(Vec2(55, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNWSE
-                arrayOf(Vec2(91, 0), Vec2(17, 22), Vec2(5, 0)),  // ImGuiMouseCursor_Hand
-                arrayOf(Vec2(109, 0), Vec2(13, 15), Vec2(6, 7))) // ImGuiMouseCursor_NotAllowed
+            // Pos ........ Size ......... Offset ......
+            arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)),         // MouseCursor.Arrow
+            arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(1, 8)),   // MouseCursor.TextInput
+            arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)),              // MouseCursor.Move
+            arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(4, 11)),  // MouseCursor.ResizeNS
+            arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 4)), // MouseCursor.ResizeEW
+            arrayOf(Vec2(73, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNESW
+            arrayOf(Vec2(55, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNWSE
+            arrayOf(Vec2(91, 0), Vec2(17, 22), Vec2(5, 0)),  // ImGuiMouseCursor_Hand
+            arrayOf(Vec2(109, 0), Vec2(13, 15), Vec2(6, 7))) // ImGuiMouseCursor_NotAllowed
     }
 }

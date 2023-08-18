@@ -239,7 +239,6 @@ object ShowDemoWindowWidgets {
         `Drag and Drop`()
         `Querying Item Status (Edited,Active,Hovered etc)`()
         `Querying Window Status (Focused-Hovered etc,)`()
-        `Text Filter`()
 
         // Demonstrate BeginDisabled/EndDisabled using a checkbox located at the bottom of the section (which is a bit odd:
         // logically we'd have this checkbox at the top of the section, but we don't want this feature to steal that space)
@@ -250,6 +249,8 @@ object ShowDemoWindowWidgets {
             checkbox("Disable entire section above", ::disableAll)
             sameLine(); helpMarker("Demonstrate using BeginDisabled()/EndDisabled() across this section.")
         }
+
+        `Text Filter`()
     }
 
     object Basic {
@@ -700,6 +701,7 @@ object ShowDemoWindowWidgets {
                     "Below we are displaying the font texture (which is the only texture we have access to in this demo). " +
                     "Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. " +
                     "Hover the texture for a zoomed view!")
+
                 // Below we are displaying the font texture because it is the only texture we have access to inside the demo!
                 // Remember that ImTextureID is just storage for whatever you want it to be. It is essentially a value that
                 // will be passed to the rendering backend via the ImDrawCmd structure.

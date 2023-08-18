@@ -65,7 +65,7 @@ class PackRange {
     var firstUnicodeCodepointInRange = 0 // if non-zero, then the chars are continuous, and this is the first codepoint
     var arrayOfUnicodeCodepoints: IntArray? = null // if non-zero, then this is an array of unicode codepoints
     var numChars = 0
-    var chardataForRange: ArrayList<PackedChar> = ArrayList() // output
+    var chardataForRange: Array<PackedChar> = emptyArray() // output
 
     // don't set these, they're used internally
     var hOversample = 0u
@@ -146,7 +146,7 @@ fun PackContext.packSetOversampling(hOversample: UInt, vOversample: UInt) {
 //    spc->skip_missing = skip;
 //}
 
-fun getPackedQuad(charData: List<PackedChar>, pw: Int, ph: Int, // same data as above
+fun getPackedQuad(charData: Array<PackedChar>, pw: Int, ph: Int, // same data as above
                   charIndex: Int,       // character to display
                   pos: Vec2 = Vec2(),   // pointers to current position in screen pixel space
                   q: AlignedQuad,       // output: quad to draw
