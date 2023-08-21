@@ -205,7 +205,7 @@ object DemoWindow {
             bulletText("Sections below are demonstrating many aspects of the library.")
             bulletText("The \"Examples\" menu above leads to more demo contents.")
             bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
-                "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
+                       "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
 
             separatorText("PROGRAMMER GUIDE:")
             bulletText("See the ShowDemoWindow() code in imgui_demo.cpp. <- you are here!")
@@ -274,11 +274,9 @@ object DemoWindow {
                 spacing()
             }
             treeNode("Backend Flags") {
-                helpMarker(
-                    """
+                helpMarker("""
                     Those flags are set by the backends (imgui_impl_xxx files) to specify their capabilities.
-                    Here we expose them as read-only fields to avoid breaking interactions with your backend.""".trimIndent()
-                )
+                    Here we expose them as read-only fields to avoid breaking interactions with your backend.""".trimIndent())
 
                 // FIXME: Maybe we need a BeginReadonly() equivalent to keep label bright?
                 beginDisabled()

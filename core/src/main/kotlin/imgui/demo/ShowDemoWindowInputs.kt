@@ -49,8 +49,8 @@ object ShowDemoWindowInputs {
             setNextItemOpen(true, Cond.Once)
             treeNode("Inputs") {
                 helpMarker("This is a simplified view. See more detailed input state:\n" +
-                                   "- in 'Tools->Metrics/Debugger->Inputs'.\n" +
-                                   "- in 'Tools->Debug Log->IO'.")
+                           "- in 'Tools->Metrics/Debugger->Inputs'.\n" +
+                           "- in 'Tools->Debug Log->IO'.")
                 if (isMousePosValid())
                     text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
                 else
@@ -86,13 +86,12 @@ object ShowDemoWindowInputs {
             //            IMGUI_DEMO_MARKER("Inputs & Focus/Outputs");
             setNextItemOpen(true, Cond.Once)
             treeNode("Outputs") {
-                helpMarker(
-                    "The value of io.WantCaptureMouse and io.WantCaptureKeyboard are normally set by Dear ImGui " +
-                            "to instruct your application of how to route inputs. Typically, when a value is true, it means " +
-                            "Dear ImGui wants the corresponding inputs and we expect the underlying application to ignore them.\n\n" +
-                            "The most typical case is: when hovering a window, Dear ImGui set io.WantCaptureMouse to true, " +
-                            "and underlying application should ignore mouse inputs (in practice there are many and more subtle " +
-                            "rules leading to how those flags are set).")
+                helpMarker("The value of io.WantCaptureMouse and io.WantCaptureKeyboard are normally set by Dear ImGui " +
+                           "to instruct your application of how to route inputs. Typically, when a value is true, it means " +
+                           "Dear ImGui wants the corresponding inputs and we expect the underlying application to ignore them.\n\n" +
+                           "The most typical case is: when hovering a window, Dear ImGui set io.WantCaptureMouse to true, " +
+                           "and underlying application should ignore mouse inputs (in practice there are many and more subtle " +
+                           "rules leading to how those flags are set).")
                 text("io.WantCaptureMouse: ${io.wantCaptureMouse.i}")
                 text("io.WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose.i}")
                 text("io.WantCaptureKeyboard: ${io.wantCaptureKeyboard.i}")
@@ -102,9 +101,8 @@ object ShowDemoWindowInputs {
 
                 //                IMGUI_DEMO_MARKER("Inputs & Focus/Outputs/WantCapture override");
                 treeNode("WantCapture override") {
-                    helpMarker(
-                        "Hovering the colored canvas will override io.WantCaptureXXX fields.\n" +
-                                "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.")
+                    helpMarker("Hovering the colored canvas will override io.WantCaptureXXX fields.\n" +
+                               "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.")
                     val captureOverrideDesc = listOf("None", "Set to false", "Set to true")
                     setNextItemWidth(ImGui.fontSize * 15)
                     slider("SetNextFrameWantCaptureMouse() on hover", ::captureOverrideMouse, -1, +1, captureOverrideDesc[captureOverrideMouse + 1], SliderFlag.AlwaysClamp)
@@ -133,8 +131,8 @@ object ShowDemoWindowInputs {
 
                 text("Hover to see mouse cursors:")
                 sameLine(); helpMarker("Your application can render a different mouse cursor based on what ImGui::GetMouseCursor() returns. " +
-                                               "If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, " +
-                                               "otherwise your backend needs to handle it.")
+                                       "If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, " +
+                                       "otherwise your backend needs to handle it.")
                 for (i in 0 until MouseCursor.COUNT) {
                     val cursor = MouseCursor of i
                     val label = "Mouse cursor $i: $cursor"
@@ -175,6 +173,7 @@ object ShowDemoWindowInputs {
             }
         }
     }
+
     object Tabbing {
         var buf = "hello".toByteArray(32)
         operator fun invoke() {

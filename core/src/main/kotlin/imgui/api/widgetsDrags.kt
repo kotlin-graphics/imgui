@@ -271,9 +271,7 @@ interface widgetsDrags {
 
         val labelSize = ImGui.calcTextSize(label, hideTextAfterDoubleHash = true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
-        val totalBb = Rect(
-                frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f)
-        )
+        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
         val tempInputAllowed = flags hasnt SliderFlag.NoInput
         ImGui.itemSize(totalBb, ImGui.style.framePadding.y)
@@ -339,7 +337,7 @@ interface widgetsDrags {
         if (labelSize.x > 0f)
             ImGui.renderText(Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y), label)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags / if(tempInputAllowed) ItemStatusFlag.Inputable else none)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags / if (tempInputAllowed) ItemStatusFlag.Inputable else none)
         return valueChanged
     }
 }
@@ -351,7 +349,7 @@ inline fun <reified N> drag(label: String,
                             max: N? = null,
                             format_: String? = null,
                             flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
-        ImGui.drag(label, pData, vSpeed, min, max, format_, flags)
+    ImGui.drag(label, pData, vSpeed, min, max, format_, flags)
 
 inline fun <reified N> ImGui.drag(label: String,
                                   pData: KMutableProperty0<N>,
@@ -360,7 +358,7 @@ inline fun <reified N> ImGui.drag(label: String,
                                   max: N? = null,
                                   format_: String? = null,
                                   flags: SliderFlags = none): Boolean where N : Number, N : Comparable<N> =
-        numberOps<N>().drag(label, pData, vSpeed, min, max, format_, flags)
+    numberOps<N>().drag(label, pData, vSpeed, min, max, format_, flags)
 
 /** Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget,
  *  p_min and p_max are optional.
@@ -374,7 +372,7 @@ inline fun <reified N> dragN(label: String,
                              format: String? = null,
                              flags: SliderFlags = none,
                              properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
-        ImGui.dragN(label, components, vSpeed, min, max, format, flags, properties)
+    ImGui.dragN(label, components, vSpeed, min, max, format, flags, properties)
 
 /** Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget,
  *  p_min and p_max are optional.
@@ -388,7 +386,7 @@ inline fun <reified N> ImGui.dragN(label: String,
                                    format: String? = null,
                                    flags: SliderFlags = none,
                                    properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
-        numberOps<N>().dragN(label, components, vSpeed, min, max, format, flags, properties)
+    numberOps<N>().dragN(label, components, vSpeed, min, max, format, flags, properties)
 
 inline fun <N> NumberOps<N>.dragN(label: String,
                                   components: Int,
@@ -398,4 +396,4 @@ inline fun <N> NumberOps<N>.dragN(label: String,
                                   format: String? = null,
                                   flags: SliderFlags = none,
                                   properties: (Int) -> KMutableProperty0<N>): Boolean where N : Number, N : Comparable<N> =
-        widgetN(label, components) { i -> drag("", properties(i), vSpeed, min, max, format, flags) }
+    widgetN(label, components) { i -> drag("", properties(i), vSpeed, min, max, format, flags) }

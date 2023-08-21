@@ -266,15 +266,14 @@ interface demoDebugInformations {
                             for (columnN in 0 until table.columnsCount) {
                                 val r = Funcs.getTableRect(table, rectN, columnN)
                                 val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}"
-                                        .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                                    .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                                 selectable(buf)
                                 if (isItemHovered())
                                     foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
                             }
                         } else {
                             val r = Funcs.getTableRect(table, rectN, -1)
-                            val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${rectN.name}".format(
-                                    r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                            val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${rectN.name}".format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                             selectable(buf)
                             if (isItemHovered())
                                 foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
@@ -801,14 +800,14 @@ interface demoDebugInformations {
          *
          *  add style selector block (not a window), essentially a combo listing the default styles. */
         operator fun invoke(label: String) =
-                if (combo(label, ::styleIdx, "Dark\u0000Light\u0000Classic\u0000")) {
-                    when (styleIdx) {
-                        0 -> styleColorsDark()
-                        1 -> styleColorsLight()
-                        2 -> styleColorsClassic()
-                    }
-                    true
-                } else false
+            if (combo(label, ::styleIdx, "Dark\u0000Light\u0000Classic\u0000")) {
+                when (styleIdx) {
+                    0 -> styleColorsDark()
+                    1 -> styleColorsLight()
+                    2 -> styleColorsClassic()
+                }
+                true
+            } else false
     }
 
     /** Demo helper function to select among loaded fonts.

@@ -277,9 +277,9 @@ interface windows {
                 else -> style.windowBorderSize
             }
             window.windowPadding put style.windowPadding
-            if (flags has Wf._ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf._Popup)) && window.windowBorderSize == 0f) window.windowPadding.put(
-                0f,
-                if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
+            if (flags has Wf._ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf._Popup)) && window.windowBorderSize == 0f)
+                window.windowPadding.put(0f,
+                                         if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
 
             // Lock menu offset so size calculation can use it as menu-bar windows need a minimum size.
             window.dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x

@@ -338,7 +338,7 @@ interface main {
         if (g.dragDropActive) {
             val isDelivered = g.dragDropPayload.delivery
             val isElapsed = g.dragDropPayload.dataFrameCount + 1 < g.frameCount &&
-                    (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !g.dragDropMouseButton.isDown)
+                            (g.dragDropSourceFlags has DragDropFlag.SourceAutoExpirePayload || !g.dragDropMouseButton.isDown)
             if (isDelivered || isElapsed)
                 clearDragDrop()
         }
@@ -362,7 +362,7 @@ interface main {
         g.windowsTempSortBuffer.clear()
         g.windowsTempSortBuffer.ensureCapacity(g.windows.size)
         g.windows.filter { !it.active || it.flags hasnt Wf._ChildWindow }  // if a child is active its parent will add it
-                .forEach { it addToSortBuffer g.windowsTempSortBuffer }
+            .forEach { it addToSortBuffer g.windowsTempSortBuffer }
         assert(g.windows.size == g.windowsTempSortBuffer.size) { "This usually assert if there is a mismatch between the ImGuiWindowFlags_ChildWindow / ParentWindow values and DC.ChildWindows[] in parents, aka we've done something wrong." }
         g.windows.clear()
         g.windows += g.windowsTempSortBuffer
@@ -408,16 +408,15 @@ interface main {
             renderDimmedBackgrounds()
 
         // Add ImDrawList to render
-        val windowsToRenderTopMost = arrayOf(
-            g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
-            g.navWindowingTarget?.let { g.navWindowingListWindow })
+        val windowsToRenderTopMost = arrayOf(g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
+                                             g.navWindowingTarget?.let { g.navWindowingListWindow })
         g.windows
-                .filter { it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
-                .forEach { it.addRootToDrawData() }
+            .filter { it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
+            .forEach { it.addRootToDrawData() }
         windowsToRenderTopMost
-                .filterNotNull()
-                .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
-                .forEach { it.addRootToDrawData() }
+            .filterNotNull()
+            .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
+            .forEach { it.addRootToDrawData() }
 
         // Draw software mouse cursor if requested by io.MouseDrawCursor flag
         if (g.io.mouseDrawCursor && firstRenderOfFrame && g.mouseCursor != MouseCursor.None)

@@ -36,11 +36,10 @@ object LongText {
         }
 
         text("Printing unusually long amount of text.")
-        combo(
-            "Test type", ::testType,
-            "Single call to TextUnformatted()" + NUL +
-            "Multiple calls to Text(), clipped" + NUL +
-            "Multiple calls to Text(), not clipped (slow)" + NUL)
+        combo("Test type", ::testType,
+              "Single call to TextUnformatted()" + NUL +
+              "Multiple calls to Text(), clipped" + NUL +
+              "Multiple calls to Text(), not clipped (slow)" + NUL)
         text("Buffer contents: %d lines, %d bytes", lines, log.length)
         if (button("Clear")) log.clear().also { lines = 0 }
         sameLine()

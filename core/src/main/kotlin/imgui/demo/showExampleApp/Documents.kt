@@ -46,13 +46,13 @@ import kotlin.reflect.KMutableProperty0
 
 // Simplified structure to mimic a Document model
 class MyDocument(
-        /** Document title */
-        val name: String,
-        /** Set when open (we keep an array of all available documents to simplify demo code!) */
-        var open: Boolean = true,
-        /** An arbitrary variable associated to the document */
-        val color: Vec4 = Vec4(1f)
-) {
+    /** Document title */
+    val name: String,
+    /** Set when open (we keep an array of all available documents to simplify demo code!) */
+    var open: Boolean = true,
+    /** An arbitrary variable associated to the document */
+    val color: Vec4 = Vec4(1f)
+                ) {
 
     /** Copy of Open from last update. */
     var openPrev = open
@@ -112,13 +112,12 @@ class MyDocument(
 object Documents {
 
     val documents = arrayOf(
-            MyDocument("Lettuce", true, Vec4(0.4f, 0.8f, 0.4f, 1.0f)),
-            MyDocument("Eggplant", true, Vec4(0.8f, 0.5f, 1.0f, 1.0f)),
-            MyDocument("Carrot", true, Vec4(1.0f, 0.8f, 0.5f, 1.0f)),
-            MyDocument("Tomato", false, Vec4(1.0f, 0.3f, 0.4f, 1.0f)),
-            MyDocument("A Rather Long Title", false),
-            MyDocument("Some Document", false)
-    )
+        MyDocument("Lettuce", true, Vec4(0.4f, 0.8f, 0.4f, 1.0f)),
+        MyDocument("Eggplant", true, Vec4(0.8f, 0.5f, 1.0f, 1.0f)),
+        MyDocument("Carrot", true, Vec4(1.0f, 0.8f, 0.5f, 1.0f)),
+        MyDocument("Tomato", false, Vec4(1.0f, 0.3f, 0.4f, 1.0f)),
+        MyDocument("A Rather Long Title", false),
+        MyDocument("Some Document", false))
 
     // [Optional] Notify the system of Tabs/Windows closure that happened outside the regular tab interface.
     // If a tab has been closed programmatically (aka closed from another source such as the Checkbox() in the demo,

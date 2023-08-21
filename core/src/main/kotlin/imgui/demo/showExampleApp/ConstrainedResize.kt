@@ -38,14 +38,13 @@ object ConstrainedResize {
     var windowPadding = true
     var type = 5 // Aspect Ratio
     var displayLines = 10
-    val testDesc = listOf(
-        "Resize vertical only",
-        "Resize horizontal only",
-        "Width > 100, Height > 100",
-        "Width 400-500",
-        "Height 400-500",
-        "Custom: Always Square",
-        "Custom: Fixed Steps (100)")
+    val testDesc = listOf("Resize vertical only",
+                          "Resize horizontal only",
+                          "Width > 100, Height > 100",
+                          "Width 400-500",
+                          "Height 400-500",
+                          "Custom: Always Square",
+                          "Custom: Fixed Steps (100)")
 
     object CustomConstraints {
         // Helper functions to demonstrate programmatic constraints

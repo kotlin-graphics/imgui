@@ -93,8 +93,7 @@ object ShowDemoWindowPopups {
             // This may be a bit confusing at first but it should quickly make sense. Follow on the examples below.
             treeNode("Popups") {
 
-                textWrapped(
-                    "When a popup is active, it inhibits interacting with windows that are behind the popup. " +
+                textWrapped("When a popup is active, it inhibits interacting with windows that are behind the popup. " +
                             "Clicking outside the popup closes it.")
 
                 val names = arrayOf("Bream", "Haddock", "Mackerel", "Pollock", "Tilefish")
@@ -155,6 +154,7 @@ object ShowDemoWindowPopups {
     object `Context Menus` {
         var selected = -1
         var value = 0.5f
+
         // [JVM] this needs to by a ByteArray to hold a reference, since Strings are final by design
         var name = "Label1"
         operator fun invoke() {
