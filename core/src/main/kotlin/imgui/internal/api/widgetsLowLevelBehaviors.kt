@@ -3,6 +3,7 @@ package imgui.internal.api
 import glm_.func.common.max
 import glm_.glm
 import glm_.has
+import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
@@ -605,19 +606,22 @@ internal interface widgetsLowLevelBehaviors {
                 treeNodeSetOpen(id, isOpen)
             } else {
                 // We treat ImGuiCond_Once and ImGuiCond_FirstUseEver the same because tree node state are not saved persistently.
-                val storedValue = storage.getOrElse(id) { -1 }
+                val storedValue = storage[id]?.i ?: -1
                 if (storedValue == -1) {
                     isOpen = g.nextItemData.openVal
                     storage[id] = isOpen
                     treeNodeSetOpen(id, isOpen)
-                } else isOpen = storedValue != 0
+                } else
+                    isOpen = storedValue != 0
             }
-        } else isOpen = storage[id] ?: (flags has Tnf.DefaultOpen)
+        } else
+            isOpen = storage[id] ?: (flags has Tnf.DefaultOpen)
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).
             NB- If we are above max depth we still allow manually opened nodes to be logged.    */
-        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && (window.dc.treeDepth - g.logDepthRef) < g.logDepthToExpand) isOpen = true
+        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && (window.dc.treeDepth - g.logDepthRef) < g.logDepthToExpand)
+            isOpen = true
 
         return isOpen
     }

@@ -290,7 +290,7 @@ internal interface renderHelpers {
     fun findRenderedTextEnd(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.size): Int {
         var textDisplayEnd = textBegin
         while (textDisplayEnd < textEnd && text[textDisplayEnd] != 0.b &&
-                (text[textDisplayEnd + 0] != '#'.b || text[textDisplayEnd + 1] != '#'.b))
+                (text[textDisplayEnd + 0] != '#'.b || (textDisplayEnd + 1 < textEnd && text[textDisplayEnd + 1] != '#'.b)))
             textDisplayEnd++
         return textDisplayEnd
     }

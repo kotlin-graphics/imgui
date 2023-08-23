@@ -265,8 +265,7 @@ interface demoDebugInformations {
                                 continue
                             for (columnN in 0 until table.columnsCount) {
                                 val r = Funcs.getTableRect(table, rectN, columnN)
-                                val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}"
-                                    .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                                val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}" .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                                 selectable(buf)
                                 if (isItemHovered())
                                     foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), thickness = 2f)

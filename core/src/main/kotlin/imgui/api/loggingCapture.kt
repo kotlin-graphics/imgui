@@ -92,25 +92,14 @@ interface loggingCapture {
 
     /** pass text data straight to log (without being displayed)    */
     fun logTextV(g: Context, fmt: String, vararg args: Any) {
-        if (g.logFile != null) {
-            val writer = FileWriter(g.logFile!!, true)
-            writer.write(String.format(fmt, *args))
-        } else
-            g.logBuffer.append(fmt.format(*args))
+        val text = if (args.isEmpty()) fmt else fmt.format(*args)
+        g.logFile?.appendText(text) ?: g.logBuffer.append(text)
     }
 
     fun logText(fmt: String, vararg args: Any) {
         if (!g.logEnabled)
             return
 
-        logTextV(g, fmt, args)
-    }
-
-    fun logTextV(fmt: String, vararg args: Any) {
-
-        if (!g.logEnabled)
-            return
-
-        logTextV(g, fmt, args)
+        logTextV(g, fmt, *args)
     }
 }

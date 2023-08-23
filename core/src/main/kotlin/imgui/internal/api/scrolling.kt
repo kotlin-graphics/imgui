@@ -18,7 +18,7 @@ internal interface scrolling {
     infix fun Window.setScrollX(scrollX: Float) {
         scrollTarget.x = scrollX
         scrollTargetCenterRatio.x = 0f
-        scrollTargetEdgeSnapDist.x = 0.0f
+        scrollTargetEdgeSnapDist.x = 0f
     }
 
     /** ~SetScrollY(ImGuiWindow* window, float new_scroll_y) */

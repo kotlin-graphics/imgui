@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package imgui.demo
 
 import glm_.has
@@ -525,7 +527,7 @@ object ShowDemoWindowWidgets {
         operator fun invoke() {
             treeNode("Trees") {
                 treeNode("Basic trees") {
-                    for (i in 0..4) {
+                    for (i in 0..<5) {
                         // Use SetNextItemOpen() so set the default state of a node to be open. We could
                         // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
                         if (i == 0)
@@ -632,7 +634,7 @@ object ShowDemoWindowWidgets {
 
     object Text {
         var wrapWidth = 200f
-        val buf = "日本語".toByteArray(32) // "nihongo"
+        val buf = utf8(0xe6, 0x97, 0xa5, 0xe6, 0x9c, 0xac, 0xe8, 0xaa, 0x9e).toByteArray(32) // "nihongo"
         operator fun invoke() {
             treeNode("Text") {
                 treeNode("Color Text") {
@@ -684,8 +686,8 @@ object ShowDemoWindowWidgets {
                         "CJK text will only appear if the font was loaded with the appropriate CJK character ranges." +
                         "Call io.Fonts->AddFontFromFileTTF() manually to load extra character ranges." +
                         "Read docs/FONTS.txt for details.")
-                    text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)") // Normally we would use u8"blah blah" with the proper characters directly in the string.
-                    text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
+                    text("Hiragana: ${utf8(0xe3, 0x81, 0x8b, 0xe3, 0x81, 0x8d, 0xe3, 0x81, 0x8f, 0xe3, 0x81, 0x91, 0xe3, 0x81, 0x93)} (kakikukeko)") // Normally we would use u8"blah blah" with the proper characters directly in the string.
+                    text("Kanjis: ${utf8(0xe6, 0x97, 0xa5, 0xe6, 0x9c, 0xac, 0xe8, 0xaa, 0x9e)} (nihongo)")
                     inputText("UTF-8 input", buf)
                 }
             }

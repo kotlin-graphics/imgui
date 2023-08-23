@@ -5,18 +5,15 @@ import glm_.f
 import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.bringToDisplayBehind
 import imgui.ImGui.debugLocateItemResolveWithLastItem
 import imgui.ImGui.endColumns
 import imgui.ImGui.errorCheckUsingSetCursorPosToExtendParentBoundaries
 import imgui.ImGui.findBestWindowPosForPopup
-import imgui.ImGui.findBlockingModal
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.ImGui.gcAwakeTransientBuffers
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
-import imgui.ImGui.isWithinBeginStackOf
 import imgui.ImGui.logFinish
 import imgui.ImGui.markIniSettingsDirty
 import imgui.ImGui.navInitWindow
@@ -29,7 +26,6 @@ import imgui.ImGui.setLastItemData
 import imgui.ImGui.setPos
 import imgui.ImGui.setSize
 import imgui.ImGui.style
-import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateParentAndRootLinks
 import imgui.internal.classes.FocusRequestFlag
 import imgui.internal.classes.Rect
@@ -526,6 +522,8 @@ interface windows {
             window.scrollMax.y = max(0f, window.contentSize.y + window.windowPadding.y * 2f - window.innerRect.height)
 
             // Apply scrolling
+            if (g.frameCount >= 746 && name == "Dear ImGui Test Engine/Log_4C7FD7FA/Log_CAB00879")
+                print("")
             window.scroll = window.calcNextScrollFromScrollTargetAndClamp()
             window.scrollTarget put Float.MAX_VALUE
             window.decoInnerSizeX1 = 0f; window.decoInnerSizeY1 = 0f
@@ -722,8 +720,8 @@ interface windows {
 
             window.apply {
                 // Update the Hidden flag
-                val hiddenRegulare = hiddenFramesCanSkipItems > 0 || hiddenFramesCannotSkipItems > 0 || hiddenFramesForRenderOnly > 0
-                hidden = hiddenRegulare || hiddenFramesForRenderOnly > 0
+                val hiddenRegular = hiddenFramesCanSkipItems > 0 || hiddenFramesCannotSkipItems > 0 || hiddenFramesForRenderOnly > 0
+                hidden = hiddenRegular || hiddenFramesForRenderOnly > 0
 
                 // Disable inputs for requested number of frames
                 if (disableInputsFrames > 0) {
@@ -732,7 +730,7 @@ interface windows {
                 }
 
                 // Update the SkipItems flag, used to early out of all items functions (no layout required)
-                skipItems = (collapsed || !active || hiddenRegulare) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0
+                skipItems = (collapsed || !active || hiddenRegular) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0
             }
         }
 

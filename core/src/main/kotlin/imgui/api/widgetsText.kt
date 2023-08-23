@@ -88,7 +88,7 @@ interface widgetsText {
 
         val valueTextBegin = g.tempBuffer
         val valueTextEnd = formatStringToTempBuffer(fmt, args)
-        val valueSize = calcTextSize(valueTextBegin, valueTextEnd, hideTextAfterDoubleHash = false)
+        val valueSize = calcTextSize(valueTextBegin, 0, valueTextEnd, false)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val pos = window.dc.cursorPos // [JVM] careful, same instance
