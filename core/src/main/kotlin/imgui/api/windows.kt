@@ -736,6 +736,14 @@ interface windows {
             }
         }
 
+        // [DEBUG] io.ConfigDebugBeginReturnValue override return value to test Begin/End and BeginChild/EndChild behaviors.
+        // (The implicit fallback window is NOT automatically ended allowing it to always be able to receive commands without crashing)
+        if (!window.isFallbackWindow && (g.io.configDebugBeginReturnValueOnce && windowJustCreated || g.io.configDebugBeginReturnValueLoop && g.debugBeginReturnValueCullDepth == g.currentWindowStack.size)) {
+            if (window.autoFitFrames.x > 0) window.autoFitFrames.x++
+            if (window.autoFitFrames.y > 0) window.autoFitFrames.y++
+            return false
+        }
+
         return !window.skipItems
     }
 

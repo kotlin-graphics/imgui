@@ -67,7 +67,9 @@ fun errorCheckEndFrameSanityChecks() {
     // to always call End/EndChild even if Begin/BeginChild returns false! (this is unfortunately inconsistent with most other Begin* API).
     if (g.currentWindowStack.size != 1)
         if (g.currentWindowStack.size > 1) {
+            val window = g.currentWindowStack.last().window // <-- This window was not Ended!
             assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you forget to call End/EndChild?" }
+//            IM_UNUSED(window);
             while (g.currentWindowStack.size > 1)
                 end()
         } else

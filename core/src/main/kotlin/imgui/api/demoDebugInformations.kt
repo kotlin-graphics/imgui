@@ -281,6 +281,10 @@ interface demoDebugInformations {
                     }
                     unindent()
                 }
+
+            checkbox("Debug Begin/BeginChild return value", io::configDebugBeginReturnValueLoop)
+            sameLine()
+            metricsHelpMarker("Some calls to Begin()/BeginChild() will return false.\n\nWill cycle through window depths then repeat. Windows should be flickering while running.")
         }
 
         // Windows
