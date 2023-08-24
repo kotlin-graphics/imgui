@@ -295,15 +295,15 @@ object DemoWindow {
             }
 
             treeNode("Capture/Logging") {
-                textWrapped("""
+                helpMarker("""
                     The logging API redirects all text output so you can easily capture the content of a window or a block. Tree nodes can be automatically expanded.
-                    Try opening any of the contents below in this window and then click one of the \"Log To\" button.""".trimIndent())
+                    Try opening any of the contents below in this window and then click one of the "Log To" button.""".trimIndent())
                 logButtons()
 
                 helpMarker("You can also call ImGui::LogText() to output directly to the log without a visual output.")
-                if (button("Copy \"Hello, world!\" to clipboard")) {
+                if (button("""Copy "Hello, world!" to clipboard""")) {
                     logToClipboard()
-                    logText("%s", "Hello, world!")
+                    logText("Hello, world!")
                     logFinish()
                 }
             }

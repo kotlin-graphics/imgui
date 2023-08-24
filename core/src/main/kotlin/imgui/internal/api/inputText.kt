@@ -136,7 +136,6 @@ internal interface inputText {
             val backupPos = Vec2(window.dc.cursorPos)
             itemSize(totalBb, style.framePadding.y)
             if (!itemAdd(totalBb, id, frameBb, ItemFlag.Inputable)) {
-                itemSize(totalBb, style.framePadding.y)
                 endGroup()
                 return false
             }

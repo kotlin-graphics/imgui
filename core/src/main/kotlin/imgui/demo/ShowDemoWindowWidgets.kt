@@ -2055,7 +2055,7 @@ object ShowDemoWindowWidgets {
                     |  ""         display all lines
                     |  "xxx"      display lines containing "xxx"
                     |  "xxx,yyy"  display lines containing "xxx" or "yyy"
-                    |  "-xxx"     hide lines containing "xxx"""")
+                    |  "-xxx"     hide lines containing "xxx"""".trimMargin())
                 filter.draw()
                 val lines = listOf("aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world")
                 for (line in lines)

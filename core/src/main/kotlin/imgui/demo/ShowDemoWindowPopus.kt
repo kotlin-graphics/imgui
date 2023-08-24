@@ -16,7 +16,6 @@ import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.inputText
-import imgui.ImGui.isItemHovered
 import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
@@ -29,7 +28,6 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setItemTooltip
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowPos
-import imgui.ImGui.setTooltip
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
@@ -160,7 +158,7 @@ object ShowDemoWindowPopups {
         operator fun invoke() {
             treeNode("Context menus") {
 
-                helpMarker("\"Context\" functions are simple helpers to associate a Popup to a given Item or Window identifier.")
+                helpMarker(""""Context" functions are simple helpers to associate a Popup to a given Item or Window identifier.""")
 
                 // BeginPopupContextItem() is a helper to provide common/simple popup behavior of essentially doing:
                 //     if (id == 0)
@@ -176,13 +174,13 @@ object ShowDemoWindowPopups {
                 // and BeginPopupContextItem() will use the last item ID as the popup ID.
                 run {
                     val names = listOf("Label1", "Label2", "Label3", "Label4", "Label5")
-                    for (n in 0..4) {
-                        selectable(names[n])
-                        if (selectable(names[n], selected == n))
+                    for (n in names.indices) {
+                        val name = names[n]
+                        if (selectable(name, selected == n))
                             selected = n
                         popupContextItem { // <-- use last item id as popup id
                             selected = n
-                            text("This a popup for \"${names[n]}\"!")
+                            text("""This a popup for "$name"!""")
                             if (button("Close"))
                                 closeCurrentPopup()
                         }
