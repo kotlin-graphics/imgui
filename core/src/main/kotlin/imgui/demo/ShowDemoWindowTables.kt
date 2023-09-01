@@ -69,7 +69,6 @@ import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.api.drag
 import imgui.api.slider
 import imgui.classes.DrawList
-import imgui.classes.ListClipper
 import imgui.classes.TableSortSpecs
 import imgui.classes.listClipper
 import imgui.dsl.popup
@@ -762,13 +761,13 @@ object ShowDemoWindowTables {
     }
 
     object `Sizing policies` {
-        var flags1 = Tf.BordersV or Tf.BordersOuterH or Tf.RowBg or Tf.ContextMenuInBody
+        var flags1 = Tf.BordersV / Tf.BordersOuterH / Tf.RowBg / Tf.ContextMenuInBody
         val sizingPolicyFlags = flagArrayOf(Tf.SizingFixedFit, Tf.SizingFixedSame, Tf.SizingStretchProp, Tf.SizingStretchSame)
 
         enum class ContentsType { ShowWidth, ShortText, LongText, Button, FillButton, InputText }
 
         var flags = Tf.ScrollY / Tf.Borders / Tf.RowBg / Tf.Resizable
-        var contentsType1 = ContentsType.ShowWidth
+        var contentsType = ContentsType.ShowWidth
         var columnCount = 3
         val textBuf = ByteArray(32)
 
@@ -779,7 +778,7 @@ object ShowDemoWindowTables {
                     checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags1, Tf.NoHostExtendX)
                 }
 
-                for (tableN in 0..3)
+                for (tableN in sizingPolicyFlags.indices)
                     withID(tableN) {
                         setNextItemWidth(TEXT_BASE_WIDTH * 30)
                         editTableSizingFlags(sizingPolicyFlags mutablePropertyAt tableN)
@@ -813,11 +812,11 @@ object ShowDemoWindowTables {
                     withID("Advanced") {
                         withItemWidth(TEXT_BASE_WIDTH * 30) {
                             editTableSizingFlags(::flags)
-                            val ordinalRef = contentsType1.ordinal.mutableReference
+                            val ordinalRef = contentsType.ordinal.mutableReference
                             val ordinal by ordinalRef
                             combo("Contents", ordinalRef, "Show width\u0000Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
-                            contentsType1 = ContentsType.values()[ordinal]
-                            if (contentsType1 == ContentsType.FillButton) {
+                            contentsType = ContentsType.values()[ordinal]
+                            if (contentsType == ContentsType.FillButton) {
                                 sameLine()
                                 helpMarker("Be mindful that using right-alignment (e.g. size.x = -FLT_MIN) creates a feedback loop where contents width can feed into auto-column width can feed into contents width.")
                             }
@@ -825,7 +824,6 @@ object ShowDemoWindowTables {
                             checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable)
                             checkboxFlags("ImGuiTableFlags_PreciseWidths", ::flags, Tf.PreciseWidths)
                             sameLine(); helpMarker("Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.")
-                            checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable)
                             checkboxFlags("ImGuiTableFlags_ScrollX", ::flags, Tf.ScrollX)
                             checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY)
                             checkboxFlags("ImGuiTableFlags_NoClip", ::flags, Tf.NoClip)
@@ -841,7 +839,7 @@ object ShowDemoWindowTables {
 
                         withID(cell) {
                             val label = "Hello $column,$row"
-                            when (contentsType1) {
+                            when (contentsType) {
                                 ContentsType.ShortText -> textUnformatted(label)
                                 ContentsType.LongText -> text("Some ${if (column == 0) "long" else "longeeer"} text $column,$row\nOver two lines..")
                                 ContentsType.ShowWidth -> text("W: %.1f", contentRegionAvail.x)

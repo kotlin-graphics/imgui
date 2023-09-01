@@ -304,12 +304,12 @@ class NextWindowData {
 }
 
 data class NextItemData(
-        var flags: NextItemDataFlags = none,
-        var itemFlags: ItemFlags = none, // Currently only tested/used for ImGuiItemflags_AllowOverlap.
-        var width: Float = 0f, // Set by SetNextItemWidth()
-        var focusScopeId: ID = 0, // Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging)
-        var openCond: Cond = Cond.None,
-        var openVal: Boolean = false) { // Set by SetNextItemOpen() function.
+    var flags: NextItemDataFlags = none,
+    var itemFlags: ItemFlags = none, // Currently only tested/used for ImGuiItemflags_AllowOverlap.
+    var width: Float = 0f, // Set by SetNextItemWidth()
+    var focusScopeId: ID = 0, // Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging)
+    var openCond: Cond = Cond.None,
+    var openVal: Boolean = false) { // Set by SetNextItemOpen() function.
 
     /** Also cleared manually by ItemAdd()! */
     fun clearFlags() {
@@ -418,10 +418,10 @@ class ShrinkWidthItem(var index: Int = 0,
 }
 
 class PtrOrIndex(
-        /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
-        val ptr: TabBar?,
-        /** Usually index in a main pool. */
-        val index: PoolIdx) {
+    /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
+    val ptr: TabBar?,
+    /** Usually index in a main pool. */
+    val index: PoolIdx) {
 
     constructor(ptr: TabBar) : this(ptr, PoolIdx(-1))
 
@@ -451,23 +451,23 @@ class TextIndex {
 
 /* Storage for current popup stack  */
 class PopupData(
-        /** Set on OpenPopup()  */
-        var popupId: ID = 0,
-        /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
-        var window: Window? = null,
-        /** Set on OpenPopup(), a NavWindow that will be restored on popup close */
-        var backupNavWindow: Window? = null,
-        /** Resolved on BeginPopup(). Actually a ImGuiNavLayer type (declared down below), initialized to -1 which is not part of an enum, but serves well-enough as "not any of layers" value */
-        var parentNavLayer: Int = -1,
-        /** Set on OpenPopup()  */
-        var openFrameCount: Int = -1,
-        /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others
-         *  (e.g. inside menu bar vs loose menu items)    */
-        var openParentId: ID = 0,
-        /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
-        var openPopupPos: Vec2 = Vec2(),
-        /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
-        var openMousePos: Vec2 = Vec2())
+    /** Set on OpenPopup()  */
+    var popupId: ID = 0,
+    /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
+    var window: Window? = null,
+    /** Set on OpenPopup(), a NavWindow that will be restored on popup close */
+    var backupNavWindow: Window? = null,
+    /** Resolved on BeginPopup(). Actually a ImGuiNavLayer type (declared down below), initialized to -1 which is not part of an enum, but serves well-enough as "not any of layers" value */
+    var parentNavLayer: Int = -1,
+    /** Set on OpenPopup()  */
+    var openFrameCount: Int = -1,
+    /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others
+     *  (e.g. inside menu bar vs loose menu items)    */
+    var openParentId: ID = 0,
+    /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
+    var openPopupPos: Vec2 = Vec2(),
+    /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
+    var openMousePos: Vec2 = Vec2())
 
 
 /** Clear all settings data */
@@ -556,39 +556,38 @@ value class PoolIdx(val i: Int) {
     operator fun minus(int: Int) = PoolIdx(i - int)
 }
 
-class TabBarPool {
-    val indices get() = list.indices
-    /** Contiguous data */
-    val list = ArrayList<TabBar?>()
-
-    /** ID->Index */
-    val map = mutableMapOf<ID, PoolIdx>()
-
-    /** ~GetByKey/~TryGetMapData */
-    operator fun get(key: ID): TabBar? = map[key]?.let { list[it.i] }
-
-    /** ~GetByIndex */
-    operator fun get(n: PoolIdx): TabBar? = list.getOrNull(n.i)
-    fun getIndex(p: TabBar): PoolIdx = PoolIdx(list.indexOf(p))
-    fun getOrAddByKey(key: ID): TabBar = map[key]?.let { list[it.i] }
-            ?: add().also { map[key] = PoolIdx(list.lastIndex) }
-
-    operator fun contains(p: TabBar): Boolean = p in list
-    fun clear() {
-        list.clear()
-        map.clear()
-    }
-
-    fun add(): TabBar = TabBar().also { list += it }
-    //    fun remove(key: ID, p: TabBar) = remove(key, getIndex(p))
-    //    fun remove(key: ID, idx: PoolIdx) {
-    //        list[idx.i] = null
-    //        map -= key
-    //    }
-
-    val size: Int
-        get() = list.size
-}
+//class TabBarPool {
+//    /** Contiguous data */
+//    val list = ArrayList<TabBar?>()
+//
+//    /** ID->Index */
+//    val map = mutableMapOf<ID, PoolIdx>()
+//
+//    /** ~GetByKey/~TryGetMapData */
+//    operator fun get(key: ID): TabBar? = map[key]?.let { list[it.i] }
+//
+//    /** ~GetByIndex */
+//    operator fun get(n: PoolIdx): TabBar? = list.getOrNull(n.i)
+//    fun getIndex(p: TabBar): PoolIdx = PoolIdx(list.indexOf(p))
+//    fun getOrAddByKey(key: ID): TabBar = map[key]?.let { list[it.i] }
+//                                         ?: add().also { map[key] = PoolIdx(list.lastIndex) }
+//
+//    operator fun contains(p: TabBar): Boolean = p in list
+//    fun clear() {
+//        list.clear()
+//        map.clear()
+//    }
+//
+//    fun add(): TabBar = TabBar().also { list += it }
+//    //    fun remove(key: ID, p: TabBar) = remove(key, getIndex(p))
+//    //    fun remove(key: ID, idx: PoolIdx) {
+//    //        list[idx.i] = null
+//    //        map -= key
+//    //    }
+//
+//    fun tryGetMapData(n: PoolIdx): TabBar? {
+//        val idx = map[n].val_i; if (idx == -1) return NULL; return GetByIndex(idx); }
+//}
 
 class Pool<T>(val placementNew: () -> T) : Iterable<T> {
     val buf = ArrayList<T>()        // Contiguous data
@@ -602,7 +601,7 @@ class Pool<T>(val placementNew: () -> T) : Iterable<T> {
     fun getByKey(key: ID): T? = map[key]?.let { buf[it.i] }
     operator fun get(key: ID): T? = getByKey(key)
 
-    fun getByIndex(n: PoolIdx): T = buf[n.i]
+    fun getByIndex(n: PoolIdx): T = getByIndex(n.i)
     fun getByIndex(n: Int): T = buf[n]
     operator fun get(n: PoolIdx): T = getByIndex(n)
 
@@ -628,10 +627,10 @@ class Pool<T>(val placementNew: () -> T) : Iterable<T> {
         return new
     }
 
-    @Deprecated("just a placeholder to remind the different behaviour with the indices")
+//    @Deprecated("just a placeholder to remind the different behaviour with the indices")
     fun remove(key: ID, p: T) = remove(key, getIndex(p))
 
-    @Deprecated("just a placeholder to remind the different behaviour with the indices")
+//    @Deprecated("just a placeholder to remind the different behaviour with the indices")
     fun remove(key: ID, idx: PoolIdx) {
         buf.removeAt(idx.i)
         map.remove(key)

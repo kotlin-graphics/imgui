@@ -149,7 +149,7 @@ object ShowDemoWindowInputs {
             //            IMGUI_DEMO_MARKER("Inputs & Focus/Dragging");
             treeNode("Dragging") {
                 textWrapped("You can use getMouseDragDelta(0) to query for the dragged amount on any widget.")
-                for (button in MouseButton.values())
+                for (button in MouseButton.traditionalValues)
                     if (button != MouseButton.None) {
                         text("IsMouseDragging(${button.i}):")
                         text("  w/ default threshold: ${button.isDragging().i},")

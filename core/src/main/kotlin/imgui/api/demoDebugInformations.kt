@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package imgui.api
 
 import glm_.*
@@ -10,7 +12,6 @@ import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginItemTooltip
 import imgui.ImGui.beginTable
-import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.calcTextSize
@@ -93,7 +94,6 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
-import imgui.classes.ListClipper
 import imgui.classes.Style
 import imgui.classes.listClipper
 import imgui.demo.DemoWindow
@@ -101,6 +101,7 @@ import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
 import imgui.dsl.listBox
 import imgui.dsl.treeNode
+import imgui.dsl.withID
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import imgui.internal.api.debugTools.Companion.metricsHelpMarker
@@ -176,7 +177,6 @@ interface demoDebugInformations {
         text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
         text("${io.metricsRenderVertices} vertices, ${io.metricsRenderIndices} indices (${io.metricsRenderIndices / 3} triangles)")
         text("${io.metricsRenderWindows} visible windows, ${io.metricsActiveAllocations} active allocations")
-        text("If your company uses this, please consider sponsoring the project!")
         //SameLine(); if (SmallButton("GC")) { g.GcCompactAll = true; }
 
         separator()
@@ -205,7 +205,7 @@ interface demoDebugInformations {
             if (showEncodingViewer) {
                 setNextItemWidth(-Float.MIN_VALUE)
                 inputText("##Text", buf)
-                if (buf.isNotEmpty())
+                if (buf[0] != 0.b)
                     debugTextEncoding(buf)
                 treePop()
             }
@@ -265,7 +265,7 @@ interface demoDebugInformations {
                                 continue
                             for (columnN in 0 until table.columnsCount) {
                                 val r = Funcs.getTableRect(table, rectN, columnN)
-                                val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}" .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                                val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}".format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                                 selectable(buf)
                                 if (isItemHovered())
                                     foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), thickness = 2f)
@@ -339,14 +339,16 @@ interface demoDebugInformations {
         }
 
         // Details for TabBars
-        treeNode("TabBars", "Tab Bars (${g.tabBars.size})") {
-            for (n in g.tabBars.indices)
-                debugNodeTabBar(g.tabBars[n]!!, "TabBar")
+        treeNode("TabBars", "Tab Bars (${g.tabBars.aliveCount.i})") {
+            for (tabBar in g.tabBars)
+                withID(tabBar) {
+                    debugNodeTabBar(tabBar, "TabBar")
+                }
         }
 
-        treeNode("Tables", "Tables (${g.tables.size})") {
-            for (n in 0 until g.tables.size)
-                debugNodeTable(g.tables.getByIndex(n))
+        treeNode("Tables", "Tables (${g.tables.aliveCount.i})") {
+            for (table in g.tables)
+                debugNodeTable(table)
         }
 
         // Details for Fonts
@@ -362,10 +364,11 @@ interface demoDebugInformations {
 
 
         // Details for Docking
-        //        #ifdef IMGUI_HAS_DOCK
-        treeNode("Dock nodes") {
+        if (IMGUI_HAS_DOCK)
+            treeNode("Dock nodes") {
 
-        } //        #endif // #define IMGUI_HAS_DOCK
+            }
+        //        #endif // #define IMGUI_HAS_DOCK
 
         // Settings
         treeNode("Settings") {
@@ -455,7 +458,7 @@ interface demoDebugInformations {
                 text("WheelingWindow: '${g.wheelingWindow?.name ?: "NULL"}'")
                 text("WheelingWindowReleaseTimer: %.2f", g.wheelingWindowReleaseTimer)
                 val axis = if (g.wheelingAxisAvg.x > g.wheelingAxisAvg.y) "X" else if (g.wheelingAxisAvg.x < g.wheelingAxisAvg.y) "Y" else "<none>"
-                text("WheelingAxisAvg[] = { %.3f, %.3f }, Main Axis: %s", g.wheelingAxisAvg.x, g.wheelingAxisAvg.y)
+                text("WheelingAxisAvg[] = { %.3f, %.3f }, Main Axis: $axis", g.wheelingAxisAvg.x, g.wheelingAxisAvg.y)
             }
 
             text("KEY OWNERS")
@@ -486,7 +489,7 @@ interface demoDebugInformations {
                         }
                     }
                 }
-                text("(ActiveIdUsing: AllKeyboardKeys: %d, NavDirMask: 0x%X)", g.activeIdUsingAllKeyboardKeys, g.activeIdUsingNavDirMask)
+                text("(ActiveIdUsing: AllKeyboardKeys: ${g.activeIdUsingAllKeyboardKeys.i}, NavDirMask: 0x%X)", g.activeIdUsingNavDirMask)
             }
         }
 
@@ -524,7 +527,7 @@ interface demoDebugInformations {
                 debugLocateItemOnHover(g.navId)
                 text("NavInputSource: ${g.navInputSource}")
                 text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
-                text("NavActivateId/DownId/PressedId: %08X/%08X/%08X/%08X", g.navActivateId, g.navActivateDownId, g.navActivatePressedId)
+                text("NavActivateId/DownId/PressedId: %08X/%08X/%08X", g.navActivateId, g.navActivateDownId, g.navActivatePressedId)
                 text("NavActivateFlags: %04X", g.navActivateFlags)
                 text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
                 text("NavFocusScopeId = 0x%08X", g.navFocusScopeId)
@@ -730,6 +733,7 @@ interface demoDebugInformations {
             separator()
             text("By Omar Cornut and all Dear Imgui contributors.")
             text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
+            text("If your company uses this, please consider sponsoring the project!")
 
             checkbox("Config/Build Information", ::showConfigInfo)
             if (showConfigInfo) {
@@ -1002,6 +1006,6 @@ interface demoDebugInformations {
             return formatString(buf, "???")
         }
 
-        val buf = ""
+        val buf = ByteArray(100)
     }
 }

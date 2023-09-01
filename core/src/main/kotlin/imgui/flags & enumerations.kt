@@ -1939,6 +1939,7 @@ enum class MouseButton {
     val i = ordinal - 1 // starts at -1
 
     companion object {
+        val traditionalValues = values().drop(1).take(3)
         val imguiValues = values().drop(1)
         val COUNT = 5
         infix fun of(i: Int): MouseButton = values()[1 + i]

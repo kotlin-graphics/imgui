@@ -457,7 +457,7 @@ internal interface widgetsLowLevelBehaviors {
                 treePushOverrideID(id)
             val f = if (isLeaf) none else ItemStatusFlag.Openable
             val f2 = if (isOpen) ItemStatusFlag.Opened else none
-            IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label.cStr, g.lastItemData.statusFlags or f or f2)
+            IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label.cStr, g.lastItemData.statusFlags / f / f2)
             return isOpen
         }
 

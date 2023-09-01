@@ -925,7 +925,7 @@ object ShowDemoWindowWidgets {
                     selectable("Hello.h", selected1 mutablePropertyAt 2); sameLine(300); text(" 2,345 bytes")
                 }
                 treeNode("In columns") {
-                    if (beginTable("split1", 3, TableFlag.Resizable or TableFlag.NoSavedSettings)) {
+                    if (beginTable("split1", 3, TableFlag.Resizable / TableFlag.NoSavedSettings / TableFlag.Borders)) {
                         for (i in 0..9) {
                             val label = "Item $i"
                             tableNextColumn()
@@ -933,8 +933,8 @@ object ShowDemoWindowWidgets {
                         }
                         endTable()
                     }
-                    separator()
-                    if (beginTable("split2", 3, TableFlag.Resizable or TableFlag.NoSavedSettings)) {
+                    spacing()
+                    if (beginTable("split2", 3, TableFlag.Resizable / TableFlag.NoSavedSettings / TableFlag.Borders)) {
                         for (i in 0..9) {
                             val label = "Item $i"
                             tableNextRow()

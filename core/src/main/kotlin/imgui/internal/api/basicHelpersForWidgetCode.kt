@@ -91,7 +91,7 @@ internal interface basicHelpersForWidgetCode {
         g.lastItemData.id = id
         g.lastItemData.rect put bb
         g.lastItemData.navRect put (navBbArg ?: bb)
-        g.lastItemData.inFlags = g.currentItemFlags or g.nextItemData.itemFlags or extraFlags
+        g.lastItemData.inFlags = g.currentItemFlags / g.nextItemData.itemFlags / extraFlags
         g.lastItemData.statusFlags = none
 
         // Directional navigation processing

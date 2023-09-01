@@ -308,9 +308,9 @@ object ShowDemoWindowLayout {
                 run {
                     var windowFlags: WindowFlags = none
                     if (disableMouseWheel)
-                        windowFlags = windowFlags or Wf.NoScrollWithMouse
+                        windowFlags /= Wf.NoScrollWithMouse
                     if (!disableMenu)
-                        windowFlags = windowFlags or Wf.MenuBar
+                        windowFlags /= Wf.MenuBar
                     withStyleVar(StyleVar.ChildRounding, 5f) {
                         child("ChildR", Vec2(0, 260), true, windowFlags) {
                             if (!disableMenu && beginMenuBar()) {
@@ -321,7 +321,7 @@ object ShowDemoWindowLayout {
                                 endMenuBar()
                             }
                             columns(2)
-                            if (beginTable("split", 2, TableFlag.Resizable or TableFlag.NoSavedSettings)) {
+                            if (beginTable("split", 2, TableFlag.Resizable / TableFlag.NoSavedSettings)) {
                                 for (i in 0..99) {
                                     val text = "%03d".format(style.locale, i)
                                     tableNextColumn()
