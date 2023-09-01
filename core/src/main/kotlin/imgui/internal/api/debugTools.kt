@@ -549,7 +549,7 @@ internal interface debugTools {
     }
 
     fun debugNodeTableSettings(settings: TableSettings) {
-        if (!treeNode(settings.id.L, "Settings 0x%08X (${settings.columnsCount} columns)", settings.id))
+        if (!treeNode(settings/*.id*/, "Settings 0x%08X (${settings.columnsCount} columns)", settings.id))
             return
         bulletText("SaveFlags: 0x%08X", settings.saveFlags)
         bulletText("ColumnsCount: ${settings.columnsCount} (max ${settings.columnsCountMax})")
