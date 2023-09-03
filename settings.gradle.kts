@@ -27,5 +27,6 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         maven("https://raw.githubusercontent.com/kotlin-graphics/mary/master")
+        maven(url = "https://jitpack.io")
     }
 }
