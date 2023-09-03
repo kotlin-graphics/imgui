@@ -2,7 +2,6 @@
 
 [![Build Status](https://github.com/kotlin-graphics/imgui/workflows/build/badge.svg)](https://github.com/kotlin-graphics/imgui/actions?workflow=build)
 [![license](https://img.shields.io/badge/License-MIT-orange.svg)](https://github.com/kotlin-graphics/imgui/blob/master/LICENSE) 
-[![Release](https://jitpack.io/v/kotlin-graphics/imgui.svg)](https://jitpack.io/#kotlin-graphics/imgui) 
 ![Size](https://github-size-badge.herokuapp.com/kotlin-graphics/imgui.svg)
 [![Github All Releases](https://img.shields.io/github/downloads/kotlin-graphics/imgui/total.svg)]()
 
