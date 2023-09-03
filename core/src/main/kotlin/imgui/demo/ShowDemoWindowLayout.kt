@@ -122,8 +122,8 @@ object ShowDemoWindowLayout {
         treeNode("Groups") {
 
             helpMarker("BeginGroup() basically locks the horizontal position for new line. " +
-                       "EndGroup() bundles the whole group so that you can use \"item\" functions such as " +
-                       "IsItemHovered()/IsItemActive() or SameLine() etc. on the whole group.")
+                    "EndGroup() bundles the whole group so that you can use \"item\" functions such as " +
+                    "IsItemHovered()/IsItemActive() or SameLine() etc. on the whole group.")
             beginGroup()
             group {
                 button("AAA")
@@ -165,7 +165,7 @@ object ShowDemoWindowLayout {
             run {
                 bulletText("Text baseline:")
                 sameLine(); helpMarker("This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. " +
-                                       "Lines only composed of text or \"small\" widgets use less vertical space than lines with framed widgets.")
+                    "Lines only composed of text or \"small\" widgets use less vertical space than lines with framed widgets.")
                 indent {
 
                     text("KO Blahblah"); sameLine()
@@ -274,6 +274,8 @@ object ShowDemoWindowLayout {
         Scrolling()
 
         Clipping()
+
+        `Overlap Mode`()
     }
 
     object `Child Windows` {
@@ -607,9 +609,9 @@ object ShowDemoWindowLayout {
                 // Horizontal scroll functions
                 spacing()
                 helpMarker("Use SetScrollHereX() or SetScrollFromPosX() to scroll to a given horizontal position.\n\n" +
-                           "Because the clipping rectangle of most window hides half worth of WindowPadding on the " +
-                           "left/right, using SetScrollFromPosX(+1) will usually result in clipped text whereas the " +
-                           "equivalent SetScrollFromPosY(+1) wouldn't.")
+                        "Because the clipping rectangle of most window hides half worth of WindowPadding on the " +
+                        "left/right, using SetScrollFromPosX(+1) will usually result in clipped text whereas the " +
+                        "equivalent SetScrollFromPosY(+1) wouldn't.")
                 pushID("##HorizontalScrolling")
                 for (i in 0..4) {
                     val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
@@ -640,7 +642,7 @@ object ShowDemoWindowLayout {
                 // Miscellaneous Horizontal Scrolling Demo
 
                 helpMarker("Horizontal scrolling for a window is enabled via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\n" +
-                           "You may want to also explicitly specify content width by using SetNextWindowContentWidth() before Begin().")
+                        "You may want to also explicitly specify content width by using SetNextWindowContentWidth() before Begin().")
                 slider("Lines", ::lines, 1, 15)
                 pushStyleVar(StyleVar.FrameRounding, 3f)
                 pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
@@ -778,14 +780,14 @@ object ShowDemoWindowLayout {
                 textWrapped("(Click and drag to scroll)")
 
                 helpMarker("(Left) Using ImGui::PushClipRect():\n" +
-                           "Will alter ImGui hit-testing logic + ImDrawList rendering.\n" +
-                           "(use this if you want your clipping rectangle to affect interactions)\n\n" +
-                           "(Center) Using ImDrawList::PushClipRect():\n" +
-                           "Will alter ImDrawList rendering only.\n" +
-                           "(use this as a shortcut if you are only using ImDrawList calls)\n\n" +
-                           "(Right) Using ImDrawList::AddText() with a fine ClipRect:\n" +
-                           "Will alter only this specific ImDrawList::AddText() rendering.\n" +
-                           "This is often used internally to avoid altering the clipping rectangle and minimize draw calls.")
+                        "Will alter ImGui hit-testing logic + ImDrawList rendering.\n" +
+                        "(use this if you want your clipping rectangle to affect interactions)\n\n" +
+                        "(Center) Using ImDrawList::PushClipRect():\n" +
+                        "Will alter ImDrawList rendering only.\n" +
+                        "(use this as a shortcut if you are only using ImDrawList calls)\n\n" +
+                        "(Right) Using ImDrawList::AddText() with a fine ClipRect:\n" +
+                        "Will alter only this specific ImDrawList::AddText() rendering.\n" +
+                        "This is often used internally to avoid altering the clipping rectangle and minimize draw calls.")
 
                 for (n in 0..2) {
                     if (n > 0)
@@ -821,6 +823,38 @@ object ShowDemoWindowLayout {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    object `Overlap Mode` {
+        var enableAllowOverlap = true
+        operator fun invoke() {
+//            IMGUI_DEMO_MARKER("Layout/Overlap Mode");
+            if (ImGui.treeNode("Overlap Mode")) {
+
+                helpMarker("Hit-testing is by default performed in item submission order, which generally is perceived as 'back-to-front'.\n\n" +
+                        "By using SetNextItemAllowOverlap() you can notify that an item may be overlapped by another. Doing so alters the hovering logic: items using AllowOverlap mode requires an extra frame to accept hovered state.")
+                ImGui.checkbox("Enable AllowOverlap", ::enableAllowOverlap)
+
+                val button1Pos = ImGui.cursorScreenPos // [JVM] we can use the same instance
+                val button2Pos = button1Pos + 50f
+                if (enableAllowOverlap)
+                    ImGui.setNextItemAllowOverlap()
+                ImGui.button("Button 1", Vec2(80))
+                ImGui.cursorScreenPos = button2Pos
+                ImGui.button("Button 2", Vec2(80))
+
+                // This is typically used with width-spanning items.
+                // (note that Selectable() has a dedicated flag ImGuiSelectableFlags_AllowOverlap, which is a shortcut
+                // for using SetNextItemAllowOverlap(). For demo purpose we use SetNextItemAllowOverlap() here.)
+                if (enableAllowOverlap)
+                    ImGui.setNextItemAllowOverlap()
+                ImGui.selectable("Some Selectable", false)
+                ImGui.sameLine()
+                ImGui.smallButton("++")
+
+                ImGui.treePop()
             }
         }
     }

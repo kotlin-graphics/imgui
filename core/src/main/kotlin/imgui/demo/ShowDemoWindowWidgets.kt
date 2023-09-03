@@ -104,6 +104,7 @@ import imgui.ImGui.setColorEditOptions
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setItemTooltip
+import imgui.ImGui.setNextItemAllowOverlap
 import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setTooltip
@@ -876,7 +877,7 @@ object ShowDemoWindowWidgets {
     }
 
     object Selectables {
-        val selection0 = booleanArrayOf(false, true, false, false, false)
+        val selection0 = booleanArrayOf(false, true, false, false)
         var selected0 = -1
         val selection1 = BooleanArray(5)
         val selected1 = BooleanArray(3)
@@ -898,9 +899,8 @@ object ShowDemoWindowWidgets {
                 treeNode("Basic") {
                     selectable("1. I am selectable", selection0 mutablePropertyAt 0)
                     selectable("2. I am selectable", selection0 mutablePropertyAt 1)
-                    text("(I am not selectable)")
-                    selectable("4. I am selectable", selection0 mutablePropertyAt 2)
-                    if (selectable("5. I am double clickable", selection0[3], Sf.AllowDoubleClick))
+                    selectable("3. I am selectable", selection0 mutablePropertyAt 2)
+                    if (selectable("4. I am double clickable", selection0[3], Sf.AllowDoubleClick))
                         if (MouseButton.Left.isDoubleClicked) selection0[3] = !selection0[3]
                 }
                 treeNode("Selection State: Single Selection") {
@@ -917,12 +917,12 @@ object ShowDemoWindowWidgets {
                             selection1[n] = selection1[n] xor true
                         }
                 }
-                treeNode("Rendering more text into the same line") {
-                    // Using the Selectable() override that takes "bool* p_selected" parameter,
-                    // this function toggle your bool value automatically.
-                    selectable("main.c", selected1 mutablePropertyAt 0); sameLine(300); text(" 2,345 bytes")
-                    selectable("Hello.cpp", selected1 mutablePropertyAt 1); sameLine(300); text("12,345 bytes")
-                    selectable("Hello.h", selected1 mutablePropertyAt 2); sameLine(300); text(" 2,345 bytes")
+                treeNode("Rendering more items on the same line") {
+                    // (1) Using SetNextItemAllowOverlap()
+                    // (2) Using the Selectable() override that takes "bool* p_selected" parameter, the bool value is toggled automatically.
+                    setNextItemAllowOverlap(); selectable("main.c", selected1 mutablePropertyAt 0); sameLine(300); smallButton("Link 1")
+                    setNextItemAllowOverlap(); selectable("Hello.cpp", selected1 mutablePropertyAt 1); sameLine(300); smallButton("Link 2")
+                    setNextItemAllowOverlap(); selectable("Hello.h", selected1 mutablePropertyAt 2); sameLine(300); smallButton("Link 3")
                 }
                 treeNode("In columns") {
                     if (beginTable("split1", 3, TableFlag.Resizable / TableFlag.NoSavedSettings / TableFlag.Borders)) {
