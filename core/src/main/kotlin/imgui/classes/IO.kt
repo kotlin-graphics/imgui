@@ -208,16 +208,16 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     fun copy() = IO().also {
         it.configFlags = configFlags; it.backendFlags = backendFlags; it.displaySize = displaySize; it.deltaTime = deltaTime; it.iniSavingRate = iniSavingRate
         it.iniFilename = iniFilename; it.logFilename = logFilename; it.mouseDoubleClickTime = mouseDoubleClickTime; it.mouseDoubleClickMaxDist = mouseDoubleClickMaxDist
-        it.mouseDragThreshold = mouseDragThreshold; it.keyRepeatDelay = keyRepeatDelay; it.keyRepeatRate = keyRepeatRate;
+        it.mouseDragThreshold = mouseDragThreshold; it.keyRepeatDelay = keyRepeatDelay; it.keyRepeatRate = keyRepeatRate
         it.fonts = fonts; it.fontGlobalScale = fontGlobalScale; it.fontAllowUserScaling = fontAllowUserScaling; it.fontDefault = fontDefault
         it.displayFramebufferScale = displayFramebufferScale; it.mouseDrawCursor = mouseDrawCursor; it.configMacOSXBehaviors = configMacOSXBehaviors
-        it.configInputTrickleEventQueue = configInputTrickleEventQueue; it.configInputTextCursorBlink = configInputTextCursorBlink;
+        it.configInputTrickleEventQueue = configInputTrickleEventQueue; it.configInputTextCursorBlink = configInputTextCursorBlink
         it.configInputTextEnterKeepActive = configInputTextEnterKeepActive; it.configDragClickToInputText = configDragClickToInputText
         it.configWindowsResizeFromEdges = configWindowsResizeFromEdges; it.configWindowsMoveFromTitleBarOnly = configWindowsMoveFromTitleBarOnly
         it.configMemoryCompactTimer = configMemoryCompactTimer; it.backendPlatformName = backendPlatformName; it.backendPlatformUserData = backendPlatformUserData
         it.backendRendererUserData = backendRendererUserData; it.backendLanguageUserData = backendLanguageUserData; it.getClipboardTextFn = getClipboardTextFn
         it.setClipboardTextFn = setClipboardTextFn; it.clipboardUserData = clipboardUserData /*it.setPlatformImeDataFn = setPlatformImeDataFn*/
-        it.ctx = ctx; /*it.mousePos put mousePos; repeat(5) { i -> it.mouseDown[i] = mouseDown[i] }; it.mouseWheel = mouseWheelH
+        it.ctx = ctx /*it.mousePos put mousePos; repeat(5) { i -> it.mouseDown[i] = mouseDown[i] }; it.mouseWheel = mouseWheelH
         it.mouseWheelH = mouseWheelH; it.keyCtrl = keyCtrl; it.keyShift = keyShift; it.keyAlt = keyAlt; it.keySuper = keySuper; it.mouseSource
         repeat(NavInput.COUNT) { i -> it.navInputs[i] = navInputs[i] }; it.keyMods = keyMods; repeat(Key.COUNT) {i -> it.keysData[i]}*/
     }
@@ -405,14 +405,16 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         appAcceptingEvents = acceptingEvents
     }
 
-    /** [Internal] Clear the text input buffer manually
-     *
-     *  FIXME: Perhaps we could clear queued events as well? */
-    fun clearInputCharacters() = inputQueueCharacters.clear()
+    // Clear all incoming events.
+    fun clearEventsQueue() {
+//        assert(ctx != null)
+        val g = ctx!!
+        g.inputEventsQueue.clear()
+    }
 
     /** [Internal] Release all keys
      *
-     *  FIXME: Perhaps we could clear queued events as well? */
+     *  Clear current keyboard/mouse/gamepad state + current frame text input buffer. Equivalent to releasing all keys/buttons. */
     fun clearInputKeys() {
         for (keyData in keysData) {
             keyData.down = false
@@ -427,6 +429,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             mouseDownDuration[n] = -1f; mouseDownDurationPrev[n] = -1f
         }
         mouseWheel = 0f; mouseWheelH = 0f
+        inputQueueCharacters.clear() // Behavior of old ClearInputCharacters().
     }
 
 
