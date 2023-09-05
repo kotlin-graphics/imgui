@@ -508,7 +508,7 @@ internal interface inputText {
                 }
                 isCancel ->
                     if (flags has Itf.EscapeClearsAll) {
-                        if (state.curLenA > 0)
+                        if (buf[0] != 0.b)
                             revertEdit = true
                         else {
                             renderCursor = false; renderSelection = false
@@ -576,9 +576,10 @@ internal interface inputText {
             if (revertEdit && !isReadOnly) {
                 if (flags has Itf.EscapeClearsAll) {
                     // Clear input
+                    assert(buf[0] != 0.b)
                     applyNewText = ByteArray(0)
                     applyNewTextLength = 0
-                    valueChanged /= buf[0] != 0.b
+                    valueChanged = true
                     val emptyString = CharArray(0)
                     state.replace(emptyString, 0)
                 } else if (buf.strcmp(state.initialTextA) != 0) {
@@ -606,9 +607,12 @@ internal interface inputText {
                 textStrToUtf8(state.textA, state.textW)
             }
 
-            // When using 'ImGuiInputTextFlags_EnterReturnsTrue' as a special case we reapply the live buffer back to the input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
+            // When using 'ImGuiInputTextFlags_EnterReturnsTrue' as a special case we reapply the live buffer back to the input buffer
+            // before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
             // If we didn't do that, code like InputInt() with ImGuiInputTextFlags_EnterReturnsTrue would fail.
-            // This also allows the user to use InputText() with ImGuiInputTextFlags_EnterReturnsTrue without maintaining any user-side storage (please note that if you use this property along ImGuiInputTextFlags_CallbackResize you can end up with your temporary string object unnecessarily allocating once a frame, either store your string data, either if you don't then don't use ImGuiInputTextFlags_CallbackResize).
+            // This also allows the user to use InputText() with ImGuiInputTextFlags_EnterReturnsTrue without maintaining any user-side storage
+            // (please note that if you use this property along ImGuiInputTextFlags_CallbackResize you can end up with your temporary string object
+            // unnecessarily allocating once a frame, either store your string data, either if you don't then don't use ImGuiInputTextFlags_CallbackResize).
             val applyEditBackToUserBuffer = !revertEdit || (validated && flags hasnt Itf.EnterReturnsTrue)
             if (applyEditBackToUserBuffer) {
                 // Apply new value immediately - copy modified buffer back

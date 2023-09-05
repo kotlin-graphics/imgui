@@ -131,6 +131,7 @@ import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.ImGui.windowDrawList
+import imgui.InputTextFlag
 import imgui.api.*
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.Color
@@ -1065,6 +1066,8 @@ object ShowDemoWindowWidgets {
         var buf2 = ByteArray(64)
         var buf3 = ByteArray(64)
         var editCount = 0
+        val buf4 = ByteArray(16)
+        var flags1: InputTextSingleFlags = InputTextFlag.EscapeClearsAll
         operator fun invoke() {
             // To wire InputText() with std::string or any other custom string type,
             // see the "Text Input > Resize Callback" section of this demo, and the misc/cpp/imgui_stdlib.h file.
@@ -1124,6 +1127,14 @@ object ShowDemoWindowWidgets {
                         myStr = ByteArray(1)
                     Funcs2.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), none)
                     text("Data: ${myStr.hashCode()}\nSize: ${myStr.strlen()}\nCapacity: ${myStr.size}")
+                }
+
+//                IMGUI_DEMO_MARKER("Widgets/Text Input/Miscellaneous");
+                treeNode("Miscellaneous") {
+                    ImGui.checkboxFlags("ImGuiInputTextFlags_EscapeClearsAll", ::flags1, InputTextFlag.EscapeClearsAll)
+                    ImGui.checkboxFlags("ImGuiInputTextFlags_ReadOnly", ::flags1, InputTextFlag.ReadOnly)
+                    ImGui.checkboxFlags("ImGuiInputTextFlags_NoUndoRedo", ::flags1, InputTextFlag.NoUndoRedo)
+                    ImGui.inputText("Hello", buf1, flags1)
                 }
             }
         }
