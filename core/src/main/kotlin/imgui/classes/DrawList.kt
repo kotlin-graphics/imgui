@@ -100,7 +100,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
     fun pushClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false) =
-        pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
+            pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
 
     fun pushClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false) {
 
@@ -124,7 +124,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** [JVM] */
     inline fun withClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false, block: DrawList.() -> Unit) =
-        withClipRect(rect.min, rect.max, intersectWithCurrentClipRect, block)
+            withClipRect(rect.min, rect.max, intersectWithCurrentClipRect, block)
 
     /** [JVM] */
     inline fun withClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false, block: DrawList.() -> Unit) {
@@ -732,8 +732,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
 
     fun addImage(
-        userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
-        uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE,
+            userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
+            uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE,
     ) {
 
         if (col hasnt COL32_A_MASK) return
@@ -748,9 +748,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun addImageQuad(
-        userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
-        uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
-        uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE,
+            userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
+            uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
+            uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE,
     ) {
 
         if (col hasnt COL32_A_MASK) return
@@ -805,7 +805,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** rounding_corners_flags: 4 bits corresponding to which corner to round   */
     fun pathStroke(col: Int, flags: DrawFlags = none, thickness: Float = 1.0f) =
-        addPolyline(_path, col, flags, thickness).also { pathClear() }
+            addPolyline(_path, col, flags, thickness).also { pathClear() }
 
     /** @param center must be a new instance */
     fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 0) {
@@ -1295,20 +1295,18 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun _calcCircleAutoSegmentCount(radius: Float): Int =
-        // Automatic segment count
-        when (val radiusIdx = (radius + 0.999999f).i) { // ceil to never reduce accuracy
-            in _data.circleSegmentCounts.indices -> _data.circleSegmentCounts[radiusIdx] // Use cached value
-            else -> DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
-        }
+            // Automatic segment count
+            when (val radiusIdx = (radius + 0.999999f).i) { // ceil to never reduce accuracy
+                in _data.circleSegmentCounts.indices -> _data.circleSegmentCounts[radiusIdx] // Use cached value
+                else -> DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
+            }
 
     /** @center must be a new instance */
-    fun _pathArcToFastEx(center: Vec2, radius: Float, aMinSample_: Int, aMaxSample_: Int, aStep_: Int) {
+    fun _pathArcToFastEx(center: Vec2, radius: Float, aMinSample: Int, aMaxSample: Int, aStep_: Int) {
         if (radius < 0.5f) {
             _path += center
             return
         }
-        var aMaxSample = aMaxSample_
-        var aMinSample = aMinSample_
 
         // Calculate arc auto segment step size
         var aStep = when {
@@ -1355,7 +1353,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
                 val s = _data.arcFastVtx[sampleIndex]
                 _path += Vec2(center.x + s.x * radius,
-                    center.y + s.y * radius)
+                        center.y + s.y * radius)
 
                 a += aStep; sampleIndex += aStep; aStep = aNextStep
             }
@@ -1368,7 +1366,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
                 val s = _data.arcFastVtx[sampleIndex]
                 _path += Vec2(center.x + s.x * radius,
-                    center.y + s.y * radius)
+                        center.y + s.y * radius)
 
                 a -= aStep; sampleIndex -= aStep; aStep = aNextStep
             }
@@ -1381,7 +1379,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
             val s = _data.arcFastVtx[normalizedMaxSample]
             _path += Vec2(center.x + s.x * radius,
-                center.y + s.y * radius)
+                    center.y + s.y * radius)
         }
 
         //        IM_ASSERT_PARANOID(_Path.Data + _Path.Size == out_ptr)
@@ -1437,13 +1435,14 @@ class DrawList(sharedData: DrawListSharedData?) {
 }
 
 private fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
+
 @JvmInline
 value class DrawVert_Buffer(val data: ByteBuffer) {
 
     operator fun get(index: Int) = DrawVert(
-        Vec2(data, index * DrawVert.SIZE),
-        Vec2(data, index * DrawVert.SIZE + DrawVert.OFS_UV),
-        data.getInt(index * DrawVert.SIZE + DrawVert.OFS_COL))
+            Vec2(data, index * DrawVert.SIZE),
+            Vec2(data, index * DrawVert.SIZE + DrawVert.OFS_UV),
+            data.getInt(index * DrawVert.SIZE + DrawVert.OFS_COL))
 
     operator fun plusAssign(v: Vec2) {
         data.putFloat(v.x)

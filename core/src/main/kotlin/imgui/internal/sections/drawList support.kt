@@ -78,7 +78,7 @@ class DrawListSharedData {
     /** Sample points on the quarter of the circle. */
     val arcFastVtx = Array(DRAWLIST_ARCFAST_TABLE_SIZE) {
         // FIXME: Bake rounded corners fill/borders in atlas
-        val a = it * 2 * glm.PIf / 12
+        val a = it * 2 * glm.πf / DRAWLIST_ARCFAST_TABLE_SIZE
         Vec2(cos(a), sin(a))
     }
 
