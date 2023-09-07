@@ -12,7 +12,7 @@ import imgui.internal.api.focusActivation
 const val IMGUI_BUILD = 0
 
 /** get the compiled version string e.g. "1.80 WIP" (essentially the value for IMGUI_VERSION from the compiled version of imgui.cpp) */
-const val IMGUI_VERSION = "1.89.7"
+const val IMGUI_VERSION = "1.89.7-1"
 const val IMGUI_VERSION_BUILD = "$IMGUI_VERSION.$IMGUI_BUILD"
 
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
